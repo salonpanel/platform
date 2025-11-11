@@ -15,3 +15,35 @@ values
   ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Corte Basico', 30, 1500),
   ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Barba',        20, 1000)
 on conflict (id) do nothing;
+
+-- Appointment en estado hold para pruebas
+insert into public.appointments (
+  id,
+  org_id,
+  customer_id,
+  staff_id,
+  service_id,
+  starts_at,
+  ends_at,
+  status,
+  source,
+  created_by
+)
+values (
+  'dddddddd-dddd-dddd-dddd-dddddddddddd',
+  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  null,
+  null,
+  'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+  now() + interval '1 day',
+  now() + interval '1 day' + interval '30 minutes',
+  'hold',
+  'web',
+  null
+)
+on conflict (id) do nothing;
+
+-- Verificación rápida del seed
+select id, status
+from public.appointments
+where id = 'dddddddd-dddd-dddd-dddd-dddddddddddd';

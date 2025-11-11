@@ -11,11 +11,16 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@supabase/auth-helpers-react": "^0.5.0",
     "@supabase/supabase-js": "^2.81.0",
+    "@upstash/ratelimit": "^2.0.7",
+    "@upstash/redis": "^1.35.6",
     "date-fns": "^4.1.0",
     "next": "16.0.1",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "resend": "^6.4.2",
     "stripe": "^19.3.0",
     "zod": "^4.1.12"
   },
@@ -26,6 +31,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
+    "supabase": "^2.58.5",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
