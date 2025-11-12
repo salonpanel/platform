@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from "react";
-import { addMinutes, setSeconds, setMilliseconds } from "date-fns";
+import { addMinutes, isAfter, setMilliseconds, setSeconds } from "date-fns";
 
 export type PublicService = {
   id: string;
@@ -18,6 +18,7 @@ type Props = {
     id: string;
     status: string;
   } | null;
+  tenantTimezone?: string; // P1.2: Timezone del tenant
 };
 
 type Slot = {
@@ -25,9 +26,9 @@ type Slot = {
   value: string;
 };
 
-function generateSlots(): Slot[] {
+function generateSlots(formatter: Intl.DateTimeFormat): Slot[] {
   const now = new Date();
-  const start = setMilliseconds(setSeconds(now, 0), 0);
+  const start = setMilliseconds(setSeconds(new Date(now), 0), 0);
   const minute = start.getMinutes();
   if (minute < 30) {
     start.setMinutes(30, 0, 0);
@@ -38,24 +39,34 @@ function generateSlots(): Slot[] {
   const slots: Slot[] = [];
   for (let i = 0; i < 12; i += 1) {
     const slotDate = addMinutes(start, i * 30);
+    if (!isAfter(slotDate, now)) continue;
     slots.push({
-      label: slotDate.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+      label: formatter.format(slotDate),
       value: slotDate.toISOString(),
     });
   }
   return slots;
 }
 
-export function ReserveClient({ orgId, services, successAppointment }: Props) {
+export function ReserveClient({ orgId, services, successAppointment, tenantTimezone = "Europe/Madrid" }: Props) {
   const [selectedService, setSelectedService] = useState<string>("");
   const [selectedSlot, setSelectedSlot] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const slots = useMemo(generateSlots, []);
+  // P1.2: Timezone del tenant (obtenido del servidor)
+  
+  const timeFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat("es-ES", {
+        timeZone: tenantTimezone,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }),
+    [tenantTimezone]
+  );
+  const slots = useMemo(() => generateSlots(timeFormatter), [timeFormatter]);
   const selectedServiceData = useMemo(() => {
     return services.find((service) => service.id === selectedService);
   }, [services, selectedService]);
@@ -86,7 +97,7 @@ export function ReserveClient({ orgId, services, successAppointment }: Props) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          org_id: orgId,
+          org_id: orgId, // P1.2: Mantener org_id para compatibilidad con endpoint legacy
           service_id: selectedService,
           starts_at: selectedSlot,
         }),

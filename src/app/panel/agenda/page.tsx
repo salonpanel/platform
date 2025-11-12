@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { endOfDay, startOfDay } from "date-fns";
 
@@ -20,6 +20,18 @@ export default function AgendaPage() {
   const [orgId, setOrgId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [rows, setRows] = useState<Appt[]>([]);
+  const [tenantTimezone, setTenantTimezone] = useState<string>("Europe/Madrid"); // P1.2: Timezone del tenant
+  
+  // P1.2: Formateador de tiempo usando timezone del tenant
+  const timeFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat("es-ES", {
+        timeZone: tenantTimezone,
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    [tenantTimezone]
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -40,6 +52,17 @@ export default function AgendaPage() {
       if (!org) {
         setLoaded(true);
         return;
+      }
+
+      // P1.2: Obtener timezone del tenant
+      const { data: tenantData } = await supabase
+        .from("tenants")
+        .select("id, timezone")
+        .eq("id", org)
+        .maybeSingle();
+
+      if (tenantData?.timezone) {
+        setTenantTimezone(tenantData.timezone);
       }
 
       const from = startOfDay(new Date()).toISOString();
@@ -120,15 +143,8 @@ export default function AgendaPage() {
           <div key={r.id} className="p-3 flex items-center justify-between">
             <div>
               <div className="font-medium">
-                {new Date(r.starts_at).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}{" "}
-                —{" "}
-                {new Date(r.ends_at).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {timeFormatter.format(new Date(r.starts_at))} —{" "}
+                {timeFormatter.format(new Date(r.ends_at))}
               </div>
               <div className="text-sm text-gray-600">{r.status}</div>
             </div>
