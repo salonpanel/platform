@@ -15,15 +15,23 @@ export const holdRateLimit = redis
     })
   : null;
 
-export function getClientIp(req: Request): string {
-  const forwarded = req.headers.get("x-forwarded-for");
+export function getClientIp(req: Request | Headers): string {
+  let headers: Headers;
+  
+  if (req instanceof Request) {
+    headers = req.headers;
+  } else {
+    headers = req;
+  }
+  
+  const forwarded = headers.get("x-forwarded-for");
   if (forwarded) {
     const ips = forwarded.split(",").map((ip) => ip.trim());
     if (ips.length > 0 && ips[0]) {
       return ips[0];
     }
   }
-  const realIp = req.headers.get("x-real-ip");
+  const realIp = headers.get("x-real-ip");
   if (realIp) return realIp;
   return "unknown";
 }

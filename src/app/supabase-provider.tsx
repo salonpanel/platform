@@ -1,13 +1,12 @@
 'use client';
 
 import { PropsWithChildren, useState } from "react";
-import { createBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { SupabaseClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { SupabaseContext } from "@/lib/supabase-context";
 
 export function SupabaseProvider({ children }: PropsWithChildren) {
   const [supabase] = useState<SupabaseClient>(() =>
-    createBrowserClient(
+    createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )

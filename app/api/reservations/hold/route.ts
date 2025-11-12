@@ -32,11 +32,19 @@ export async function POST(req: Request) {
 
   const ip = getClientIp(req);
 
+  // P0.2: Rate limit - 50 req/10min por IP (sliding window)
   if (holdRateLimit) {
-    const { success } = await holdRateLimit.limit(`hold:${ip}`);
+    const { success, reset } = await holdRateLimit.limit(`hold:${ip}`);
     if (!success) {
+      console.warn("hold:rate_limit", {
+        ip,
+        reset: reset ? new Date(reset).toISOString() : null
+      });
       return NextResponse.json(
-        { error: "Se han realizado demasiadas solicitudes. Inténtalo más tarde." },
+        { 
+          error: "Se han realizado demasiadas solicitudes. Inténtalo más tarde.",
+          code: "RATE_LIMIT"
+        },
         { status: 429 }
       );
     }
@@ -109,15 +117,22 @@ export async function POST(req: Request) {
     );
   }
 
+  // P1.3: Validar que el servicio tiene price_id (es vendible)
   if (!service.stripe_price_id) {
     return NextResponse.json(
-      { error: "El servicio no tiene un Stripe price id configurado." },
-      { status: 400 }
+      { 
+        error: "Servicio no vendible. El servicio no tiene un precio configurado en Stripe. Por favor, sincroniza el servicio con Stripe primero.",
+        code: "MISSING_PRICE_ID"
+      },
+      { status: 422 }
     );
   }
 
   const endsAt = addMinutes(startsAt, service.duration_min);
-  const expiresAt = addMinutes(new Date(), HOLD_TTL_MINUTES);
+  
+  // P0.2: TTL de holds - usar HOLD_TTL_MIN de env (default 10 minutos)
+  const holdTtlMinutes = Number(process.env.HOLD_TTL_MIN || HOLD_TTL_MINUTES);
+  const expiresAt = addMinutes(new Date(), holdTtlMinutes);
 
   const { data, error } = await supabase
     .from("appointments")
@@ -135,13 +150,28 @@ export async function POST(req: Request) {
     .single();
 
   if (error) {
+    // P0.3: Manejar error 23P01 (exclusion violation = solape)
     if (error.code === "23P01") {
+      // Mensaje de error amigable para solapes
+      // Nota: Por ahora usamos un mensaje genérico, pero podríamos usar la función helper
+      // si tenemos staff_id disponible (requiere modificar el schema de appointments)
       return NextResponse.json(
-        { error: "El intervalo seleccionado ya está ocupado." },
+        { 
+          error: "El intervalo seleccionado ya está ocupado. Por favor, elige otro horario.",
+          code: "23P01"
+        },
         { status: 409 }
       );
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("hold:error", {
+      error: error.message,
+      code: error.code,
+      org_id
+    });
+    return NextResponse.json(
+      { error: error.message ?? "Error al crear reserva" },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({

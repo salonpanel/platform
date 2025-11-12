@@ -1,0 +1,56 @@
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import { supabaseServer } from "./supabase";
+
+/**
+ * Verifica si un usuario es platform admin
+ * Busca en platform.platform_users o verifica JWT claim
+ */
+export async function isPlatformAdmin(userId?: string): Promise<boolean> {
+  if (!userId) {
+    const supabase = createRouteHandlerClient({ cookies });
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return false;
+    userId = user.id;
+  }
+
+  const supabase = supabaseServer();
+  
+  // Usar función RPC para verificar platform admin
+  const { data: isAdmin, error } = await supabase
+    .rpc("check_platform_admin", { p_user_id: userId })
+    .single();
+
+  if (error) {
+    console.error("Error checking platform admin:", error);
+    return false;
+  }
+
+  return !!isAdmin;
+}
+
+/**
+ * Obtiene el usuario platform admin actual
+ */
+export async function getPlatformAdmin() {
+  const supabase = createRouteHandlerClient({ cookies });
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const isAdmin = await isPlatformAdmin(user.id);
+  if (!isAdmin) return null;
+
+  const sb = supabaseServer();
+  const { data } = await sb
+    .from("platform_users")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+  return data;
+}
+

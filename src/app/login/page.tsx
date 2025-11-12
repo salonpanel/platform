@@ -1,12 +1,24 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 export default function LoginPage() {
   const supabase = createClientComponentClient();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    if (errorParam === "unauthorized") {
+      setError(
+        "No tienes permisos para acceder a esa sección. Contacta con un administrador."
+      );
+    }
+  }, [searchParams]);
 
   const sendLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,6 +34,11 @@ export default function LoginPage() {
   return (
     <div className="mx-auto max-w-md p-6">
       <h1 className="text-xl font-semibold mb-4">Acceso</h1>
+      {error && (
+        <div className="mb-4 rounded border border-red-500 bg-red-50 p-3 text-sm text-red-600">
+          {error}
+        </div>
+      )}
       {!sent ? (
         <form onSubmit={sendLink} className="space-y-3">
           <input
