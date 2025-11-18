@@ -204,8 +204,7 @@ export async function POST(req: Request) {
     }
 
     // Crear sesión usando el cliente normal con el código
-    const cookieStore = await cookies();
-    const supabaseClient = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabaseClient = createRouteHandlerClient({ cookies });
 
     // Intercambiar código por sesión
     const { data: sessionData, error: sessionError } =
