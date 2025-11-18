@@ -7,12 +7,12 @@ import { stripe } from "@/lib/stripe";
 const CURRENCY = process.env.STRIPE_DEFAULT_CURRENCY ?? "eur";
 
 type RouteParams = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export async function POST(_: Request, { params }: RouteParams) {
   try {
-    const { id } = params;
+    const { id } = await params;
     if (!id) {
       return NextResponse.json({ error: "ID requerido." }, { status: 400 });
     }

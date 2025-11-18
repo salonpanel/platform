@@ -3,9 +3,9 @@ import { supabaseServer } from "@/lib/supabase";
 import { isPlatformAdmin, canModifyPlatform } from "@/lib/platform-auth";
 
 type RouteParams = {
-  params: {
+  params: Promise<{
     orgId: string;
-  };
+  }>;
 };
 
 /**
@@ -26,7 +26,7 @@ export async function GET(
       );
     }
 
-    const { orgId } = params;
+    const { orgId } = await params;
     const supabase = supabaseServer();
 
     // Cargar plan de la org (tabla en schema platform)
@@ -72,7 +72,7 @@ export async function PUT(
       );
     }
 
-    const { orgId } = params;
+    const { orgId } = await params;
     const body = await req.json();
     const { plan_id, billing_state } = body;
 

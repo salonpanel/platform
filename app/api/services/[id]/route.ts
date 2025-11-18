@@ -24,7 +24,7 @@ type UpdateServiceRequest = {
 };
 
 type RouteParams = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 /**
@@ -41,7 +41,7 @@ type RouteParams = {
  */
 export async function PATCH(req: Request, { params }: RouteParams) {
   try {
-    const { id } = params;
+    const { id } = await params;
     if (!id) {
       return NextResponse.json({ error: "ID requerido." }, { status: 400 });
     }
@@ -177,7 +177,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
 export async function DELETE(_: Request, { params }: RouteParams) {
   try {
-    const { id } = params;
+    const { id } = await params;
     if (!id) {
       return NextResponse.json({ error: "ID requerido." }, { status: 400 });
     }

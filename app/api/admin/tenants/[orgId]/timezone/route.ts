@@ -5,9 +5,9 @@ import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 
 type RouteParams = {
-  params: {
+  params: Promise<{
     orgId: string;
-  };
+  }>;
 };
 
 /**
@@ -28,7 +28,7 @@ export async function GET(
       );
     }
 
-    const { orgId } = params;
+    const { orgId } = await params;
     const supabase = supabaseServer();
 
     // Obtener timezone del tenant
@@ -76,7 +76,7 @@ export async function PUT(
       );
     }
 
-    const { orgId } = params;
+    const { orgId } = await params;
     const body = await req.json();
     const { timezone } = body;
 
