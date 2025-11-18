@@ -193,3 +193,9 @@ comment on table public.org_metrics_daily is
 comment on function public.calculate_org_metrics_daily is 
   'Calcula y almacena métricas diarias para un tenant. Se puede ejecutar manualmente o vía cron job.';
 
+
+
+
+
+
+

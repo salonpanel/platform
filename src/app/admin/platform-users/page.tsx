@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import Link from "next/link";
+import { getSupabaseBrowser } from "@/lib/supabase/browser";
 
 type PlatformUser = {
   id: string;
@@ -14,7 +14,7 @@ type PlatformUser = {
 };
 
 export default function PlatformUsersPage() {
-  const supabase = createClientComponentClient();
+  const supabase = getSupabaseBrowser();
   const [users, setUsers] = useState<PlatformUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -120,30 +120,35 @@ export default function PlatformUsersPage() {
         </div>
       )}
 
-      <div className="rounded border">
+      <div className="rounded-lg border border-slate-700/50 overflow-hidden bg-slate-900/30">
         <table className="w-full">
-          <thead className="bg-gray-50">
+          <thead className="bg-slate-800/50 border-b border-slate-700/50">
             <tr>
-              <th className="px-4 py-3 text-left text-sm font-medium">Nombre</th>
-              <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
-              <th className="px-4 py-3 text-left text-sm font-medium">Rol</th>
-              <th className="px-4 py-3 text-left text-sm font-medium">Estado</th>
-              <th className="px-4 py-3 text-left text-sm font-medium">Creado</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Nombre</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Email</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Rol</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Estado</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Creado</th>
             </tr>
           </thead>
-          <tbody className="divide-y">
-            {users.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3 text-sm">{user.name}</td>
-                <td className="px-4 py-3 text-sm">{user.email}</td>
+          <tbody className="divide-y divide-slate-700/30">
+            {users.map((user, index) => (
+              <tr 
+                key={user.id} 
+                className={`transition-all duration-150 ${
+                  index % 2 === 0 ? "bg-slate-800/20" : "bg-slate-800/10"
+                } hover:bg-slate-700/30 hover:shadow-sm`}
+              >
+                <td className="px-4 py-3 text-sm text-slate-200 font-medium">{user.name}</td>
+                <td className="px-4 py-3 text-sm text-slate-300">{user.email}</td>
                 <td className="px-4 py-3 text-sm">
                   <span
-                    className={`inline-block rounded px-2 py-1 text-xs ${
+                    className={`inline-block rounded-md px-2.5 py-1 text-xs font-medium ${
                       user.role === "admin"
-                        ? "bg-purple-100 text-purple-800"
+                        ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
                         : user.role === "support"
-                        ? "bg-blue-100 text-blue-800"
-                        : "bg-gray-100 text-gray-800"
+                        ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                        : "bg-slate-500/20 text-slate-300 border border-slate-500/30"
                     }`}
                   >
                     {user.role}
@@ -151,16 +156,16 @@ export default function PlatformUsersPage() {
                 </td>
                 <td className="px-4 py-3 text-sm">
                   <span
-                    className={`inline-block rounded px-2 py-1 text-xs ${
+                    className={`inline-block rounded-md px-2.5 py-1 text-xs font-medium ${
                       user.active
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
+                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                        : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
                     }`}
                   >
                     {user.active ? "Activo" : "Inactivo"}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600">
+                <td className="px-4 py-3 text-sm text-slate-400">
                   {new Date(user.created_at).toLocaleDateString()}
                 </td>
               </tr>
@@ -248,4 +253,7 @@ export default function PlatformUsersPage() {
     </div>
   );
 }
+
+
+
 

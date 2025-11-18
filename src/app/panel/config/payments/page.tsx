@@ -2,17 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-
-type Service = {
-  id: string;
-  name: string;
-  duration_min: number;
-  price_cents: number;
-  active: boolean;
-  tenant_id: string;
-  stripe_price_id: string | null;
-  stripe_product_id: string | null;
-};
+import type { Service } from "@/types/services";
 
 export default function PaymentsConfigPage() {
   const supabase = createClientComponentClient();

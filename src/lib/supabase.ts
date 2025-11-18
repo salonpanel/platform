@@ -1,14 +1,6 @@
-﻿import { createClient } from '@supabase/supabase-js';
+﻿import { getSupabaseBrowser } from './supabase/browser';
+import { getSupabaseServer } from './supabase/server';
 
-export const supabaseBrowser = () =>
-  createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { persistSession: true } }
-  );
-
-export const supabaseServer = () =>
-  createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+// Compat: mantener las firmas existentes en el proyecto
+export const supabaseBrowser = () => getSupabaseBrowser();
+export const supabaseServer = () => getSupabaseServer();

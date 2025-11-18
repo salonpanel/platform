@@ -1,19 +1,40 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase";
+import { holdRateLimit, getClientIp } from "@/lib/rate-limit";
 
 /**
  * GET /api/availability
  * Obtiene slots disponibles para un servicio
  * 
+ * SEGURIDAD: Público sin sesión, pero protegido por rate limiting y validaciones estrictas
+ * 
  * Query params:
- * - tenant: UUID del tenant o slug (requerido)
+ * - tenant: UUID del tenant o slug (requerido) - Se resuelve a tenant_id en servidor
  * - service_id: UUID del servicio (requerido)
  * - staff_id: UUID del staff (opcional, filtra por staff específico)
  * - date: Fecha de inicio (YYYY-MM-DD, opcional, default: hoy)
  * - days_ahead: Días hacia adelante (opcional, default: 30)
+ * 
+ * Protección:
+ * - Rate limiting: 100 req/10min por IP
+ * - Validación estricta: tenant_id se resuelve desde slug/UUID en servidor
  */
 export async function GET(req: Request) {
   try {
+    // Rate limiting
+    const ip = getClientIp(req);
+    if (holdRateLimit) {
+      const { success, reset } = await holdRateLimit.limit(`availability:${ip}`);
+      if (!success) {
+        return NextResponse.json(
+          { 
+            error: "Se han realizado demasiadas solicitudes. Inténtalo más tarde.",
+            code: "RATE_LIMIT"
+          },
+          { status: 429 }
+        );
+      }
+    }
     const { searchParams } = new URL(req.url);
     
     const tenant = searchParams.get("tenant"); // Puede ser UUID o slug

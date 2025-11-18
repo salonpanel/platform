@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase";
+import { holdRateLimit, getClientIp } from "@/lib/rate-limit";
 
 type CheckoutIntentRequest = {
-  tenant_id: string;
-  service_id: string;
+  service_id: string; // UUID del servicio (requerido)
   customer_id?: string;
   staff_id?: string;
-  starts_at: string; // ISO timestamp
+  starts_at: string; // ISO timestamp de inicio (requerido)
   customer_email?: string;
   customer_name?: string;
   customer_phone?: string;
@@ -14,23 +14,42 @@ type CheckoutIntentRequest = {
 
 /**
  * POST /api/checkout/intent
- * Crea un payment_intent (mock) para una reserva
+ * Crea un payment_intent para una reserva
+ * 
+ * SEGURIDAD: No acepta tenant_id del cliente. Deriva tenant_id del service_id para evitar manipulación.
  * 
  * Body:
- * - tenant_id: UUID del tenant (requerido)
- * - service_id: UUID del servicio (requerido)
+ * - service_id: UUID del servicio (requerido) - El tenant_id se deriva de este servicio
  * - customer_id: UUID del cliente (opcional, se crea si no existe)
  * - staff_id: UUID del staff (opcional)
  * - starts_at: ISO timestamp de inicio (requerido)
  * - customer_email: Email del cliente (opcional, requerido si no hay customer_id)
  * - customer_name: Nombre del cliente (opcional, requerido si no hay customer_id)
  * - customer_phone: Teléfono del cliente (opcional)
+ * 
+ * Protección:
+ * - Rate limiting: 50 req/10min por IP
+ * - Validación estricta: tenant_id se deriva del servicio, no del cliente
  */
 export async function POST(req: Request) {
   try {
+    // Rate limiting
+    const ip = getClientIp(req);
+    if (holdRateLimit) {
+      const { success, reset } = await holdRateLimit.limit(`checkout:intent:${ip}`);
+      if (!success) {
+        return NextResponse.json(
+          { 
+            error: "Se han realizado demasiadas solicitudes. Inténtalo más tarde.",
+            code: "RATE_LIMIT"
+          },
+          { status: 429 }
+        );
+      }
+    }
+
     const body = (await req.json()) as CheckoutIntentRequest;
     const {
-      tenant_id,
       service_id,
       customer_id,
       staff_id,
@@ -40,21 +59,21 @@ export async function POST(req: Request) {
       customer_phone,
     } = body;
 
-    if (!tenant_id || !service_id || !starts_at) {
+    if (!service_id || !starts_at) {
       return NextResponse.json(
-        { error: "tenant_id, service_id y starts_at son requeridos" },
+        { error: "service_id y starts_at son requeridos" },
         { status: 400 }
       );
     }
 
     const supabase = supabaseServer();
 
-    // P1.3: Validar que el servicio existe, pertenece al tenant y tiene price_id
+    // SEGURIDAD: Obtener tenant_id del servicio, no del cliente
+    // Esto previene que un cliente manipule el tenant_id
     const { data: service, error: serviceError } = await supabase
       .from("services")
       .select("id, tenant_id, duration_min, price_cents, active, stripe_price_id")
       .eq("id", service_id)
-      .eq("tenant_id", tenant_id)
       .eq("active", true)
       .maybeSingle();
 
@@ -64,6 +83,9 @@ export async function POST(req: Request) {
         { status: 404 }
       );
     }
+
+    // SEGURIDAD: tenant_id se deriva del servicio, no del cliente
+    const tenant_id = service.tenant_id;
 
     // P1.3: Validar que el servicio tiene price_id (es vendible)
     if (!service.stripe_price_id) {

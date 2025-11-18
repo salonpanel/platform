@@ -27,6 +27,11 @@ UPSTASH_REDIS_REST_TOKEN=...
 # reCAPTCHA (opcional, necesario para protección anti-spam)
 RECAPTCHA_SECRET_KEY=...
 RECAPTCHA_SITE_KEY=...
+
+# Cron Jobs (obligatorio para producción)
+# Genera una clave aleatoria fuerte (mínimo 32 caracteres)
+# Esta clave protege los endpoints de cron jobs internos
+INTERNAL_CRON_KEY=clave-secreta-aleatoria-minimo-32-caracteres
 ```
 
 ## 🔑 Dónde Obtener las Claves
@@ -98,4 +103,5 @@ Para verificar que las variables están configuradas:
 1. Reinicia el servidor
 2. Intenta hacer login
 3. Si ves errores, revisa la consola del servidor
+
 

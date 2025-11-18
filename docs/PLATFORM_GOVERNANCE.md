@@ -238,3 +238,9 @@ ORDER BY started_at DESC;
 4. **Notificaciones**: Alertas de cambios de plan, features, etc.
 5. **API Pública**: Endpoints para gestionar features programáticamente
 
+
+
+
+
+
+
