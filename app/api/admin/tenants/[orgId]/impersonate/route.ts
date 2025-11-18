@@ -6,9 +6,9 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { addHours } from "date-fns";
 
 type RouteParams = {
-  params: {
+  params: Promise<{
     orgId: string;
-  };
+  }>;
 };
 
 /**
@@ -29,7 +29,7 @@ export async function POST(
       );
     }
 
-    const { orgId } = params;
+    const { orgId } = await params;
     const body = await req.json();
     const { reason, expires_in_hours } = body;
 
@@ -144,7 +144,7 @@ export async function DELETE(
       );
     }
 
-    const { orgId } = params;
+    const { orgId } = await params;
     const supabase = supabaseServer();
 
     // Obtener user_id del contexto de autenticación

@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase";
 
 type RouteParams = {
-  params: {
+  params: Promise<{
     tenantId: string;
-  };
+  }>;
 };
 
 /**
@@ -16,7 +16,7 @@ export async function GET(
   { params }: RouteParams
 ) {
   try {
-    const { tenantId } = params;
+    const { tenantId } = await params;
     const supabase = supabaseServer();
 
     // Obtener timezone del tenant
