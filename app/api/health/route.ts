@@ -60,9 +60,7 @@ export async function GET() {
         };
         overallStatus = "error";
       } else {
-        const stripe = new Stripe(stripeSecretKey, {
-          apiVersion: "2024-06-20",
-        });
+        const stripe = new Stripe(stripeSecretKey);
         await stripe.products.list({ limit: 1 });
         const paymentsResponseTime = Date.now() - paymentsStart;
 
