@@ -368,9 +368,9 @@ export async function GET() {
               .eq("tenant_id", tenant.id)
               .eq("active", true),
           ]);
-          bookingsCount = bookingsResult;
-          servicesCount = servicesResult;
-          staffCount = staffResult;
+          bookingsCount = { count: bookingsResult.count || 0 };
+          servicesCount = { count: servicesResult.count || 0 };
+          staffCount = { count: staffResult.count || 0 };
 
           // Reservas de hoy
           const todayStart = new Date();
