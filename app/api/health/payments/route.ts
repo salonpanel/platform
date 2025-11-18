@@ -54,9 +54,7 @@ export async function GET(req: Request) {
       );
     }
 
-    const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: "2024-06-20",
-    });
+    const stripe = new Stripe(stripeSecretKey);
 
     const startTime = Date.now();
 
