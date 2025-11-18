@@ -43,7 +43,7 @@ const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_fake';
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_test_fake';
 
 const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
+const stripe = new Stripe(STRIPE_SECRET_KEY);
 
 describe('Webhook Idempotency Tests', () => {
   const eventId = 'evt_test_1234567890';
