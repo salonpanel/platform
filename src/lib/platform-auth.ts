@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { supabaseServer } from "./supabase";
 
 /**
- * Verifica si un usuario es platform admin
+ * Verifica si un usuario es platform admin (cualquier rol activo)
  * Busca en platform.platform_users o verifica JWT claim
  */
 export async function isPlatformAdmin(userId?: string): Promise<boolean> {
@@ -29,6 +29,37 @@ export async function isPlatformAdmin(userId?: string): Promise<boolean> {
   }
 
   return !!isAdmin;
+}
+
+/**
+ * Verifica si un usuario tiene permisos de modificación (admin o support, no viewer)
+ */
+export async function canModifyPlatform(userId?: string): Promise<boolean> {
+  if (!userId) {
+    const supabase = createRouteHandlerClient({ cookies });
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return false;
+    userId = user.id;
+  }
+
+  const supabase = supabaseServer();
+  
+  // Verificar que tiene rol admin o support
+  const { data: canModify, error } = await supabase
+    .rpc("check_platform_admin_role", { 
+      p_user_id: userId,
+      p_allowed_roles: ["admin", "support"]
+    })
+    .single();
+
+  if (error) {
+    console.error("Error checking platform admin role:", error);
+    return false;
+  }
+
+  return !!canModify;
 }
 
 /**

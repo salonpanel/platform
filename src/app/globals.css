@@ -1,8 +1,112 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,600,700,900&display=swap');
 @import "tailwindcss";
+@import "../styles/theme.css";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Sistema de diseño premium - Paleta oscura elegante */
+  --bg-primary: #0E0F11;
+  --bg-secondary: rgba(255, 255, 255, 0.03);
+  --bg-card: #15171A;
+  --glass: rgba(255, 255, 255, 0.08);
+  --text-primary: #FFFFFF;
+  --text-secondary: #d1d4dc;
+  --text-tertiary: #9ca3af;
+  
+  /* Compatibilidad legacy */
+  --color-bg-base: #0e0f11;
+  --color-bg-primary: #0e0f11;
+  --color-bg-secondary: rgba(255, 255, 255, 0.03);
+  --color-bg-tertiary: rgba(255, 255, 255, 0.05);
+  
+  /* Glass surfaces - actualizado con más opacidad */
+  --glass-bg-subtle: rgba(255, 255, 255, 0.03);
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  
+  /* Textos - actualizados */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #d1d4dc;
+  --color-text-disabled: #60667A;
+  
+  /* Acentos premium */
+  --accent-blue: #3A6DFF;
+  --accent-aqua: #4FE3C1;
+  --accent-purple: #A06BFF;
+  --accent-pink: #FF6DA3;
+  
+  /* Aurora accents (legacy) */
+  --accent-1: #3A6DFF;     /* azul neón */
+  --accent-2: #4FE3C1;     /* aqua */
+  --accent-3: #A06BFF;     /* morado neón */
+  
+  /* Semantic colors */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-info: #3B82F6;
+  
+  /* Aurora gradients */
+  --gradient-1: linear-gradient(135deg, #7b5cff 0%, #4de2c3 100%);
+  --gradient-2: linear-gradient(135deg, #4de2c3 0%, #ffb86b 100%);
+  
+  /* Acentos gradiente - compatibilidad */
+  --gradient-primary-start: #7b5cff;
+  --gradient-primary-end: #4de2c3;
+  --gradient-secondary-start: #4de2c3;
+  --gradient-secondary-end: #ffb86b;
+  
+  /* Acentos legacy (compatibilidad) */
+  --color-accent: #7b5cff;
+  --color-accent-warm: #4de2c3;
+  
+  /* Glassmorphism */
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-border-subtle: rgba(255, 255, 255, 0.04);
+  --glass-blur: blur(12px);
+  
+  /* Sombras premium difuminadas */
+  --shadow-card: 0px 6px 20px rgba(0, 0, 0, 0.45);
+  --shadow-premium: 0px 6px 20px rgba(0, 0, 0, 0.45);
+  --shadow-glass: 0px 8px 32px rgba(0, 0, 0, 0.35);
+  --shadow-neon-glow-blue: 0 0 20px rgba(98, 125, 255, 0.3);
+  --shadow-neon-glow-purple: 0 0 20px rgba(161, 108, 255, 0.3);
+  --shadow-glow-blue: 0 0 12px rgba(162, 108, 255, 0.4);
+  --shadow-glow-pink: 0 0 12px rgba(255, 111, 145, 0.4);
+  
+  /* Sombras suaves (legacy) */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  
+  /* Legacy support */
+  --background: var(--color-bg-base);
+  --foreground: var(--color-text-primary);
+  
+  /* Spacing scale */
+  --spacing-1: 4px;
+  --spacing-2: 6px;
+  --spacing-3: 8px;
+  --spacing-4: 12px;
+  --spacing-5: 16px;
+  --spacing-6: 20px;
+  --spacing-7: 24px;
+  --spacing-8: 32px;
+  --spacing-9: 40px;
+  
+  /* Border radius scale - actualizado para más redondeo */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 28px;
+  --radius-2xl: 40px;
+  
+  /* Transiciones suaves */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @theme inline {
@@ -12,15 +116,298 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', 'Satoshi', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
+  overflow-x: hidden;
+}
+
+/* Fuente Satoshi/Inter para títulos - mejorada */
+h1, h2, h3, h4, h5, h6,
+.font-satoshi {
+  font-family: 'Satoshi', 'Inter', system-ui, -apple-system, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Tipografía mejorada */
+h1 {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+h2, h3 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+label, .label {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* Heading system elegante */
+h1 {
+  @apply text-[var(--color-text-primary)] tracking-tight;
+  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+h2 {
+  @apply text-[var(--color-text-primary)] tracking-tight;
+  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+h3 {
+  @apply text-[var(--color-text-primary)] tracking-tight;
+  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+h4 {
+  @apply text-lg font-medium text-[var(--color-text-primary)];
+  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-size: 18px;
+  line-height: 24px;
+}
+
+/* Body text system */
+.body-lg {
+  font-size: 16px;
+  line-height: 1.5;
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+}
+
+.body-md {
+  font-size: 15px;
+  line-height: 1.5;
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+}
+
+.body-sm {
+  font-size: 13px;
+  line-height: 1.5;
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+}
+
+/* Glassmorphism utilities - mejorado */
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-subtle {
+  background: var(--bg-secondary);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Aurora gradients */
+.gradient-aurora-1 {
+  background: var(--gradient-1);
+}
+
+.gradient-aurora-2 {
+  background: var(--gradient-2);
+}
+
+
+.glass-white {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Sombras premium */
+.shadow-premium {
+  box-shadow: var(--shadow-premium);
+}
+
+.shadow-glass {
+  box-shadow: var(--shadow-glass);
+}
+
+/* Sidebar sin sombra para no interferir con contenido */
+aside.sidebar-no-shadow {
+  box-shadow: none !important;
+}
+
+.shadow-glow-blue {
+  box-shadow: var(--shadow-glow-blue);
+}
+
+.shadow-glow-pink {
+  box-shadow: var(--shadow-glow-pink);
+}
+
+.shadow-neon-glow-blue {
+  box-shadow: var(--shadow-neon-glow-blue);
+}
+
+.shadow-neon-glow-purple {
+  box-shadow: var(--shadow-neon-glow-purple);
+}
+
+/* Gradientes premium */
+.gradient-primary {
+  background: linear-gradient(135deg, var(--gradient-primary-start) 0%, var(--gradient-primary-end) 100%);
+}
+
+.gradient-secondary {
+  background: linear-gradient(135deg, var(--gradient-secondary-start) 0%, var(--gradient-secondary-end) 100%);
+}
+
+.gradient-text-primary {
+  background: linear-gradient(135deg, var(--gradient-primary-start) 0%, var(--gradient-primary-end) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Microinteracciones suaves */
+.transition-smooth {
+  transition: all var(--transition-base);
+}
+
+.transition-fast {
+  transition: all var(--transition-fast);
+}
+
+.transition-slow {
+  transition: all var(--transition-slow);
+}
+
+.hover-lift {
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-premium);
+}
+
+.hover-scale {
+  transition: transform var(--transition-base);
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* Scrollbar personalizado premium */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-primary);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  border: 2px solid var(--color-bg-primary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) var(--color-bg-primary);
+}
+
+/* Animaciones premium */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(162, 108, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(162, 108, 255, 0.6);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-fadeInScale {
+  animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+/* Estilos para selects y options en dark mode */
+select {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+select option {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+/* Ocultar scrollbars pero mantener funcionalidad */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+/* Ocultar completamente la barra (versión none) */
+.scrollbar-none {
+  scrollbar-width: none; /* Firefox */
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none; /* WebKit */
 }

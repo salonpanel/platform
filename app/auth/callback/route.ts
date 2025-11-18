@@ -1,3 +1,28 @@
+/**
+ * Handler de callback para autenticación con Magic Links de Supabase
+ * 
+ * Este endpoint maneja la redirección después de que el usuario hace clic en el magic link
+ * enviado por email.
+ * 
+ * FLUJO ESPERADO:
+ * 1. El usuario recibe un email con un magic link de Supabase
+ * 2. El link puede venir en dos formatos:
+ *    a) Con hash (#access_token=...&refresh_token=...) - típico de magic links
+ *    b) Con query param (?code=...) - usado con PKCE o redirects del servidor
+ * 3. Si viene con hash, el cliente (navegador) debe extraerlo y pasarlo como query param
+ *    antes de redirigir a este endpoint, ya que el hash NO está disponible en el servidor
+ * 4. Este handler intercambia el código/token por una sesión y redirige al usuario
+ * 
+ * CASOS DE ERROR MANEJADOS:
+ * - NEXT_PUBLIC_APP_URL no configurado: en dev, se infiere de la request; en prod, error 500
+ * - Host/origen inválido: en prod, verificación estricta; en dev, más flexible
+ * - Código/token ausente: error 400 con mensaje claro
+ * - Código expirado o inválido: error 400 con sugerencia de solicitar nuevo link
+ * - Error en logging de auth_logs: no rompe el flujo, solo warning en consola
+ * 
+ * NOTA: El logging en auth_logs es opcional y no debe interrumpir el flujo de autenticación
+ * si falla (por ejemplo, si la tabla no existe o hay problemas de permisos RLS).
+ */
 import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
@@ -52,9 +77,16 @@ export async function GET(request: Request) {
     }
   }
 
-  const code = url.searchParams.get("code");
+  // Buscar código en query params
+  let code = url.searchParams.get("code");
+  
+  // También buscar access_token en query params (por si viene del cliente)
+  let accessToken = url.searchParams.get("access_token");
+  
+  // Nota: El hash (#) no está disponible en el servidor, así que el cliente debe extraerlo
+  // y pasarlo como query param antes de redirigir
 
-  if (!code) {
+  if (!code && !accessToken) {
     return NextResponse.json(
       { error: "Código de autenticación no proporcionado." },
       { status: 400 }
@@ -65,10 +97,25 @@ export async function GET(request: Request) {
     const cookieStore = await cookies();
     const supabaseClient = createRouteHandlerClient({ cookies: () => cookieStore });
     
-    // Intentar intercambiar el código por una sesión
-    // Para Magic Links con emailRedirectTo, Supabase puede requerir PKCE
-    // Si falla, intentaremos métodos alternativos
-    let { data, error } = await supabaseClient.auth.exchangeCodeForSession(code);
+    let data: any = null;
+    let error: any = null;
+    
+    // Si tenemos access_token directamente, usarlo
+    if (accessToken) {
+      const { data: sessionData, error: sessionError } = await supabaseClient.auth.setSession({
+        access_token: accessToken,
+        refresh_token: '', // Se obtendrá automáticamente
+      });
+      data = sessionData;
+      error = sessionError;
+    } else if (code) {
+      // Intentar intercambiar el código por una sesión
+      // Para Magic Links con emailRedirectTo, Supabase puede requerir PKCE
+      // Si falla, intentaremos métodos alternativos
+      const result = await supabaseClient.auth.exchangeCodeForSession(code);
+      data = result.data;
+      error = result.error;
+    }
     
     if (error) {
       console.error("Error al intercambiar código por sesión:", error);

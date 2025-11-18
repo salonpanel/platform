@@ -53,8 +53,33 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <p>Cargando tenants...</p>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 inline-block">
+            <svg
+              className="h-8 w-8 animate-spin"
+              style={{ color: "rgb(148, 163, 184)" }}
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-20"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="3"
+              />
+              <path
+                className="opacity-70"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+          </div>
+          <p className="text-slate-400">Cargando tenants...</p>
+        </div>
       </div>
     );
   }
@@ -62,8 +87,15 @@ export default function AdminPage() {
   if (error) {
     return (
       <div className="p-6">
-        <div className="rounded border border-red-500 bg-red-50 p-4 text-red-600">
-          {error}
+        <div className="mb-4 rounded border border-red-500 bg-red-50 p-4 text-red-600">
+          <h3 className="mb-2 font-semibold">Error al cargar tenants</h3>
+          <p>{error}</p>
+          <button
+            onClick={loadTenants}
+            className="mt-4 rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+          >
+            Reintentar
+          </button>
         </div>
       </div>
     );
@@ -75,6 +107,12 @@ export default function AdminPage() {
         <h1 className="text-2xl font-semibold">Administración de Plataforma</h1>
         <div className="flex gap-2">
           <Link
+            href="/admin/new-tenant"
+            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          >
+            + Nueva Barbería
+          </Link>
+          <Link
             href="/admin/platform-users"
             className="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
           >
@@ -83,32 +121,37 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="rounded border">
+      <div className="rounded-lg border border-slate-700/50 overflow-hidden bg-slate-900/30">
         <table className="w-full">
-          <thead className="bg-gray-50">
+          <thead className="bg-slate-800/50 border-b border-slate-700/50">
             <tr>
-              <th className="px-4 py-3 text-left text-sm font-medium">Nombre</th>
-              <th className="px-4 py-3 text-left text-sm font-medium">Slug</th>
-              <th className="px-4 py-3 text-left text-sm font-medium">Plan</th>
-              <th className="px-4 py-3 text-left text-sm font-medium">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Nombre</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Slug</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Plan</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                 Features Activos
               </th>
-              <th className="px-4 py-3 text-left text-sm font-medium">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                 KPIs
               </th>
-              <th className="px-4 py-3 text-left text-sm font-medium">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                 Creado
               </th>
-              <th className="px-4 py-3 text-left text-sm font-medium">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                 Acciones
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y">
-            {tenants.map((tenant) => (
-              <tr key={tenant.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3 text-sm">{tenant.name}</td>
-                <td className="px-4 py-3 text-sm font-mono text-gray-600">
+          <tbody className="divide-y divide-slate-700/30">
+            {tenants.map((tenant, index) => (
+              <tr 
+                key={tenant.id} 
+                className={`transition-all duration-150 ${
+                  index % 2 === 0 ? "bg-slate-800/20" : "bg-slate-800/10"
+                } hover:bg-slate-700/30 hover:shadow-sm`}
+              >
+                <td className="px-4 py-3 text-sm text-slate-200 font-medium">{tenant.name}</td>
+                <td className="px-4 py-3 text-sm font-mono text-slate-400">
                   {tenant.slug}
                 </td>
                 <td className="px-4 py-3 text-sm">
@@ -147,30 +190,41 @@ export default function AdminPage() {
                     <div className="flex flex-col gap-1 text-xs">
                       <div>
                         <span className="font-medium">Reservas:</span>{" "}
-                        {tenant.kpis.total_bookings} total, {tenant.kpis.bookings_today} hoy
+                        <span className="text-gray-700">
+                          {tenant.kpis.total_bookings.toLocaleString()} total
+                        </span>
+                        {tenant.kpis.bookings_today > 0 && (
+                          <span className="ml-1 text-green-600">
+                            ({tenant.kpis.bookings_today} hoy)
+                          </span>
+                        )}
                       </div>
                       <div>
                         <span className="font-medium">Servicios:</span>{" "}
-                        {tenant.kpis.active_services} activos
+                        <span className="text-gray-700">
+                          {tenant.kpis.active_services} activos
+                        </span>
                       </div>
                       <div>
                         <span className="font-medium">Staff:</span>{" "}
-                        {tenant.kpis.active_staff} activo
+                        <span className="text-gray-700">
+                          {tenant.kpis.active_staff} activo
+                        </span>
                       </div>
                     </div>
                   ) : (
-                    <span className="text-gray-400 text-xs">Cargando...</span>
+                    <span className="text-gray-400 text-xs">Sin métricas</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600">
+                <td className="px-4 py-3 text-sm text-slate-400">
                   {new Date(tenant.created_at).toLocaleDateString()}
                 </td>
                 <td className="px-4 py-3 text-sm">
                   <Link
                     href={`/admin/${tenant.id}`}
-                    className="text-blue-600 hover:underline"
+                    className="text-slate-300 hover:text-slate-100 font-medium transition-colors"
                   >
-                    Gestionar
+                    Gestionar →
                   </Link>
                 </td>
               </tr>

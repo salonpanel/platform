@@ -36,12 +36,15 @@ export function withFeatureGuard(featureKey: string) {
             data: { user },
           } = await supabase.auth.getUser();
           if (user) {
-            const { data: profile } = await supabase
-              .from("users")
+            // Usar memberships en lugar de users (legacy)
+            const { data: membership } = await supabase
+              .from("memberships")
               .select("tenant_id")
-              .eq("id", user.id)
+              .eq("user_id", user.id)
+              .order("created_at", { ascending: true })
+              .limit(1)
               .single();
-            orgId = profile?.tenant_id || null;
+            orgId = membership?.tenant_id || null;
           }
         }
 
@@ -90,4 +93,8 @@ export async function requireFeature(
     );
   }
 }
+
+
+
+
 

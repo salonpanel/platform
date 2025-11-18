@@ -1,22 +1,18 @@
 'use client';
 
 import { PropsWithChildren, useState } from "react";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { SupabaseClient } from "@supabase/supabase-js";
 import { SupabaseContext } from "@/lib/supabase-context";
+import { getSupabaseBrowser } from "@/lib/supabase/browser";
 
 export function SupabaseProvider({ children }: PropsWithChildren) {
-  const [supabase] = useState<SupabaseClient>(() =>
-    createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-  );
+	const [supabase] = useState<SupabaseClient>(() => getSupabaseBrowser());
 
-  return (
-    <SupabaseContext.Provider value={supabase}>
-      {children}
-    </SupabaseContext.Provider>
-  );
+	return (
+		<SupabaseContext.Provider value={supabase}>
+			{children}
+		</SupabaseContext.Provider>
+	);
 }
 
 export default SupabaseProvider;

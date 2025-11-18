@@ -173,3 +173,9 @@ La migración incluye datos de ejemplo:
 3. Añadir notificaciones y recordatorios
 4. Implementar calendario y vista de agenda
 
+
+
+
+
+
+

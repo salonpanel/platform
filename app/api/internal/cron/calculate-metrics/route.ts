@@ -40,6 +40,7 @@ export async function POST(req: Request) {
     const metricDateStr = metricDate.toISOString().split("T")[0];
 
     // Llamar a la función para calcular métricas de todos los tenants
+    // Nota: La función tiene parámetro por defecto, pero lo pasamos explícitamente
     const { data, error } = await sb.rpc("calculate_all_org_metrics_daily", {
       p_metric_date: metricDateStr,
     });

@@ -135,3 +135,9 @@ Una vez creado el primer platform admin:
 - [Documentación de Gobierno de Plataforma](./PLATFORM_GOVERNANCE.md)
 - [Migración de Platform Governance](../supabase/migrations/0011_platform_governance.sql)
 
+
+
+
+
+
+

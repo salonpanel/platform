@@ -6,16 +6,17 @@ import { stripe } from "@/lib/stripe";
 const CURRENCY = process.env.STRIPE_DEFAULT_CURRENCY ?? "eur";
 
 type MigrateRequest = {
-  org_id?: string;
+  tenant_id?: string;
+  org_id?: string; // compatibilidad legacy
 };
 
 export async function POST(req: Request) {
   const body = (await req.json()) as MigrateRequest;
-  const orgId = body.org_id;
+  const tenantId = body.tenant_id ?? body.org_id;
 
-  if (!orgId) {
+  if (!tenantId) {
     return NextResponse.json(
-      { error: "org_id es obligatorio." },
+      { error: "tenant_id es obligatorio." },
       { status: 400 }
     );
   }
@@ -33,9 +34,9 @@ export async function POST(req: Request) {
   }
 
   const { data: membership } = await supabase
-    .from("org_members")
+    .from("memberships")
     .select("role")
-    .eq("org_id", orgId)
+    .eq("tenant_id", tenantId)
     .eq("user_id", session.user.id)
     .maybeSingle();
 
@@ -51,7 +52,7 @@ export async function POST(req: Request) {
     .select(
       "id, name, price_cents, duration_min, active, stripe_product_id, stripe_price_id"
     )
-    .eq("org_id", orgId);
+    .eq("tenant_id", tenantId);
 
   if (fetchError) {
     return NextResponse.json(
@@ -79,7 +80,7 @@ export async function POST(req: Request) {
           name: service.name,
           active: service.active ?? true,
           metadata: {
-            org_id: orgId,
+            tenant_id: tenantId,
             service_id: service.id,
           },
         });
@@ -91,7 +92,7 @@ export async function POST(req: Request) {
         currency: CURRENCY,
         unit_amount: service.price_cents,
         metadata: {
-          org_id: orgId,
+          tenant_id: tenantId,
           service_id: service.id,
         },
       });
@@ -124,9 +125,11 @@ export async function POST(req: Request) {
     }
   }
 
+  const syncedCount = results.length;
+
   return NextResponse.json({
-    migrated: results.length,
-    total_pending: toMigrate.length - results.length,
+    syncedCount,
+    totalPending: Math.max((toMigrate?.length || 0) - syncedCount, 0),
     details: results,
   });
 }

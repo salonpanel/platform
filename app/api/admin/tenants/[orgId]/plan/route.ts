@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase";
-import { isPlatformAdmin } from "@/lib/platform-auth";
+import { isPlatformAdmin, canModifyPlatform } from "@/lib/platform-auth";
 
 type RouteParams = {
   params: {
@@ -63,11 +63,11 @@ export async function PUT(
   { params }: RouteParams
 ) {
   try {
-    // Verificar que el usuario es platform admin
-    const isAdmin = await isPlatformAdmin();
-    if (!isAdmin) {
+    // Verificar que el usuario tiene permisos de modificación (admin o support)
+    const canModify = await canModifyPlatform();
+    if (!canModify) {
       return NextResponse.json(
-        { error: "No autorizado" },
+        { error: "No autorizado. Se requieren permisos de admin o support." },
         { status: 403 }
       );
     }

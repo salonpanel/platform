@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase";
+import { holdRateLimit, getClientIp } from "@/lib/rate-limit";
 
 type CheckoutConfirmRequest = {
   payment_intent_id: string;
@@ -8,14 +9,35 @@ type CheckoutConfirmRequest = {
 
 /**
  * POST /api/checkout/confirm
- * Confirma un payment_intent (mock) y crea el booking
+ * Confirma un payment_intent y crea el booking
+ * 
+ * SEGURIDAD: Rate limiting activo. El tenant_id se deriva del payment_intent, no del cliente.
  * 
  * Body:
  * - payment_intent_id: UUID del payment_intent (requerido)
  * - mock_payment: Boolean para simular pago (opcional, default: true)
+ * 
+ * Protección:
+ * - Rate limiting: 50 req/10min por IP
+ * - Validación estricta: tenant_id se deriva del payment_intent
  */
 export async function POST(req: Request) {
   try {
+    // Rate limiting
+    const ip = getClientIp(req);
+    if (holdRateLimit) {
+      const { success, reset } = await holdRateLimit.limit(`checkout:confirm:${ip}`);
+      if (!success) {
+        return NextResponse.json(
+          { 
+            error: "Se han realizado demasiadas solicitudes. Inténtalo más tarde.",
+            code: "RATE_LIMIT"
+          },
+          { status: 429 }
+        );
+      }
+    }
+
     const body = (await req.json()) as CheckoutConfirmRequest;
     const { payment_intent_id, mock_payment = true } = body;
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase";
-import { isPlatformAdmin } from "@/lib/platform-auth";
+import { isPlatformAdmin, canModifyPlatform } from "@/lib/platform-auth";
 import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { addHours } from "date-fns";
@@ -20,11 +20,11 @@ export async function POST(
   { params }: RouteParams
 ) {
   try {
-    // Verificar que el usuario es platform admin
-    const isAdmin = await isPlatformAdmin();
-    if (!isAdmin) {
+    // Verificar que el usuario tiene permisos de modificación (admin o support)
+    const canModify = await canModifyPlatform();
+    if (!canModify) {
       return NextResponse.json(
-        { error: "No autorizado" },
+        { error: "No autorizado. Se requieren permisos de admin o support para impersonar." },
         { status: 403 }
       );
     }
@@ -135,11 +135,11 @@ export async function DELETE(
   { params }: RouteParams
 ) {
   try {
-    // Verificar que el usuario es platform admin
-    const isAdmin = await isPlatformAdmin();
-    if (!isAdmin) {
+    // Verificar que el usuario tiene permisos de modificación (admin o support)
+    const canModify = await canModifyPlatform();
+    if (!canModify) {
       return NextResponse.json(
-        { error: "No autorizado" },
+        { error: "No autorizado. Se requieren permisos de admin o support." },
         { status: 403 }
       );
     }
