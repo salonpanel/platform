@@ -48,7 +48,7 @@ export async function handlePaymentIntentSucceeded(
       }
     } else {
       // Crear payment si no existe (puede pasar si el evento llega antes que checkout.session.completed)
-      const charge = paymentIntent.charges?.data?.[0];
+      // PaymentIntent no tiene charges directamente, se obtiene del Charge object
       const amount = paymentIntent.amount / 100;
       const depositValue = paymentIntent.metadata?.deposit
         ? parseFloat(paymentIntent.metadata.deposit)
@@ -61,7 +61,7 @@ export async function handlePaymentIntentSucceeded(
         .from("payments")
         .insert({
           stripe_payment_intent_id: paymentIntent.id,
-          stripe_charge_id: charge?.id || null,
+          stripe_charge_id: null, // Charge ID se obtiene del Charge object si es necesario
           barberia_id: tenantId,
           booking_id: paymentIntent.metadata?.booking_id || null,
           service_id: paymentIntent.metadata?.service_id || null,

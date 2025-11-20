@@ -19,7 +19,7 @@ const UPSTASH_REDIS_REST_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 // Skip tests si no hay configuración de Upstash
 const shouldSkip = !UPSTASH_REDIS_REST_URL || !UPSTASH_REDIS_REST_TOKEN;
 
-describe.skipIf(shouldSkip)('Concurrency Rate Limit Tests', () => {
+(shouldSkip ? describe.skip : describe)('Concurrency Rate Limit Tests', () => {
   let redis: Redis;
   let rateLimit: Ratelimit;
 
