@@ -66,7 +66,7 @@ export async function handleCheckoutSessionCompleted(
         .from("payments")
         .insert({
           stripe_payment_intent_id: paymentIntent.id,
-          stripe_charge_id: charge?.id || null,
+          stripe_charge_id: null, // Charge ID se obtiene del Charge object si es necesario
           stripe_session_id: session.id,
           barberia_id: tenantId,
           booking_id: bookingId || null,

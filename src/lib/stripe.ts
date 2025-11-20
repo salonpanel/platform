@@ -12,7 +12,7 @@ export function getStripeClient(): Stripe {
   }
 
   return new Stripe(secretKey, {
-    apiVersion: "2024-12-18.acacia",
+    apiVersion: "2025-10-29.clover" as const,
     typescript: true,
   });
 }
