@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { format, parseISO, startOfDay, addMinutes, isSameDay } from "date-fns";
 import { Card } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { toTenantLocalDate } from "@/lib/timezone";
+import { toTenantLocalDate, formatInTenantTz } from "@/lib/timezone";
 
 type Booking = {
   id: string;
@@ -171,13 +171,9 @@ export function AgendaTimeline({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs font-mono font-semibold text-[var(--color-text-primary)]">
-                        {format(new Date(booking.starts_at), "HH:mm", {
-                          timeZone: timezone,
-                        })}{" "}
+                        {formatInTenantTz(booking.starts_at, timezone, "HH:mm")}{" "}
                         -{" "}
-                        {format(new Date(booking.ends_at), "HH:mm", {
-                          timeZone: timezone,
-                        })}
+                        {formatInTenantTz(booking.ends_at, timezone, "HH:mm")}
                       </span>
                       <StatusBadge status={booking.status} />
                     </div>

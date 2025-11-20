@@ -1,68 +1,119 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
+import type Stripe from "stripe";
+import { stripe } from "@/lib/stripe";
 import { supabaseServer } from "@/lib/supabase";
+import { processStripeEvent } from "@/lib/stripe-handlers";
+import type { WebhookHandlerContext } from "@/lib/stripe-handlers/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
+/**
+ * POST /api/webhooks/stripe
+ * 
+ * Endpoint para recibir webhooks de Stripe
+ * 
+ * Características:
+ * - Valida firma del webhook usando STRIPE_WEBHOOK_SECRET
+ * - Soporta Stripe Connect Standard (Accounts v1)
+ * - Idempotencia mediante tabla stripe_events_processed
+ * - Handlers modulares por tipo de evento
+ * - Siempre retorna 200 (incluso para eventos no soportados)
+ */
 export async function POST(req: Request) {
+  // Leer body como raw buffer (Next.js App Router ya lo hace automáticamente)
   const bodyBuffer = Buffer.from(await req.arrayBuffer());
-  const signature = headers().get("stripe-signature") ?? "";
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const headersList = await headers();
+  const signature = headersList.get("stripe-signature") ?? "";
+
+  // Obtener webhook secret de variables de entorno
+  // En producción: NO permitir fallback, debe estar configurado
+  // En desarrollo: permitir fallback para testing local
+  let webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!webhookSecret) {
-    return NextResponse.json(
-      { error: "STRIPE_WEBHOOK_SECRET no configurado." },
-      { status: 500 }
-    );
+    if (process.env.NODE_ENV === "production") {
+      console.error("stripe:webhook_secret_missing", {
+        environment: "production",
+        message: "STRIPE_WEBHOOK_SECRET no configurado en producción",
+      });
+      return NextResponse.json(
+        { error: "STRIPE_WEBHOOK_SECRET no configurado." },
+        { status: 500 }
+      );
+    }
+    // Desarrollo: usar secret de test como fallback
+    webhookSecret = "whsec_IumW21gqZsqahT0zvkQuQoxFeNuuJfSx";
+    console.warn("stripe:webhook_secret_fallback", {
+      environment: "development",
+      message: "Usando secret de test como fallback",
+    });
   }
 
+  // Validar firma del webhook
   let event: Stripe.Event;
+
   try {
     event = stripe.webhooks.constructEvent(bodyBuffer, signature, webhookSecret);
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Error desconocido";
+    console.error("stripe:signature_invalid", {
+      error: errorMessage,
+    });
     return NextResponse.json(
-      { error: `Firma inválida: ${error?.message ?? "desconocido"}` },
+      { error: `Firma inválida: ${errorMessage}` },
       { status: 400 }
     );
   }
 
-  const sb = supabaseServer();
+  const supabase = supabaseServer();
   const eventId = event.id;
   const eventType = event.type;
 
-  // P0.1: Idempotencia - Insertar evento ANTES de procesar
-  // Usar "insert ... on conflict do nothing" para cortar reintentos
-  // Si conflicto (23505) => evento ya procesado => retornar 200 sin efectos
-  const { data: inserted, error: insertError } = await sb
+  // Log defensivo: información del evento antes de procesar
+  const connectedAccountId: string | undefined =
+    typeof event.account === "string" 
+      ? event.account 
+      : (event.account && typeof event.account === "object" && "id" in event.account)
+        ? (event.account as { id: string }).id
+        : undefined;
+  
+  console.info("stripe:event", {
+    type: eventType,
+    id: eventId,
+    account: connectedAccountId || null,
+  });
+
+  // Idempotencia: Insertar evento ANTES de procesar
+  // Si el evento ya existe (23505), retornar 200 sin procesar
+  const { data: inserted, error: insertError } = await supabase
     .from("stripe_events_processed")
     .insert({ event_id: eventId, event_type: eventType })
     .select()
     .maybeSingle();
 
-  // Manejar error de inserción
   if (insertError) {
     // Si es unique violation (23505), el evento ya fue procesado
     if (insertError.code === "23505") {
-      // Short-circuit: retornar 200 sin procesar (idempotencia)
-      // Logging mínimo: solo tipo e ID, sin payload sensible
-      console.info("stripe:duplicate", { 
-        type: eventType, 
-        eventId, 
-        deduped: true
+      console.info("stripe:duplicate", {
+        type: eventType,
+        eventId,
+        deduped: true,
       });
       // Responder 200 para que Stripe no reintente
       return NextResponse.json({ ok: true, deduped: true });
     }
-    // Otro error: devolver error (no debería pasar)
-    console.error("stripe:insert_error", { 
-      type: eventType, 
-      eventId, 
+
+    // Otro error: loguear estructurado y retornar 500
+    console.error("stripe:insert_error", {
+      type: eventType,
+      eventId,
       code: insertError.code,
-      message: insertError.message 
+      message: insertError.message,
+      details: insertError.details,
+      hint: insertError.hint,
     });
     return NextResponse.json(
       { error: "Error registrando evento." },
@@ -71,117 +122,51 @@ export async function POST(req: Request) {
   }
 
   // Si no se insertó (por alguna razón), también retornar 200 sin efectos
-  // Esto puede pasar si el evento ya existe pero no detectamos el conflicto
   if (!inserted) {
-    console.warn("stripe:no_insert", { 
-      type: eventType, 
-      eventId
+    console.warn("stripe:no_insert", {
+      type: eventType,
+      eventId,
     });
     return NextResponse.json({ ok: true, deduped: true });
   }
 
-  // Evento nuevo registrado correctamente → continuar con el procesamiento
+  // Evento nuevo registrado correctamente → procesar
+  // (connectedAccountId ya se obtuvo arriba para el log)
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    const appointmentId = session.metadata?.appointment_id;
-    const bookingId = session.metadata?.booking_id;
-    const paymentIntentId = session.metadata?.payment_intent_id;
+  // Crear contexto para el handler
+  const context: WebhookHandlerContext = {
+    event,
+    stripe,
+    supabase,
+    connectedAccountId,
+  };
 
-    // Procesar booking (nuevo modelo)
-    if (bookingId || paymentIntentId) {
-      // Si hay payment_intent_id, actualizar el payment_intent y confirmar booking
-      if (paymentIntentId) {
-        const { data: paymentIntent, error: piError } = await sb
-          .from("payment_intents")
-          .select("id, status, tenant_id, service_id, customer_id, metadata")
-          .eq("id", paymentIntentId)
-          .maybeSingle();
+  // Procesar evento usando handlers modulares
+  const result = await processStripeEvent(context);
 
-        if (!piError && paymentIntent && paymentIntent.status === "requires_payment") {
-          // Actualizar payment_intent a paid
-          await sb
-            .from("payment_intents")
-            .update({ status: "paid", updated_at: new Date().toISOString() })
-            .eq("id", paymentIntentId);
-
-          // Buscar booking asociado
-          const { data: booking } = await sb
-            .from("bookings")
-            .select("id, status")
-            .eq("payment_intent_id", paymentIntentId)
-            .maybeSingle();
-
-          if (booking && booking.status === "pending") {
-            // Actualizar booking a paid
-            await sb
-              .from("bookings")
-              .update({ status: "paid", expires_at: null })
-              .eq("id", booking.id);
-          }
-        }
-      }
-
-      // Si hay booking_id directo, confirmarlo
-      if (bookingId) {
-        const { data: booking, error: bookingError } = await sb
-          .from("bookings")
-          .select("id, status, expires_at")
-          .eq("id", bookingId)
-          .maybeSingle();
-
-        if (!bookingError && booking) {
-          const now = new Date();
-          const expiresAt = booking.expires_at
-            ? new Date(booking.expires_at)
-            : null;
-
-          const isExpired = expiresAt ? expiresAt <= now : false;
-          const alreadyPaid = booking.status === "paid";
-
-          if (!alreadyPaid && !isExpired) {
-            await sb
-              .from("bookings")
-              .update({ status: "paid", expires_at: null })
-              .eq("id", bookingId);
-          }
-        }
-      }
-    }
-
-    // Procesar appointment (legacy, mantener compatibilidad)
-    if (appointmentId) {
-      const { data: appointment, error: appointmentError } = await sb
-        .from("appointments")
-        .select("id, status, expires_at")
-        .eq("id", appointmentId)
-        .maybeSingle();
-
-      if (!appointmentError && appointment) {
-        const now = new Date();
-        const expiresAt = appointment.expires_at
-          ? new Date(appointment.expires_at)
-          : null;
-
-        const isExpired = expiresAt ? expiresAt <= now : false;
-        const alreadyConfirmed = appointment.status === "confirmed";
-
-        if (!alreadyConfirmed && !isExpired) {
-          await sb
-            .from("appointments")
-            .update({ status: "confirmed", expires_at: null })
-            .eq("id", appointmentId);
-        }
-      }
-    }
+  // Logging mínimo sin payload sensible
+  if (result.success) {
+    console.info("stripe:processed", {
+      type: eventType,
+      eventId,
+      connectedAccountId: connectedAccountId || null,
+    });
+  } else {
+    console.error("stripe:handler_error", {
+      type: eventType,
+      eventId,
+      message: result.message,
+      error: result.error?.message,
+      connectedAccountId: connectedAccountId || null,
+    });
   }
 
-  // P0.1: Logging mínimo sin payload sensible (solo tipo e ID, sin PII)
-  // Sin customer_email, payment_intent_id, etc.
-  console.info("stripe:processed", { 
-    type: eventType, 
-    eventId
+  // Siempre retornar 200, incluso si hay errores
+  // Stripe reintentará si no recibe 200, pero nosotros ya registramos el evento
+  // Los errores se loguean pero no bloquean la respuesta
+  return NextResponse.json({
+    ok: true,
+    processed: result.success,
+    message: result.message,
   });
-  
-  return NextResponse.json({ ok: true });
 }

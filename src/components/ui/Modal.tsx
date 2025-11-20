@@ -153,7 +153,7 @@ export function Modal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
+            transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
             className="fixed inset-0 bg-black/70 backdrop-blur-sm"
           />
 
@@ -165,15 +165,14 @@ export function Modal({
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ 
               duration: 0.15,
-              ease: "easeOut"
+              ease: "easeOut" as const
             }}
             className={cn(
-              "relative z-50 w-full rounded-2xl bg-[#15171A] border border-white/10",
-              "shadow-[0px_8px_32px_rgba(0,0,0,0.5)]",
-              "backdrop-blur-md",
+              "relative z-50 w-full rounded-[var(--radius-xl)] glass-strong border-[var(--glass-border-strong)]",
+              "shadow-[var(--shadow-modal)]",
               sizes[size]
             )}
-            onClick={(e: MouseEvent) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-labelledby={ariaLabelledBy || "modal-title"}
@@ -181,10 +180,11 @@ export function Modal({
             tabIndex={-1}
           >
             {/* Header - Premium */}
-            <div className="flex items-center justify-between border-b border-white/5 px-6 py-5">
+            <div className="flex items-center justify-between border-b border-[var(--glass-border-subtle)] px-6 py-5">
               <h2 
                 id="modal-title"
-                className="text-xl font-semibold text-white font-['Plus_Jakarta_Sans'] tracking-tight"
+                className="text-xl font-semibold text-[var(--text-primary)] tracking-tight"
+                style={{ fontFamily: "var(--font-heading)" }}
               >
                 {title}
               </h2>
@@ -192,7 +192,8 @@ export function Modal({
                 whileHover={{ scale: 1.05, rotate: 90 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onClose}
-                className="p-2 rounded-[10px] text-[#d1d4dc] hover:text-white hover:bg-white/5 transition-all duration-150"
+                className="p-2 rounded-[var(--radius-sm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)] transition-all"
+                style={{ transitionDuration: "var(--duration-base)" }}
                 aria-label="Cerrar modal"
               >
                 <X className="h-5 w-5" />
@@ -200,13 +201,16 @@ export function Modal({
             </div>
 
             {/* Content - Premium */}
-            <div className="px-6 py-5 text-white max-h-[70vh] overflow-y-auto scrollbar-hide">
+            <div 
+              className="px-6 py-5 text-[var(--text-primary)] max-h-[70vh] overflow-y-auto scrollbar-hide"
+              style={{ fontFamily: "var(--font-body)" }}
+            >
               {children}
             </div>
 
             {/* Footer - Premium */}
             {footer && (
-              <div className="flex items-center justify-end gap-3 border-t border-white/5 px-6 py-4">
+              <div className="flex items-center justify-end gap-3 border-t border-[var(--glass-border-subtle)] px-6 py-4">
                 {footer}
               </div>
             )}

@@ -27,3 +27,5 @@ $$;
 grant execute on function public.user_has_role_for_tenant(uuid, text[]) to authenticated, anon;
 
 
+
+

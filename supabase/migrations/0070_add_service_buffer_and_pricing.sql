@@ -22,3 +22,5 @@ alter table public.services
 alter table public.services
   add column if not exists pricing_levels jsonb;
 
+
+

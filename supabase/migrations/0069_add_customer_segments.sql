@@ -9,3 +9,5 @@ alter table public.customers
 -- If there are helper views/materializations that mirror customers (e.g. customer_stats),
 -- ensure their definitions are rebuilt elsewhere to include these columns.
 
+
+

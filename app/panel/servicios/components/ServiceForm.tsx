@@ -2,8 +2,8 @@
 
 import {
   SERVICE_PRESET_CATEGORIES,
-  ServiceFormState,
 } from "../hooks";
+import type { ServiceFormState } from "../types";
 
 type Props = {
   form: ServiceFormState;

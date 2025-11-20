@@ -18,16 +18,18 @@ import { ServiceForm } from "./components/ServiceForm";
 import { ServicePreviewModal } from "./components/ServicePreviewModal";
 import {
   DEFAULT_CATEGORY,
-  type Service,
-  type ServiceFilters,
-  type ServiceFormState,
-  type SortOption,
   buildDefaultFormState,
   normalizeService,
   useFilteredServices,
   usePagination,
   useServiceStats,
 } from "./hooks";
+import type {
+  Service,
+  ServiceFilters,
+  ServiceFormState,
+  SortOption,
+} from "./types";
 
 const PAGE_SIZE_OPTIONS = [8, 12, 24, 48];
 

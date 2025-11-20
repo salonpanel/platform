@@ -5,10 +5,13 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SidebarNav } from "@/components/panel/SidebarNav";
 import { TopBar } from "@/components/panel/TopBar";
+import { BottomNavBar } from "@/components/panel/BottomNavBar";
 import { ImpersonationBanner } from "@/components/panel/ImpersonationBanner";
 import { PageContainer } from "@/components/panel/PageContainer";
 import { Spinner } from "@/components/ui/Spinner";
+import { ToastProvider } from "@/components/ui";
 import { getCurrentTenant } from "@/lib/panel-tenant";
+import { MobileHamburgerButton } from "@/components/panel/MobileHamburgerButton";
 
 type TenantInfo = {
   id: string;
@@ -26,6 +29,20 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Inicializar con el valor de localStorage si está disponible (solo en cliente)
+  // Por defecto, empezar colapsado (true) para ahorrar espacio
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("sidebarCollapsed");
+        // Si hay un valor guardado, usarlo; si no, empezar colapsado por defecto
+        return saved !== null ? saved === "true" : true;
+      } catch {
+        return true; // Por defecto colapsado
+      }
+    }
+    return true; // Por defecto colapsado en SSR
+  });
   const [panelError, setPanelError] = useState<{ title: string; description?: string } | null>(null);
   const [noMembership, setNoMembership] = useState(false);
   const [authStatus, setAuthStatus] = useState<"UNKNOWN" | "AUTHENTICATED" | "UNAUTHENTICATED">("UNKNOWN");
@@ -161,10 +178,10 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--bg-primary)]">
         <div className="text-center">
           <Spinner size="lg" />
-          <p className="mt-4 text-slate-400">Cargando panel...</p>
+          <p className="mt-4" style={{ color: "var(--text-secondary)" }}>Cargando panel...</p>
         </div>
       </div>
     );
@@ -172,10 +189,10 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
 
   if (!loading && authStatus === "UNAUTHENTICATED") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--bg-primary)]">
         <div className="text-center">
           <Spinner size="lg" />
-          <p className="mt-4 text-slate-400">Redirigiendo al login...</p>
+          <p className="mt-4" style={{ color: "var(--text-secondary)" }}>Redirigiendo al login...</p>
         </div>
       </div>
     );
@@ -183,15 +200,19 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
 
   if (!loading && panelError) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
-        <div className="text-center text-slate-100 max-w-md px-4">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--bg-primary)]">
+        <div className="text-center max-w-md px-4" style={{ color: "var(--text-primary)" }}>
           <p className="text-lg font-medium mb-2">{panelError.title}</p>
           {panelError.description && (
-            <p className="text-sm text-slate-400 mb-6">{panelError.description}</p>
+            <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>{panelError.description}</p>
           )}
           <Link
             href="/logout"
-            className="inline-block rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 transition-colors"
+            className="inline-block rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+            style={{
+              backgroundColor: "var(--bg-card)",
+              color: "var(--text-primary)",
+            }}
           >
             Cerrar sesión
           </Link>
@@ -202,15 +223,19 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
 
   if (!loading && noMembership) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
-        <div className="text-center text-slate-100 max-w-md px-4">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--bg-primary)]">
+        <div className="text-center max-w-md px-4" style={{ color: "var(--text-primary)" }}>
           <h1 className="mb-2 text-xl font-semibold">No tienes ninguna barbería asignada.</h1>
-          <p className="mb-4 text-slate-400">
+          <p className="mb-4" style={{ color: "var(--text-secondary)" }}>
             Contacta con soporte o con tu administrador para que te asignen una barbería en la plataforma.
           </p>
           <Link
             href="/logout"
-            className="inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+            className="inline-block rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+            style={{
+              backgroundColor: "var(--accent-blue)",
+              color: "var(--text-primary)",
+            }}
           >
             Cerrar sesión
           </Link>
@@ -240,57 +265,102 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
     return "Panel";
   };
 
+  // Determinar densidad para data-density attribute
+  const [density, setDensity] = useState<"normal" | "compact" | "ultra-compact">("normal");
+
+  useEffect(() => {
+    const updateDensity = () => {
+      const height = window.innerHeight;
+      if (height <= 750) {
+        setDensity("ultra-compact");
+      } else if (height <= 950) {
+        setDensity("compact");
+      } else {
+        setDensity("normal");
+      }
+    };
+
+    updateDensity();
+    window.addEventListener("resize", updateDensity);
+    return () => window.removeEventListener("resize", updateDensity);
+  }, []);
+
   return (
-    <div className="flex h-screen bg-slate-950">
-      {/* Sidebar */}
+    <div 
+      className="flex h-screen overflow-hidden bg-[var(--bg-primary)]"
+      data-density={density}
+    >
+      {/* Sidebar - Scroll interno propio si supera altura disponible */}
       <SidebarNav
         items={navItems}
         tenantName={tenant.name}
         isOpen={sidebarOpen}
+        isCollapsed={sidebarCollapsed}
         onClose={() => setSidebarOpen(false)}
+        onToggleCollapse={() => {
+          setSidebarCollapsed((prev) => {
+            const newState = !prev;
+            if (typeof window !== "undefined") {
+              localStorage.setItem("sidebarCollapsed", newState ? "true" : "false");
+            }
+            return newState;
+          });
+        }}
       />
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Impersonation Banner */}
+      {/* Main Content - ZERO SCROLL: flex-col, sin scroll vertical */}
+      <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
+        {/* Impersonation Banner - Fijo, no afecta contenedor principal */}
         {isImpersonating && (
-          <ImpersonationBanner
-            tenantName={tenant.name}
-            onExit={handleExitImpersonation}
-          />
+          <div className="flex-shrink-0">
+            <ImpersonationBanner
+              tenantName={tenant.name}
+              onEndImpersonation={handleExitImpersonation}
+            />
+          </div>
         )}
 
-        {/* Top Bar */}
-        <TopBar
-          title={getPageTitle()}
-          tenantName={tenant.name}
-          userRole={userRole}
-          timezone={tenant.timezone}
-          onMenuClick={() => setSidebarOpen(!sidebarOpen)}
-        />
+        {/* Top Bar - Fijo, sin afectar contenedor principal */}
+        <div className="flex-shrink-0">
+          <TopBar
+            title={getPageTitle()}
+            tenantName={tenant.name}
+            userRole={userRole}
+            timezone={tenant.timezone}
+            onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+          />
+        </div>
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-slate-950">
+        {/* Page Content - ZERO SCROLL: flex-1 min-h-0 overflow-hidden relative */}
+        <main className="flex-1 min-h-0 overflow-hidden relative bg-[var(--bg-primary)]">
           <PageContainer>{children}</PageContainer>
         </main>
+
+        {/* Bottom Navigation Bar - Solo visible en móvil */}
+        <BottomNavBar />
       </div>
+
+      {/* Mobile Hamburger Button - Flotante en esquina inferior derecha */}
+      <MobileHamburgerButton onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
     </div>
   );
 }
 
 export default function PanelLayout({ children }: { children: ReactNode }) {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center bg-slate-950">
-          <div className="text-center">
-            <Spinner size="lg" />
-            <p className="mt-4 text-slate-400">Cargando panel...</p>
+    <ToastProvider>
+      <Suspense
+        fallback={
+          <div className="flex min-h-screen items-center justify-center bg-[var(--bg-primary)]">
+            <div className="text-center">
+              <Spinner size="lg" />
+              <p className="mt-4" style={{ color: "var(--text-secondary)" }}>Cargando panel...</p>
+            </div>
           </div>
-        </div>
-      }
-    >
-      <PanelLayoutContent>{children}</PanelLayoutContent>
-    </Suspense>
+        }
+      >
+        <PanelLayoutContent>{children}</PanelLayoutContent>
+      </Suspense>
+    </ToastProvider>
   );
 }

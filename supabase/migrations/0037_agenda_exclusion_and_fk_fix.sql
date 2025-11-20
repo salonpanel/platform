@@ -87,3 +87,5 @@ COMMENT ON TABLE public.users IS 'LEGACY: evitar su uso. Emplear auth.users + pu
 
 
 
+
+

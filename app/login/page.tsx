@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, CheckCircle2, AlertCircle, Loader2, Sparkles } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 
-export default function LoginPage() {
+function LoginContent() {
   const supabase = getSupabaseBrowser();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
@@ -61,6 +61,14 @@ export default function LoginPage() {
           body: JSON.stringify({ email: email.toLowerCase() }),
         });
 
+        // Verificar que la respuesta es JSON antes de parsear
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await response.text();
+          console.error("Respuesta no es JSON:", text.substring(0, 200));
+          throw new Error(`El servidor devolvió un error (${response.status}). Verifica la consola del servidor.`);
+        }
+
         const data = await response.json();
 
         // Si el endpoint indica usar el flujo normal, continuar sin error
@@ -69,7 +77,7 @@ export default function LoginPage() {
           // Continuar con el flujo normal (no lanzar error)
         } else if (!response.ok) {
           // Mostrar el error detallado
-          const errorMsg = data.error || "Error en auto-login";
+          const errorMsg = data.error || `Error en auto-login (${response.status})`;
           console.error("Error en dev-login:", data);
           throw new Error(errorMsg);
         }
@@ -101,7 +109,9 @@ export default function LoginPage() {
         }
       } catch (err: any) {
         console.error("Error en auto-login:", err);
-        setError("No se pudo iniciar sesión automáticamente. El usuario puede no existir o hay un problema con la base de datos. Verifica los logs del servidor.");
+        // Mostrar error más específico
+        const errorMessage = err?.message || "No se pudo iniciar sesión automáticamente. El usuario puede no existir o hay un problema con la base de datos. Verifica los logs del servidor.";
+        setError(errorMessage);
         setSent(false);
         setLoading(false);
         return;
@@ -109,9 +119,12 @@ export default function LoginPage() {
     }
     
     // Flujo normal de magic link (solo si no es el email de desarrollo o si el auto-login no se ejecutó)
+    // Usar URL centralizada para callbacks de auth
+    // Por ahora, todos los logins usan pro.bookfast.es como callback
+    // TODO: En el futuro, si hay login desde portal público o marketing, ajustar según contexto
     const callbackBase = redirectParam
-      ? `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectParam)}`
-      : `${window.location.origin}/auth/callback`;
+      ? `/auth/callback?redirect=${encodeURIComponent(redirectParam)}`
+      : `/auth/callback`;
     
     const callbackUrl = `${callbackBase}#email=${encodeURIComponent(email)}`;
     
@@ -290,3 +303,14 @@ export default function LoginPage() {
   );
 }
 
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-white" />
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
+  );
+}

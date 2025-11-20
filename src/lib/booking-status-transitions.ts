@@ -123,3 +123,5 @@ export function getSuggestedNextStatus(currentStatus: BookingStatus): BookingSta
   return suggestions[currentStatus] ?? null;
 }
 
+
+

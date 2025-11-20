@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -17,7 +18,8 @@ import {
   Menu,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Wallet
 } from "lucide-react";
 
 interface NavItem {
@@ -49,6 +51,8 @@ const getNavIcon = (href: string): React.ReactNode => {
       return <Scissors className={iconClass} />;
     case "/panel/staff":
       return <User className={iconClass} />;
+    case "/panel/monedero":
+      return <Wallet className={iconClass} />;
     case "/panel/chat":
       return <MessageSquare className={iconClass} />;
     case "/panel/ajustes":
@@ -78,7 +82,15 @@ export function SidebarNav({
   };
 
   // Cuando está colapsado y se hace hover, expandir temporalmente
+  // Si no está colapsado, siempre expandido
   const isExpanded = isCollapsed ? isHovered : true;
+  
+  // Resetear hover cuando cambia el estado de colapsado
+  React.useEffect(() => {
+    if (!isCollapsed) {
+      setIsHovered(false);
+    }
+  }, [isCollapsed]);
 
   return (
     <>
@@ -101,9 +113,22 @@ export function SidebarNav({
         animate={{ 
           width: isExpanded ? 240 : 64,
         }}
-        transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        transition={{ 
+          type: "spring", 
+          damping: 25, 
+          stiffness: 200,
+          duration: 0.3
+        }}
+        onMouseEnter={() => {
+          // Solo expandir con hover si está colapsado
+          if (isCollapsed) {
+            setIsHovered(true);
+          }
+        }}
+        onMouseLeave={() => {
+          // Siempre resetear hover al salir
+          setIsHovered(false);
+        }}
         className={cn(
           "fixed md:static inset-y-0 left-0 z-50 glass flex flex-col transition-all duration-300 ease-in-out",
           "bg-[var(--bg-primary)] backdrop-blur-xl border-r border-[rgba(255,255,255,0.1)] sidebar-no-shadow",
@@ -113,7 +138,6 @@ export function SidebarNav({
         style={{
           borderRadius: "0 var(--radius-xl) var(--radius-xl) 0",
           boxShadow: "none",
-          width: isExpanded ? 240 : 64,
         }}
       >
         {/* Logo/Name y botón toggle */}
@@ -168,8 +192,8 @@ export function SidebarNav({
           </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto p-3 scrollbar-hide">
+        {/* Navigation - Scroll interno propio si supera altura disponible */}
+        <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 scrollbar-hide">
           <ul className="space-y-1.5">
             {items.map((item, index) => {
               const active = isActive(item.href);

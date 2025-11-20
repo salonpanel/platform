@@ -17,10 +17,14 @@ import { getSupabaseServer } from "@/lib/supabase/server";
 export async function POST(req: Request) {
   // Verificación estricta: solo desarrollo
   const isDevelopment = process.env.NODE_ENV === "development";
+  const devLoginEnabled = process.env.NEXT_PUBLIC_ENABLE_DEV_LOGIN === "true";
   
-  // Doble verificación: también verificar que no estamos en producción
-  if (!isDevelopment || process.env.NODE_ENV === "production") {
-    console.error("⚠️ Intento de acceso a dev-login en producción bloqueado");
+  // Triple verificación para máxima seguridad:
+  // 1. NODE_ENV debe ser development
+  // 2. Flag explícita NEXT_PUBLIC_ENABLE_DEV_LOGIN debe ser "true"
+  // 3. No debe estar en producción
+  if (!isDevelopment || process.env.NODE_ENV === "production" || !devLoginEnabled) {
+    console.error("⚠️ Intento de acceso a dev-login bloqueado (no disponible en producción)");
     return NextResponse.json(
       { error: "Este endpoint solo está disponible en desarrollo" },
       { status: 403 }
@@ -173,7 +177,9 @@ export async function POST(req: Request) {
     }
 
     // Generar un magic link que redirigirá a nuestro handler del lado del cliente
-    const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/auth/magic-link-handler`;
+    // Usar URL centralizada para callbacks de auth
+    const { URLS } = await import("@/lib/urls");
+    const redirectUrl = `${URLS.PRO_BASE}/auth/magic-link-handler`;
     const { data: linkData, error: linkError } =
       await supabaseAdmin.auth.admin.generateLink({
         type: "magiclink",
@@ -204,7 +210,10 @@ export async function POST(req: Request) {
     }
 
     // Crear sesión usando el cliente normal con el código
-    const supabaseClient = createRouteHandlerClient({ cookies });
+    // En Next.js 16+, cookies() es async, pero createRouteHandlerClient espera la función directamente
+    const supabaseClient = createRouteHandlerClient({ 
+      cookies: async () => await cookies()
+    });
 
     // Intercambiar código por sesión
     const { data: sessionData, error: sessionError } =

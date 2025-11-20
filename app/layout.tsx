@@ -1,7 +1,7 @@
 ﻿import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "../src/app/globals.css";
-import { SupabaseProvider } from "../src/app/supabase-provider";
+import "./globals.css";
+import { SupabaseProvider } from "./supabase-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +14,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Platform",
-  description: "Plataforma de gestión",
+  title: "BookFast - Sistema de Reservas para Barberías",
+  description: "Plataforma de gestión y reservas online para barberías",
+  robots: {
+    index: false, // Por defecto, no indexar (se sobrescribe en páginas públicas)
+    follow: false,
+  },
 };
 
 export default function RootLayout({

@@ -68,8 +68,8 @@ function serializeError(error: unknown) {
   if (error instanceof Error) {
     return {
       message: error.message,
-      code: (error as Record<string, unknown>).code as string | undefined,
-      details: (error as Record<string, unknown>).details,
+      code: (error as unknown as Record<string, unknown>).code as string | undefined,
+      details: (error as unknown as Record<string, unknown>).details,
     };
   }
 

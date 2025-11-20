@@ -120,3 +120,5 @@ FOR EACH ROW EXECUTE FUNCTION public.trg_bookings_update_metrics();
 
 
 
+
+

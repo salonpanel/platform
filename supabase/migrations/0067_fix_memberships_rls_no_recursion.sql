@@ -35,3 +35,5 @@ CREATE POLICY insert_own_memberships
 
 -- Nota: no se crean políticas de UPDATE/DELETE para mantener la superficie mínima
 
+
+

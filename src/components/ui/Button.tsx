@@ -6,8 +6,10 @@ import { motion } from "framer-motion";
 
 interface ButtonProps {
   children: ReactNode;
-  variant?: "primary" | "secondary" | "ghost" | "danger";
+  variant?: "primary" | "secondary" | "ghost" | "danger" | "outline" | "destructive";
   size?: "sm" | "md" | "lg";
+  shape?: "default" | "pill"; // Capsule shape option
+  density?: "default" | "compact";
   onClick?: () => void;
   disabled?: boolean;
   isLoading?: boolean;
@@ -19,26 +21,37 @@ export function Button({
   children,
   variant = "primary",
   size = "md",
+  shape = "default",
+  density = "default",
   onClick,
   disabled = false,
   isLoading = false,
   className,
   icon,
 }: ButtonProps) {
-  const baseStyles = "inline-flex items-center justify-center gap-2 font-['Plus_Jakarta_Sans'] font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#15171A] disabled:opacity-50 disabled:cursor-not-allowed";
+  const baseStyles = "inline-flex items-center justify-center gap-2 font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+  
+  // Usar variables CSS para tipografía
+  const fontStyle = {
+    fontFamily: "var(--font-heading)",
+  };
 
   const variants = {
-    primary: "bg-gradient-to-r from-[#3A6DFF] to-[#4FE3C1] text-white shadow-[0px_4px_20px_rgba(58,109,255,0.4)] hover:shadow-[0px_8px_32px_rgba(79,227,193,0.5)] focus:ring-[#3A6DFF]/30 backdrop-blur-sm",
-    secondary: "bg-white/5 text-white border border-white/10 hover:border-white/20 hover:bg-white/8 focus:ring-[#4FE3C1]/30 backdrop-blur-md",
-    ghost: "text-[#d1d4dc] hover:text-white hover:bg-white/5 focus:ring-[#3A6DFF]/30 transition-all",
-    danger: "bg-[rgba(239,68,68,0.12)] text-[#EF4444] border border-[#EF4444]/30 hover:bg-[rgba(239,68,68,0.18)] hover:border-[#EF4444]/50 focus:ring-[#EF4444]/30 backdrop-blur-sm",
+    primary: "bg-[var(--gradient-primary)] text-white shadow-[var(--glow-aqua)] hover:shadow-[var(--glow-aqua),0px_0px_24px_rgba(79,227,193,0.6)] focus:ring-[var(--accent-aqua)]/30 backdrop-blur-sm",
+    secondary: "glass text-[var(--text-primary)] border-[var(--glass-border)] hover:border-[var(--accent-aqua-border)] hover:bg-[var(--accent-aqua-glass)] focus:ring-[var(--accent-aqua)]/30",
+    outline: "bg-transparent text-[var(--text-primary)] border-2 border-[var(--accent-aqua-border)] hover:bg-[var(--accent-aqua-glass)] hover:border-[var(--accent-aqua)] focus:ring-[var(--accent-aqua)]/30",
+    ghost: "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)] focus:ring-[var(--accent-blue)]/30",
+    danger: "bg-[var(--color-danger-glass)] text-[var(--color-danger)] border border-[var(--color-danger)]/30 hover:bg-[rgba(239,68,68,0.18)] hover:border-[var(--color-danger)]/50 focus:ring-[var(--color-danger)]/30 backdrop-blur-sm",
+    destructive: "bg-[var(--color-danger)] text-white border border-[var(--color-danger)] hover:bg-[rgba(239,68,68,0.9)] hover:shadow-[0px_0px_16px_rgba(239,68,68,0.4)] focus:ring-[var(--color-danger)]/30",
   };
 
   const sizes = {
-    sm: "px-4 py-2 text-sm rounded-[10px]",
-    md: "px-6 py-3 text-sm rounded-[10px]",
-    lg: "px-8 py-4 text-base rounded-[14px]",
+    sm: density === "compact" ? "px-[10px] py-[6px] text-xs" : "px-4 py-2 text-sm",
+    md: density === "compact" ? "px-[10px] py-[6px] text-xs" : "px-6 py-3 text-sm",
+    lg: density === "compact" ? "px-4 py-2 text-sm" : "px-8 py-4 text-base",
   };
+
+  const radiusClass = shape === "pill" ? "rounded-[var(--radius-pill)]" : "rounded-[var(--radius-md)]";
 
   const buttonContent = (
     <>
@@ -80,12 +93,15 @@ export function Button({
     <motion.button
       whileHover={!disabled && !isLoading ? { scale: 1.02 } : {}}
       whileTap={!disabled && !isLoading ? { scale: 0.98 } : {}}
+      transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
       className={cn(
         baseStyles,
         variants[variant],
         sizes[size],
+        radiusClass,
         className
       )}
+      style={fontStyle}
       onClick={onClick}
       disabled={disabled || isLoading}
     >

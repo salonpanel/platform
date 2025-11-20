@@ -344,5 +344,6 @@ if (require.main === module) {
   main().catch(console.error);
 }
 
-export { validateRLSPolicies, TestResult };
+export { validateRLSPolicies };
+export type { TestResult };
 

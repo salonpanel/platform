@@ -202,3 +202,5 @@ COMMENT ON FUNCTION public.get_user_profile_photo(UUID, UUID) IS 'Obtiene la fot
 
 GRANT EXECUTE ON FUNCTION public.get_user_profile_photo(UUID, UUID) TO authenticated;
 
+
+
