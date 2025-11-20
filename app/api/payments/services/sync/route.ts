@@ -2,12 +2,10 @@ import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
-import Stripe from "stripe";
+import { stripe } from "@/lib/stripe";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 const CURRENCY = process.env.STRIPE_DEFAULT_CURRENCY ?? "eur";
 

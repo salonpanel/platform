@@ -4,6 +4,7 @@ import { isPlatformAdmin, canModifyPlatform } from "@/lib/platform-auth";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { isValidTenantSlug, isReservedSubdomain } from "@/lib/domains";
 
 /**
  * POST /api/admin/tenants
@@ -31,10 +32,21 @@ export async function POST(req: Request) {
       );
     }
 
-    // Validar formato de slug
-    if (!/^[a-z0-9-]+$/.test(slug)) {
+    // Validar formato de slug usando la función centralizada
+    const trimmedSlug = slug.trim().toLowerCase();
+    
+    if (!isValidTenantSlug(trimmedSlug)) {
+      // Verificar si es un subdominio reservado
+      if (isReservedSubdomain(trimmedSlug)) {
+        return NextResponse.json(
+          { error: "Este nombre no está disponible, prueba con otra variante" },
+          { status: 400 }
+        );
+      }
+      
+      // Otro error de formato
       return NextResponse.json(
-        { error: "El slug solo puede contener letras minúsculas, números y guiones" },
+        { error: "El slug debe tener entre 3 y 32 caracteres, solo letras minúsculas, números y guiones, y no puede empezar ni terminar en guion" },
         { status: 400 }
       );
     }

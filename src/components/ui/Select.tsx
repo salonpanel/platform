@@ -18,26 +18,30 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="mb-2 block text-sm font-medium text-[var(--color-text-secondary)] font-satoshi">
+          <label 
+            className="mb-2 block text-sm font-semibold text-[var(--text-primary)]"
+            style={{ fontFamily: "var(--font-heading)" }}
+          >
             {label}
-            {props.required && <span className="text-red-400 ml-1">*</span>}
+            {props.required && <span className="text-[var(--color-danger)] ml-1">*</span>}
           </label>
         )}
         <div className="relative">
           <select
             ref={ref}
             className={cn(
-              "w-full rounded-xl border px-4 py-3 text-sm font-semibold appearance-none font-satoshi",
-              "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--bg-primary)]",
-              "transition-all duration-200 cursor-pointer backdrop-blur-md",
+              "w-full rounded-[var(--radius-md)] border px-4 py-3 text-sm font-semibold appearance-none",
+              "focus:outline-none focus:ring-2 focus:ring-offset-2",
+              "transition-all cursor-pointer glass backdrop-blur-md",
               "pr-10",
               error
-                ? "glass border-[rgba(239,68,68,0.4)] bg-[rgba(239,68,68,0.1)] text-red-200 focus:ring-[rgba(239,68,68,0.4)] focus:border-[rgba(239,68,68,0.6)]"
-                : "glass border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.05)] text-[var(--text-primary)] focus:border-[#3A6DFF] focus:ring-[#3A6DFF]/30 focus:bg-[rgba(255,255,255,0.08)]",
+                ? "border-[var(--color-danger)]/40 bg-[var(--color-danger-glass)] text-[var(--color-danger)] focus:ring-[var(--color-danger)]/30 focus:border-[var(--color-danger)]/60"
+                : "border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-primary)] focus:border-[var(--accent-aqua-border)] focus:ring-[var(--accent-aqua)]/30 focus:bg-[var(--glass-bg-strong)] focus:shadow-[var(--shadow-input-focus)]",
               className
             )}
             style={{
-              borderRadius: "var(--radius-md)",
+              fontFamily: "var(--font-body)",
+              transitionDuration: "var(--duration-base)",
             }}
             {...props}
           >
@@ -51,16 +55,26 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           <motion.div 
             className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
             animate={{ rotate: props.value ? 180 : 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
           >
             <ChevronDown className="h-4 w-4 text-[var(--text-secondary)]" />
           </motion.div>
         </div>
         {error && (
-          <p className="mt-1 text-xs text-red-400">{error}</p>
+          <p 
+            className="mt-1 text-xs text-[var(--color-danger)]"
+            style={{ fontFamily: "var(--font-body)" }}
+          >
+            {error}
+          </p>
         )}
         {helperText && !error && (
-          <p className="mt-1 text-xs text-[var(--color-text-secondary)]">{helperText}</p>
+          <p 
+            className="mt-1 text-xs text-[var(--text-secondary)]"
+            style={{ fontFamily: "var(--font-body)" }}
+          >
+            {helperText}
+          </p>
         )}
       </div>
     );

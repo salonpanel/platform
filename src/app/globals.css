@@ -5,108 +5,300 @@
 @import "../styles/theme.css";
 
 :root {
-  /* Sistema de diseño premium - Paleta oscura elegante */
-  --bg-primary: #0E0F11;
-  --bg-secondary: rgba(255, 255, 255, 0.03);
-  --bg-card: #15171A;
-  --glass: rgba(255, 255, 255, 0.08);
-  --text-primary: #FFFFFF;
-  --text-secondary: #d1d4dc;
-  --text-tertiary: #9ca3af;
-  
+  /* ============================================================================
+     NUEVO DESIGN SYSTEM - BookFast Platform
+     Capsule Shapes + Soft Glass + Premium Gradients + Neo-Glow
+     ============================================================================ */
+
+  /* ----------------------------------------------------------------------------
+     NEUTROS - Dark Mode Foundation
+     ---------------------------------------------------------------------------- */
+  --neutral-50: #06141B;   /* Más oscuro - Background principal */
+  --neutral-100: #11212D;  /* Background secundario */
+  --neutral-200: #253745;  /* Background terciario / Cards */
+  --neutral-300: #4A5C6A;  /* Borders / Dividers */
+  --neutral-400: #9BA8AB;  /* Texto secundario */
+  --neutral-500: #CCD0CF;  /* Texto primario */
+
+  /* Mapeo semántico de neutros */
+  --bg-primary: var(--neutral-50);
+  --bg-secondary: var(--neutral-100);
+  --bg-tertiary: var(--neutral-200);
+  --bg-card: var(--neutral-200);
+  --border-default: var(--neutral-300);
+  --text-primary: var(--neutral-500);
+  --text-secondary: var(--neutral-400);
+  --text-tertiary: var(--neutral-300);
+
   /* Compatibilidad legacy */
-  --color-bg-base: #0e0f11;
-  --color-bg-primary: #0e0f11;
-  --color-bg-secondary: rgba(255, 255, 255, 0.03);
-  --color-bg-tertiary: rgba(255, 255, 255, 0.05);
-  
-  /* Glass surfaces - actualizado con más opacidad */
-  --glass-bg-subtle: rgba(255, 255, 255, 0.03);
-  --glass-bg: rgba(255, 255, 255, 0.08);
-  
-  /* Textos - actualizados */
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #d1d4dc;
-  --color-text-disabled: #60667A;
-  
-  /* Acentos premium */
-  --accent-blue: #3A6DFF;
-  --accent-aqua: #4FE3C1;
-  --accent-purple: #A06BFF;
-  --accent-pink: #FF6DA3;
-  
-  /* Aurora accents (legacy) */
-  --accent-1: #3A6DFF;     /* azul neón */
-  --accent-2: #4FE3C1;     /* aqua */
-  --accent-3: #A06BFF;     /* morado neón */
-  
-  /* Semantic colors */
+  --color-bg-base: var(--neutral-50);
+  --color-bg-primary: var(--neutral-50);
+  --color-bg-secondary: var(--neutral-100);
+  --color-bg-tertiary: var(--neutral-200);
+  --color-text-primary: var(--neutral-500);
+  --color-text-secondary: var(--neutral-400);
+  --color-text-disabled: var(--neutral-300);
+  --background: var(--neutral-50);
+  --foreground: var(--neutral-500);
+
+  /* ----------------------------------------------------------------------------
+     ACENTOS PREMIUM
+     ---------------------------------------------------------------------------- */
+  --accent-aqua: #4FE3C1;      /* Aqua - Acción principal */
+  --accent-purple: #A06BFF;    /* Purple - Acción secundaria */
+  --accent-blue: #3A6DFF;      /* Blue - Información / Links */
+  --accent-pink: #FF6DA3;      /* Pink - Destacados / Alerts */
+
+  /* Variantes con opacidad para glass effects */
+  --accent-aqua-glass: rgba(79, 227, 193, 0.12);
+  --accent-purple-glass: rgba(160, 107, 255, 0.12);
+  --accent-blue-glass: rgba(58, 109, 255, 0.12);
+  --accent-pink-glass: rgba(255, 109, 163, 0.12);
+
+  /* Bordes con glow (neo-glow edges) */
+  --accent-aqua-border: rgba(79, 227, 193, 0.3);
+  --accent-purple-border: rgba(160, 107, 255, 0.3);
+  --accent-blue-border: rgba(58, 109, 255, 0.3);
+  --accent-pink-border: rgba(255, 109, 163, 0.3);
+
+  /* Legacy compatibility */
+  --accent-1: var(--accent-blue);
+  --accent-2: var(--accent-aqua);
+  --accent-3: var(--accent-purple);
+  --color-accent: var(--accent-purple);
+  --color-accent-warm: var(--accent-aqua);
+
+  /* ----------------------------------------------------------------------------
+     GRADIENTES PREMIUM
+     ---------------------------------------------------------------------------- */
+  --gradient-primary: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-aqua) 100%);
+  --gradient-secondary: linear-gradient(135deg, var(--accent-aqua) 0%, var(--accent-purple) 100%);
+  --gradient-accent: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-pink) 100%);
+
+  /* Gradientes radiales para backgrounds */
+  --gradient-radial-primary: radial-gradient(ellipse at top, rgba(58, 109, 255, 0.15) 0%, transparent 70%);
+  --gradient-radial-secondary: radial-gradient(ellipse at top, rgba(79, 227, 193, 0.15) 0%, transparent 70%);
+
+  /* Legacy compatibility */
+  --gradient-1: var(--gradient-primary);
+  --gradient-2: var(--gradient-secondary);
+  --gradient-primary-start: #3A6DFF;
+  --gradient-primary-end: #4FE3C1;
+  --gradient-secondary-start: #4FE3C1;
+  --gradient-secondary-end: #A06BFF;
+
+  /* ----------------------------------------------------------------------------
+     COLORES SEMÁNTICOS
+     ---------------------------------------------------------------------------- */
   --color-success: #10B981;
+  --color-success-glass: rgba(16, 185, 129, 0.12);
   --color-warning: #F59E0B;
+  --color-warning-glass: rgba(245, 158, 11, 0.12);
   --color-danger: #EF4444;
+  --color-danger-glass: rgba(239, 68, 68, 0.12);
   --color-info: #3B82F6;
-  
-  /* Aurora gradients */
-  --gradient-1: linear-gradient(135deg, #7b5cff 0%, #4de2c3 100%);
-  --gradient-2: linear-gradient(135deg, #4de2c3 0%, #ffb86b 100%);
-  
-  /* Acentos gradiente - compatibilidad */
-  --gradient-primary-start: #7b5cff;
-  --gradient-primary-end: #4de2c3;
-  --gradient-secondary-start: #4de2c3;
-  --gradient-secondary-end: #ffb86b;
-  
-  /* Acentos legacy (compatibilidad) */
-  --color-accent: #7b5cff;
-  --color-accent-warm: #4de2c3;
-  
-  /* Glassmorphism */
-  --glass-border: rgba(255, 255, 255, 0.06);
+  --color-info-glass: rgba(59, 130, 246, 0.12);
+
+  /* ----------------------------------------------------------------------------
+     SISTEMA DE GLASS (Soft Glass)
+     ---------------------------------------------------------------------------- */
+  /* Glass Base */
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-bg-subtle: rgba(255, 255, 255, 0.03);
+  --glass-bg-strong: rgba(255, 255, 255, 0.1);
+
+  /* Glass Borders */
+  --glass-border: rgba(255, 255, 255, 0.08);
   --glass-border-subtle: rgba(255, 255, 255, 0.04);
-  --glass-blur: blur(12px);
-  
-  /* Sombras premium difuminadas */
-  --shadow-card: 0px 6px 20px rgba(0, 0, 0, 0.45);
-  --shadow-premium: 0px 6px 20px rgba(0, 0, 0, 0.45);
+  --glass-border-strong: rgba(255, 255, 255, 0.12);
+
+  /* Glass Blur */
+  --glass-blur: blur(16px);
+  --glass-blur-subtle: blur(12px);
+  --glass-blur-strong: blur(20px);
+
+  /* Glass con Acentos */
+  --glass-aqua: rgba(79, 227, 193, 0.08);
+  --glass-purple: rgba(160, 107, 255, 0.08);
+  --glass-blue: rgba(58, 109, 255, 0.08);
+  --glass-pink: rgba(255, 109, 163, 0.08);
+
+  /* Legacy compatibility */
+  --glass: var(--glass-bg);
+  --glass-border-old: rgba(255, 255, 255, 0.06);
+
+  /* ----------------------------------------------------------------------------
+     SOMBRAS Y GLOWS PREMIUM
+     ---------------------------------------------------------------------------- */
+  /* Sombras de Cards */
+  --shadow-card: 0px 4px 16px rgba(0, 0, 0, 0.3), 
+                 0px 2px 8px rgba(0, 0, 0, 0.2),
+                 inset 0px 1px 0px rgba(255, 255, 255, 0.08);
+
+  --shadow-card-hover: 0px 8px 32px rgba(0, 0, 0, 0.4),
+                        0px 4px 16px rgba(0, 0, 0, 0.3),
+                        inset 0px 1px 0px rgba(255, 255, 255, 0.12);
+
+  /* Sombra de Modal */
+  --shadow-modal: 0px 12px 48px rgba(0, 0, 0, 0.5),
+                  0px 4px 16px rgba(0, 0, 0, 0.3),
+                  inset 0px 1px 0px rgba(255, 255, 255, 0.1);
+
+  /* Sombra de Input Focus */
+  --shadow-input-focus: 0px 0px 0px 3px rgba(79, 227, 193, 0.2),
+                        inset 0px 1px 2px rgba(0, 0, 0, 0.1);
+
+  /* Glows Neo (neo-glow edges) */
+  --glow-aqua: 0px 0px 16px rgba(79, 227, 193, 0.4),
+               0px 0px 32px rgba(79, 227, 193, 0.2);
+
+  --glow-purple: 0px 0px 16px rgba(160, 107, 255, 0.4),
+                 0px 0px 32px rgba(160, 107, 255, 0.2);
+
+  --glow-blue: 0px 0px 16px rgba(58, 109, 255, 0.4),
+               0px 0px 32px rgba(58, 109, 255, 0.2);
+
+  --glow-pink: 0px 0px 16px rgba(255, 109, 163, 0.4),
+               0px 0px 32px rgba(255, 109, 163, 0.2);
+
+  /* Glow de Borde (neo-glow edges) */
+  --glow-border-aqua: 0px 0px 8px rgba(79, 227, 193, 0.3);
+  --glow-border-purple: 0px 0px 8px rgba(160, 107, 255, 0.3);
+  --glow-border-blue: 0px 0px 8px rgba(58, 109, 255, 0.3);
+  --glow-border-pink: 0px 0px 8px rgba(255, 109, 163, 0.3);
+
+  /* Legacy compatibility */
+  --shadow-premium: var(--shadow-card);
   --shadow-glass: 0px 8px 32px rgba(0, 0, 0, 0.35);
-  --shadow-neon-glow-blue: 0 0 20px rgba(98, 125, 255, 0.3);
-  --shadow-neon-glow-purple: 0 0 20px rgba(161, 108, 255, 0.3);
-  --shadow-glow-blue: 0 0 12px rgba(162, 108, 255, 0.4);
-  --shadow-glow-pink: 0 0 12px rgba(255, 111, 145, 0.4);
-  
-  /* Sombras suaves (legacy) */
+  --shadow-neon-glow-blue: var(--glow-blue);
+  --shadow-neon-glow-purple: var(--glow-purple);
+  --shadow-glow-blue: var(--glow-blue);
+  --shadow-glow-pink: var(--glow-pink);
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  
-  /* Legacy support */
-  --background: var(--color-bg-base);
-  --foreground: var(--color-text-primary);
-  
-  /* Spacing scale */
+
+  /* ----------------------------------------------------------------------------
+     SISTEMA DE TIPOGRAFÍA
+     ---------------------------------------------------------------------------- */
+  --font-heading: 'Plus Jakarta Sans', 'Satoshi', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-kpi: 'Inter', system-ui, sans-serif;
+
+  /* Headings */
+  --text-h1-size: 32px;
+  --text-h1-line: 1.2;
+  --text-h1-weight: 700;
+  --text-h1-letter: -0.03em;
+
+  --text-h2-size: 24px;
+  --text-h2-line: 1.3;
+  --text-h2-weight: 600;
+  --text-h2-letter: -0.02em;
+
+  --text-h3-size: 20px;
+  --text-h3-line: 1.4;
+  --text-h3-weight: 600;
+  --text-h3-letter: -0.02em;
+
+  --text-h4-size: 18px;
+  --text-h4-line: 1.4;
+  --text-h4-weight: 600;
+  --text-h4-letter: -0.01em;
+
+  /* Body */
+  --text-body-lg-size: 16px;
+  --text-body-lg-line: 1.5;
+  --text-body-lg-weight: 400;
+
+  --text-body-md-size: 15px;
+  --text-body-md-line: 1.5;
+  --text-body-md-weight: 400;
+
+  --text-body-sm-size: 13px;
+  --text-body-sm-line: 1.5;
+  --text-body-sm-weight: 400;
+
+  /* KPIs / Numeric */
+  --text-kpi-size: 28px;
+  --text-kpi-line: 1.2;
+  --text-kpi-weight: 600;
+  --text-kpi-letter: -0.01em;
+
+  /* ----------------------------------------------------------------------------
+     SISTEMA DE FORMAS - Border Radius (Capsule System)
+     ---------------------------------------------------------------------------- */
+  --radius-xs: 8px;        /* Badges pequeños, tags */
+  --radius-sm: 12px;        /* Inputs pequeños, botones pequeños */
+  --radius-md: 18px;       /* Inputs, botones, cards pequeños */
+  --radius-lg: 24px;       /* Cards medianos, modales pequeños */
+  --radius-xl: 28px;       /* Cards grandes, modales */
+  --radius-2xl: 40px;      /* Containers grandes */
+  --radius-pill: 9999px;   /* Pills / Capsules completas */
+
+  /* ----------------------------------------------------------------------------
+     SISTEMA DE ESPACIADO
+     ---------------------------------------------------------------------------- */
+  --spacing-0: 0px;
   --spacing-1: 4px;
-  --spacing-2: 6px;
-  --spacing-3: 8px;
-  --spacing-4: 12px;
-  --spacing-5: 16px;
-  --spacing-6: 20px;
-  --spacing-7: 24px;
-  --spacing-8: 32px;
-  --spacing-9: 40px;
-  
-  /* Border radius scale - actualizado para más redondeo */
-  --radius-xs: 8px;
-  --radius-sm: 12px;
-  --radius-md: 18px;
-  --radius-lg: 24px;
-  --radius-xl: 28px;
-  --radius-2xl: 40px;
-  
-  /* Transiciones suaves */
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-7: 32px;
+  --spacing-8: 40px;
+  --spacing-9: 48px;
+  --spacing-10: 64px;
+
+  /* Spacing Semántico */
+  --spacing-xs: var(--spacing-2);
+  --spacing-sm: var(--spacing-3);
+  --spacing-md: var(--spacing-4);
+  --spacing-lg: var(--spacing-6);
+  --spacing-xl: var(--spacing-8);
+  --spacing-2xl: var(--spacing-10);
+
+  /* Legacy compatibility */
+  --spacing-1-old: 4px;
+  --spacing-2-old: 6px;
+  --spacing-3-old: 8px;
+  --spacing-4-old: 12px;
+  --spacing-5-old: 16px;
+  --spacing-6-old: 20px;
+  --spacing-7-old: 24px;
+  --spacing-8-old: 32px;
+  --spacing-9-old: 40px;
+
+  /* ----------------------------------------------------------------------------
+     SISTEMA DE ANIMACIONES Y MOTION
+     ---------------------------------------------------------------------------- */
+  /* Easing Functions */
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-smooth: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in-smooth: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Duración de Transiciones */
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 400ms;
+
+  /* Legacy compatibility */
+  --transition-fast: var(--duration-fast) var(--ease-smooth);
+  --transition-base: var(--duration-base) var(--ease-smooth);
+  --transition-slow: var(--duration-slow) var(--ease-smooth);
+
+  /* ----------------------------------------------------------------------------
+     BREAKPOINTS VERTICALES - ZERO SCROLL SYSTEM
+     ---------------------------------------------------------------------------- */
+  --vh-large: 950px;   /* Layout amplio, separación elegante */
+  --vh-medium: 800px;  /* Layout compacto */
+  --vh-small: 750px;   /* Layout ultra-compact */
+  --vh-tiny: 650px;    /* Modo mínimo */
 }
 
 @theme inline {
@@ -204,19 +396,35 @@ h4 {
   font-weight: 400;
 }
 
-/* Glassmorphism utilities - mejorado */
+/* ============================================================================
+   GLASS UTILITIES - Soft Glass System
+   ============================================================================ */
 .glass {
-  background: var(--glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-default {
+  background: var(--bg-card);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
 }
 
 .glass-subtle {
-  background: var(--bg-secondary);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--glass-bg-subtle);
+  backdrop-filter: var(--glass-blur-subtle);
+  -webkit-backdrop-filter: var(--glass-blur-subtle);
+  border: 1px solid var(--glass-border-subtle);
+}
+
+.glass-strong {
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur-strong);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  border: 1px solid var(--glass-border-strong);
 }
 
 /* Aurora gradients */
@@ -236,9 +444,95 @@ h4 {
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Sombras premium */
+/* ============================================================================
+   SOMBRAS Y GLOWS UTILITIES
+   ============================================================================ */
+.shadow-card {
+  box-shadow: var(--shadow-card);
+}
+
+.shadow-card-hover {
+  box-shadow: var(--shadow-card-hover);
+}
+
+.shadow-modal {
+  box-shadow: var(--shadow-modal);
+}
+
+.shadow-input-focus {
+  box-shadow: var(--shadow-input-focus);
+}
+
+/* Glows */
+.glow-aqua {
+  box-shadow: var(--glow-aqua);
+}
+
+.glow-purple {
+  box-shadow: var(--glow-purple);
+}
+
+.glow-blue {
+  box-shadow: var(--glow-blue);
+}
+
+.glow-pink {
+  box-shadow: var(--glow-pink);
+}
+
+/* Glow Borders (neo-glow edges) */
+.glow-border-aqua {
+  box-shadow: var(--glow-border-aqua);
+}
+
+.glow-border-purple {
+  box-shadow: var(--glow-border-purple);
+}
+
+.glow-border-blue {
+  box-shadow: var(--glow-border-blue);
+}
+
+.glow-border-pink {
+  box-shadow: var(--glow-border-pink);
+}
+
+/* ============================================================================
+   CAPSULE & SURFACE UTILITIES
+   ============================================================================ */
+.capsule {
+  border-radius: var(--radius-pill);
+}
+
+.surface-card {
+  background: var(--bg-card);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.surface-panel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--glass-border-subtle);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+
+.premium-divider {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--glass-border),
+    transparent
+  );
+  border: none;
+  margin: var(--spacing-4) 0;
+}
+
+/* Legacy compatibility */
 .shadow-premium {
-  box-shadow: var(--shadow-premium);
+  box-shadow: var(--shadow-card);
 }
 
 .shadow-glass {
@@ -282,7 +576,9 @@ aside.sidebar-no-shadow {
   background-clip: text;
 }
 
-/* Microinteracciones suaves */
+/* ============================================================================
+   TRANSICIONES Y MICROINTERACCIONES
+   ============================================================================ */
 .transition-smooth {
   transition: all var(--transition-base);
 }
@@ -293,6 +589,10 @@ aside.sidebar-no-shadow {
 
 .transition-slow {
   transition: all var(--transition-slow);
+}
+
+.transition-slower {
+  transition: all var(--duration-slower) var(--ease-smooth);
 }
 
 .hover-lift {
@@ -339,11 +639,13 @@ aside.sidebar-no-shadow {
   scrollbar-color: rgba(255, 255, 255, 0.1) var(--color-bg-primary);
 }
 
-/* Animaciones premium */
-@keyframes fadeIn {
+/* ============================================================================
+   ANIMACIONES ESTÁNDAR - Entry, Exit, Micro-interactions
+   ============================================================================ */
+@keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -354,11 +656,73 @@ aside.sidebar-no-shadow {
 @keyframes fadeInScale {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.96);
   }
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-glow-aqua {
+  0%, 100% {
+    box-shadow: var(--glow-aqua);
+  }
+  50% {
+    box-shadow: var(--glow-aqua), 0px 0px 24px rgba(79, 227, 193, 0.6);
+  }
+}
+
+@keyframes pulse-glow-purple {
+  0%, 100% {
+    box-shadow: var(--glow-purple);
+  }
+  50% {
+    box-shadow: var(--glow-purple), 0px 0px 24px rgba(160, 107, 255, 0.6);
+  }
+}
+
+/* Clases de animación */
+.animate-fadeInUp {
+  animation: fadeInUp var(--duration-base) var(--ease-out-smooth);
+}
+
+.animate-fadeInScale {
+  animation: fadeInScale var(--duration-base) var(--ease-smooth);
+}
+
+.animate-slideInRight {
+  animation: slideInRight var(--duration-base) var(--ease-out-smooth);
+}
+
+.animate-pulse-glow-aqua {
+  animation: pulse-glow-aqua 2s ease-in-out infinite;
+}
+
+.animate-pulse-glow-purple {
+  animation: pulse-glow-purple 2s ease-in-out infinite;
+}
+
+/* Legacy compatibility */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -373,10 +737,6 @@ aside.sidebar-no-shadow {
 
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-out;
-}
-
-.animate-fadeInScale {
-  animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .animate-glow {

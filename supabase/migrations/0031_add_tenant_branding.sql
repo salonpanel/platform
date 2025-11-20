@@ -26,3 +26,5 @@ where portal_url is null and slug is not null;
 
 
 
+
+

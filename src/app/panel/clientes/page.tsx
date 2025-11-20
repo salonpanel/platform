@@ -4,11 +4,24 @@ import { useEffect, useState, Suspense, useMemo } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useSearchParams } from "next/navigation";
 import { getCurrentTenant } from "@/lib/panel-tenant";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
-import { Spinner } from "@/components/ui/Spinner";
-import { EmptyState } from "@/components/ui/EmptyState";
+import {
+  Card,
+  Button,
+  Modal,
+  Spinner,
+  EmptyState,
+  SearchInput,
+  Input,
+  FormField,
+  DataTable,
+  useToast,
+  TitleBar,
+} from "@/components/ui";
+import { HeightAwareContainer, useHeightAware } from "@/components/panel/HeightAwareContainer";
+import { PanelSection } from "@/components/panel/PanelSection";
+import { motion } from "framer-motion";
+import { Users, UserPlus, Mail, Phone, Calendar, Edit } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type Customer = {
   id: string;
@@ -22,12 +35,16 @@ type Customer = {
 function ClientesContent() {
   const supabase = createClientComponentClient();
   const searchParams = useSearchParams();
+  const { showToast } = useToast();
+  const heightAware = useHeightAware();
+  const { density: rawDensity } = heightAware;
+  // Mapear Density type a valores aceptados por componentes UI
+  const density = rawDensity === "normal" ? "default" : rawDensity;
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -36,6 +53,11 @@ function ClientesContent() {
     email: "",
     phone: "",
   });
+  const [formErrors, setFormErrors] = useState<{
+    name?: string;
+    email?: string;
+    phone?: string;
+  }>({});
 
   const impersonateOrgId = useMemo(
     () => searchParams?.get("impersonate") || null,
@@ -131,6 +153,7 @@ function ClientesContent() {
   const openNewModal = () => {
     setEditingCustomer(null);
     setForm({ name: "", email: "", phone: "" });
+    setFormErrors({});
     setError(null);
     setShowModal(true);
   };
@@ -142,6 +165,7 @@ function ClientesContent() {
       email: customer.email || "",
       phone: customer.phone || "",
     });
+    setFormErrors({});
     setError(null);
     setShowModal(true);
   };
@@ -150,11 +174,28 @@ function ClientesContent() {
     setShowModal(false);
     setEditingCustomer(null);
     setForm({ name: "", email: "", phone: "" });
+    setFormErrors({});
     setError(null);
   };
 
+  const validateForm = () => {
+    const errors: typeof formErrors = {};
+    if (!form.name.trim()) {
+      errors.name = "El nombre es obligatorio";
+    }
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      errors.email = "El email no es válido";
+    }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async () => {
-    if (!tenantId || !form.name.trim() || saving) return;
+    if (!tenantId || saving) return;
+
+    if (!validateForm()) {
+      return;
+    }
 
     setError(null);
     setSaving(true);
@@ -184,7 +225,11 @@ function ClientesContent() {
               : c
           )
         );
-        setSuccessMessage("Cliente actualizado correctamente");
+        showToast({
+          type: "success",
+          title: "Cliente actualizado",
+          message: "El cliente se ha actualizado correctamente",
+        });
       } else {
         // Crear
         const { data, error: createError } = await supabase
@@ -203,13 +248,21 @@ function ClientesContent() {
         }
 
         setCustomers((prev) => [{ ...data, bookings_count: 0 }, ...prev]);
-        setSuccessMessage("Cliente creado correctamente");
+        showToast({
+          type: "success",
+          title: "Cliente creado",
+          message: "El cliente se ha creado correctamente",
+        });
       }
 
       closeModal();
-      setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
       setError(err?.message || "Error al guardar cliente");
+      showToast({
+        type: "error",
+        title: "Error",
+        message: err?.message || "Error al guardar cliente",
+      });
     } finally {
       setSaving(false);
     }
@@ -224,6 +277,28 @@ function ClientesContent() {
     );
   });
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 8 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.2,
+        ease: "easeOut" as const,
+      },
+    },
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -234,180 +309,262 @@ function ClientesContent() {
 
   if (error && !tenantId) {
     return (
-      <Card className="border-red-500/50 bg-red-500/10">
-        <div className="text-red-400">
-          <h3 className="mb-2 font-semibold">Error</h3>
-          <p className="text-sm">{error}</p>
+      <Card variant="default" className="border-[var(--color-danger)]/50 bg-[var(--color-danger-glass)]">
+        <div className="text-[var(--color-danger)]">
+          <h3
+            className="mb-2 font-semibold"
+            style={{ fontFamily: "var(--font-heading)" }}
+          >
+            Error
+          </h3>
+          <p
+            className="text-sm"
+            style={{ fontFamily: "var(--font-body)" }}
+          >
+            {error}
+          </p>
         </div>
       </Card>
     );
   }
 
+  const columns = [
+    {
+      key: "name",
+      header: "Nombre",
+      sortable: true,
+      accessor: (row: Customer) => (
+        <div
+          className="font-semibold"
+          style={{
+            fontFamily: "var(--font-body)",
+            color: "var(--text-primary)",
+          }}
+        >
+          {row.name}
+        </div>
+      ),
+    },
+    {
+      key: "email",
+      header: "Email",
+      sortable: true,
+      accessor: (row: Customer) => (
+        <div
+          className="flex items-center gap-2"
+          style={{
+            fontFamily: "var(--font-body)",
+            color: row.email ? "var(--text-secondary)" : "var(--text-tertiary)",
+          }}
+        >
+          {row.email ? (
+            <>
+              <Mail className="h-4 w-4" />
+              {row.email}
+            </>
+          ) : (
+            "-"
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "phone",
+      header: "Teléfono",
+      sortable: false,
+      accessor: (row: Customer) => (
+        <div
+          className="flex items-center gap-2"
+          style={{
+            fontFamily: "var(--font-body)",
+            color: row.phone ? "var(--text-secondary)" : "var(--text-tertiary)",
+          }}
+        >
+          {row.phone ? (
+            <>
+              <Phone className="h-4 w-4" />
+              {row.phone}
+            </>
+          ) : (
+            "-"
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "bookings_count",
+      header: "Reservas",
+      sortable: true,
+      accessor: (row: Customer) => (
+        <div
+          className="flex items-center gap-2"
+          style={{
+            fontFamily: "var(--font-body)",
+            color: "var(--text-secondary)",
+          }}
+        >
+          <Calendar className="h-4 w-4" />
+          {row.bookings_count || 0}
+        </div>
+      ),
+    },
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Header con búsqueda y botón */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass rounded-xl p-4 border border-[rgba(255,255,255,0.08)] backdrop-blur-md">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)] font-satoshi tracking-tight">Clientes</h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">
-            {customers.length} {customers.length === 1 ? "cliente" : "clientes"}
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <input
-            type="text"
-            placeholder="Buscar por nombre, email o teléfono..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full sm:w-64 rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
-            style={{ borderRadius: "var(--radius-md)" }}
-          />
-          <Button onClick={openNewModal}>+ Nuevo Cliente</Button>
-        </div>
-      </div>
+    <div className="h-full flex flex-col min-h-0 overflow-hidden">
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="flex-1 flex flex-col min-h-0 overflow-hidden"
+      >
+        {/* Header fijo: Búsqueda + Botón */}
+        <motion.div variants={itemVariants} className="flex-shrink-0 mb-4">
+          <PanelSection
+            variant="default"
+            density="auto"
+            padding={density === "ultra-compact" ? "compact" : density === "compact" ? "sm" : "md"}
+            scrollable={false}
+          >
+            <div className={cn(
+              "flex flex-col gap-3",
+              density === "ultra-compact" ? "sm:flex-row" : "sm:flex-row"
+            )}>
+              <TitleBar
+                title="Clientes"
+                subtitle={`${customers.length} ${customers.length === 1 ? "cliente" : "clientes"}`}
+                density={density}
+              >
+                <div className={cn(
+                  "flex gap-3",
+                  density === "ultra-compact" ? "flex-col" : "flex-row"
+                )}>
+                  <SearchInput
+                    value={searchTerm}
+                    onChange={setSearchTerm}
+                    placeholder="Buscar..."
+                    debounceMs={300}
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={openNewModal}
+                    icon={<UserPlus className="h-4 w-4" />}
+                    density={rawDensity === "normal" ? "default" : rawDensity === "ultra-compact" ? "compact" : rawDensity}
+                  >
+                    Nuevo
+                  </Button>
+                </div>
+              </TitleBar>
+            </div>
+          </PanelSection>
+        </motion.div>
 
-      {/* Mensaje de éxito */}
-      {successMessage && (
-        <Card className="border-[rgba(16,185,129,0.4)] bg-[rgba(16,185,129,0.08)]">
-          <p className="text-sm text-emerald-400">{successMessage}</p>
-        </Card>
-      )}
-
-      {/* Mensaje de error */}
-      {error && (
-        <Card className="border-[rgba(239,68,68,0.4)] bg-[rgba(239,68,68,0.08)]">
-          <p className="text-sm text-red-400">{error}</p>
-        </Card>
-      )}
-
-      {/* Lista de clientes */}
-      {filteredCustomers.length === 0 ? (
-        <Card>
-          <EmptyState
-            title={
-              searchTerm
-                ? "No se encontraron clientes"
-                : "No hay clientes registrados"
-            }
-            description={
-              searchTerm
-                ? "Intenta con otro criterio de búsqueda"
-                : "Crea tu primer cliente para empezar"
-            }
-          />
-        </Card>
-      ) : (
-        <>
-          {/* Vista Desktop: Tabla */}
-          <div className="hidden md:block overflow-x-auto">
-            <Card padding="none">
-              <table className="w-full">
-                <thead className="border-b border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.03)]">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.08em]">
-                      Nombre
-                    </th>
-                    <th className="px-4 py-3 text-left text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.08em]">
-                      Email
-                    </th>
-                    <th className="px-4 py-3 text-left text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.08em]">
-                      Teléfono
-                    </th>
-                    <th className="px-4 py-3 text-left text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.08em]">
-                      Reservas
-                    </th>
-                    <th className="px-4 py-3 text-right text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.08em]">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[rgba(255,255,255,0.06)]">
-                  {filteredCustomers.map((customer) => (
-                    <tr
-                      key={customer.id}
-                      className="hover:bg-[rgba(255,255,255,0.04)] transition-colors"
-                    >
-                      <td className="px-4 py-3">
-                        <div className="text-sm font-semibold text-[var(--text-primary)]">
+        {/* DataTable con scroll interno */}
+        <motion.div variants={itemVariants} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+          {filteredCustomers.length === 0 ? (
+            <Card variant="default" density={density}>
+              <EmptyState
+                title={
+                  searchTerm
+                    ? "No se encontraron clientes"
+                    : "No hay clientes registrados"
+                }
+                description={
+                  searchTerm
+                    ? "Intenta con otro criterio de búsqueda"
+                    : "Crea tu primer cliente para empezar"
+                }
+              />
+            </Card>
+          ) : (
+            <DataTable
+              data={filteredCustomers}
+              columns={columns}
+              loading={loading}
+              onRowClick={(customer) => openEditModal(customer)}
+              emptyMessage="No hay clientes"
+              mobileCard={(customer) => (
+                <Card variant="default" className="cursor-pointer" density={density}>
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div
+                          className={cn(
+                            "font-semibold",
+                            density === "ultra-compact" ? "text-sm" : "text-base"
+                          )}
+                          style={{
+                            fontFamily: "var(--font-body)",
+                            color: "var(--text-primary)",
+                          }}
+                        >
                           {customer.name}
                         </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="text-sm text-[var(--text-secondary)]">
-                          {customer.email || "-"}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="text-sm text-[var(--text-secondary)]">
-                          {customer.phone || "-"}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="text-sm text-[var(--text-secondary)]">
-                          {customer.bookings_count || 0}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditModal(customer)}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          openEditModal(customer);
+                        }}
+                        icon={<Edit className="h-4 w-4" />}
+                        density={rawDensity === "normal" ? "default" : rawDensity === "ultra-compact" ? "compact" : rawDensity}
+                      >
+                        Editar
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      {customer.email && (
+                        <div
+                          className={cn(
+                            "flex items-center gap-2",
+                            density === "ultra-compact" ? "text-xs" : "text-sm"
+                          )}
+                          style={{
+                            fontFamily: "var(--font-body)",
+                            color: "var(--text-secondary)",
+                          }}
                         >
-                          Editar
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Card>
-          </div>
-
-          {/* Vista Mobile: Cards */}
-          <div className="md:hidden space-y-3">
-            {filteredCustomers.map((customer) => (
-              <Card key={customer.id} className="p-4">
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="text-base font-semibold text-[var(--text-primary)]">
-                        {customer.name}
+                          <Mail className="h-4 w-4" />
+                          {customer.email}
+                        </div>
+                      )}
+                      {customer.phone && (
+                        <div
+                          className={cn(
+                            "flex items-center gap-2",
+                            density === "ultra-compact" ? "text-xs" : "text-sm"
+                          )}
+                          style={{
+                            fontFamily: "var(--font-body)",
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          <Phone className="h-4 w-4" />
+                          {customer.phone}
+                        </div>
+                      )}
+                      <div
+                        className={cn(
+                          "flex items-center gap-2",
+                          density === "ultra-compact" ? "text-xs" : "text-sm"
+                        )}
+                        style={{
+                          fontFamily: "var(--font-body)",
+                          color: "var(--text-secondary)",
+                        }}
+                      >
+                        <Calendar className="h-4 w-4" />
+                        {customer.bookings_count || 0} reservas
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openEditModal(customer)}
-                    >
-                      Editar
-                    </Button>
                   </div>
-                  <div className="space-y-1 text-sm text-[var(--text-secondary)]">
-                    {customer.email && (
-                      <div>
-                        <span className="text-[var(--text-tertiary)]">Email:</span>{" "}
-                        <span className="text-[var(--text-secondary)]">{customer.email}</span>
-                      </div>
-                    )}
-                    {customer.phone && (
-                      <div>
-                        <span className="text-[var(--text-tertiary)]">Teléfono:</span>{" "}
-                        <span className="text-[var(--text-secondary)]">{customer.phone}</span>
-                      </div>
-                    )}
-                    <div>
-                      <span className="text-[var(--text-tertiary)]">Reservas:</span>{" "}
-                      <span className="text-[var(--text-secondary)]">
-                        {customer.bookings_count || 0}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </>
-      )}
+                </Card>
+              )}
+            />
+          )}
+        </motion.div>
+      </motion.div>
 
       {/* Modal de crear/editar */}
       <Modal
@@ -431,56 +588,70 @@ function ClientesContent() {
       >
         <div className="space-y-4">
           {error && (
-            <div className="rounded-lg border border-[rgba(239,68,68,0.4)] bg-[rgba(239,68,68,0.08)] p-3">
-              <p className="text-sm text-red-400">{error}</p>
+            <div className="rounded-[var(--radius-md)] border border-[var(--color-danger)]/40 bg-[var(--color-danger-glass)] p-3">
+              <p
+                className="text-sm text-[var(--color-danger)]"
+                style={{ fontFamily: "var(--font-body)" }}
+              >
+                {error}
+              </p>
             </div>
           )}
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-[var(--color-text-primary)] font-satoshi">
-              Nombre <span className="text-red-400">*</span>
-            </label>
-            <input
+          <FormField
+            label="Nombre"
+            error={formErrors.name}
+            required
+          >
+            <Input
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
-              style={{ borderRadius: "var(--radius-md)" }}
               placeholder="Nombre completo"
+              variant="glass"
               autoFocus
             />
-          </div>
+          </FormField>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-[var(--color-text-primary)] font-satoshi">
-              Email
-            </label>
-            <input
+          <FormField
+            label="Email"
+            error={formErrors.email}
+            helperText="Opcional"
+          >
+            <Input
               type="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
-              style={{ borderRadius: "var(--radius-md)" }}
               placeholder="email@ejemplo.com"
+              variant="glass"
+              icon={<Mail className="h-4 w-4" />}
             />
-          </div>
+          </FormField>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-[var(--color-text-primary)] font-satoshi">
-              Teléfono
-            </label>
-            <input
+          <FormField
+            label="Teléfono"
+            helperText="Opcional"
+          >
+            <Input
               type="tel"
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className="w-full rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
-              style={{ borderRadius: "var(--radius-md)" }}
               placeholder="+34 600 000 000"
+              variant="glass"
+              icon={<Phone className="h-4 w-4" />}
             />
-          </div>
+          </FormField>
         </div>
       </Modal>
     </div>
+  );
+}
+
+function ClientesWrapper() {
+  return (
+    <HeightAwareContainer className="h-full">
+      <ClientesContent />
+    </HeightAwareContainer>
   );
 }
 
@@ -493,7 +664,7 @@ export default function ClientesPage() {
         </div>
       }
     >
-      <ClientesContent />
+      <ClientesWrapper />
     </Suspense>
   );
 }

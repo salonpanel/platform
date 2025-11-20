@@ -64,7 +64,7 @@ export function CustomerBookingsTimeline({
                   <span className="text-sm font-semibold text-[var(--color-text-primary)] font-satoshi">
                     {formatBookingDate(booking.starts_at, tenantTimezone)}
                   </span>
-                  <StatusBadge status={booking.status} size="sm" />
+                  <StatusBadge status={booking.status === "confirmed" ? "paid" : booking.status} size="sm" />
                   {isNoShow && (
                     <span className="text-xs text-amber-400 font-medium">⚠️ No-show</span>
                   )}

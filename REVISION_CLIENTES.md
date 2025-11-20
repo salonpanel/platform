@@ -128,3 +128,5 @@ El módulo `/panel/clientes` y `/panel/clientes/[id]` está ahora en modo "herra
 - ✅ UX mejorada con KPIs contextuales y empty states claros
 - ✅ Código limpio, tipado y mantenible
 
+
+

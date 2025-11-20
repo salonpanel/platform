@@ -1,6 +1,8 @@
 import { supabaseServer } from "@/lib/supabase";
 import { ReserveClient, PublicService, PublicServiceWithSlots } from "./ReserveClient";
 import { format } from "date-fns";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 type Props = {
   params: { orgId: string };
@@ -8,6 +10,54 @@ type Props = {
 };
 
 export const dynamic = "force-dynamic";
+
+// Metadatos SEO para el portal público de reservas
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const supabase = supabaseServer();
+  
+  // Intentar obtener el nombre del tenant para personalizar el título
+  let tenantName = "Barbería";
+  try {
+    // Intentar primero por ID (UUID)
+    const { data: tenantById } = await supabase
+      .from("tenants")
+      .select("name")
+      .eq("id", params.orgId)
+      .maybeSingle();
+    
+    // Si no se encuentra por ID, intentar por slug
+    if (!tenantById) {
+      const { data: tenantBySlug } = await supabase
+        .from("tenants")
+        .select("name")
+        .eq("slug", params.orgId)
+        .maybeSingle();
+      
+      if (tenantBySlug) {
+        tenantName = tenantBySlug.name;
+      }
+    } else {
+      tenantName = tenantById.name;
+    }
+  } catch (error) {
+    // Si falla, usar el nombre genérico
+    console.error("Error obteniendo nombre del tenant para metadata:", error);
+  }
+
+  return {
+    title: `${tenantName} - Reserva tu cita online | BookFast`,
+    description: `Reserva tu cita en ${tenantName} de forma rápida y sencilla. Elige servicio, fecha y hora.`,
+    robots: {
+      index: true, // El portal público SÍ debe ser indexado
+      follow: true,
+    },
+    openGraph: {
+      title: `${tenantName} - Reserva tu cita online`,
+      description: `Reserva tu cita en ${tenantName} de forma rápida y sencilla.`,
+      type: "website",
+    },
+  };
+}
 
 export default async function ReservePage({ params, searchParams }: Props) {
   const supabase = supabaseServer();
@@ -35,15 +85,9 @@ export default async function ReservePage({ params, searchParams }: Props) {
   }
 
   if (tenantError || !tenantData) {
-    // Si no se encuentra el tenant, retornar error
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-        <div className="glass rounded-2xl border border-red-500/50 bg-red-500/10 p-8 text-center max-w-md shadow-[0px_12px_48px_rgba(0,0,0,0.5)]">
-          <h1 className="text-2xl font-bold text-red-400 mb-2 font-satoshi">Organización no encontrada</h1>
-          <p className="text-slate-400">La organización que buscas no existe o no está disponible.</p>
-        </div>
-      </div>
-    );
+    // Si no se encuentra el tenant, usar notFound() de Next.js
+    // Esto mostrará app/not-found.tsx o app/r/[orgId]/not-found.tsx si existe
+    notFound();
   }
 
   tenantId = tenantData.id;
@@ -137,6 +181,10 @@ export default async function ReservePage({ params, searchParams }: Props) {
   }
 
   const publicServices = (services ?? []) as PublicService[];
+
+  if (!tenantId) {
+    notFound();
+  }
 
   return (
     <ReserveClient

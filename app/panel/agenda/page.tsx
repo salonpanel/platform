@@ -70,7 +70,7 @@ const [showBookingDetail, setShowBookingDetail] = useState(false);
 const [showBlockingModal, setShowBlockingModal] = useState(false);
 
 const [selectedSlot, setSelectedSlot] = useState<CalendarSlot | null>(null);
-  const [services, setServices] = useState<Array<{ id: string; name: string; duration_min: number; price_cents: number }>>([]);
+  const [services, setServices] = useState<Array<{ id: string; name: string; duration_min: number; price_cents: number; buffer_min: number }>>([]);
   const [customers, setCustomers] = useState<Array<{ id: string; name: string; email: string | null; phone: string | null; notes?: string | null }>>([]);
   
   const { showToast, ToastComponent } = useToast();
@@ -147,13 +147,13 @@ const [selectedSlot, setSelectedSlot] = useState<CalendarSlot | null>(null);
         // Cargar servicios
         const { data: servicesData } = await supabase
           .from("services")
-          .select("id, name, duration_min, price_cents")
+          .select("id, name, duration_min, price_cents, buffer_min")
           .eq("tenant_id", tenant.id)
           .eq("active", true)
           .order("name");
 
         if (servicesData) {
-          setServices(servicesData);
+          setServices(servicesData.map(s => ({ ...s, buffer_min: s.buffer_min ?? 0 })));
         }
 
         // Cargar clientes
@@ -541,6 +541,11 @@ const onSaveBlocking = async (blockingData: BlockingFormPayload) => {
       }
 
       const targetStaffId = newStaffId || bookingToUpdate.staff_id;
+      
+      if (!targetStaffId) {
+        showToast("Debe seleccionar un profesional para la cita", "error");
+        return;
+      }
 
       const hasConflicts = conflictsHook.checkAndShowBookingConflicts({
         id: bookingId,
@@ -644,6 +649,9 @@ const onSaveBlocking = async (blockingData: BlockingFormPayload) => {
 
     // Si no se fuerza el solape, verificar conflictos nuevamente
     if (!forceOverlap) {
+      if (!bookingData.staff_id) {
+        throw new Error("Debe seleccionar un profesional para la cita");
+      }
       const detectedConflicts = detectConflictsForBooking(
         bookingData.starts_at,
         bookingData.ends_at,
@@ -661,7 +669,7 @@ const onSaveBlocking = async (blockingData: BlockingFormPayload) => {
       // Update: obtener el booking actual para comparar y respetar restricciones
       const { data: currentBooking, error: fetchError } = await supabase
         .from("bookings")
-        .select("status, staff_id, starts_at, ends_at")
+        .select("status, staff_id, starts_at, ends_at, internal_notes, client_message, is_highlighted, customer_id, service_id")
         .eq("id", bookingData.id)
         .eq("tenant_id", tenantId)
         .single();
@@ -1060,7 +1068,7 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
 
   // Handler para filtrar por staff desde chips de utilización
   const handleStaffFilterChange = (staffId: string) => {
-    setFilters((prev) => {
+    setFilters((prev: { payment: string[]; status: string[]; staff: string[]; highlighted: boolean | null }) => {
       // Si el staff ya está filtrado, quitarlo; si no, añadirlo
       const currentStaff = prev.staff.includes("all") ? [] : prev.staff;
       if (currentStaff.includes(staffId)) {
@@ -1549,7 +1557,12 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
                 });
               } else if (conflictsHook.pendingBlocking) {
                 await conflictsHook.handleResolve(resolution, async (force) => {
-                  await saveBlocking(conflictsHook.pendingBlocking!, force);
+                  const blocking = conflictsHook.pendingBlocking!;
+                  await saveBlocking({
+                    ...blocking,
+                    type: blocking.type || "block",
+                    reason: blocking.reason || "",
+                  }, force);
                 });
               }
             } catch (err) {

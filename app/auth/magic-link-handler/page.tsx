@@ -1,19 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
-export default function MagicLinkHandlerPage() {
+function MagicLinkHandlerContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const supabase = createClientComponentClient({
-    options: {
-      auth: {
-        storageKey: "sb-magic-link-handler",
-      },
-    },
-  });
+  const supabase = createClientComponentClient();
 
   useEffect(() => {
     const handleMagicLink = async () => {
@@ -83,6 +77,21 @@ export default function MagicLinkHandlerPage() {
         <p className="text-gray-600">Iniciando sesión...</p>
       </div>
     </div>
+  );
+}
+
+export default function MagicLinkHandlerPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+          <p className="text-gray-600">Cargando...</p>
+        </div>
+      </div>
+    }>
+      <MagicLinkHandlerContent />
+    </Suspense>
   );
 }
 

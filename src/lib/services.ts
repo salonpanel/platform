@@ -6,3 +6,5 @@ export function getServiceTotalDuration(
   return service.duration_min + (service.buffer_min ?? 0);
 }
 
+
+

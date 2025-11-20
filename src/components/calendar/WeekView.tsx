@@ -168,7 +168,7 @@ export function WeekView({
                         key={booking.id}
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        whileHover={{ scale: 1.02, brightness: 1.1 }}
+                        whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => onBookingClick(booking)}
                         onKeyDown={(e) => {

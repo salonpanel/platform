@@ -3,16 +3,11 @@
 import { useEffect, useState, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { getCurrentTenant } from "@/lib/panel-tenant";
-import { Spinner } from "@/components/ui/Spinner";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Spinner, Card, Button, EmptyState, Alert, SearchInput, useToast, TitleBar } from "@/components/ui";
 import { StaffEditModal } from "@/components/panel/StaffEditModal";
-import { Alert } from "@/components/ui/Alert";
 import { motion } from "framer-motion";
-import { GlassCard } from "@/components/ui/GlassCard";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
+import { User, UserPlus, Scissors, Calendar, Edit, Power } from "lucide-react";
 
 type Staff = {
   id: string;
@@ -30,6 +25,7 @@ type Staff = {
 function StaffContent() {
   const supabase = getSupabaseBrowser();
   const searchParams = useSearchParams();
+  const toast = useToast();
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -130,125 +126,54 @@ function StaffContent() {
     };
   }, [supabase, tenantId]);
 
-  // La función createStaff ahora está integrada en handleSaveStaff
-
   const startEdit = (staff: Staff) => {
-    if (!canManageStaff) return;
     setEditingStaff(staff);
     setShowEditModal(true);
   };
 
-  const handleSaveStaff = async (data: {
-    name: string;
-    skills: string[];
-    profile_photo_url?: string;
-    weekly_hours?: number;
-    schedules?: Array<{
-      day_of_week: number;
-      start_time: string;
-      end_time: string;
-      is_active: boolean;
-    }>;
-  }) => {
-    if (!tenantId || !canManageStaff) return;
+  const handleSaveStaff = async (staffData: Partial<Staff>) => {
+    if (!tenantId || !editingStaff) return;
 
-    setError(null);
     setSaving(true);
+    setError(null);
 
     try {
-      if (editingStaff) {
-        // Actualizar staff existente
-        const { data: updatedStaff, error: updateError } = await supabase
-          .from("staff")
-          .update({
-            name: data.name.trim(),
-            display_name: data.name.trim(),
-            skills: data.skills.length > 0 ? data.skills : null,
-            profile_photo_url: data.profile_photo_url || null,
-            weekly_hours: data.weekly_hours || null,
-          })
-          .eq("id", editingStaff.id)
-          .select()
-          .single();
+      const { data, error: updateError } = await supabase
+        .from("staff")
+        .update({
+          name: staffData.name,
+          display_name: staffData.display_name,
+          skills: staffData.skills,
+        })
+        .eq("id", editingStaff.id)
+        .select()
+        .single();
 
-        if (updateError) throw updateError;
-
-        // Actualizar horarios
-        if (data.schedules && data.schedules.length > 0) {
-          // Eliminar horarios existentes
-          await supabase
-            .from("staff_schedules")
-            .delete()
-            .eq("tenant_id", tenantId)
-            .eq("staff_id", editingStaff.id);
-
-          // Insertar nuevos horarios
-          const schedulesToInsert = data.schedules.map((s) => ({
-            tenant_id: tenantId,
-            staff_id: editingStaff.id,
-            day_of_week: s.day_of_week,
-            start_time: s.start_time,
-            end_time: s.end_time,
-            is_active: s.is_active,
-          }));
-
-          const { error: schedulesError } = await supabase
-            .from("staff_schedules")
-            .insert(schedulesToInsert);
-
-          if (schedulesError) throw schedulesError;
-        }
-
-        setStaffList((prev) =>
-          prev.map((s) =>
-            s.id === editingStaff.id
-              ? { ...updatedStaff, bookings_count: s.bookings_count }
-              : s
-          )
-        );
-      } else {
-        // Crear nuevo staff
-        const { data: newStaff, error: createError } = await supabase
-          .from("staff")
-          .insert({
-            tenant_id: tenantId,
-            name: data.name.trim(),
-            display_name: data.name.trim(),
-            active: true,
-            skills: data.skills.length > 0 ? data.skills : null,
-            profile_photo_url: data.profile_photo_url || null,
-            weekly_hours: data.weekly_hours || null,
-          })
-          .select()
-          .single();
-
-        if (createError) throw createError;
-
-        // Insertar horarios
-        if (data.schedules && data.schedules.length > 0) {
-          const schedulesToInsert = data.schedules.map((s) => ({
-            tenant_id: tenantId,
-            staff_id: newStaff.id,
-            day_of_week: s.day_of_week,
-            start_time: s.start_time,
-            end_time: s.end_time,
-            is_active: s.is_active,
-          }));
-
-          const { error: schedulesError } = await supabase
-            .from("staff_schedules")
-            .insert(schedulesToInsert);
-
-          if (schedulesError) throw schedulesError;
-        }
-
-        setStaffList((prev) => [...prev, { ...newStaff, bookings_count: 0 }]);
+      if (updateError) {
+        throw new Error(updateError.message);
       }
 
+      setStaffList((prev) =>
+        prev.map((s) =>
+          s.id === editingStaff.id
+            ? { ...data, display_name: data.display_name || data.name, bookings_count: s.bookings_count }
+            : s
+        )
+      );
       setShowEditModal(false);
       setEditingStaff(null);
+      toast.showToast({
+        type: "success",
+        title: "Staff actualizado",
+        message: "El miembro del staff se ha actualizado correctamente",
+      });
     } catch (err: any) {
       setError(err?.message || "Error al guardar staff");
+      toast.showToast({
+        type: "error",
+        title: "Error",
+        message: err?.message || "Error al guardar staff",
+      });
       throw err;
     } finally {
       setSaving(false);
@@ -273,8 +198,18 @@ function StaffContent() {
       setStaffList((prev) =>
         prev.map((s) => (s.id === id ? { ...s, active: data.active } : s))
       );
+      toast.showToast({
+        type: "success",
+        title: data.active ? "Staff activado" : "Staff desactivado",
+        message: `El miembro del staff ha sido ${data.active ? "activado" : "desactivado"}`,
+      });
     } catch (err: any) {
       setError(err?.message || "Error al actualizar staff");
+      toast.showToast({
+        type: "error",
+        title: "Error",
+        message: err?.message || "Error al actualizar staff",
+      });
     }
   };
 
@@ -287,13 +222,32 @@ function StaffContent() {
     );
   });
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 8 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.2,
+        ease: "easeOut" as const,
+      },
+    },
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <Spinner size="lg" />
-          <p className="mt-4 text-slate-400">Cargando staff...</p>
-        </div>
+        <Spinner size="lg" />
       </div>
     );
   }
@@ -307,89 +261,132 @@ function StaffContent() {
   }
 
   return (
-    <div className="space-y-4">
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-6"
+    >
       {/* Header con búsqueda y botón de añadir */}
-      <GlassCard className="p-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-semibold text-[var(--color-text-primary)] font-satoshi leading-tight">Staff</h1>
-            <p className="text-sm text-[var(--color-text-secondary)]">
-              {staffList.filter((s) => s.active).length} activos de {staffList.length} total
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Buscar por nombre o habilidades..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="rounded-lg border border-slate-700/50 bg-slate-800/30 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500/30 transition-all duration-200"
-            />
-            {canManageStaff && (
-              <Button onClick={() => {
-                setEditingStaff(null);
-                setShowEditModal(true);
-              }}>
-                + Nuevo Staff
-              </Button>
-            )}
-          </div>
-        </div>
+      <motion.div variants={itemVariants}>
+        <Card variant="glass" padding="md">
+          <TitleBar
+            title="Staff"
+            subtitle={`${staffList.filter((s) => s.active).length} activos de ${staffList.length} total`}
+          >
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <SearchInput
+                value={searchTerm}
+                onChange={setSearchTerm}
+                placeholder="Buscar por nombre o habilidades..."
+                debounceMs={300}
+                className="w-full sm:w-64"
+              />
+              {canManageStaff && (
+                <Button
+                  onClick={() => {
+                    setEditingStaff(null);
+                    setShowEditModal(true);
+                  }}
+                  icon={<UserPlus className="h-4 w-4" />}
+                >
+                  Nuevo Staff
+                </Button>
+              )}
+            </div>
+          </TitleBar>
 
-        {!canManageStaff && (
-          <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-            Solo los administradores pueden crear o editar miembros del staff.
-          </p>
-        )}
-      </GlassCard>
+          {!canManageStaff && (
+            <p
+              className="mt-4 text-sm"
+              style={{
+                fontFamily: "var(--font-body)",
+                color: "var(--text-secondary)",
+              }}
+            >
+              Solo los administradores pueden crear o editar miembros del staff.
+            </p>
+          )}
+        </Card>
+      </motion.div>
 
       {/* Mensaje de error */}
       {error && (
-        <Alert type="error" onClose={() => setError(null)}>
-          {error}
-        </Alert>
+        <motion.div variants={itemVariants}>
+          <Alert type="error" onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        </motion.div>
       )}
 
       {/* Lista de staff */}
       {filteredStaff.length === 0 ? (
-        <EmptyState
-          title={searchTerm ? "No se encontró staff" : "No hay staff registrado"}
-          description={searchTerm ? "Intenta con otro criterio de búsqueda" : "Crea tu primer miembro del staff"}
-        />
+        <motion.div variants={itemVariants}>
+          <Card variant="default">
+            <EmptyState
+              title={searchTerm ? "No se encontró staff" : "No hay staff registrado"}
+              description={searchTerm ? "Intenta con otro criterio de búsqueda" : "Crea tu primer miembro del staff"}
+            />
+          </Card>
+        </motion.div>
       ) : (
         <div className="space-y-3">
-          {filteredStaff.map((staff) => (
+          {filteredStaff.map((staff, index) => (
             <motion.div
               key={staff.id}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-4 rounded-[var(--radius-lg)] hover:scale-[1.01] transition-all duration-200"
-              style={{
-                background: "linear-gradient(135deg, rgba(123, 92, 255, 0.05) 0%, rgba(77, 226, 195, 0.03) 100%)",
-                backdropFilter: "blur(8px)",
-                WebkitBackdropFilter: "blur(8px)",
-                border: "1px solid rgba(255, 255, 255, 0.06)",
-              }}
+              transition={{ delay: index * 0.05, duration: 0.2 }}
             >
-              <div className="flex items-center justify-between">
+              <Card variant="default" className="cursor-default">
+                <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-[var(--color-text-primary)] font-satoshi">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="rounded-[var(--radius-md)] bg-[var(--accent-aqua-glass)] border border-[var(--accent-aqua-border)] p-2">
+                        <User className="h-4 w-4 text-[var(--accent-aqua)]" />
+                      </div>
+                      <span
+                        className="font-medium"
+                        style={{
+                          fontFamily: "var(--font-heading)",
+                          color: "var(--text-primary)",
+                        }}
+                      >
                         {staff.display_name || staff.name}
                       </span>
-                      <StatusBadge status={staff.active ? "active" : "inactive"} />
-                    </div>
-                    <div className="mt-1 flex flex-wrap gap-4 text-sm text-[var(--color-text-secondary)]">
-                      {staff.skills && staff.skills.length > 0 && (
-                        <span className="flex items-center gap-1">
-                          <span>✂️</span>
-                          {staff.skills.join(", ")}
+                      {staff.active ? (
+                        <span className="rounded-[var(--radius-pill)] bg-[var(--color-success-glass)] border border-[var(--color-success)]/30 px-2.5 py-1 text-xs font-semibold text-[var(--color-success)]">
+                          Activo
+                        </span>
+                      ) : (
+                        <span className="rounded-[var(--radius-pill)] bg-[var(--glass-bg)] border border-[var(--glass-border)] px-2.5 py-1 text-xs font-semibold text-[var(--text-secondary)]">
+                          Inactivo
                         </span>
                       )}
-                      <span className="flex items-center gap-1">
-                        <span>📅</span>
+                    </div>
+                    <div className="flex flex-wrap gap-4 text-sm">
+                      {staff.skills && staff.skills.length > 0 && (
+                        <div
+                          className="flex items-center gap-2"
+                          style={{
+                            fontFamily: "var(--font-body)",
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          <Scissors className="h-4 w-4" />
+                          {staff.skills.join(", ")}
+                        </div>
+                      )}
+                      <div
+                        className="flex items-center gap-2"
+                        style={{
+                          fontFamily: "var(--font-body)",
+                          color: "var(--text-secondary)",
+                        }}
+                      >
+                        <Calendar className="h-4 w-4" />
                         {staff.bookings_count || 0} {staff.bookings_count === 1 ? "reserva" : "reservas"}
-                      </span>
+                      </div>
                     </div>
                   </div>
                   {canManageStaff && (
@@ -398,6 +395,7 @@ function StaffContent() {
                         variant="ghost"
                         size="sm"
                         onClick={() => startEdit(staff)}
+                        icon={<Edit className="h-4 w-4" />}
                       >
                         Editar
                       </Button>
@@ -405,16 +403,18 @@ function StaffContent() {
                         variant={staff.active ? "danger" : "secondary"}
                         size="sm"
                         onClick={() => toggleActive(staff.id, staff.active)}
+                        icon={<Power className="h-4 w-4" />}
                       >
                         {staff.active ? "Desactivar" : "Activar"}
                       </Button>
                     </div>
                   )}
                 </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       {/* Modal de edición/creación de staff */}
       {tenantId && canManageStaff && (
@@ -430,7 +430,7 @@ function StaffContent() {
           supabase={supabase}
         />
       )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -447,4 +447,3 @@ export default function StaffPage() {
     </Suspense>
   );
 }
-

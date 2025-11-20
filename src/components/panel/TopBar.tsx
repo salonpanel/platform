@@ -72,15 +72,6 @@ export function TopBar({
       {/* Contenido integrado sin cajas */}
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-6 flex-1 min-w-0">
-          {/* Mobile menu button */}
-          <button
-            onClick={onMenuClick}
-            className="md:hidden text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-2 -ml-2 rounded-[var(--radius-md)] hover:bg-[rgba(255,255,255,0.04)] transition-all duration-200"
-            aria-label="Abrir menú"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-
           {/* Title integrado */}
           <div className="flex-1 min-w-0">
             <motion.h1 
