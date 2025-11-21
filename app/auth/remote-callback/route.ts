@@ -24,11 +24,12 @@ export async function GET(req: NextRequest) {
   const requestId = url.searchParams.get("request_id");
   const secretToken = url.searchParams.get("token");
 
-  // Log mínimo para debug en producción
-  console.log("[remote-callback] params", {
-    hasCode: !!code,
+  // Log inicial con todos los parámetros que llegan
+  console.log("[RemoteCallback] Incoming params", {
+    code: code ? "present" : "missing",
     requestId,
-    hasSecretToken: !!secretToken,
+    secretToken: secretToken ? "present" : "missing",
+    fullUrl: url.toString(),
   });
 
   if (!code || !requestId || !secretToken) {
@@ -51,6 +52,13 @@ export async function GET(req: NextRequest) {
     }
 
     const { access_token, refresh_token, user } = data.session;
+    
+    console.log("[RemoteCallback] Session obtained", {
+      userId: user?.id,
+      email: user?.email,
+      hasAccessToken: !!access_token,
+      hasRefreshToken: !!refresh_token,
+    });
 
     // 2) Actualizar la request con tokens mediante SERVICE_ROLE
     const admin = createAdminClient(
@@ -63,6 +71,11 @@ export async function GET(req: NextRequest) {
         },
       }
     );
+
+    console.log("[RemoteCallback] Updating login request", {
+      requestId,
+      secretToken: secretToken ? "present" : "missing",
+    });
 
     const { data: updated, error: updateError } = await admin
       .from("auth_login_requests")

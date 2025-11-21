@@ -12,16 +12,22 @@ export default async function PanelLayout({ children }: { children: ReactNode })
   // Crear cliente de Supabase con cookies (server-side)
   const supabase = createServerComponentClient({ cookies });
   
-  // Verificar sesión en el servidor usando getUser (más confiable que getSession)
-  const { data: { user }, error } = await supabase.auth.getUser();
+  // Verificar sesión en el servidor usando getSession (más rápido que getUser)
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-  // Si no hay usuario o hay error, redirigir a login
-  if (!user || error) {
-    // Redirigir a login con la ruta por defecto del panel
-    // El middleware ya maneja las rutas específicas
+  // Si no hay sesión, intentar getUser como fallback
+  if (!session && !sessionError) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (!user || userError) {
+      console.log("[PanelLayout] No session or user, redirecting to login");
+      redirect(`/login?redirect=${encodeURIComponent("/panel")}`);
+    }
+  } else if (!session || sessionError) {
+    console.log("[PanelLayout] Session error or missing, redirecting to login", { error: sessionError });
     redirect(`/login?redirect=${encodeURIComponent("/panel")}`);
   }
 
-  // Si hay usuario, renderizar el layout cliente
+  // Si hay sesión, renderizar el layout cliente
   return <PanelLayoutClient>{children}</PanelLayoutClient>;
 }

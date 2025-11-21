@@ -56,6 +56,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Log el resultado de la creación
+    console.log("[CreateLoginRequest] Created", {
+      id: data.id,
+      email: data.email,
+      redirect_path: data.redirect_path,
+      status: data.status,
+    });
+
     // Return request ID and secret token to client
     // Client will use secret_token in the magic link URL
     return NextResponse.json({
