@@ -42,6 +42,13 @@ export function getSupabaseBrowser(): SupabaseClient {
       },
     });
 
+    // Configurar el cliente para que guarde las cookies correctamente
+    // Esto es necesario para Next.js SSR
+    if (typeof window !== 'undefined') {
+      // El cliente ya está configurado con persistSession: true
+      // Esto automáticamente guarda los tokens en localStorage y cookies
+    }
+
     // Log de depuración: verificar configuración de cookies
     if (typeof window !== 'undefined') {
       console.log("[SupabaseBrowser] Client initialized with config:", {
