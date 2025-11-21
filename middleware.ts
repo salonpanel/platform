@@ -31,14 +31,10 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(url, { status: 301 });
     }
 
-    // 2. Redirigir www.bookfast.es a bookfast.es (301 permanente)
-    if (host === "www.bookfast.es") {
-      url.host = "bookfast.es";
-      logDomainDebug(`Redirigiendo www a dominio raíz: ${url.toString()}`);
-      return NextResponse.redirect(url, { status: 301 });
-    }
+    // NOTA: El redirect de www.bookfast.es → bookfast.es se maneja en Vercel
+    // No hacer redirect aquí para evitar bucles infinitos
 
-    // 3. Redirigir rutas fuera de contexto en bookfast.es
+    // 2. Redirigir rutas fuera de contexto en bookfast.es
     // Si alguien intenta acceder a /panel o /admin desde bookfast.es, redirigir al dominio correcto
     if (host === "bookfast.es") {
       if (pathname.startsWith("/panel")) {
@@ -112,13 +108,23 @@ export async function middleware(req: NextRequest) {
   // ============================================================================
 
   // 1. bookfast.es y www.bookfast.es → público (marketing)
+  // NOTA: El redirect de www → root se maneja en Vercel, no aquí
   // Verificar antes de cualquier otra lógica para evitar bucles
   if (host === "bookfast.es" || host === "www.bookfast.es" || subdomain === "www") {
+    // Permitir que pase sin procesamiento adicional (marketing es público)
     return NextResponse.next();
   }
 
   // 2. Panel profesional (pro.bookfast.es)
   if (subdomain === "pro" || (host.includes("localhost") && pathname.startsWith("/panel"))) {
+    // Log de debug para sesión
+    logDomainDebug(`[Pro Domain] Request:`, {
+      host,
+      pathname,
+      hasSession: !!session,
+      userId: session?.user?.id,
+    });
+
     // AISLAMIENTO: Bloquear /admin y redirigir a admin.bookfast.es (antes de rewrites)
     if (pathname.startsWith("/admin")) {
       const adminUrl = new URL(pathname, URLS.ADMIN_BASE);
@@ -164,12 +170,13 @@ export async function middleware(req: NextRequest) {
       if (!session) {
         url.pathname = "/login";
         url.searchParams.set("redirect", "/panel");
+        logDomainDebug(`[Pro Domain] No session at /, redirecting to login`);
         return NextResponse.redirect(url);
       }
       
       // Rewrite / a /panel
       url.pathname = "/panel";
-      logDomainDebug(`Rewriting / to /panel for pro domain`);
+      logDomainDebug(`[Pro Domain] Rewriting / to /panel (session exists)`);
       return NextResponse.rewrite(url);
     }
 
@@ -177,11 +184,21 @@ export async function middleware(req: NextRequest) {
     const finalPath = pathname.startsWith("/panel") ? pathname : `/panel${pathname}`;
 
     // Proteger rutas /panel/* (requiere sesión) - verificar ANTES del rewrite
-    if (finalPath.startsWith("/panel") && !pathname.startsWith("/login") && !pathname.startsWith("/auth") && !session) {
+    // IMPORTANTE: Solo redirigir si NO hay sesión y NO es una ruta pública
+    if (finalPath.startsWith("/panel") && 
+        !pathname.startsWith("/login") && 
+        !pathname.startsWith("/auth") && 
+        !pathname.startsWith("/api") &&
+        !session) {
       url.pathname = "/login";
       url.searchParams.set("redirect", finalPath);
-      logDomainDebug(`No session found, redirecting to login with redirect=${finalPath}`);
+      logDomainDebug(`[Pro Domain] No session for ${pathname}, redirecting to login with redirect=${finalPath}`);
       return NextResponse.redirect(url);
+    }
+
+    // Si hay sesión, permitir acceso
+    if (session) {
+      logDomainDebug(`[Pro Domain] Session exists for ${pathname}, allowing access`);
     }
 
     // Rewrite todas las rutas a /panel/* (excepto /auth, /api, /login, etc.)
@@ -192,7 +209,7 @@ export async function middleware(req: NextRequest) {
         !pathname.startsWith("/logout") &&
         !pathname.startsWith("/_next")) {
       url.pathname = `/panel${pathname}`;
-      logDomainDebug(`Rewriting ${pathname} to /panel${pathname} for pro domain`);
+      logDomainDebug(`[Pro Domain] Rewriting ${pathname} to /panel${pathname}`);
       return NextResponse.rewrite(url);
     }
 

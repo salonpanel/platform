@@ -22,14 +22,27 @@ import { getClientIp } from "@/lib/rate-limit";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  let allowedAppUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const requestHeaders = await headers();
+  
+  // Log inicial para debug
+  console.log("[AuthCallback] Request received:", {
+    host: url.host,
+    pathname: url.pathname,
+    searchParams: Array.from(url.searchParams.keys()),
+    hasCode: !!url.searchParams.get("code"),
+    hasAccessToken: !!url.searchParams.get("access_token"),
+    hasRefreshToken: !!url.searchParams.get("refresh_token"),
+  });
 
-  // En desarrollo, usar el host de la request si NEXT_PUBLIC_APP_URL no está configurado
+  // Configurar allowedAppUrl
+  let allowedAppUrl = process.env.NEXT_PUBLIC_APP_URL;
   if (!allowedAppUrl) {
     const isDevelopment = process.env.NODE_ENV === "development" || !process.env.NODE_ENV;
     if (isDevelopment) {
       allowedAppUrl = `${url.protocol}//${url.host}`;
+      console.log("[AuthCallback] Using development host:", allowedAppUrl);
     } else {
+      console.error("[AuthCallback] NEXT_PUBLIC_APP_URL not configured in production");
       return NextResponse.json(
         { error: "NEXT_PUBLIC_APP_URL no configurado. Configura esta variable en producción." },
         { status: 500 }
@@ -38,29 +51,12 @@ export async function GET(request: Request) {
   }
 
   const allowedHost = new URL(allowedAppUrl).host;
-  const requestHeaders = await headers();
-  const originHeader = requestHeaders.get("origin");
-
-  // En desarrollo, ser más flexible con la verificación de host
   const isDevelopment = process.env.NODE_ENV === "development" || !process.env.NODE_ENV;
   
+  // Validación de host (solo en producción)
   if (!isDevelopment) {
-    // En producción, verificar estrictamente
-    if (originHeader) {
-      try {
-        const originHost = new URL(originHeader).host;
-        if (originHost !== allowedHost) {
-          return NextResponse.json(
-            { error: "Host de origen no permitido." },
-            { status: 400 }
-          );
-        }
-      } catch {
-        return NextResponse.json({ error: "Origen inválido." }, { status: 400 });
-      }
-    }
-
     if (url.host !== allowedHost) {
+      console.error("[AuthCallback] Host mismatch:", { requestHost: url.host, allowedHost });
       return NextResponse.json(
         { error: "Host de callback inválido." },
         { status: 400 }
@@ -68,14 +64,17 @@ export async function GET(request: Request) {
     }
   }
 
-  // Buscar código en query params (Supabase usa 'code' cuando emailRedirectTo apunta a /auth/callback)
+  // Buscar código o tokens en query params
   const code = url.searchParams.get("code");
+  const accessToken = url.searchParams.get("access_token");
+  const refreshToken = url.searchParams.get("refresh_token");
   
   // Buscar redirect_to (parámetro estándar de Supabase) o redirect (fallback)
   const redirectTo = url.searchParams.get("redirect_to") || url.searchParams.get("redirect") || "/panel";
 
-  // Si no hay código, el magic link no pasó por el callback correctamente
-  if (!code) {
+  // Si no hay código ni tokens, error
+  if (!code && !accessToken) {
+    console.error("[AuthCallback] No code or access_token provided");
     return NextResponse.json(
       { 
         error: "Código de autenticación no proporcionado. Asegúrate de que el magic link apunta a /auth/callback.",
@@ -87,41 +86,63 @@ export async function GET(request: Request) {
 
   try {
     // Crear cliente de Supabase con cookies (Next.js 16+)
-    // IMPORTANTE: Pasar la función cookies directamente, no el resultado await
     const supabaseClient = createRouteHandlerClient({ cookies });
     
-    // Intercambiar código por sesión - esto setea las cookies automáticamente
-    // exchangeCodeForSession es el método oficial de Supabase para magic links
-    const { data, error } = await supabaseClient.auth.exchangeCodeForSession(code);
+    let session;
     
-    if (error) {
-      console.error("Error al intercambiar código por sesión:", error);
-      console.error("Detalles del error:", JSON.stringify(error, null, 2));
+    // Caso 1: Intercambiar código por sesión (flujo estándar de magic link)
+    if (code) {
+      console.log("[AuthCallback] Exchanging code for session...");
+      const { data, error } = await supabaseClient.auth.exchangeCodeForSession(code);
       
-      // Si el error es de PKCE o token inválido, el código puede haber expirado
-      if (
-        error.message?.includes("code verifier") || 
-        error.message?.includes("code_verifier") ||
-        error.message?.includes("expired") ||
-        error.message?.includes("invalid")
-      ) {
+      if (error) {
+        console.error("[AuthCallback] Error exchanging code for session:", error);
+        
+        if (
+          error.message?.includes("code verifier") || 
+          error.message?.includes("code_verifier") ||
+          error.message?.includes("expired") ||
+          error.message?.includes("invalid")
+        ) {
+          return NextResponse.json(
+            { 
+              error: "El enlace ha expirado o es inválido. Por favor, solicita un nuevo enlace mágico desde la página de login." 
+            },
+            { status: 400 }
+          );
+        }
+        
         return NextResponse.json(
-          { 
-            error: "El enlace ha expirado o es inválido. Por favor, solicita un nuevo enlace mágico desde la página de login. Si el problema persiste, verifica que no hayas hecho clic en el enlace más de una vez." 
-          },
+          { error: error.message ?? "No se pudo iniciar sesión." },
           { status: 400 }
         );
       }
-      
-      return NextResponse.json(
-        { error: error.message ?? "No se pudo iniciar sesión." },
-        { status: 400 }
-      );
-    }
 
-    const session = data.session;
+      session = data.session;
+      console.log("[AuthCallback] Session established via code exchange:", { userId: session?.user?.id });
+    }
+    // Caso 2: Establecer sesión directamente con tokens (flujo alternativo)
+    else if (accessToken && refreshToken) {
+      console.log("[AuthCallback] Setting session with tokens...");
+      const { data, error } = await supabaseClient.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+      
+      if (error) {
+        console.error("[AuthCallback] Error setting session:", error);
+        return NextResponse.json(
+          { error: error.message ?? "No se pudo establecer la sesión." },
+          { status: 400 }
+        );
+      }
+
+      session = data.session;
+      console.log("[AuthCallback] Session established via tokens:", { userId: session?.user?.id });
+    }
     
     if (!session) {
+      console.error("[AuthCallback] No session after authentication");
       return NextResponse.json(
         { error: "No se pudo establecer la sesión. Por favor, intenta de nuevo." },
         { status: 400 }
@@ -142,17 +163,17 @@ export async function GET(request: Request) {
           user_agent: userAgent,
         });
       } catch (logError) {
-        // No romper el flujo si el log falla
-        console.warn("Error al registrar en auth_logs (no crítico):", logError);
+        console.warn("[AuthCallback] Error logging to auth_logs (non-critical):", logError);
       }
     }
 
     // Redirigir al panel (o a la ruta indicada)
-    // IMPORTANTE: Usar allowedAppUrl para mantener el dominio correcto
-    // Las cookies ya están seteadas por exchangeCodeForSession
-    return NextResponse.redirect(new URL(redirectTo, allowedAppUrl));
+    const finalRedirectUrl = new URL(redirectTo, allowedAppUrl);
+    console.log("[AuthCallback] Redirecting to:", finalRedirectUrl.toString());
+    
+    return NextResponse.redirect(finalRedirectUrl);
   } catch (err: any) {
-    console.error("Error inesperado en callback:", err);
+    console.error("[AuthCallback] Unexpected error:", err);
     return NextResponse.json(
       { error: err?.message ?? "Error inesperado al procesar la autenticación." },
       { status: 500 }
