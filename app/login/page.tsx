@@ -13,6 +13,7 @@ function LoginContent() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [cooldown, setCooldown] = useState(0); // Cooldown en segundos
 
   // Verificar si ya hay una sesión activa y redirigir al panel
   useEffect(() => {
@@ -30,8 +31,19 @@ function LoginContent() {
     checkSession();
   }, [supabase, router]);
 
+  // Efecto para ir bajando el cooldown
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = setInterval(() => setCooldown((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(id);
+  }, [cooldown]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevenir múltiples llamadas y respetar cooldown
+    if (loading || cooldown > 0) return;
+    
     setError(null);
     setLoading(true);
 
@@ -46,8 +58,15 @@ function LoginContent() {
       if (authError) {
         console.error("Error al enviar OTP:", authError);
         
-        // Manejar diferentes tipos de errores
-        if (authError.message?.includes('rate limit') || authError.message?.includes('too many')) {
+        // Si Supabase devuelve el mensaje de "solo puedes pedirlo después de X segundos"
+        if (authError.message?.includes("you can only request this after")) {
+          // Extraer el número de segundos del mensaje o usar 60 por defecto
+          const match = authError.message.match(/(\d+)\s+seconds?/i);
+          const seconds = match ? parseInt(match[1], 10) : 60;
+          setCooldown(seconds);
+          setError(`Por favor espera ${seconds} segundos antes de solicitar otro código.`);
+        } else if (authError.message?.includes('rate limit') || authError.message?.includes('too many')) {
+          setCooldown(60);
           setError('Por favor espera un momento antes de reenviar el código. Puedes solicitar un nuevo código cada 60 segundos.');
         } else if (authError.message?.includes('email')) {
           setError('Por favor ingresa un correo electrónico válido.');
@@ -61,6 +80,7 @@ function LoginContent() {
       // Éxito: redirigir a la página de verificación
       setSent(true);
       setLoading(false);
+      setCooldown(60); // Establecer cooldown después de envío exitoso
       
       // Redirigir a la página de verificación con el email como parámetro
       router.push(`/login/verify-code?email=${encodeURIComponent(email)}`);
@@ -160,9 +180,9 @@ function LoginContent() {
 
                 <motion.button
                   type="submit"
-                  disabled={loading || !email}
-                  whileHover={{ scale: loading ? 1 : 1.02 }}
-                  whileTap={{ scale: loading ? 1 : 0.98 }}
+                  disabled={loading || !email || cooldown > 0}
+                  whileHover={loading || cooldown > 0 ? undefined : { scale: 1.02 }}
+                  whileTap={loading || cooldown > 0 ? undefined : { scale: 0.98 }}
                   className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold font-satoshi shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
                   style={{ borderRadius: "12px" }}
                 >
@@ -170,6 +190,11 @@ function LoginContent() {
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
                       <span>Enviando...</span>
+                    </>
+                  ) : cooldown > 0 ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Espera {cooldown}s</span>
                     </>
                   ) : (
                     <>

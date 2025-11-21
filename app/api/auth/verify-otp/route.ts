@@ -1,96 +1,62 @@
+// app/api/auth/verify-otp/route.ts
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+// import type { Database } from "@/lib/database.types"; // si tienes tipos
 
-/**
- * Route Handler para verificar código OTP
- * 
- * CRÍTICO: Este endpoint debe ejecutarse en el servidor porque:
- * 1. Usa createRouteHandlerClient({ cookies }) que escribe cookies de sesión
- * 2. Las cookies escritas aquí son accesibles por el middleware y server components
- * 3. Si se hace en el cliente, la sesión solo existe en localStorage y el servidor no la ve
- */
 export async function POST(req: Request) {
   try {
-    console.log("[VerifyOTP API] Iniciando verificación OTP...");
-    
-    const body = await req.json().catch((err) => {
-      console.error("[VerifyOTP API] Error parsing request body:", err);
-      return null;
-    });
+    const body = await req.json();
+    const { email, code } = body;
 
-    if (!body || !body.email || !body.token) {
-      console.error("[VerifyOTP API] Datos incompletos:", { hasEmail: !!body?.email, hasToken: !!body?.token });
+    if (!email || !code) {
       return NextResponse.json(
-        { error: "Datos de verificación incompletos." },
+        { error: "Email y código son obligatorios." },
         { status: 400 }
       );
     }
 
-    const { email, token } = body;
+    // 👇 Patrón correcto en Next.js 16 App Router
+    const supabase = createRouteHandlerClient/*<Database>*/({ cookies });
 
-    // CRÍTICO: Cliente Supabase vinculado a cookies (esto escribe las cookies de sesión)
-    // En Next.js 16, createRouteHandlerClient espera cookies directamente, sin funciones intermedias
-    // Patrón correcto: { cookies } donde cookies viene de next/headers
-    console.log("[VerifyOTP API] Creando cliente Supabase...");
-    const supabase = createRouteHandlerClient({ cookies });
-    console.log("[VerifyOTP API] Cliente Supabase creado correctamente");
-
-    console.log("[VerifyOTP API] Verificando OTP para:", email);
-
-    // Verificar el código OTP en servidor
+    // 1) Verificar OTP (tipo "email" porque estás usando código por email)
     const { data, error } = await supabase.auth.verifyOtp({
-      type: "email",
       email,
-      token,
+      token: code,
+      type: "email", // <- IMPORTANTE
     });
 
-    if (error || !data.session) {
-      console.error("[VerifyOTP API] Error al verificar OTP:", {
-        error: error?.message,
-        errorName: error?.name,
-        hasData: !!data,
-        hasSession: !!data?.session,
-      });
+    if (error) {
+      console.error("[VerifyOTP API] Error en verifyOtp:", error);
       return NextResponse.json(
-        {
-          error:
-            error?.message ||
-            "El código no es válido o ha expirado. Por favor, inténtalo de nuevo.",
-        },
+        { error: error.message ?? "Error en la verificación del código." },
         { status: 400 }
       );
     }
 
-    console.log("[VerifyOTP API] Sesión creada:", {
+    if (!data.session) {
+      console.error("[VerifyOTP API] verifyOtp no devolvió sesión.");
+      return NextResponse.json(
+        { error: "No se pudo establecer la sesión." },
+        { status: 400 }
+      );
+    }
+
+    // 2) En este punto, Supabase ya ha escrito las cookies de sesión a través del helper
+    //    No hace falta llamar a setSession aquí.
+
+    console.log("[VerifyOTP API] Sesión creada correctamente:", {
       userId: data.session.user?.id,
       email: data.session.user?.email,
     });
 
-    // IMPORTANTE:
-    // createRouteHandlerClient + verifyOtp escriben las cookies de sesión
-    // directamente asociadas a este dominio (pro.bookfast.es)
-    // No hace falta llamar a setSession aquí, las cookies ya están escritas.
-
-    return NextResponse.json({
-      ok: true,
-      user: {
-        id: data.session.user?.id,
-        email: data.session.user?.email,
-      },
-    });
+    // Puedes devolver solo OK; el cliente ya redirige a /panel
+    return NextResponse.json({ ok: true });
   } catch (err: any) {
-    console.error("[VerifyOTP API] Error inesperado:", {
-      message: err?.message,
-      stack: err?.stack,
-      name: err?.name,
-    });
+    console.error("[VerifyOTP API] Error inesperado:", err);
     return NextResponse.json(
-      {
-        error: err?.message || "Error inesperado al verificar el código. Por favor, inténtalo de nuevo.",
-      },
+      { error: "Error interno al verificar el código." },
       { status: 500 }
     );
   }
 }
-

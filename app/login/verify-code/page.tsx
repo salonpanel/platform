@@ -68,7 +68,7 @@ function VerifyCodeContent() {
         },
         body: JSON.stringify({
           email: email.toLowerCase().trim(),
-          token: code.trim(),
+          code: code.trim(), // Cambiar de 'token' a 'code' para alinear con el route handler
         }),
       });
 
@@ -85,10 +85,7 @@ function VerifyCodeContent() {
         return;
       }
 
-      console.log("[VerifyCode] OTP verificado correctamente:", {
-        userId: data.user?.id,
-        email: data.user?.email,
-      });
+      console.log("[VerifyCode] OTP verificado correctamente");
 
       // Éxito: redirigir al panel
       // En este punto, el servidor YA ha escrito las cookies de sesión
@@ -129,7 +126,14 @@ function VerifyCodeContent() {
       if (authError) {
         console.error("Error reenviando OTP:", authError);
         
-        if (authError.message?.includes('rate limit') || authError.message?.includes('too many')) {
+        // Si Supabase devuelve el mensaje de "solo puedes pedirlo después de X segundos"
+        if (authError.message?.includes("you can only request this after")) {
+          const match = authError.message.match(/(\d+)\s+seconds?/i);
+          const seconds = match ? parseInt(match[1], 10) : 60;
+          setTimeLeft(seconds);
+          setError(`Por favor espera ${seconds} segundos antes de solicitar otro código.`);
+        } else if (authError.message?.includes('rate limit') || authError.message?.includes('too many')) {
+          setTimeLeft(60);
           setError('Por favor espera un momento antes de reenviar. Puedes solicitar un nuevo código cada 60 segundos.');
         } else {
           setError('No se pudo reenviar el código. Por favor intenta más tarde.');
