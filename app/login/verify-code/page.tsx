@@ -30,6 +30,43 @@ function VerifyCodeContent() {
     return () => clearInterval(timer);
   }, [timeLeft]);
 
+  // Escuchar cambios de autenticación para detectar cuando se establece la sesión
+  // Esto es un fallback en caso de que verifyOtp() se complete pero la promesa no se resuelva
+  useEffect(() => {
+    if (!verifying) return;
+
+    console.log("[VerifyCode] Setting up auth state listener while verifying...");
+    
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("[VerifyCode] Auth state changed during verification:", event, {
+        hasSession: !!session,
+        userId: session?.user?.id,
+        verifying,
+      });
+
+      // Si se detecta SIGNED_IN y tenemos sesión, y estamos verificando, redirigir
+      if (event === 'SIGNED_IN' && session && verifying) {
+        console.log("[VerifyCode] SIGNED_IN detected during verification, redirecting...");
+        const redirectParam = searchParams?.get("redirect");
+        const redirectPath = redirectParam || "/panel";
+        
+        // Limpiar el estado de verificación
+        setVerifying(false);
+        setSuccess(true);
+        
+        // Redirigir
+        window.location.href = redirectPath;
+      }
+    });
+
+    return () => {
+      console.log("[VerifyCode] Cleaning up auth state listener");
+      subscription.unsubscribe();
+    };
+  }, [verifying, supabase, searchParams]);
+
   // Verificar código OTP
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,19 +85,27 @@ function VerifyCodeContent() {
     }
 
     try {
-      console.log("[VerifyCode] Calling verifyOtp...");
-      const { data, error: verifyError } = await supabase.auth.verifyOtp({
+      console.log("[VerifyCode] Calling verifyOtp...", {
+        email: email ? email.substring(0, 5) + "..." : "missing",
+        codeLength: code.length,
+      });
+      
+      // Llamar a verifyOtp
+      const verifyResult = await supabase.auth.verifyOtp({
         email: email.toLowerCase().trim(),
         token: code.trim(),
         type: 'email',
       });
 
-      console.log("[VerifyCode] verifyOtp response:", {
-        hasData: !!data,
-        hasSession: !!data?.session,
-        hasError: !!verifyError,
-        errorMessage: verifyError?.message,
+      console.log("[VerifyCode] verifyOtp completed:", {
+        hasData: !!verifyResult.data,
+        hasSession: !!verifyResult.data?.session,
+        hasError: !!verifyResult.error,
+        errorMessage: verifyResult.error?.message,
+        errorName: verifyResult.error?.name,
       });
+
+      const { data, error: verifyError } = verifyResult;
 
       if (verifyError) {
         console.error("[VerifyCode] Error verificando OTP:", verifyError);
