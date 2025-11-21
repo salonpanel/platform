@@ -46,7 +46,10 @@ export function SupabaseProvider({ children }: PropsWithChildren) {
 
 			// Si el usuario se autentica (en esta pestaña o en otra)
 			if (event === 'SIGNED_IN' && session) {
-				console.log("[SupabaseProvider] User signed in, session active");
+				console.log("[SupabaseProvider] User signed in, session active", {
+					pathname,
+					userId: session.user?.id,
+				});
 				
 				// Solo redirigir si estamos en la página de login o verify-code
 				// Esto evita redirecciones innecesarias cuando ya estamos en el panel
@@ -58,7 +61,10 @@ export function SupabaseProvider({ children }: PropsWithChildren) {
 					
 					console.log("[SupabaseProvider] Redirecting from login/verify-code to:", redirectPath);
 					// Usar window.location para forzar una navegación completa y asegurar que la sesión se persista
-					window.location.href = redirectPath;
+					// Solo redirigir si no estamos ya en proceso de redirección (evitar bucles)
+					if (!window.location.pathname.startsWith('/panel')) {
+						window.location.href = redirectPath;
+					}
 				}
 			}
 
