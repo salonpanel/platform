@@ -119,14 +119,15 @@ function LoginContent() {
     }
     
     // Flujo normal de magic link (solo si no es el email de desarrollo o si el auto-login no se ejecutó)
-    // Usar URL centralizada para callbacks de auth
-    // Por ahora, todos los logins usan pro.bookfast.es como callback
-    // TODO: En el futuro, si hay login desde portal público o marketing, ajustar según contexto
+    // Usar URL absoluta para callbacks de auth (Supabase requiere URL completa)
+    // En producción: usar NEXT_PUBLIC_APP_URL, en desarrollo: usar el dominio actual
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
     const callbackBase = redirectParam
-      ? `/auth/callback?redirect=${encodeURIComponent(redirectParam)}`
-      : `/auth/callback`;
+      ? `${baseUrl}/auth/callback?redirect=${encodeURIComponent(redirectParam)}`
+      : `${baseUrl}/auth/callback`;
     
-    const callbackUrl = `${callbackBase}#email=${encodeURIComponent(email)}`;
+    // Nota: El hash #email no se envía en emailRedirectTo, solo se usa en el cliente
+    const callbackUrl = callbackBase;
     
     const { error: authError } = await supabase.auth.signInWithOtp({
       email,
