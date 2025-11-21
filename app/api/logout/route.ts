@@ -5,10 +5,8 @@ import { supabaseServer } from "@/lib/supabase";
 import { getClientIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
-  // En Next.js 16+, cookies() es async, pero createRouteHandlerClient espera la función directamente
-  const supabase = createRouteHandlerClient({ 
-    cookies: async () => await cookies()
-  });
+  // En Next.js 16, cookies() NO es async en route handlers, se pasa directamente
+  const supabase = createRouteHandlerClient({ cookies });
   const {
     data: { user },
   } = await supabase.auth.getUser();
