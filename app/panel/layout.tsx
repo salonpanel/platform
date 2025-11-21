@@ -15,19 +15,40 @@ export default async function PanelLayout({ children }: { children: ReactNode })
   // Verificar sesión en el servidor usando getSession (más rápido que getUser)
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
+  console.log("[PanelLayout] Server-side session check:", {
+    hasSession: !!session,
+    userId: session?.user?.id,
+    email: session?.user?.email,
+    hasError: !!sessionError,
+    errorMessage: sessionError?.message,
+  });
+
   // Si no hay sesión, intentar getUser como fallback
   if (!session && !sessionError) {
+    console.log("[PanelLayout] No session, trying getUser as fallback...");
     const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    console.log("[PanelLayout] getUser result:", {
+      hasUser: !!user,
+      userId: user?.id,
+      hasError: !!userError,
+      errorMessage: userError?.message,
+    });
     
     if (!user || userError) {
       console.log("[PanelLayout] No session or user, redirecting to login");
       redirect(`/login?redirect=${encodeURIComponent("/panel")}`);
     }
   } else if (!session || sessionError) {
-    console.log("[PanelLayout] Session error or missing, redirecting to login", { error: sessionError });
+    console.log("[PanelLayout] Session error or missing, redirecting to login", { 
+      error: sessionError,
+      errorMessage: sessionError?.message,
+      errorName: sessionError?.name,
+    });
     redirect(`/login?redirect=${encodeURIComponent("/panel")}`);
   }
 
   // Si hay sesión, renderizar el layout cliente
+  console.log("[PanelLayout] Session valid, rendering client layout");
   return <PanelLayoutClient>{children}</PanelLayoutClient>;
 }
