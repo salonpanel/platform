@@ -23,18 +23,23 @@ export async function GET(req: NextRequest) {
   const code = url.searchParams.get("code");
   const requestId = url.searchParams.get("request_id");
   const secretToken = url.searchParams.get("token");
+  const type = url.searchParams.get("type");
+  const token = url.searchParams.get("token"); // Token de Supabase (diferente de secretToken)
 
   // Log inicial con todos los parámetros que llegan
-  console.log("[remote-callback] params", {
-    code: code || null,
+  console.log("[remote-callback] Request received", {
+    code: code ? `${code.substring(0, 10)}...` : null,
     requestId: requestId || null,
     secretToken: secretToken ? "present" : "missing",
+    type: type || null,
+    supabaseToken: token ? "present" : "missing",
     fullUrl: url.toString(),
+    searchParams: Array.from(url.searchParams.entries()),
   });
 
   // Si no tenemos code, no podemos continuar
   if (!code) {
-    console.error("[remote-callback] Missing code parameter");
+    console.error("[remote-callback] Missing code parameter - redirecting to login");
     return NextResponse.redirect(
       new URL("/login?error=invalid_link", url.origin)
     );
@@ -44,14 +49,41 @@ export async function GET(req: NextRequest) {
   let needsRequestLookup = !requestId || !secretToken;
 
   try {
+    console.log("[remote-callback] Step 1: Creating Supabase client");
     // 1) Intercambiar code por session en ESTE dispositivo (móvil)
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => cookieStore 
+    });
+    
+    console.log("[remote-callback] Step 2: Exchanging code for session", {
+      codeLength: code.length,
+      hasRequestId: !!requestId,
+      hasSecretToken: !!secretToken,
+    });
+    
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
-    if (error || !data?.session) {
-      console.error("[remote-callback] exchangeCodeForSession error", error);
+    if (error) {
+      console.error("[remote-callback] exchangeCodeForSession error", {
+        errorMessage: error.message,
+        errorName: error.name,
+        errorStatus: error.status,
+        hasCode: !!code,
+        codeLength: code?.length,
+      });
       return NextResponse.redirect(
-        new URL("/login?error=invalid_session", url.origin)
+        new URL(`/login?error=invalid_session&details=${encodeURIComponent(error.message || 'unknown')}`, url.origin)
+      );
+    }
+
+    if (!data?.session) {
+      console.error("[remote-callback] No session returned after exchangeCodeForSession", {
+        hasData: !!data,
+        hasSession: !!data?.session,
+      });
+      return NextResponse.redirect(
+        new URL("/login?error=no_session", url.origin)
       );
     }
 
@@ -74,16 +106,28 @@ export async function GET(req: NextRequest) {
     }
 
     // 2) Si no tenemos requestId o secretToken, buscar la request pendiente más reciente para este email
-    const admin = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    console.log("[remote-callback] Step 3: Creating admin client for database operations");
+    
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error("[remote-callback] Missing Supabase credentials", {
+        hasUrl: !!supabaseUrl,
+        hasServiceRoleKey: !!serviceRoleKey,
+      });
+      await supabase.auth.signOut();
+      return NextResponse.redirect(
+        new URL("/login?error=server_config", url.origin)
+      );
+    }
+
+    const admin = createAdminClient(supabaseUrl, serviceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
 
     let finalRequestId = requestId;
     let finalSecretToken = secretToken;
@@ -183,9 +227,30 @@ export async function GET(req: NextRequest) {
       new URL("/auth/remote-confirmed", url.origin)
     );
   } catch (err: any) {
-    console.error("[remote-callback] Unexpected error:", err);
+    console.error("[remote-callback] Unexpected error:", {
+      errorMessage: err?.message,
+      errorName: err?.name,
+      errorStack: err?.stack,
+      errorDetails: err,
+      url: url.toString(),
+      hasCode: !!code,
+      hasRequestId: !!requestId,
+      hasSecretToken: !!secretToken,
+    });
+    
+    // Intentar cerrar sesión si hay un cliente de Supabase activo
+    try {
+      const cookieStore = await cookies();
+      const supabase = createRouteHandlerClient({ 
+        cookies: () => cookieStore 
+      });
+      await supabase.auth.signOut();
+    } catch (signOutError) {
+      console.warn("[remote-callback] Error during cleanup signOut:", signOutError);
+    }
+    
     return NextResponse.redirect(
-      new URL("/login?error=unexpected", url.origin)
+      new URL(`/login?error=unexpected&details=${encodeURIComponent(err?.message || 'unknown_error')}`, url.origin)
     );
   }
 }

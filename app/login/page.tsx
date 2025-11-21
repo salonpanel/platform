@@ -19,6 +19,11 @@ function LoginContent() {
   const [secretToken, setSecretToken] = useState<string | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const realtimeSubscriptionRef = useRef<any>(null);
+  
+  // Estado para modo OTP (código de 6 dígitos)
+  const [otpMode, setOtpMode] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
 
   // Limpiar cualquier sesión previa para evitar errores de refresh token reciclado
   useEffect(() => {
@@ -348,9 +353,17 @@ function LoginContent() {
       setSecretToken(token);
 
       // 2. Enviar magic link con callback a remote-callback
-      // IMPORTANTE: Asegurar que baseUrl no tenga espacios y esté correctamente formateado
-      let baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-        (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
+      // IMPORTANTE: Usar el dominio actual dinámicamente para soportar múltiples subdominios
+      // Esto permite que funcione en pro.bookfast.es, admin.bookfast.es, etc.
+      let baseUrl: string;
+      
+      if (typeof window !== "undefined") {
+        // En el cliente, usar el dominio actual (soporta cualquier subdominio)
+        baseUrl = window.location.origin;
+      } else {
+        // En el servidor, usar NEXT_PUBLIC_APP_URL o fallback
+        baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      }
       
       // Limpiar espacios y asegurar formato correcto
       baseUrl = baseUrl.trim().replace(/\s+/g, '');
@@ -370,7 +383,32 @@ function LoginContent() {
       
       console.log("[Login] emailRedirectTo URL:", finalCallbackUrl);
       console.log("[Login] baseUrl used:", baseUrl);
+      console.log("[Login] Current origin:", typeof window !== "undefined" ? window.location.origin : "server");
 
+      // Si está en modo OTP, enviar OTP en lugar de magic link
+      if (otpMode) {
+        const { error: authError } = await supabase.auth.signInWithOtp({
+          email: email.toLowerCase().trim(),
+          options: {
+            // Para OTP, no necesitamos emailRedirectTo, solo enviamos el código
+            shouldCreateUser: true,
+          },
+        });
+
+        if (authError) {
+          console.error("Error al enviar OTP:", authError);
+          setError(authError.message || "Error al enviar el código OTP");
+          setLoading(false);
+          return;
+        }
+
+        // Cambiar a pantalla de entrada de código OTP
+        setSent(true);
+        setLoading(false);
+        return;
+      }
+
+      // Modo magic link (por defecto)
       const { error: authError } = await supabase.auth.signInWithOtp({
         email: email.toLowerCase().trim(),
         options: {
@@ -433,6 +471,51 @@ function LoginContent() {
     setLoginRequestId(null);
     setSecretToken(null);
     setError(null);
+    setOtpMode(false);
+    setOtpCode("");
+  };
+
+  // Función para verificar código OTP
+  const verifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setVerifyingOtp(true);
+    setError(null);
+
+    const redirectParam = searchParams.get("redirect");
+    const redirectPath = redirectParam || "/panel";
+
+    try {
+      const { data, error: verifyError } = await supabase.auth.verifyOtp({
+        email: email.toLowerCase().trim(),
+        token: otpCode.trim(),
+        type: 'email',
+      });
+
+      if (verifyError) {
+        console.error("Error verificando OTP:", verifyError);
+        setError(verifyError.message || "Código inválido. Por favor, verifica el código e intenta de nuevo.");
+        setVerifyingOtp(false);
+        return;
+      }
+
+      if (!data.session) {
+        setError("No se pudo establecer la sesión. Por favor, intenta de nuevo.");
+        setVerifyingOtp(false);
+        return;
+      }
+
+      console.log("[Login] OTP verified successfully:", {
+        userId: data.session.user?.id,
+        email: data.session.user?.email,
+      });
+
+      // Redirigir al panel
+      router.replace(redirectPath);
+    } catch (err: any) {
+      console.error("Error inesperado verificando OTP:", err);
+      setError(err?.message || "Error al verificar el código. Por favor, intenta de nuevo.");
+      setVerifyingOtp(false);
+    }
   };
 
   return (
@@ -466,7 +549,9 @@ function LoginContent() {
               Bienvenido
             </h1>
             <p className="text-slate-400 text-sm">
-              Ingresa tu correo para recibir un enlace de acceso
+              {otpMode 
+                ? "Ingresa el código de 6 dígitos que recibiste por correo"
+                : "Ingresa tu correo para recibir un enlace de acceso"}
             </p>
           </motion.div>
 
@@ -489,7 +574,77 @@ function LoginContent() {
 
           {/* Formulario, mensaje de confirmación o pantalla de espera */}
           <AnimatePresence mode="wait">
-            {waitingForApproval ? (
+            {otpMode && sent ? (
+              <motion.form
+                key="otp-form"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onSubmit={verifyOtp}
+                className="space-y-6"
+              >
+                <div>
+                  <label htmlFor="otp" className="block text-sm font-medium text-slate-300 mb-2 font-satoshi">
+                    Código de verificación
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="otp"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]{6}"
+                      maxLength={6}
+                      required
+                      value={otpCode}
+                      onChange={(e) => {
+                        // Solo permitir números
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                        setOtpCode(value);
+                      }}
+                      disabled={verifyingOtp}
+                      className="w-full px-4 py-3.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 font-mono text-2xl text-center tracking-widest backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      placeholder="000000"
+                      style={{ borderRadius: "12px" }}
+                      autoFocus
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2 text-center">
+                    Ingresa el código de 6 dígitos enviado a <span className="font-semibold text-white">{email}</span>
+                  </p>
+                </div>
+
+                <motion.button
+                  type="submit"
+                  disabled={verifyingOtp || otpCode.length !== 6}
+                  whileHover={{ scale: verifyingOtp ? 1 : 1.02 }}
+                  whileTap={{ scale: verifyingOtp ? 1 : 0.98 }}
+                  className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold font-satoshi shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+                  style={{ borderRadius: "12px" }}
+                >
+                  {verifyingOtp ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Verificando...</span>
+                    </>
+                  ) : (
+                    <span>Verificar código</span>
+                  )}
+                </motion.button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOtpMode(false);
+                    setSent(false);
+                    setOtpCode("");
+                    setError(null);
+                  }}
+                  className="text-sm text-slate-400 hover:text-slate-300 font-medium transition-colors w-full"
+                >
+                  Volver a enviar código o usar enlace mágico
+                </button>
+              </motion.form>
+            ) : waitingForApproval ? (
               <motion.div
                 key="waiting"
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -567,10 +722,25 @@ function LoginContent() {
                   ) : (
                     <>
                       <Mail className="w-5 h-5" />
-                      <span>Enviar enlace mágico</span>
+                      <span>{otpMode ? "Enviar código OTP" : "Enviar enlace mágico"}</span>
                     </>
                   )}
                 </motion.button>
+
+                <div className="pt-4 border-t border-white/5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOtpMode(!otpMode);
+                      setError(null);
+                    }}
+                    className="text-sm text-slate-400 hover:text-slate-300 font-medium transition-colors w-full"
+                  >
+                    {otpMode 
+                      ? "Prefiero usar enlace mágico" 
+                      : "Prefiero usar código OTP (6 dígitos)"}
+                  </button>
+                </div>
               </motion.form>
             ) : (
               <motion.div

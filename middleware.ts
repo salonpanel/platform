@@ -138,47 +138,61 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(marketingUrl, { status: 301 });
     }
 
-    // Si viene de Supabase magic link, redirigir a magic-link-handler
-    // SOLO verificar en "/" y "/auth/callback" para evitar bucles
-    if (pathname === "/" || pathname === "/auth/callback") {
+    // Si viene de Supabase magic link, redirigir al handler apropiado
+    // Verificar en "/", "/auth/callback", "/auth/remote-callback" y "/login" para capturar todas las redirecciones
+    if (pathname === "/" || pathname === "/auth/callback" || pathname === "/auth/remote-callback" || pathname === "/login") {
       const type = url.searchParams.get("type");
       const token = url.searchParams.get("token");
       const code = url.searchParams.get("code");
       const requestId = url.searchParams.get("request_id");
       const secretToken = url.searchParams.get("token");
       
-      // Si tiene request_id, es un magic link remoto → redirigir a magic-link-handler
-      if (requestId && secretToken && (code || (type === "magiclink" && token))) {
-        const handlerUrl = new URL("/auth/magic-link-handler", url);
-        handlerUrl.searchParams.set("request_id", requestId);
-        handlerUrl.searchParams.set("token", secretToken);
-        if (code) handlerUrl.searchParams.set("code", code);
-        if (type) handlerUrl.searchParams.set("type", type);
-        if (token && token !== secretToken) handlerUrl.searchParams.set("supabase_token", token);
-        logDomainDebug(`[Pro Domain] Magic link remoto detectado, redirigiendo a magic-link-handler`);
-        return NextResponse.redirect(handlerUrl);
+      // Si estamos en /auth/remote-callback con code, dejar que el endpoint lo procese
+      if (pathname === "/auth/remote-callback" && code) {
+        logDomainDebug(`[Pro Domain] Remote callback con code, dejando que el endpoint lo procese`);
+        // No hacer nada, dejar que el route handler procese
       }
-      
+      // Si tiene request_id, es un magic link remoto → redirigir a remote-callback o magic-link-handler
+      else if (requestId && secretToken && (code || (type === "magiclink" && token))) {
+        // Si ya estamos en /auth/remote-callback, no redirigir (evitar bucle)
+        if (pathname !== "/auth/remote-callback") {
+          const callbackUrl = new URL("/auth/remote-callback", url);
+          callbackUrl.searchParams.set("request_id", requestId);
+          callbackUrl.searchParams.set("token", secretToken);
+          if (code) callbackUrl.searchParams.set("code", code);
+          if (type) callbackUrl.searchParams.set("type", type);
+          if (token && token !== secretToken) callbackUrl.searchParams.set("supabase_token", token);
+          logDomainDebug(`[Pro Domain] Magic link remoto detectado, redirigiendo a remote-callback`);
+          return NextResponse.redirect(callbackUrl);
+        }
+      }
       // Si es un magic link normal (sin request_id), redirigir a callback normal
-      if ((type === "magiclink" && token) || code) {
-        const callbackUrl = new URL("/auth/callback", url);
-        if (code) callbackUrl.searchParams.set("code", code);
-        if (type) callbackUrl.searchParams.set("type", type);
-        if (token) callbackUrl.searchParams.set("token", token);
-        logDomainDebug(`[Pro Domain] Magic link normal detectado, redirigiendo a callback`);
-        return NextResponse.redirect(callbackUrl);
+      else if ((type === "magiclink" && token) || code) {
+        // Solo redirigir si no estamos ya en /auth/callback
+        if (pathname !== "/auth/callback") {
+          const callbackUrl = new URL("/auth/callback", url);
+          if (code) callbackUrl.searchParams.set("code", code);
+          if (type) callbackUrl.searchParams.set("type", type);
+          if (token) callbackUrl.searchParams.set("token", token);
+          logDomainDebug(`[Pro Domain] Magic link normal detectado, redirigiendo a callback`);
+          return NextResponse.redirect(callbackUrl);
+        }
       }
-      
-      // Proteger antes de rewrite: si no hay sesión, redirigir a login
-      if (!session) {
+      // Si estamos en /login con error pero sin parámetros de auth, continuar normalmente
+      else if (pathname === "/login") {
+        // Dejar que la página de login maneje el error
+        logDomainDebug(`[Pro Domain] En /login, continuando normalmente`);
+      }
+      // Proteger antes de rewrite: si no hay sesión y estamos en "/", redirigir a login
+      else if (pathname === "/" && !session) {
         url.pathname = "/login";
         url.searchParams.set("redirect", "/panel");
         logDomainDebug(`[Pro Domain] No session at /, redirecting to login`);
         return NextResponse.redirect(url);
       }
-      
-      // Rewrite / a /panel
-      url.pathname = "/panel";
+      // Rewrite / a /panel si hay sesión
+      else if (pathname === "/" && session) {
+        url.pathname = "/panel";
       logDomainDebug(`[Pro Domain] Rewriting / to /panel (session exists)`);
       return NextResponse.rewrite(url);
     }
