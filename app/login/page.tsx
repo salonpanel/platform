@@ -295,8 +295,11 @@ function LoginContent() {
 
       // 2. Enviar magic link con callback a remote-callback
       // IMPORTANTE: Asegurar que baseUrl no tenga espacios y esté correctamente formateado
-      const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 
-        (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000")).trim();
+      let baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+        (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
+      
+      // Limpiar espacios y asegurar formato correcto
+      baseUrl = baseUrl.trim().replace(/\s+/g, '');
       
       // Construir URL de callback sin espacios - asegurar que no haya espacios en ninguna parte
       const callbackUrl = new URL("/auth/remote-callback", baseUrl);
@@ -304,7 +307,15 @@ function LoginContent() {
       callbackUrl.searchParams.set("token", token);
       
       const finalCallbackUrl = callbackUrl.toString();
+      
+      // Validar que la URL no tiene espacios codificados
+      if (finalCallbackUrl.includes("%20")) {
+        console.error("[Login] ERROR: URL contains encoded spaces!", finalCallbackUrl);
+        throw new Error("Error al construir la URL de callback. Por favor, recarga la página.");
+      }
+      
       console.log("[Login] emailRedirectTo URL:", finalCallbackUrl);
+      console.log("[Login] baseUrl used:", baseUrl);
 
       const { error: authError } = await supabase.auth.signInWithOtp({
         email: email.toLowerCase().trim(),
