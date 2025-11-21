@@ -51,20 +51,19 @@ export function SupabaseProvider({ children }: PropsWithChildren) {
 					userId: session.user?.id,
 				});
 				
-				// Solo redirigir si estamos en la página de login (no en verify-code, ya que esa página maneja su propia redirección)
-				// Esto evita redirecciones innecesarias cuando ya estamos en el panel o en verify-code
-				if (pathname === '/login' && !pathname?.startsWith('/login/verify-code')) {
+				// Redirigir si estamos en login o verify-code (pero no si ya estamos en panel)
+				// Esto asegura que el usuario sea redirigido después de autenticarse
+				if ((pathname === '/login' || pathname === '/login/verify-code') && 
+				    !window.location.pathname.startsWith('/panel') &&
+				    !window.location.pathname.startsWith('/admin')) {
 					// Obtener redirect de query params si existe
 					const searchParams = new URLSearchParams(window.location.search);
 					const redirectParam = searchParams.get('redirect');
 					const redirectPath = redirectParam || '/panel';
 					
-					console.log("[SupabaseProvider] Redirecting from login to:", redirectPath);
+					console.log("[SupabaseProvider] Redirecting from login/verify-code to:", redirectPath);
 					// Usar window.location para forzar una navegación completa y asegurar que la sesión se persista
-					// Solo redirigir si no estamos ya en proceso de redirección (evitar bucles)
-					if (!window.location.pathname.startsWith('/panel')) {
-						window.location.href = redirectPath;
-					}
+					window.location.href = redirectPath;
 				}
 			}
 
