@@ -1,0 +1,75 @@
+# Configuración de OWASP Noir para el proyecto
+
+# Directorios a excluir del análisis
+exclude:
+  - node_modules
+  - .next
+  - .vercel
+  - dist
+  - build
+  - coverage
+  - .git
+
+# Extensiones de archivo a analizar
+include_extensions:
+  - .ts
+  - .tsx
+  - .js
+  - .jsx
+  - .mjs
+
+# Configuración de detección de vulnerabilidades
+security:
+  # Habilitar detección de patrones de vulnerabilidades
+  enable_vulnerability_detection: true
+  
+  # Nivel de severidad mínimo para reportar
+  min_severity: low
+  
+  # Patrones específicos a buscar
+  patterns:
+    - sql_injection
+    - xss
+    - path_traversal
+    - command_injection
+    - ssrf
+    - open_redirect
+
+# Configuración de reportes
+reporting:
+  # Formato de salida por defecto
+  default_format: json
+  
+  # Incluir detalles de código fuente
+  include_code_paths: true
+  
+  # Incluir tags de seguridad
+  include_security_tags: true
+  
+  # Directorio de salida para reportes
+  output_directory: security-reports
+
+# Configuración de integración con herramientas
+integrations:
+  # Integración con ZAP (OWASP Zed Attack Proxy)
+  zap:
+    enabled: true
+    export_format: json
+  
+  # Integración con Caido
+  caido:
+    enabled: false
+  
+  # Exportar como OpenAPI Specification
+  openapi:
+    enabled: true
+    version: "3.0"
+
+# URLs base para diferentes entornos
+environments:
+  development:
+    base_url: http://localhost:3000
+  staging:
+    base_url: https://staging.yourdomain.com
+  production:
+    base_url: https://yourdomain.com

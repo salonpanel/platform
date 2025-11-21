@@ -18,14 +18,15 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     // @ts-expect-error La versión actual del helper tipa este campo como función async
     cookies: () => cookieStore,
   });
-  
+
   // Verificar sesión en el servidor usando getSession
   let {
     data: { session },
     error: sessionError,
   } = await supabase.auth.getSession();
 
-  if (sessionError) {
+  // Solo loguear errores en desarrollo
+  if (sessionError && process.env.NODE_ENV === 'development') {
     console.error("[PanelLayout] Error al obtener sesión:", sessionError);
   }
 
@@ -33,42 +34,50 @@ export default async function PanelLayout({ children }: { children: ReactNode })
   if (!session) {
     // Verificar si hay cookies de auth usando getAll() y buscando en el array
     const allCookies = cookieStore.getAll();
-    const hasAuthCookies = allCookies.some((c: { name: string }) => c.name === "sb-panel-auth-auth-token") || 
-                          allCookies.some((c: { name: string }) => c.name === "sb-panel-auth-refresh-token");
-    
+    const hasAuthCookies = allCookies.some((c: { name: string }) => c.name === "sb-panel-auth-auth-token") ||
+      allCookies.some((c: { name: string }) => c.name === "sb-panel-auth-refresh-token");
+
     if (hasAuthCookies) {
       // REINTENTAR obtener la sesión si hay cookies presentes
       // Esto permite darle tiempo a Supabase para hidratar correctamente la sesión
       // especialmente después de verificar OTP cuando las cookies acaban de establecerse
-      console.log("[PanelLayout] No session but auth cookies present, rechecking session...");
-      
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[PanelLayout] No session but auth cookies present, rechecking session...");
+      }
+
       // Pequeño delay para dar tiempo a que las cookies se propaguen
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise(resolve => setTimeout(resolve, 200));
+
       const recheckResult = await supabase.auth.getSession();
       if (recheckResult.data.session) {
         session = recheckResult.data.session;
-        console.log("[PanelLayout] Rechecked session recovered:", {
-          userId: session.user?.id,
-          email: session.user?.email,
-        });
-      } else {
+        if (process.env.NODE_ENV === 'development') {
+          console.log("[PanelLayout] Rechecked session recovered:", {
+            userId: session.user?.id,
+            email: session.user?.email,
+          });
+        }
+      } else if (process.env.NODE_ENV === 'development') {
         console.log("[PanelLayout] Recheck failed, still no session");
       }
     }
-    
+
     // Si después del reintento aún no hay sesión, redirigir al login
     if (!session) {
-      console.log("[PanelLayout] Sin sesión después de reintento, redirigiendo a /login");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[PanelLayout] Sin sesión después de reintento, redirigiendo a /login");
+      }
       redirect(`/login?redirect=${encodeURIComponent("/panel")}`);
     }
   }
 
   // A partir de aquí, session existe y puedes recuperar user/tenant/etc.
-  console.log("[PanelLayout] Session valid, rendering client layout:", {
-    userId: session.user?.id,
-    email: session.user?.email,
-  });
+  if (process.env.NODE_ENV === 'development') {
+    console.log("[PanelLayout] Session valid, rendering client layout:", {
+      userId: session.user?.id,
+      email: session.user?.email,
+    });
+  }
 
   return <PanelLayoutClient>{children}</PanelLayoutClient>;
 }

@@ -5,7 +5,9 @@ import { createServerClient } from "@supabase/ssr";
 
 export async function POST(req: NextRequest) {
   try {
-    console.log("[VerifyOTP API] Iniciando verificación OTP...");
+    if (process.env.NODE_ENV === 'development') {
+      console.log("[VerifyOTP API] Iniciando verificación OTP...");
+    }
 
     // SEGURIDAD: Validar origen de la request (CSRF protection)
     const origin = req.headers.get('origin');
@@ -31,10 +33,12 @@ export async function POST(req: NextRequest) {
     let body;
     try {
       body = await req.json();
-      console.log("[VerifyOTP API] Body recibido:", {
-        hasEmail: !!body?.email,
-        hasToken: !!body?.token
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[VerifyOTP API] Body recibido:", {
+          hasEmail: !!body?.email,
+          hasToken: !!body?.token
+        });
+      }
     } catch (parseError: any) {
       console.error("[VerifyOTP API] Error parseando JSON:", parseError);
       return NextResponse.json(
@@ -57,7 +61,9 @@ export async function POST(req: NextRequest) {
     const email = String(body.email).toLowerCase().trim();
     const token = String(body.token).trim();
 
-    console.log("[VerifyOTP API] Creando cliente Supabase...");
+    if (process.env.NODE_ENV === 'development') {
+      console.log("[VerifyOTP API] Creando cliente Supabase...");
+    }
     // ✅ Usar createServerClient de @supabase/ssr para Next.js 16
     // Este helper maneja correctamente las cookies en route handlers
     const cookieStore = await cookies();
@@ -81,9 +87,13 @@ export async function POST(req: NextRequest) {
         },
       }
     );
-    console.log("[VerifyOTP API] Cliente Supabase creado correctamente");
+    if (process.env.NODE_ENV === 'development') {
+      console.log("[VerifyOTP API] Cliente Supabase creado correctamente");
+    }
 
-    console.log("[VerifyOTP API] Verificando OTP para:", email);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("[VerifyOTP API] Verificando OTP para:", email);
+    }
 
     const { data, error } = await supabase.auth.verifyOtp({
       type: "email",
@@ -104,10 +114,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("[VerifyOTP API] Sesión creada:", {
-      userId: data.session.user?.id,
-      email: data.session.user?.email,
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log("[VerifyOTP API] Sesión creada:", {
+        userId: data.session.user?.id,
+        email: data.session.user?.email,
+      });
+    }
 
     // ⚠️ Importante:
     // - createServerClient + verifyOtp escriben las cookies de sesión en response

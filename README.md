@@ -1,6 +1,8 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Platform - Salon Management System
 
-## Getting Started
+This is a [Next.js](https://nextjs.org) project for salon management, built with security and best practices in mind.
+
+## 🚀 Getting Started
 
 First, run the development server:
 
@@ -10,27 +12,98 @@ npm run dev
 yarn dev
 # or
 pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🛡️ Security
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This project uses **OWASP Noir** for automated security analysis and vulnerability detection.
 
-## Learn More
+### Quick Security Scan
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# Install OWASP Noir (first time only)
+npm run security:install
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Run security scan
+npm run security:scan
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Detailed scan with vulnerability detection
+npm run security:scan:verbose
+```
 
-## Deploy on Vercel
+### Security Documentation
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- 📖 [OWASP Noir Documentation](./docs/OWASP_NOIR.md) - Complete guide
+- 🚀 [Quick Start Guide](./docs/NOIR_QUICK_START.md) - Fast reference
+- 📋 [Security Checklist](./docs/SECURITY_CHECKLIST.md) - Best practices
+- 🛡️ [Security Policy](./SECURITY.md) - Reporting vulnerabilities
+- 🎯 [Implementation Summary](./IMPLEMENTACION_OWASP_NOIR.md) - Setup details
+
+## 📦 Available Scripts
+
+### Development
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+
+### Testing
+- `npm run test` - Run tests
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Generate coverage report
+- `npm run test:rls` - Test Row Level Security
+
+### Security
+- `npm run security:install` - Install OWASP Noir
+- `npm run security:scan` - Run security scan
+- `npm run security:scan:verbose` - Detailed security scan
+- `npm run security:scan:prod` - Scan for production
+
+## 🏗️ Tech Stack
+
+- **Framework**: Next.js 16 with App Router
+- **Language**: TypeScript
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Styling**: Tailwind CSS
+- **Security**: OWASP Noir, RLS, Rate Limiting
+- **Deployment**: Vercel
+
+## 📚 Learn More
+
+### Next.js Resources
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Learn Next.js](https://nextjs.org/learn)
+- [Next.js GitHub](https://github.com/vercel/next.js)
+
+### Security Resources
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
+- [OWASP Noir](https://owasp-noir.github.io/noir/)
+- [Supabase Security](https://supabase.com/docs/guides/auth/row-level-security)
+
+## 🚀 Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## 🔒 Security First
+
+This project follows security best practices:
+- ✅ Automated security scanning with OWASP Noir
+- ✅ Row Level Security (RLS) in database
+- ✅ Rate limiting on API endpoints
+- ✅ Input validation with Zod
+- ✅ Secure authentication with Supabase
+- ✅ CI/CD security checks
+
+See [SECURITY.md](./SECURITY.md) for our security policy and how to report vulnerabilities.
+
+---
+
+**Version**: 0.1.0  
+**License**: Private  
+**Last Updated**: 2025-11-21
+

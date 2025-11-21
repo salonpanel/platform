@@ -16,7 +16,11 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:rls": "ts-node tests/rls-validation.ts",
-    "test:concurrency": "jest tests/concurrency-overlap.test.ts tests/concurrency-rate-limit.test.ts"
+    "test:concurrency": "jest tests/concurrency-overlap.test.ts tests/concurrency-rate-limit.test.ts",
+    "security:install": "powershell -ExecutionPolicy Bypass -File scripts/install-noir.ps1",
+    "security:scan": "powershell -ExecutionPolicy Bypass -File scripts/run-noir-scan.ps1",
+    "security:scan:verbose": "powershell -ExecutionPolicy Bypass -File scripts/run-noir-scan.ps1 -Verbose -WithTags",
+    "security:scan:prod": "powershell -ExecutionPolicy Bypass -File scripts/run-noir-scan.ps1 -BaseUrl https://yourdomain.com"
   },
   "dependencies": {
     "@supabase/auth-helpers-nextjs": "^0.10.0",
