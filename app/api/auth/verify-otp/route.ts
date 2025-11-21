@@ -12,6 +12,8 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
  */
 export async function POST(req: Request) {
   try {
+    console.log("[VerifyOTP API] Iniciando verificación OTP...");
+    
     const body = await req.json().catch((err) => {
       console.error("[VerifyOTP API] Error parsing request body:", err);
       return null;
@@ -30,7 +32,9 @@ export async function POST(req: Request) {
     // CRÍTICO: Cliente Supabase vinculado a cookies (esto escribe las cookies de sesión)
     // En Next.js 16, createRouteHandlerClient espera cookies directamente, sin funciones intermedias
     // Patrón correcto: { cookies } donde cookies viene de next/headers
+    console.log("[VerifyOTP API] Creando cliente Supabase...");
     const supabase = createRouteHandlerClient({ cookies });
+    console.log("[VerifyOTP API] Cliente Supabase creado correctamente");
 
     console.log("[VerifyOTP API] Verificando OTP para:", email);
 
