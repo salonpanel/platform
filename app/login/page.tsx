@@ -74,7 +74,7 @@ function LoginContent() {
       if (data.status === "approved" && data.accessToken && data.refreshToken) {
         // Request aprobada, establecer sesión
         console.log("[Polling] Request approved, setting session...");
-        await handleApprovedRequest(data.accessToken, data.refreshToken, data.redirectPath);
+        await handleApprovedRequest(data.accessToken, data.refreshToken, data.redirectPath || "/panel");
       } else if (data.status === "expired" || data.status === "cancelled") {
         // Request expirada o cancelada
         console.log("[Polling] Request expired or cancelled:", data.status);
@@ -281,13 +281,18 @@ function LoginContent() {
       const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 
         (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000")).trim();
       
-      // Construir URL de callback sin espacios
-      const callbackUrl = `${baseUrl}/auth/remote-callback?request_id=${encodeURIComponent(requestId)}&token=${encodeURIComponent(token)}`;
+      // Construir URL de callback sin espacios - asegurar que no haya espacios en ninguna parte
+      const callbackUrl = new URL("/auth/remote-callback", baseUrl);
+      callbackUrl.searchParams.set("request_id", requestId);
+      callbackUrl.searchParams.set("token", token);
+      
+      const finalCallbackUrl = callbackUrl.toString();
+      console.log("[Login] emailRedirectTo URL:", finalCallbackUrl);
 
       const { error: authError } = await supabase.auth.signInWithOtp({
         email: email.toLowerCase().trim(),
         options: {
-          emailRedirectTo: callbackUrl,
+          emailRedirectTo: finalCallbackUrl,
           shouldCreateUser: true,
         },
       });

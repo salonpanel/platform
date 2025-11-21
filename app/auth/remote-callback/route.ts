@@ -27,14 +27,19 @@ export async function GET(req: NextRequest) {
   const secretToken = url.searchParams.get("token");
   
   // También buscar token de Supabase (cuando viene directamente desde el magic link)
+  // NOTA: Si Supabase redirige directamente, puede que el token esté en el hash (#) en lugar de query params
   const supabaseToken = url.searchParams.get("token");
   const type = url.searchParams.get("type");
+  const accessToken = url.searchParams.get("access_token");
+  const refreshToken = url.searchParams.get("refresh_token");
 
   console.log("[RemoteCallback] Received request:", { 
     hasCode: !!code, 
     hasRequestId: !!requestId, 
     hasSecretToken: !!secretToken,
     hasSupabaseToken: !!supabaseToken,
+    hasAccessToken: !!accessToken,
+    hasRefreshToken: !!refreshToken,
     type,
     fullUrl: url.toString()
   });
@@ -45,6 +50,79 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(
       new URL("/login?error=invalid_link", url.origin)
     );
+  }
+
+  // CASO ESPECIAL: Si Supabase redirige directamente con access_token y refresh_token (sin code)
+  // Esto puede pasar si Supabase procesa el token automáticamente
+  if (!code && accessToken && refreshToken) {
+    console.log("[RemoteCallback] Direct tokens received from Supabase, updating request directly");
+    
+    try {
+      // Actualizar la request directamente con los tokens
+      const supabaseAdmin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+          },
+        }
+      );
+
+      // Obtener información del usuario desde el token
+      const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(accessToken);
+      
+      if (userError || !user) {
+        console.error("[RemoteCallback] Error getting user from token:", userError);
+        return NextResponse.redirect(
+          new URL("/login?error=invalid_token", url.origin)
+        );
+      }
+
+      console.log("[RemoteCallback] Updating login request with direct tokens:", { requestId, userId: user.id });
+      
+      const { data: updated, error: updateError } = await supabaseAdmin
+        .from("auth_login_requests")
+        .update({
+          status: "approved",
+          approved_at: new Date().toISOString(),
+          supabase_access_token: accessToken,
+          supabase_refresh_token: refreshToken,
+          email: user.email ?? null,
+        })
+        .eq("id", requestId)
+        .eq("secret_token", secretToken)
+        .eq("status", "pending")
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error("[RemoteCallback] Error updating login request:", updateError);
+        return NextResponse.redirect(
+          new URL("/auth/remote-confirmed?error=update_failed", url.origin)
+        );
+      }
+
+      if (!updated) {
+        console.warn("[RemoteCallback] Request not found or already processed:", { requestId, secretToken });
+        return NextResponse.redirect(
+          new URL("/auth/remote-confirmed?error=already_approved", url.origin)
+        );
+      }
+
+      console.log("[RemoteCallback] Request updated successfully with direct tokens:", { requestId, status: updated.status });
+
+      // Redirigir a página de confirmación
+      return NextResponse.redirect(
+        new URL("/auth/remote-confirmed", url.origin)
+      );
+    } catch (err: any) {
+      console.error("[RemoteCallback] Unexpected error processing direct tokens:", err);
+      return NextResponse.redirect(
+        new URL("/login?error=unexpected", url.origin)
+      );
+    }
   }
 
   // Si no hay code pero hay token de Supabase, Supabase está usando su propio flujo
