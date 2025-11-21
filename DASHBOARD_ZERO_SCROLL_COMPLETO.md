@@ -225,3 +225,5 @@ El Dashboard está **100% alineado con el patrón ZERO SCROLL** y cuenta con:
 **El sistema está listo para ser replicado en el resto de páginas del panel.**
 
 
+
+

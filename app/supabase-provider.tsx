@@ -10,6 +10,7 @@ export function SupabaseProvider({ children }: PropsWithChildren) {
 	const [supabase] = useState<SupabaseClient>(() => getSupabaseBrowser());
 	const router = useRouter();
 	const pathname = usePathname();
+	const isDevelopment = process.env.NODE_ENV === 'development';
 
 	// Configurar listener global de cambios de autenticación
 	// Esto detecta cambios de sesión en todas las pestañas del mismo dominio
@@ -19,66 +20,76 @@ export function SupabaseProvider({ children }: PropsWithChildren) {
 	// - El token se refresca automáticamente (TOKEN_REFRESHED)
 	// - La sesión cambia en otra pestaña (gracias a multiTab)
 	useEffect(() => {
-		console.log("[SupabaseProvider] Setting up global auth state listener");
+		if (isDevelopment) {
+			console.log("[SupabaseProvider] Setting up global auth state listener");
+		}
 
 		const {
 			data: { subscription },
 		} = supabase.auth.onAuthStateChange(async (event, session) => {
-			console.log("[SupabaseProvider] Auth state changed:", event, {
-				hasSession: !!session,
-				userId: session?.user?.id,
-				email: session?.user?.email,
-				pathname,
-			});
+			if (isDevelopment) {
+				console.log("[SupabaseProvider] Auth state changed:", event, {
+					hasSession: !!session,
+					userId: session?.user?.id,
+					email: session?.user?.email,
+					pathname,
+				});
+			}
 
 			// Log adicional para depuración: verificar sesión directamente después del evento
-			try {
-				const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
-				console.log("[SupabaseProvider] getSession() after event:", {
-					hasSession: !!currentSession,
-					userId: currentSession?.user?.id,
-					hasError: !!sessionError,
-					errorMessage: sessionError?.message,
-				});
-			} catch (err) {
-				console.warn("[SupabaseProvider] Error calling getSession() after event:", err);
+			if (isDevelopment) {
+				try {
+					const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+					console.log("[SupabaseProvider] getSession() after event:", {
+						hasSession: !!currentSession,
+						userId: currentSession?.user?.id,
+						hasError: !!sessionError,
+						errorMessage: sessionError?.message,
+					});
+				} catch (err) {
+					console.warn("[SupabaseProvider] Error calling getSession() after event:", err);
+				}
 			}
 
 			// Si el usuario se autentica (en esta pestaña o en otra)
 			if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
 				const currentPath = window.location.pathname;
-				console.log("[SupabaseProvider] User signed in or token refreshed, session active", {
-					event,
-					pathname,
-					currentPath,
-					userId: session.user?.id,
-					isOnLogin: pathname === '/login' || pathname === '/login/verify-code',
-					isOnLoginWindow: currentPath === '/login' || currentPath === '/login/verify-code',
-				});
-				
+				if (isDevelopment) {
+					console.log("[SupabaseProvider] User signed in or token refreshed, session active", {
+						event,
+						pathname,
+						currentPath,
+						userId: session.user?.id,
+						isOnLogin: pathname === '/login' || pathname === '/login/verify-code',
+						isOnLoginWindow: currentPath === '/login' || currentPath === '/login/verify-code',
+					});
+				}
+
 				// IMPORTANTE: Redirigir inmediatamente si estamos en login y hay sesión
 				// No esperar delay porque las cookies ya están establecidas por el servidor
-				const isOnLoginPage = pathname === '/login' || pathname === '/login/verify-code' || 
-				                    currentPath === '/login' || currentPath === '/login/verify-code';
+				const isOnLoginPage = pathname === '/login' || pathname === '/login/verify-code' ||
+					currentPath === '/login' || currentPath === '/login/verify-code';
 				const isOnProtectedRoute = currentPath.startsWith('/panel') || currentPath.startsWith('/admin');
-				
+
 				if (isOnLoginPage && !isOnProtectedRoute) {
 					// Obtener redirect de query params si existe
 					const searchParams = new URLSearchParams(window.location.search);
 					const redirectParam = searchParams.get('redirect');
 					const redirectPath = redirectParam || '/panel';
-					
-					console.log("[SupabaseProvider] Redirecting immediately from", currentPath, "to:", redirectPath, {
-						event,
-						hasSession: !!session,
-						userId: session?.user?.id,
-					});
-					
+
+					if (isDevelopment) {
+						console.log("[SupabaseProvider] Redirecting immediately from", currentPath, "to:", redirectPath, {
+							event,
+							hasSession: !!session,
+							userId: session?.user?.id,
+						});
+					}
+
 					// Redirigir inmediatamente sin delay
 					// Usar window.location para forzar una navegación completa y asegurar que la sesión se persista
 					window.location.href = redirectPath;
 					return; // Salir temprano para evitar procesamiento adicional
-				} else {
+				} else if (isDevelopment) {
 					console.log("[SupabaseProvider] Not redirecting:", {
 						isOnLoginPage,
 						isOnProtectedRoute,
@@ -90,12 +101,16 @@ export function SupabaseProvider({ children }: PropsWithChildren) {
 
 			// Si el usuario cierra sesión (en esta pestaña o en otra)
 			if (event === 'SIGNED_OUT') {
-				console.log("[SupabaseProvider] User signed out");
-				
+				if (isDevelopment) {
+					console.log("[SupabaseProvider] User signed out");
+				}
+
 				// Redirigir a login si estamos en una ruta protegida
 				// No redirigir si ya estamos en login o en rutas públicas
 				if (pathname?.startsWith('/panel') || pathname?.startsWith('/admin')) {
-					console.log("[SupabaseProvider] Redirecting to login from protected route");
+					if (isDevelopment) {
+						console.log("[SupabaseProvider] Redirecting to login from protected route");
+					}
 					router.replace('/login');
 				}
 			}
@@ -103,13 +118,15 @@ export function SupabaseProvider({ children }: PropsWithChildren) {
 			// TOKEN_REFRESHED ahora se maneja arriba junto con SIGNED_IN
 
 			// Si el usuario cambia (raro, pero puede pasar con impersonación)
-			if (event === 'USER_UPDATED') {
+			if (event === 'USER_UPDATED' && isDevelopment) {
 				console.log("[SupabaseProvider] User data updated");
 			}
 		});
 
 		return () => {
-			console.log("[SupabaseProvider] Cleaning up auth state listener");
+			if (isDevelopment) {
+				console.log("[SupabaseProvider] Cleaning up auth state listener");
+			}
 			subscription.unsubscribe();
 		};
 	}, [supabase, router, pathname]);

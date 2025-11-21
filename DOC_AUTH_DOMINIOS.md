@@ -188,3 +188,5 @@ Ambos son necesarios para cubrir diferentes flujos de Supabase Auth.
 **Última actualización**: 2024-12-19
 
 
+
+

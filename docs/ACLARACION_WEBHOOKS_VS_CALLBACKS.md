@@ -131,3 +131,5 @@ await supabaseAdmin
 
 Cada componente tiene su responsabilidad específica y no pueden hacer el trabajo del otro.
 
+
+

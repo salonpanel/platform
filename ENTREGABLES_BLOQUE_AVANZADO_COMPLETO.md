@@ -364,3 +364,5 @@ Dashboard
 **Listo para**: Continuar con limpieza de código duplicado en Agenda y aplicación de mejoras visuales en páginas restantes (Clientes, Servicios, Staff, Ajustes).
 
 
+
+

@@ -99,3 +99,5 @@ Todos los checks han pasado. El proyecto puede desplegarse con confianza.
 - `docs/ENV_VARS.md` - Variables de entorno
 - `docs/DEPLOY_VERCEL.md` - Guía de deployment completa
 
+
+

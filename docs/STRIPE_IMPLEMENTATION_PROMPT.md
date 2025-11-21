@@ -276,3 +276,5 @@ Usa TypeScript, Next.js App Router, y Supabase. Sigue las mejores prácticas de 
 
 **Nota:** Estos prompts están diseñados para ser usados uno por uno, en orden, para implementar el sistema de forma incremental y controlada.
 
+
+

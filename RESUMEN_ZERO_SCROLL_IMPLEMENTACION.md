@@ -226,3 +226,5 @@ function PageWrapper() {
 - **Hooks/Contextos**: useDensity, HeightAwareContainer implementados y funcionando
 
 
+
+

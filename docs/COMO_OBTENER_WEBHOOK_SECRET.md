@@ -138,3 +138,5 @@ Si ya tenías el webhook configurado, Vercel debería detectar el cambio automá
 - [Supabase Database Webhooks](https://supabase.com/docs/guides/database/webhooks)
 - [Vercel Environment Variables](https://vercel.com/docs/concepts/projects/environment-variables)
 
+
+

@@ -120,3 +120,5 @@ Si después de configurar todas las URLs el problema persiste:
 2. Verifica que las variables de entorno estén correctas
 3. Asegúrate de que el dominio esté correctamente configurado en Vercel
 
+
+

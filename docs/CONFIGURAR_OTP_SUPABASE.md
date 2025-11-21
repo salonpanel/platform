@@ -54,3 +54,5 @@ Después de configurar:
 2. Revisa tu correo - deberías recibir un email con un código de 6 dígitos
 3. El código NO debe incluir ningún enlace
 
+
+

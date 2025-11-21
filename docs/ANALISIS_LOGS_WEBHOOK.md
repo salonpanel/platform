@@ -107,3 +107,5 @@ Si el problema persiste, podemos:
 - El webhook está funcionando (status 200), solo necesita detectar mejor los cambios
 - Los logs mejorados nos ayudarán a diagnosticar el problema si persiste
 
+
+

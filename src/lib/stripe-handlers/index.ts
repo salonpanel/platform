@@ -64,3 +64,5 @@ export function getSupportedEventTypes(): string[] {
   return Object.keys(EVENT_HANDLERS);
 }
 
+
+

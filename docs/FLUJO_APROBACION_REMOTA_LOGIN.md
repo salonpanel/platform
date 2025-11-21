@@ -295,3 +295,5 @@ O aplicar manualmente:
 - Este flujo de aprobación remota es opcional y se activa automáticamente cuando se crea una login request
 - El polling es un fallback si Realtime falla, pero Realtime es preferido para mejor UX
 
+
+

@@ -88,3 +88,5 @@ Después de actualizar las URLs:
 - **SÍ** incluye paths específicos en todas las URLs
 - **SÍ** verifica que no haya espacios en las URLs
 
+
+

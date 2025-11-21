@@ -52,3 +52,5 @@ COMMENT ON COLUMN public.payments.stripe_charge_id IS 'ID del Charge de Stripe';
 COMMENT ON COLUMN public.payments.balance_status IS 'Estado del balance: pending (retenido), available (disponible), paid_out (transferido)';
 COMMENT ON COLUMN public.payments.status IS 'Estado del pago: pending, succeeded, refunded, disputed, failed';
 
+
+

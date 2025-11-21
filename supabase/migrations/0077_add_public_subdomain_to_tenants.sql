@@ -19,3 +19,5 @@ WHERE public_subdomain IS NOT NULL;
 -- Optional: Add comment to document the field
 COMMENT ON COLUMN tenants.public_subdomain IS 'Custom subdomain for tenant (e.g., barberia-demo). Must be unique and follow slug validation rules. Used for wildcard domain routing (*.bookfast.es)';
 
+
+

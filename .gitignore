@@ -58,3 +58,5 @@ supabase/.temp
 # Backup files
 *.swp
 *.swo
+
+.vercel

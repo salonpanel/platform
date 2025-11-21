@@ -16,3 +16,5 @@ COMMENT ON COLUMN public.services.deposit_amount IS 'Monto fijo del depósito si
 COMMENT ON COLUMN public.services.deposit_percent IS 'Porcentaje del precio total si deposit_type es percent';
 COMMENT ON COLUMN public.services.online_payment_required IS 'Indica si el pago online es obligatorio para este servicio';
 
+
+

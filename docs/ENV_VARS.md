@@ -269,3 +269,5 @@ SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key
 - Verifica que el cron job está configurado en Vercel Dashboard (Settings → Cron Jobs)
 
 
+
+

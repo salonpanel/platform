@@ -24,3 +24,5 @@ export const metadata: Metadata = {
 // Este archivo es solo documentación, no se exporta nada
 
 
+
+

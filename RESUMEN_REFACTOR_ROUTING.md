@@ -239,3 +239,5 @@ app/
 **Próximo paso**: Probar que todo funciona y eliminar `src/app/`
 
 
+
+

@@ -123,3 +123,5 @@ Si después de verificar todo lo anterior el problema persiste:
 - El orden no importa: Puedes añadir las URLs en cualquier orden
 - Espera unos minutos después de guardar cambios en Supabase: A veces Supabase cachea las configuraciones
 
+
+

@@ -6,13 +6,34 @@ import { createServerClient } from "@supabase/ssr";
 export async function POST(req: NextRequest) {
   try {
     console.log("[VerifyOTP API] Iniciando verificación OTP...");
-    
+
+    // SEGURIDAD: Validar origen de la request (CSRF protection)
+    const origin = req.headers.get('origin');
+    const referer = req.headers.get('referer');
+    const isDevelopment = process.env.NODE_ENV === 'development';
+
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'https://pro.bookfast.es',
+      'https://admin.bookfast.es',
+    ];
+
+    // Validar origen solo en producción
+    if (!isDevelopment && origin && !allowedOrigins.includes(origin)) {
+      console.error("[VerifyOTP API] Origen no permitido:", origin);
+      return NextResponse.json(
+        { ok: false, error: "Origen no permitido" },
+        { status: 403 }
+      );
+    }
+
     let body;
     try {
       body = await req.json();
-      console.log("[VerifyOTP API] Body recibido:", { 
-        hasEmail: !!body?.email, 
-        hasToken: !!body?.token 
+      console.log("[VerifyOTP API] Body recibido:", {
+        hasEmail: !!body?.email,
+        hasToken: !!body?.token
       });
     } catch (parseError: any) {
       console.error("[VerifyOTP API] Error parseando JSON:", parseError);
@@ -23,9 +44,9 @@ export async function POST(req: NextRequest) {
     }
 
     if (!body || !body.email || !body.token) {
-      console.error("[VerifyOTP API] Datos incompletos:", { 
-        hasEmail: !!body?.email, 
-        hasToken: !!body?.token 
+      console.error("[VerifyOTP API] Datos incompletos:", {
+        hasEmail: !!body?.email,
+        hasToken: !!body?.token
       });
       return NextResponse.json(
         { ok: false, error: "Datos de verificación incompletos." },
@@ -40,10 +61,10 @@ export async function POST(req: NextRequest) {
     // ✅ Usar createServerClient de @supabase/ssr para Next.js 16
     // Este helper maneja correctamente las cookies en route handlers
     const cookieStore = await cookies();
-    
+
     // Crear una respuesta vacía para establecer cookies
     const response = new NextResponse();
-    
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

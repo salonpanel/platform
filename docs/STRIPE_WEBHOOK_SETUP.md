@@ -134,3 +134,5 @@ Para probar en producción:
 **Última actualización**: 2024
 **Versión**: 2.0.0 (Arquitectura Modular)
 
+
+

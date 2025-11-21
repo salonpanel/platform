@@ -105,3 +105,5 @@ if (warnings.length > 0) {
 
 console.log('\n✅ Verificación completada\n');
 
+
+

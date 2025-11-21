@@ -123,3 +123,5 @@ El sistema:
 - ✅ Persiste sesión correctamente
 - ✅ Redirige correctamente después de autenticación
 
+
+
