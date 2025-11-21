@@ -1,80 +1,17 @@
 /**
  * Server-side layout para el panel
- * Verifica la sesión en el servidor antes de renderizar el layout cliente
+ * IMPORTANTE: La verificación de sesión se maneja en el Client Component (layout-client.tsx)
+ * para evitar race conditions con cookies que se establecen en el API route
  */
-import { cookies } from "next/headers";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { redirect } from "next/navigation";
 import { ReactNode } from "react";
 import PanelLayoutClient from "./layout-client";
 
 export default async function PanelLayout({ children }: { children: ReactNode }) {
-  // CRÍTICO: En Server Components (Next.js 16), el patrón correcto es:
-  // 1. Llamar cookies() con await (puede ser async en Next.js 16)
-  // 2. Pasar una función que retorna el cookieStore a createServerComponentClient
-  const cookieStore = await cookies();
-  const supabase = createServerComponentClient({
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error La versión actual del helper tipa este campo como función async
-    cookies: () => cookieStore,
-  });
-
-  // Verificar sesión en el servidor usando getSession
-  let {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession();
-
-  // Solo loguear errores en desarrollo
-  if (sessionError && process.env.NODE_ENV === 'development') {
-    console.error("[PanelLayout] Error al obtener sesión:", sessionError);
-  }
-
-  // Si no hay sesión, verificar si hay cookies de auth (sesión puede estar inicializándose)
-  if (!session) {
-    // Verificar si hay cookies de auth usando getAll() y buscando en el array
-    const allCookies = cookieStore.getAll();
-    const hasAuthCookies = allCookies.some((c: { name: string }) => c.name === "sb-panel-auth-auth-token") ||
-      allCookies.some((c: { name: string }) => c.name === "sb-panel-auth-refresh-token");
-
-    if (hasAuthCookies) {
-      // REINTENTAR obtener la sesión si hay cookies presentes
-      // Esto permite darle tiempo a Supabase para hidratar correctamente la sesión
-      // especialmente después de verificar OTP cuando las cookies acaban de establecerse
-      if (process.env.NODE_ENV === 'development') {
-        console.log("[PanelLayout] No session but auth cookies present, rechecking session...");
-      }
-
-      const recheckResult = await supabase.auth.getSession();
-      if (recheckResult.data.session) {
-        session = recheckResult.data.session;
-        if (process.env.NODE_ENV === 'development') {
-          console.log("[PanelLayout] Rechecked session recovered:", {
-            userId: session.user?.id,
-            email: session.user?.email,
-          });
-        }
-      } else if (process.env.NODE_ENV === 'development') {
-        console.log("[PanelLayout] Recheck failed, still no session");
-      }
-    }
-
-    // Si después del reintento aún no hay sesión, redirigir al login
-    if (!session) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log("[PanelLayout] Sin sesión después de reintento, redirigiendo a /login");
-      }
-      redirect(`/login?redirect=${encodeURIComponent("/panel")}`);
-    }
-  }
-
-  // A partir de aquí, session existe y puedes recuperar user/tenant/etc.
-  if (process.env.NODE_ENV === 'development') {
-    console.log("[PanelLayout] Session valid, rendering client layout:", {
-      userId: session.user?.id,
-      email: session.user?.email,
-    });
-  }
+  // NO verificar sesión aquí - el Client Component maneja toda la autenticación
+  // Esto evita:
+  // 1. Race conditions cuando las cookies se acaban de establecer
+  // 2. Bucles infinitos de redirección
+  // 3. Problemas de propagación de cookies entre Server y Client
 
   return <PanelLayoutClient>{children}</PanelLayoutClient>;
 }
