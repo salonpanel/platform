@@ -35,6 +35,7 @@ export function getSupabaseBrowser(): SupabaseClient {
         },
         setAll(cookiesToSet) {
           if (typeof document === 'undefined') return;
+          console.log("[SupabaseBrowser] setAll called with cookies:", cookiesToSet.map(c => c.name));
           cookiesToSet.forEach(({ name, value, options }) => {
             let cookieString = `${name}=${value}`;
             // CRÍTICO: Configurar cookies con dominio, sameSite y secure
@@ -59,7 +60,19 @@ export function getSupabaseBrowser(): SupabaseClient {
             } else {
               cookieString += `; Max-Age=${60 * 60 * 24 * 7}`; // 7 días por defecto
             }
+            console.log("[SupabaseBrowser] Setting cookie:", name, "with options:", {
+              domain: options?.domain || '.bookfast.es',
+              sameSite: options?.sameSite || 'None',
+              secure: options?.secure !== false,
+            });
             document.cookie = cookieString;
+          });
+          // Verificar que las cookies se establecieron
+          const allCookies = document.cookie.split(';').map(c => c.trim());
+          const authCookies = allCookies.filter(c => c.startsWith('sb-panel-auth'));
+          console.log("[SupabaseBrowser] Cookies after setAll:", {
+            allCookies: allCookies.length,
+            authCookies: authCookies.map(c => c.split('=')[0]),
           });
         },
       },
