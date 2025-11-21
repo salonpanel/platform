@@ -20,6 +20,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     totalCookies: allCookies.length,
     authCookies: authCookies.length,
     authCookieNames: authCookies.map(c => c.name),
+    allCookieNames: allCookies.map(c => c.name),
   });
   
   // Verificar sesión en el servidor usando getSession (más rápido que getUser)

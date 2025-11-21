@@ -207,8 +207,20 @@ function VerifyCodeContent() {
       // CRÍTICO: Esperar un momento para asegurar que las cookies se establezcan
       // y luego forzar una recarga completa de la página
       // Esto es necesario porque el servidor necesita leer las cookies en la siguiente request
-      // Aumentar el delay a 500ms para dar más tiempo a que las cookies se establezcan
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Aumentar el delay a 1000ms para dar más tiempo a que las cookies se establezcan y se sincronicen
+      console.log("[VerifyCode] Waiting 1000ms for cookies to be established...");
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Verificar cookies una vez más antes de redirigir
+      if (typeof document !== 'undefined') {
+        const cookies = document.cookie.split(';').map(c => c.trim());
+        const authCookies = cookies.filter(c => c.startsWith('sb-panel-auth'));
+        console.log("[VerifyCode] Final cookies check before redirect:", {
+          allCookies: cookies.length,
+          authCookies: authCookies.length,
+          authCookieNames: authCookies.map(c => c.split('=')[0]),
+        });
+      }
       
       console.log("[VerifyCode] Executing redirect to:", redirectPath);
       // Usar window.location.href para forzar una navegación completa
