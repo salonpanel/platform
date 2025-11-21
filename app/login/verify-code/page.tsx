@@ -30,56 +30,22 @@ function VerifyCodeContent() {
     return () => clearInterval(timer);
   }, [timeLeft]);
 
-  // Escuchar cambios de autenticación para detectar cuando se establece la sesión
-  // Esto es un fallback en caso de que verifyOtp() se complete pero la promesa no se resuelva
-  useEffect(() => {
-    if (!verifying) return;
-
-    console.log("[VerifyCode] Setting up auth state listener while verifying...");
-    
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("[VerifyCode] Auth state changed during verification:", event, {
-        hasSession: !!session,
-        userId: session?.user?.id,
-        verifying,
-      });
-
-      // Si se detecta SIGNED_IN y tenemos sesión, y estamos verificando, redirigir
-      if (event === 'SIGNED_IN' && session && verifying) {
-        console.log("[VerifyCode] SIGNED_IN detected during verification, redirecting...");
-        const redirectParam = searchParams?.get("redirect");
-        const redirectPath = redirectParam || "/panel";
-        
-        // Limpiar el estado de verificación
-        setVerifying(false);
-        setSuccess(true);
-        
-        // Redirigir después de un pequeño delay para asegurar que el estado se actualice
-        setTimeout(() => {
-          console.log("[VerifyCode] Executing redirect from listener to:", redirectPath);
-          window.location.href = redirectPath;
-        }, 100);
-      }
-    });
-
-    return () => {
-      console.log("[VerifyCode] Cleaning up auth state listener");
-      subscription.unsubscribe();
-    };
-  }, [verifying, supabase, searchParams]);
+  // Ya no necesitamos el listener de auth state porque la verificación se hace en el servidor
+  // El servidor escribe las cookies y luego redirigimos
 
   // Verificar código OTP
+  // CRÍTICO: Ahora la verificación se hace en el servidor (Route Handler)
+  // Esto escribe las cookies de sesión que el servidor puede leer
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setVerifying(true);
 
-    console.log("[VerifyCode] Starting verification...", {
-      email: email ? "present" : "missing",
-      codeLength: code.length,
-    });
+    if (!email) {
+      setError("No se ha encontrado el email en la sesión de login.");
+      setVerifying(false);
+      return;
+    }
 
     if (code.length !== 8) {
       setError("El código debe tener 8 dígitos");
@@ -88,147 +54,58 @@ function VerifyCodeContent() {
     }
 
     try {
-      console.log("[VerifyCode] Calling verifyOtp...", {
+      console.log("[VerifyCode] Enviando OTP al API...", {
         email: email ? email.substring(0, 5) + "..." : "missing",
         codeLength: code.length,
       });
-      
-      // Llamar a verifyOtp
-      const verifyResult = await supabase.auth.verifyOtp({
-        email: email.toLowerCase().trim(),
-        token: code.trim(),
-        type: 'email',
+
+      // CRÍTICO: Llamar al endpoint del servidor que usa createRouteHandlerClient
+      // Esto escribe las cookies de sesión que el servidor puede leer
+      const res = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          token: code.trim(),
+        }),
       });
 
-      console.log("[VerifyCode] verifyOtp completed:", {
-        hasData: !!verifyResult.data,
-        hasSession: !!verifyResult.data?.session,
-        hasError: !!verifyResult.error,
-        errorMessage: verifyResult.error?.message,
-        errorName: verifyResult.error?.name,
-      });
+      const data = await res.json();
 
-      const { data, error: verifyError } = verifyResult;
-
-      if (verifyError) {
-        console.error("[VerifyCode] Error verificando OTP:", verifyError);
-        
-        // Manejar diferentes tipos de errores
-        if (verifyError.message?.includes('expired') || verifyError.message?.includes('invalid')) {
-          setError('Código inválido o expirado. Por favor verifica el código e intenta nuevamente, o solicita uno nuevo.');
-        } else {
-          setError(verifyError.message || 'Error al verificar el código. Intenta de nuevo.');
-        }
+      if (!res.ok || !data.ok) {
+        console.error("[VerifyCode] Error en verificación:", data);
+        setError(
+          data?.error ||
+            "No hemos podido verificar el código. Por favor, inténtalo de nuevo."
+        );
         setCode(""); // Limpiar campo por seguridad
         setVerifying(false);
         return;
       }
 
-      if (!data.session) {
-        console.error("[VerifyCode] No session in response");
-        setError("No se pudo establecer la sesión. Por favor, intenta de nuevo.");
-        setVerifying(false);
-        return;
-      }
-
-      console.log("[VerifyCode] OTP verified successfully:", {
-        userId: data.session.user?.id,
-        email: data.session.user?.email,
-        hasAccessToken: !!data.session.access_token,
-        hasRefreshToken: !!data.session.refresh_token,
+      console.log("[VerifyCode] OTP verificado correctamente:", {
+        userId: data.user?.id,
+        email: data.user?.email,
       });
-
-      // CRÍTICO: Establecer la sesión explícitamente para asegurar que se guarde en cookies
-      // Aunque verifyOtp devuelve la sesión, debemos llamar a setSession() para que
-      // se persista correctamente en cookies del navegador (necesario para Next.js SSR)
-      const { access_token, refresh_token } = data.session;
-      
-      console.log("[VerifyCode] Setting session explicitly...");
-      const { data: sessionData, error: setSessionError } = await supabase.auth.setSession({
-        access_token,
-        refresh_token,
-      });
-
-      if (setSessionError) {
-        console.error("[VerifyCode] Error setting session:", setSessionError);
-        setError("Error al establecer la sesión. Por favor, intenta de nuevo.");
-        setVerifying(false);
-        return;
-      }
-
-      if (!sessionData.session) {
-        console.error("[VerifyCode] No session after setSession");
-        setError("La sesión no se estableció correctamente. Por favor, intenta de nuevo.");
-        setVerifying(false);
-        return;
-      }
-
-      console.log("[VerifyCode] Session established successfully:", {
-        userId: sessionData.session.user?.id,
-        email: sessionData.session.user?.email,
-      });
-
-      // Verificar que la sesión se guardó correctamente
-      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
-      console.log("[VerifyCode] Current session after setSession:", {
-        hasSession: !!currentSession,
-        userId: currentSession?.user?.id,
-        hasError: !!sessionError,
-        errorMessage: sessionError?.message,
-      });
-
-      if (!currentSession) {
-        console.error("[VerifyCode] Session not persisted after setSession");
-        setError("La sesión no se guardó correctamente. Por favor, intenta de nuevo.");
-        setVerifying(false);
-        return;
-      }
-
-      // CRÍTICO: Verificar cookies en el navegador antes de redirigir
-      if (typeof document !== 'undefined') {
-        const cookies = document.cookie.split(';').map(c => c.trim());
-        const authCookies = cookies.filter(c => c.startsWith('sb-panel-auth'));
-        console.log("[VerifyCode] Cookies after setSession:", {
-          allCookies: cookies.length,
-          authCookies: authCookies.length,
-          authCookieNames: authCookies.map(c => c.split('=')[0]),
-        });
-      }
 
       // Éxito: redirigir al panel
+      // En este punto, el servidor YA ha escrito las cookies de sesión
+      // Simplemente redirigimos al panel
       const redirectParam = searchParams?.get("redirect");
       const redirectPath = redirectParam || "/panel";
-      console.log("[VerifyCode] Session confirmed, redirecting to:", redirectPath);
+      console.log("[VerifyCode] OTP verificado, redirigiendo a:", redirectPath);
       
       // Limpiar estado antes de redirigir
       setVerifying(false);
       setSuccess(true);
       
-      // CRÍTICO: Esperar un momento para asegurar que las cookies se establezcan
-      // y luego forzar una recarga completa de la página
-      // Esto es necesario porque el servidor necesita leer las cookies en la siguiente request
-      // Aumentar el delay a 1000ms para dar más tiempo a que las cookies se establezcan y se sincronicen
-      console.log("[VerifyCode] Waiting 1000ms for cookies to be established...");
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Verificar cookies una vez más antes de redirigir
-      if (typeof document !== 'undefined') {
-        const cookies = document.cookie.split(';').map(c => c.trim());
-        const authCookies = cookies.filter(c => c.startsWith('sb-panel-auth'));
-        console.log("[VerifyCode] Final cookies check before redirect:", {
-          allCookies: cookies.length,
-          authCookies: authCookies.length,
-          authCookieNames: authCookies.map(c => c.split('=')[0]),
-        });
-      }
-      
-      console.log("[VerifyCode] Executing redirect to:", redirectPath);
-      // Usar window.location.href para forzar una navegación completa
-      // Esto asegura que las cookies se establezcan correctamente y el servidor las lea
-      window.location.href = redirectPath;
+      // Redirigir usando router.replace (más limpio que window.location)
+      router.replace(redirectPath);
     } catch (err: any) {
-      console.error("[VerifyCode] Unexpected error verifying OTP:", err);
-      setError(err?.message || "Error al verificar el código. Por favor, intenta de nuevo.");
+      console.error("[VerifyCode] Error inesperado:", err);
+      setError("Ha ocurrido un error inesperado. Inténtalo de nuevo.");
       setCode(""); // Limpiar campo
       setVerifying(false);
     }
