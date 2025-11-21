@@ -217,13 +217,17 @@ export async function middleware(req: NextRequest) {
           // La sesión se recuperó, continuar con el flujo normal
           return res;
         }
-        // Si el reintento falla, continuar con la redirección al login
+
+        // Si el reintento falla pero ya hay cookies de sesión, no forzar redirección desde middleware.
+        // Dejamos que el layout cliente gestione la autenticación para evitar bucles /panel ↔ /login.
+        logDomainDebug(`[Pro Domain] Auth cookies present but no session yet for ${pathname}, allowing request to proceed without redirect`);
+        return NextResponse.next();
       }
       
-      // Si no hay cookies o el reintento falló, redirigir al login
+      // Si no hay cookies, redirigir al login
       url.pathname = "/login";
       url.searchParams.set("redirect", finalPath);
-      logDomainDebug(`[Pro Domain] No session and no valid auth cookies for ${pathname}, redirecting to login with redirect=${finalPath}`);
+      logDomainDebug(`[Pro Domain] No session and no auth cookies for ${pathname}, redirecting to login with redirect=${finalPath}`);
       return NextResponse.redirect(url);
     }
 
