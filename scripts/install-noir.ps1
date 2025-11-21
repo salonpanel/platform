@@ -7,7 +7,7 @@ Write-Host "=== Instalando OWASP Noir ===" -ForegroundColor Cyan
 $noirInstalled = Get-Command noir -ErrorAction SilentlyContinue
 
 if ($noirInstalled) {
-    Write-Host "✓ OWASP Noir ya está instalado" -ForegroundColor Green
+    Write-Host "OWASP Noir ya está instalado" -ForegroundColor Green
     noir --version
     exit 0
 }
@@ -26,8 +26,8 @@ try {
     
     # Construir URL de descarga para Windows
     $downloadUrl = "https://github.com/owasp-noir/noir/releases/download/$version/noir-$version-$arch-pc-windows-msvc.zip"
-    $zipFile = "$env:TEMP\noir.zip"
-    $extractPath = "$env:TEMP\noir"
+    $zipFile = Join-Path $env:TEMP "noir.zip"
+    $extractPath = Join-Path $env:TEMP "noir"
     
     Write-Host "Descargando desde: $downloadUrl" -ForegroundColor Yellow
     Invoke-WebRequest -Uri $downloadUrl -OutFile $zipFile
@@ -37,32 +37,35 @@ try {
     Expand-Archive -Path $zipFile -DestinationPath $extractPath -Force
     
     # Crear directorio para herramientas si no existe
-    $toolsDir = "$HOME\.noir"
+    $toolsDir = Join-Path $HOME ".noir"
     if (-not (Test-Path $toolsDir)) {
         New-Item -ItemType Directory -Path $toolsDir | Out-Null
     }
     
     # Mover el ejecutable
-    Move-Item -Path "$extractPath\noir.exe" -Destination "$toolsDir\noir.exe" -Force
+    $noirExe = Join-Path $extractPath "noir.exe"
+    $destExe = Join-Path $toolsDir "noir.exe"
+    Move-Item -Path $noirExe -Destination $destExe -Force
     
     # Agregar al PATH del usuario si no está
     $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
     if ($userPath -notlike "*$toolsDir*") {
         Write-Host "Agregando Noir al PATH del usuario..." -ForegroundColor Yellow
-        [Environment]::SetEnvironmentVariable("Path", "$userPath;$toolsDir", "User")
+        $newPath = "$userPath;$toolsDir"
+        [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
         $env:Path = "$env:Path;$toolsDir"
     }
     
     # Limpiar archivos temporales
-    Remove-Item $zipFile -Force
-    Remove-Item $extractPath -Recurse -Force
+    Remove-Item $zipFile -Force -ErrorAction SilentlyContinue
+    Remove-Item $extractPath -Recurse -Force -ErrorAction SilentlyContinue
     
-    Write-Host "✓ OWASP Noir instalado exitosamente en: $toolsDir" -ForegroundColor Green
-    Write-Host "✓ Ejecuta 'noir --version' para verificar la instalación" -ForegroundColor Green
-    Write-Host "⚠ Puede que necesites reiniciar tu terminal para que el PATH se actualice" -ForegroundColor Yellow
+    Write-Host "OWASP Noir instalado exitosamente en: $toolsDir" -ForegroundColor Green
+    Write-Host "Ejecuta 'noir --version' para verificar la instalación" -ForegroundColor Green
+    Write-Host "Puede que necesites reiniciar tu terminal para que el PATH se actualice" -ForegroundColor Yellow
     
 } catch {
-    Write-Host "✗ Error al instalar OWASP Noir: $_" -ForegroundColor Red
+    Write-Host "Error al instalar OWASP Noir: $_" -ForegroundColor Red
     Write-Host "Por favor, instala manualmente desde: https://github.com/owasp-noir/noir/releases" -ForegroundColor Yellow
     exit 1
 }

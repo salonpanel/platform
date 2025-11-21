@@ -59,4 +59,9 @@ supabase/.temp
 *.swp
 *.swo
 
+# Security reports (OWASP Noir)
+security-reports/
+*.noir.json
+*.noir.yaml
+
 .vercel

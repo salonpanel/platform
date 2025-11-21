@@ -1,0 +1,157 @@
+{
+    "endpoints": [
+        {
+            "url": "https://localhost:3000/api/auth/login",
+            "method": "POST",
+            "params": [
+                {
+                    "name": "email",
+                    "value": "",
+                    "param_type": "form",
+                    "tags": []
+                },
+                {
+                    "name": "password",
+                    "value": "",
+                    "param_type": "form",
+                    "tags": [
+                        {
+                            "name": "sensitive_data",
+                            "description": "This parameter contains sensitive information",
+                            "tagger": "Hunt"
+                        }
+                    ]
+                }
+            ],
+            "details": {
+                "code_paths": [
+                    {
+                        "path": "app/api/auth/login/route.ts",
+                        "line": 15
+                    }
+                ]
+            },
+            "protocol": "http",
+            "tags": []
+        },
+        {
+            "url": "https://localhost:3000/api/tenants/:id",
+            "method": "GET",
+            "params": [
+                {
+                    "name": "id",
+                    "value": "",
+                    "param_type": "path",
+                    "tags": []
+                }
+            ],
+            "details": {
+                "code_paths": [
+                    {
+                        "path": "app/api/tenants/[id]/route.ts",
+                        "line": 8
+                    }
+                ]
+            },
+            "protocol": "http",
+            "tags": []
+        },
+        {
+            "url": "https://localhost:3000/api/clients",
+            "method": "POST",
+            "params": [
+                {
+                    "name": "name",
+                    "value": "",
+                    "param_type": "form",
+                    "tags": []
+                },
+                {
+                    "name": "email",
+                    "value": "",
+                    "param_type": "form",
+                    "tags": []
+                },
+                {
+                    "name": "phone",
+                    "value": "",
+                    "param_type": "form",
+                    "tags": []
+                }
+            ],
+            "details": {
+                "code_paths": [
+                    {
+                        "path": "app/api/clients/route.ts",
+                        "line": 12
+                    }
+                ]
+            },
+            "protocol": "http",
+            "tags": []
+        },
+        {
+            "url": "https://localhost:3000/api/appointments",
+            "method": "GET",
+            "params": [
+                {
+                    "name": "date",
+                    "value": "",
+                    "param_type": "query",
+                    "tags": []
+                },
+                {
+                    "name": "tenant_id",
+                    "value": "",
+                    "param_type": "query",
+                    "tags": []
+                }
+            ],
+            "details": {
+                "code_paths": [
+                    {
+                        "path": "app/api/appointments/route.ts",
+                        "line": 10
+                    }
+                ]
+            },
+            "protocol": "http",
+            "tags": []
+        },
+        {
+            "url": "https://localhost:3000/api/search",
+            "method": "GET",
+            "params": [
+                {
+                    "name": "query",
+                    "value": "",
+                    "param_type": "query",
+                    "tags": [
+                        {
+                            "name": "sqli",
+                            "description": "This parameter may be vulnerable to SQL Injection attacks.",
+                            "tagger": "Hunt"
+                        }
+                    ]
+                }
+            ],
+            "details": {
+                "code_paths": [
+                    {
+                        "path": "app/api/search/route.ts",
+                        "line": 7
+                    }
+                ]
+            },
+            "protocol": "http",
+            "tags": []
+        }
+    ],
+    "metadata": {
+        "scan_date": "2025-11-21T22:00:00Z",
+        "base_url": "https://localhost:3000",
+        "total_endpoints": 5,
+        "total_vulnerabilities": 2,
+        "noir_version": "0.25.1"
+    }
+}
