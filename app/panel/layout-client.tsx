@@ -10,6 +10,7 @@ import { PageContainer } from "@/components/panel/PageContainer";
 import { Spinner } from "@/components/ui/Spinner";
 import { ToastProvider } from "@/components/ui";
 import { getCurrentTenant } from "@/lib/panel-tenant";
+import { getSupabaseBrowser } from "@/lib/supabase/browser";
 
 type TenantInfo = {
   id: string;
@@ -31,15 +32,65 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
   const [noMembership, setNoMembership] = useState(false);
   const [authStatus, setAuthStatus] = useState<"UNKNOWN" | "AUTHENTICATED" | "UNAUTHENTICATED">("UNKNOWN");
   const [authRedirectTriggered, setAuthRedirectTriggered] = useState(false);
+  const [sessionLoading, setSessionLoading] = useState(true);
 
   // Extraer el valor de impersonate una sola vez para evitar re-renders
   const impersonateOrgId = useMemo(() => {
     return searchParams?.get("impersonate") || null;
   }, [searchParams?.toString()]);
 
+  // Verificar sesión inicial antes de cargar el tenant
+  useEffect(() => {
+    let mounted = true;
+    const checkSession = async () => {
+      try {
+        const supabase = getSupabaseBrowser();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        console.log("[PanelLayoutClient] Initial session check:", {
+          hasSession: !!session,
+          userId: session?.user?.id,
+          hasError: !!error,
+          errorMessage: error?.message,
+        });
+
+        if (!mounted) return;
+
+        if (!session || error) {
+          setAuthStatus("UNAUTHENTICATED");
+          setSessionLoading(false);
+          return;
+        }
+
+        setAuthStatus("AUTHENTICATED");
+        setSessionLoading(false);
+      } catch (err) {
+        console.error("[PanelLayoutClient] Error checking session:", err);
+        if (mounted) {
+          setAuthStatus("UNAUTHENTICATED");
+          setSessionLoading(false);
+        }
+      }
+    };
+
+    checkSession();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   useEffect(() => {
     let mounted = true;
     const loadTenant = async () => {
+      // Esperar a que la sesión esté verificada antes de cargar el tenant
+      if (sessionLoading || authStatus === "UNKNOWN") {
+        return;
+      }
+
+      if (authStatus === "UNAUTHENTICATED") {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       setPanelError(null);
       setNoMembership(false);
@@ -123,7 +174,7 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, [impersonateOrgId]);
+  }, [impersonateOrgId, sessionLoading, authStatus]);
 
   useEffect(() => {
     if (authStatus !== "UNAUTHENTICATED" || authRedirectTriggered) {
@@ -157,12 +208,15 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
     }
   };
 
-  if (loading || authStatus === "UNKNOWN") {
+  // Mostrar loading mientras se verifica la sesión o se carga el tenant
+  if (sessionLoading || loading || authStatus === "UNKNOWN") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-950">
         <div className="text-center">
           <Spinner size="lg" />
-          <p className="mt-4 text-slate-400">Cargando panel...</p>
+          <p className="mt-4 text-slate-400">
+            {sessionLoading ? "Verificando sesión..." : "Cargando panel..."}
+          </p>
         </div>
       </div>
     );
