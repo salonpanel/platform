@@ -139,30 +139,40 @@ export async function middleware(req: NextRequest) {
     }
 
     // Si viene de Supabase magic link (con type=magiclink y token), redirigir al callback apropiado
-    if (pathname === "/") {
+    if (pathname === "/" || pathname === "/login") {
       const type = url.searchParams.get("type");
       const token = url.searchParams.get("token");
       const code = url.searchParams.get("code");
       const requestId = url.searchParams.get("request_id");
       const secretToken = url.searchParams.get("token");
+      const redirectTo = url.searchParams.get("redirect_to");
+      
+      // Si hay redirect_to con espacios codificados, limpiarlo
+      let cleanRedirectTo = redirectTo;
+      if (redirectTo) {
+        cleanRedirectTo = redirectTo.trim().replace(/%20+/g, '');
+      }
       
       // Si tiene request_id, es un magic link remoto → redirigir a remote-callback
       if (requestId && secretToken && (code || (type === "magiclink" && token))) {
         const callbackUrl = new URL("/auth/remote-callback", url);
-        url.searchParams.forEach((value, key) => {
-          callbackUrl.searchParams.set(key, value);
-        });
-        logDomainDebug(`Magic link remoto detectado en raíz, redirigiendo a remote-callback`);
+        callbackUrl.searchParams.set("request_id", requestId);
+        callbackUrl.searchParams.set("token", secretToken);
+        if (code) callbackUrl.searchParams.set("code", code);
+        if (type) callbackUrl.searchParams.set("type", type);
+        if (token && token !== secretToken) callbackUrl.searchParams.set("supabase_token", token);
+        logDomainDebug(`Magic link remoto detectado, redirigiendo a remote-callback`);
         return NextResponse.redirect(callbackUrl);
       }
       
       // Si es un magic link normal (sin request_id), redirigir a callback normal
       if ((type === "magiclink" && token) || code) {
         const callbackUrl = new URL("/auth/callback", url);
-        url.searchParams.forEach((value, key) => {
-          callbackUrl.searchParams.set(key, value);
-        });
-        logDomainDebug(`Magic link detectado en raíz, redirigiendo a callback`);
+        if (code) callbackUrl.searchParams.set("code", code);
+        if (type) callbackUrl.searchParams.set("type", type);
+        if (token) callbackUrl.searchParams.set("token", token);
+        if (cleanRedirectTo) callbackUrl.searchParams.set("redirect_to", cleanRedirectTo);
+        logDomainDebug(`Magic link detectado, redirigiendo a callback`);
         return NextResponse.redirect(callbackUrl);
       }
       
