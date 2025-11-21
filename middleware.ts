@@ -191,6 +191,34 @@ export async function middleware(req: NextRequest) {
       return NextResponse.rewrite(url);
     }
 
+    // Detectar si Supabase redirige a /login con parámetros del magic link
+    // Esto pasa cuando Supabase ignora emailRedirectTo y redirige a su Site URL
+    if (pathname === "/login") {
+      const type = url.searchParams.get("type");
+      const token = url.searchParams.get("token");
+      const code = url.searchParams.get("code");
+      const redirectTo = url.searchParams.get("redirect_to");
+      
+      // Si hay parámetros de magic link, intentar extraer request_id del hash o de otra forma
+      // O redirigir a /auth/callback para procesar el magic link normal
+      if ((type === "magiclink" && token) || code) {
+        // Si hay redirect_to con espacios, limpiarlo
+        let cleanRedirectTo = redirectTo;
+        if (redirectTo) {
+          cleanRedirectTo = redirectTo.trim().replace(/%20+/g, '');
+        }
+        
+        // Redirigir a callback normal (no tenemos request_id aquí, así que es login normal)
+        const callbackUrl = new URL("/auth/callback", url);
+        if (code) callbackUrl.searchParams.set("code", code);
+        if (type) callbackUrl.searchParams.set("type", type);
+        if (token) callbackUrl.searchParams.set("token", token);
+        if (cleanRedirectTo) callbackUrl.searchParams.set("redirect_to", cleanRedirectTo);
+        logDomainDebug(`[Pro Domain] Magic link detected in /login, redirecting to callback`);
+        return NextResponse.redirect(callbackUrl);
+      }
+    }
+
     // Determinar la ruta final después del rewrite
     const finalPath = pathname.startsWith("/panel") ? pathname : `/panel${pathname}`;
 
