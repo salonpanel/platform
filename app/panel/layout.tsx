@@ -45,9 +45,6 @@ export default async function PanelLayout({ children }: { children: ReactNode })
         console.log("[PanelLayout] No session but auth cookies present, rechecking session...");
       }
 
-      // Pequeño delay para dar tiempo a que las cookies se propaguen
-      await new Promise(resolve => setTimeout(resolve, 200));
-
       const recheckResult = await supabase.auth.getSession();
       if (recheckResult.data.session) {
         session = recheckResult.data.session;
