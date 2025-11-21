@@ -249,37 +249,21 @@ function LoginContent() {
         }
       }
 
-      // IMPORTANTE: Esperar un momento para que las cookies se sincronicen con el servidor
-      // antes de redirigir. Esto evita que el middleware no detecte la sesión.
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Verificar que la sesión sigue disponible antes de redirigir
-      const { data: verifySession } = await supabase.auth.getSession();
-      if (!verifySession?.session) {
-        console.error("[handleApprovedRequest] Session lost after setting, retrying...");
-        // Reintentar establecer la sesión
-        const { data: retryData, error: retryError } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-        if (retryError || !retryData?.session) {
-          console.error("[handleApprovedRequest] Failed to re-establish session:", retryError);
-          setError("Error al establecer la sesión. Por favor, intenta de nuevo.");
-          setWaitingForApproval(false);
-          setSent(false);
-          return;
-        }
-        // Esperar un poco más después del reintento
-        await new Promise(resolve => setTimeout(resolve, 200));
-      }
-
-      // Redirigir al panel - usar window.location para forzar navegación completa
+      // IMPORTANTE: En lugar de establecer la sesión en el cliente y esperar,
+      // redirigir a /auth/callback con los tokens para que el servidor establezca
+      // las cookies correctamente. Esto garantiza que el middleware y el layout
+      // del servidor vean la sesión.
       const finalRedirectPath = redirectPath || "/panel";
-      console.log("[Login Waiting] Redirecting to:", finalRedirectPath);
+      console.log("[Login Waiting] Redirecting to callback to establish session server-side:", finalRedirectPath);
       
-      // Usar window.location.href en lugar de router para forzar navegación completa
-      // Esto asegura que el servidor vea la nueva sesión y no haya problemas de caché
-      window.location.href = finalRedirectPath;
+      // Redirigir a /auth/callback con los tokens para que el servidor los procese
+      // El callback establecerá las cookies correctamente y luego redirigirá al panel
+      const callbackUrl = new URL("/auth/callback", window.location.origin);
+      callbackUrl.searchParams.set("access_token", accessToken);
+      callbackUrl.searchParams.set("refresh_token", refreshToken);
+      callbackUrl.searchParams.set("redirect", finalRedirectPath);
+      
+      window.location.href = callbackUrl.toString();
     } catch (err: any) {
       console.error("[handleApprovedRequest] Unexpected error:", err);
       setError("Error al procesar la aprobación. Por favor, intenta de nuevo.");
