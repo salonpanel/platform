@@ -69,16 +69,15 @@ function LoginContent() {
       }
 
       const data = await response.json();
-      console.log("[Polling] Status check:", { 
-        status: data.status, 
-        hasAccessToken: !!data.accessToken,
-        hasRefreshToken: !!data.refreshToken,
-        redirectPath: data.redirectPath 
+      console.log("[Login Waiting] status update", {
+        status: data.status,
+        hasTokens: !!data.accessToken && !!data.refreshToken,
+        redirectPath: data.redirectPath,
       });
       
       if (data.status === "approved" && data.accessToken && data.refreshToken) {
         // Request aprobada, establecer sesión
-        console.log("[Polling] Request approved, setting session with tokens...");
+        console.log("[Login Waiting] Request approved, setting session...");
         await handleApprovedRequest(data.accessToken, data.refreshToken, data.redirectPath || "/panel");
       } else if (data.status === "expired" || data.status === "cancelled") {
         // Request expirada o cancelada
@@ -118,7 +117,7 @@ function LoginContent() {
       });
 
       if (error) {
-        console.error("[handleApprovedRequest] Error setting session:", error);
+        console.error("[Login Waiting] setSession error", error);
         setError("Error al establecer la sesión. Por favor, intenta de nuevo.");
         setWaitingForApproval(false);
         setSent(false);
@@ -126,14 +125,14 @@ function LoginContent() {
       }
 
       if (!data.session) {
-        console.error("[handleApprovedRequest] No session returned after setSession");
+        console.error("[Login Waiting] No session returned after setSession");
         setError("No se pudo establecer la sesión. Por favor, intenta de nuevo.");
         setWaitingForApproval(false);
         setSent(false);
         return;
       }
 
-      console.log("[handleApprovedRequest] Session established successfully:", { 
+      console.log("[Login Waiting] Session established successfully:", { 
         userId: data.session.user?.id,
         email: data.session.user?.email,
       });
@@ -154,8 +153,9 @@ function LoginContent() {
 
       // Redirigir al panel
       const finalRedirectPath = redirectPath || "/panel";
-      console.log("[handleApprovedRequest] Redirecting to:", finalRedirectPath);
+      console.log("[Login Waiting] Redirecting to:", finalRedirectPath);
       router.replace(finalRedirectPath);
+      router.refresh(); // Forzar refresh para asegurar que el servidor vea la nueva sesión
     } catch (err: any) {
       console.error("[handleApprovedRequest] Unexpected error:", err);
       setError("Error al procesar la aprobación. Por favor, intenta de nuevo.");

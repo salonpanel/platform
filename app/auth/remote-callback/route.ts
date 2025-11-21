@@ -25,15 +25,19 @@ export async function GET(req: NextRequest) {
   const secretToken = url.searchParams.get("token");
 
   // Log inicial con todos los parámetros que llegan
-  console.log("[RemoteCallback] Incoming params", {
-    code: code ? "present" : "missing",
-    requestId,
+  console.log("[remote-callback] params", {
+    code: code || null,
+    requestId: requestId || null,
     secretToken: secretToken ? "present" : "missing",
     fullUrl: url.toString(),
   });
 
   if (!code || !requestId || !secretToken) {
-    console.error("[remote-callback] Missing required params:", { code: !!code, requestId, secretToken: !!secretToken });
+    console.error("[remote-callback] Missing required params:", { 
+      code: !!code, 
+      requestId: requestId || null, 
+      secretToken: !!secretToken 
+    });
     return NextResponse.redirect(
       new URL("/login?error=invalid_link", url.origin)
     );
@@ -53,9 +57,10 @@ export async function GET(req: NextRequest) {
 
     const { access_token, refresh_token, user } = data.session;
     
-    console.log("[RemoteCallback] Session obtained", {
-      userId: user?.id,
-      email: user?.email,
+    console.log("[remote-callback] session", {
+      hasSession: !!data?.session,
+      userId: data?.session?.user?.id,
+      email: data?.session?.user?.email,
       hasAccessToken: !!access_token,
       hasRefreshToken: !!refresh_token,
     });
@@ -72,7 +77,7 @@ export async function GET(req: NextRequest) {
       }
     );
 
-    console.log("[RemoteCallback] Updating login request", {
+    console.log("[remote-callback] Updating login request", {
       requestId,
       secretToken: secretToken ? "present" : "missing",
     });
@@ -81,7 +86,7 @@ export async function GET(req: NextRequest) {
       .from("auth_login_requests")
       .update({
         status: "approved",
-        // IMPORTANTE: usar fecha válida, no "now()" como string
+        // IMPORTANTE: usar fecha válida en formato ISO, no "now()" como string
         approved_at: new Date().toISOString(),
         supabase_access_token: access_token,
         supabase_refresh_token: refresh_token,
@@ -93,19 +98,39 @@ export async function GET(req: NextRequest) {
       .select()
       .single();
 
-    if (updateError || !updated) {
-      console.error("[remote-callback] update error", updateError, { requestId, secretToken });
-      // si falla el update, mejor informar que el enlace no es válido
+    if (updateError) {
+      console.error("[remote-callback] updateError", updateError, {
+        requestId,
+        secretToken: secretToken ? "present" : "missing",
+        errorMessage: updateError.message,
+        errorDetails: updateError.details,
+        errorHint: updateError.hint,
+      });
       await supabase.auth.signOut();
       return NextResponse.redirect(
         new URL("/login?error=update_failed", url.origin)
       );
     }
 
-    console.log("[remote-callback] login_request approved", {
+    if (!updated) {
+      console.error("[remote-callback] update returned no rows", {
+        requestId,
+        secretToken: secretToken ? "present" : "missing",
+        message: "Login request not found or already processed",
+      });
+      await supabase.auth.signOut();
+      return NextResponse.redirect(
+        new URL("/login?error=login_request_not_found", url.origin)
+      );
+    }
+
+    console.log("[remote-callback] updated login request", {
       id: updated.id,
       email: updated.email,
       status: updated.status,
+      approved_at: updated.approved_at,
+      hasAccessToken: !!updated.supabase_access_token,
+      hasRefreshToken: !!updated.supabase_refresh_token,
     });
 
     // 3) Cerrar sesión en este dispositivo (no queremos sesión en el móvil)
