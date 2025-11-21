@@ -186,21 +186,19 @@ export async function middleware(req: NextRequest) {
     // Proteger rutas /panel/* (requiere sesión) - verificar ANTES del rewrite
     // IMPORTANTE: Solo redirigir si NO hay sesión y NO es una ruta pública
     // NOTA: No redirigir inmediatamente si la sesión está cargándose (evitar redirecciones prematuras)
-    if (finalPath.startsWith("/panel") && 
+    const isProtectedPanelRoute = finalPath.startsWith("/panel") && 
         !pathname.startsWith("/login") && 
         !pathname.startsWith("/auth") && 
         !pathname.startsWith("/api") &&
-        !session) {
+        !pathname.startsWith("/_next") &&
+        !pathname.startsWith("/favicon.ico");
+    
+    if (isProtectedPanelRoute && !session) {
       // Verificar si hay cookies de sesión pendientes (sesión puede estar inicializándose)
       const hasAuthCookies = req.cookies.has("sb-panel-auth-auth-token") || 
                              req.cookies.has("sb-panel-auth-refresh-token");
       
-      if (!hasAuthCookies) {
-        url.pathname = "/login";
-        url.searchParams.set("redirect", finalPath);
-        logDomainDebug(`[Pro Domain] No session and no auth cookies for ${pathname}, redirecting to login with redirect=${finalPath}`);
-        return NextResponse.redirect(url);
-      } else {
+      if (hasAuthCookies) {
         // REINTENTAR obtener la sesión si hay cookies presentes
         // Esto permite darle tiempo a Supabase para hidratar correctamente la sesión
         logDomainDebug(`[Pro Domain] No session but auth cookies present for ${pathname}, rechecking session...`);
@@ -208,17 +206,19 @@ export async function middleware(req: NextRequest) {
           data: { session: recheckedSession },
         } = await supabase.auth.getSession();
         
-        if (!recheckedSession) {
-          // Si después del reintento aún no hay sesión, redirigir al login
-          url.pathname = "/login";
-          url.searchParams.set("redirect", finalPath);
-          logDomainDebug(`[Pro Domain] Rechecked session still missing for ${pathname}, redirecting to login`);
-          return NextResponse.redirect(url);
-        } else {
+        if (recheckedSession) {
           logDomainDebug(`[Pro Domain] Rechecked session recovered for ${pathname}, allowing access`);
           // La sesión se recuperó, continuar con el flujo normal
+          return res;
         }
+        // Si el reintento falla, continuar con la redirección al login
       }
+      
+      // Si no hay cookies o el reintento falló, redirigir al login
+      url.pathname = "/login";
+      url.searchParams.set("redirect", finalPath);
+      logDomainDebug(`[Pro Domain] No session and no valid auth cookies for ${pathname}, redirecting to login with redirect=${finalPath}`);
+      return NextResponse.redirect(url);
     }
 
     // Si hay sesión, permitir acceso
@@ -381,23 +381,23 @@ export async function middleware(req: NextRequest) {
       const hasAuthCookies = req.cookies.has("sb-panel-auth-auth-token") || 
                              req.cookies.has("sb-panel-auth-refresh-token");
       
-      if (!hasAuthCookies) {
-        url.pathname = "/login";
-        url.searchParams.set("redirect", pathname);
-        return NextResponse.redirect(url);
-      } else {
+      if (hasAuthCookies) {
         // REINTENTAR obtener la sesión si hay cookies presentes
         const {
           data: { session: recheckedSession },
         } = await supabase.auth.getSession();
         
-        if (!recheckedSession) {
-          url.pathname = "/login";
-          url.searchParams.set("redirect", pathname);
-          return NextResponse.redirect(url);
+        if (recheckedSession) {
+          // La sesión se recuperó, continuar normalmente
+          return res;
         }
-        // Si se recuperó la sesión, continuar normalmente
+        // Si el reintento falla, continuar con la redirección al login
       }
+      
+      // Si no hay cookies o el reintento falló, redirigir al login
+      url.pathname = "/login";
+      url.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(url);
     }
 
     // Proteger /admin (requiere sesión + platform admin)
