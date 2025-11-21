@@ -210,10 +210,8 @@ export async function POST(req: Request) {
     }
 
     // Crear sesión usando el cliente normal con el código
-    // En Next.js 16+, cookies() es async, pero createRouteHandlerClient espera la función directamente
-    const supabaseClient = createRouteHandlerClient({ 
-      cookies: async () => await cookies()
-    });
+    // En Next.js 16, cookies() NO es async en route handlers, se pasa directamente
+    const supabaseClient = createRouteHandlerClient({ cookies });
 
     // Intercambiar código por sesión
     const { data: sessionData, error: sessionError } =
