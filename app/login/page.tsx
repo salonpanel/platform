@@ -249,11 +249,13 @@ function LoginContent() {
         }
       }
 
-      // Redirigir al panel
+      // Redirigir al panel - usar window.location para forzar navegación completa
       const finalRedirectPath = redirectPath || "/panel";
       console.log("[Login Waiting] Redirecting to:", finalRedirectPath);
-      router.replace(finalRedirectPath);
-      router.refresh(); // Forzar refresh para asegurar que el servidor vea la nueva sesión
+      
+      // Usar window.location.href en lugar de router para forzar navegación completa
+      // Esto asegura que el servidor vea la nueva sesión y no haya problemas de caché
+      window.location.href = finalRedirectPath;
     } catch (err: any) {
       console.error("[handleApprovedRequest] Unexpected error:", err);
       setError("Error al procesar la aprobación. Por favor, intenta de nuevo.");
