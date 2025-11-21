@@ -37,20 +37,33 @@ export async function GET(req: NextRequest) {
     searchParams: Array.from(url.searchParams.entries()),
   });
 
-  // Si no tenemos code, no podemos continuar
+  // Si no tenemos code, puede estar en el hash (PKCE flow)
+  // Redirigir a magic-link-handler que puede leer el hash en el cliente
   if (!code) {
-    console.error("[remote-callback] Missing code parameter - redirecting to login");
+    console.log("[remote-callback] No code in query params, redirecting to magic-link-handler (PKCE flow - code may be in hash)");
+    
+    // Si tenemos request_id y token, redirigir a magic-link-handler
+    if (requestId && secretToken) {
+      const handlerUrl = new URL("/auth/magic-link-handler", url.origin);
+      handlerUrl.searchParams.set("request_id", requestId);
+      handlerUrl.searchParams.set("token", secretToken);
+      if (type) handlerUrl.searchParams.set("type", type);
+      if (token && token !== secretToken) handlerUrl.searchParams.set("supabase_token", token);
+      return NextResponse.redirect(handlerUrl);
+    }
+    
+    // Si no tenemos request_id o token, error
+    console.error("[remote-callback] Missing code and missing request_id/token - redirecting to login");
     return NextResponse.redirect(
-      new URL("/login?error=invalid_link", url.origin)
+      new URL("/login?error=invalid_link&details=no_code_no_params", url.origin)
     );
   }
 
-  // Si no tenemos request_id o secretToken, intentaremos encontrarlos después de obtener la sesión
+  // Si tenemos code, procesar normalmente
   let needsRequestLookup = !requestId || !secretToken;
 
   try {
     console.log("[remote-callback] Step 1: Creating Supabase client");
-    // 1) Intercambiar code por session en ESTE dispositivo (móvil)
     // En Next.js 16, cookies() NO es async en route handlers, se pasa directamente
     // (igual que en app/auth/callback/route.ts que funciona correctamente)
     const supabase = createRouteHandlerClient({ cookies });
@@ -62,21 +75,23 @@ export async function GET(req: NextRequest) {
     });
     
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    const session = data?.session;
+    const sessionError = error;
 
-    if (error) {
+    if (sessionError) {
       console.error("[remote-callback] exchangeCodeForSession error", {
-        errorMessage: error.message,
-        errorName: error.name,
-        errorStatus: error.status,
+        errorMessage: sessionError.message,
+        errorName: sessionError.name,
+        errorStatus: sessionError.status,
         hasCode: !!code,
         codeLength: code?.length,
       });
       return NextResponse.redirect(
-        new URL(`/login?error=invalid_session&details=${encodeURIComponent(error.message || 'unknown')}`, url.origin)
+        new URL(`/login?error=invalid_session&details=${encodeURIComponent(sessionError.message || 'unknown')}`, url.origin)
       );
     }
 
-    if (!data?.session) {
+    if (!session) {
       console.error("[remote-callback] No session returned after exchangeCodeForSession", {
         hasData: !!data,
         hasSession: !!data?.session,
@@ -86,12 +101,12 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const { access_token, refresh_token, user } = data.session;
+    const { access_token, refresh_token, user } = session;
     
     console.log("[remote-callback] session", {
-      hasSession: !!data?.session,
-      userId: data?.session?.user?.id,
-      email: data?.session?.user?.email,
+      hasSession: !!session,
+      userId: session?.user?.id,
+      email: session?.user?.email,
       hasAccessToken: !!access_token,
       hasRefreshToken: !!refresh_token,
     });
