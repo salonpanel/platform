@@ -40,7 +40,9 @@ export async function POST(req: NextRequest) {
     // ✅ Usar createServerClient de @supabase/ssr para Next.js 16
     // Este helper maneja correctamente las cookies en route handlers
     const cookieStore = await cookies();
-    const response = NextResponse.next();
+    
+    // Crear una respuesta vacía para establecer cookies
+    const response = new NextResponse();
     
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
