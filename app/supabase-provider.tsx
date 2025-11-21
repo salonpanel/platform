@@ -50,28 +50,33 @@ export function SupabaseProvider({ children }: PropsWithChildren) {
 					event,
 					pathname,
 					userId: session.user?.id,
+					currentPath: window.location.pathname,
 				});
 				
 				// IMPORTANTE: Esperar un momento antes de redirigir para asegurar que las cookies se establezcan
 				// Esto es crítico porque el servidor necesita leer las cookies en la siguiente request
 				// Redirigir desde /login o /login/verify-code si hay sesión
-				if ((pathname === '/login' || pathname === '/login/verify-code') && 
-				    !window.location.pathname.startsWith('/panel') &&
-				    !window.location.pathname.startsWith('/admin')) {
+				const currentPath = window.location.pathname;
+				if ((pathname === '/login' || pathname === '/login/verify-code' || 
+				     currentPath === '/login' || currentPath === '/login/verify-code') && 
+				    !currentPath.startsWith('/panel') &&
+				    !currentPath.startsWith('/admin')) {
 					setTimeout(() => {
 						// Verificar que aún estamos en login/verify-code antes de redirigir
-						if (window.location.pathname === '/login' || 
-						    window.location.pathname === '/login/verify-code') {
+						const stillOnLogin = window.location.pathname === '/login' || 
+						                    window.location.pathname === '/login/verify-code';
+						
+						if (stillOnLogin) {
 							// Obtener redirect de query params si existe
 							const searchParams = new URLSearchParams(window.location.search);
 							const redirectParam = searchParams.get('redirect');
 							const redirectPath = redirectParam || '/panel';
 							
-							console.log("[SupabaseProvider] Redirecting from", pathname, "to:", redirectPath);
+							console.log("[SupabaseProvider] Redirecting from", window.location.pathname, "to:", redirectPath);
 							// Usar window.location para forzar una navegación completa y asegurar que la sesión se persista
 							window.location.href = redirectPath;
 						}
-					}, 300); // Delay para asegurar que las cookies se establezcan
+					}, 500); // Delay aumentado para asegurar que las cookies se establezcan
 				}
 			}
 
