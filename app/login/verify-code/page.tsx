@@ -36,6 +36,11 @@ function VerifyCodeContent() {
     setError(null);
     setVerifying(true);
 
+    console.log("[VerifyCode] Starting verification...", {
+      email: email ? "present" : "missing",
+      codeLength: code.length,
+    });
+
     if (code.length !== 8) {
       setError("El código debe tener 8 dígitos");
       setVerifying(false);
@@ -43,14 +48,22 @@ function VerifyCodeContent() {
     }
 
     try {
+      console.log("[VerifyCode] Calling verifyOtp...");
       const { data, error: verifyError } = await supabase.auth.verifyOtp({
         email: email.toLowerCase().trim(),
         token: code.trim(),
         type: 'email',
       });
 
+      console.log("[VerifyCode] verifyOtp response:", {
+        hasData: !!data,
+        hasSession: !!data?.session,
+        hasError: !!verifyError,
+        errorMessage: verifyError?.message,
+      });
+
       if (verifyError) {
-        console.error("Error verificando OTP:", verifyError);
+        console.error("[VerifyCode] Error verificando OTP:", verifyError);
         
         // Manejar diferentes tipos de errores
         if (verifyError.message?.includes('expired') || verifyError.message?.includes('invalid')) {
@@ -64,6 +77,7 @@ function VerifyCodeContent() {
       }
 
       if (!data.session) {
+        console.error("[VerifyCode] No session in response");
         setError("No se pudo establecer la sesión. Por favor, intenta de nuevo.");
         setVerifying(false);
         return;
@@ -72,6 +86,15 @@ function VerifyCodeContent() {
       console.log("[VerifyCode] OTP verified successfully:", {
         userId: data.session.user?.id,
         email: data.session.user?.email,
+        hasAccessToken: !!data.session.access_token,
+        hasRefreshToken: !!data.session.refresh_token,
+      });
+
+      // Verificar que la sesión se guardó correctamente
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      console.log("[VerifyCode] Current session after verify:", {
+        hasSession: !!currentSession,
+        userId: currentSession?.user?.id,
       });
 
       // Éxito: mostrar mensaje y redirigir
@@ -79,14 +102,16 @@ function VerifyCodeContent() {
       
       // Redirigir al panel después de un breve delay
       // Usar window.location.href para forzar una navegación completa y asegurar que la sesión se persista
+      const redirectParam = searchParams?.get("redirect");
+      const redirectPath = redirectParam || "/panel";
+      console.log("[VerifyCode] Scheduling redirect to:", redirectPath);
+      
       setTimeout(() => {
-        const redirectParam = searchParams?.get("redirect");
-        const redirectPath = redirectParam || "/panel";
-        console.log("[VerifyCode] Redirecting to:", redirectPath);
+        console.log("[VerifyCode] Executing redirect to:", redirectPath);
         window.location.href = redirectPath;
       }, 1000);
     } catch (err: any) {
-      console.error("Error inesperado verificando OTP:", err);
+      console.error("[VerifyCode] Unexpected error verifying OTP:", err);
       setError(err?.message || "Error al verificar el código. Por favor, intenta de nuevo.");
       setCode(""); // Limpiar campo
       setVerifying(false);
