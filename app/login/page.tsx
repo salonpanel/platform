@@ -62,41 +62,59 @@ function LoginContent() {
   // Polling para verificar estado de la request (fallback si Realtime falla)
   const pollRequestStatus = async (requestId: string) => {
     try {
-      const response = await fetch(`/api/auth/login-request/status?requestId=${requestId}`);
-      if (!response.ok) return;
+      const response = await fetch(`/api/auth/login-request/status?requestId=${encodeURIComponent(requestId)}`);
+      if (!response.ok) {
+        console.warn("[Polling] Response not OK:", response.status);
+        return;
+      }
 
       const data = await response.json();
+      console.log("[Polling] Status check:", { status: data.status, hasTokens: !!(data.accessToken && data.refreshToken) });
       
       if (data.status === "approved" && data.accessToken && data.refreshToken) {
         // Request aprobada, establecer sesión
+        console.log("[Polling] Request approved, setting session...");
         await handleApprovedRequest(data.accessToken, data.refreshToken, data.redirectPath);
       } else if (data.status === "expired" || data.status === "cancelled") {
         // Request expirada o cancelada
+        console.log("[Polling] Request expired or cancelled:", data.status);
         setWaitingForApproval(false);
         setSent(false);
         setError(data.status === "expired" ? "El enlace ha expirado. Por favor, solicita uno nuevo." : "Login cancelado.");
       }
     } catch (err) {
-      console.error("Error polling request status:", err);
+      console.error("[Polling] Error polling request status:", err);
     }
   };
 
   // Manejar request aprobada
   const handleApprovedRequest = async (accessToken: string, refreshToken: string, redirectPath: string) => {
     try {
+      console.log("[handleApprovedRequest] Setting session with tokens...");
+      
       // Establecer sesión con los tokens
       const { data, error } = await supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,
       });
 
-      if (error || !data.session) {
-        console.error("Error setting session:", error);
+      if (error) {
+        console.error("[handleApprovedRequest] Error setting session:", error);
         setError("Error al establecer la sesión. Por favor, intenta de nuevo.");
         setWaitingForApproval(false);
         setSent(false);
         return;
       }
+
+      if (!data.session) {
+        console.error("[handleApprovedRequest] No session returned after setSession");
+        setError("No se pudo establecer la sesión. Por favor, intenta de nuevo.");
+        setWaitingForApproval(false);
+        setSent(false);
+        return;
+      }
+
+      console.log("[handleApprovedRequest] Session established successfully:", { userId: data.session.user?.id });
 
       // Limpiar tokens del servidor (seguridad)
       if (loginRequestId) {
@@ -136,6 +154,8 @@ function LoginContent() {
       realtimeSubscriptionRef.current.unsubscribe();
     }
 
+    console.log("[Realtime] Setting up subscription for request:", requestId);
+
     // Suscribirse a cambios en auth_login_requests
     const channel = supabase
       .channel(`login-request-${requestId}`)
@@ -148,22 +168,32 @@ function LoginContent() {
           filter: `id=eq.${requestId}`,
         },
         (payload) => {
+          console.log("[Realtime] Change detected:", payload);
           const newData = payload.new as any;
           
           if (newData.status === "approved" && newData.supabase_access_token && newData.supabase_refresh_token) {
+            console.log("[Realtime] Request approved, setting session...");
             handleApprovedRequest(
               newData.supabase_access_token,
               newData.supabase_refresh_token,
               newData.redirect_path || "/panel"
             );
           } else if (newData.status === "expired" || newData.status === "cancelled") {
+            console.log("[Realtime] Request expired or cancelled:", newData.status);
             setWaitingForApproval(false);
             setSent(false);
             setError(newData.status === "expired" ? "El enlace ha expirado. Por favor, solicita uno nuevo." : "Login cancelado.");
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("[Realtime] Subscription status:", status);
+        if (status === "SUBSCRIBED") {
+          console.log("[Realtime] Successfully subscribed to changes");
+        } else if (status === "CHANNEL_ERROR") {
+          console.error("[Realtime] Channel error, falling back to polling");
+        }
+      });
 
     realtimeSubscriptionRef.current = channel;
   };
@@ -247,10 +277,12 @@ function LoginContent() {
       setSecretToken(token);
 
       // 2. Enviar magic link con callback a remote-callback
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-        (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
+      // IMPORTANTE: Asegurar que baseUrl no tenga espacios y esté correctamente formateado
+      const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 
+        (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000")).trim();
       
-      const callbackUrl = `${baseUrl}/auth/remote-callback?request_id=${requestId}&token=${token}`;
+      // Construir URL de callback sin espacios
+      const callbackUrl = `${baseUrl}/auth/remote-callback?request_id=${encodeURIComponent(requestId)}&token=${encodeURIComponent(token)}`;
 
       const { error: authError } = await supabase.auth.signInWithOtp({
         email: email.toLowerCase().trim(),
