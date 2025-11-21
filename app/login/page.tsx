@@ -15,22 +15,6 @@ function LoginContent() {
   const [sent, setSent] = useState(false);
   const [cooldown, setCooldown] = useState(0); // Cooldown en segundos
 
-  // Verificar si ya hay una sesión activa y redirigir al panel
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          console.log("[Login] Session already exists, redirecting to panel");
-          router.replace("/panel");
-        }
-      } catch (err) {
-        console.warn("[Login] Error checking session:", err);
-      }
-    };
-    checkSession();
-  }, [supabase, router]);
-
   // Efecto para ir bajando el cooldown
   useEffect(() => {
     if (cooldown <= 0) return;
