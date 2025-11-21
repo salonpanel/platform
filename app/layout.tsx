@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   },
   // Añadir metadata adicional para favicon en todos los subdominios
   other: {
-    "apple-mobile-web-app-capable": "yes",
+    "mobile-web-app-capable": "yes",
   },
 };
 
