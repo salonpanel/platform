@@ -34,24 +34,46 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     errorName: sessionError?.name,
   });
 
-  // Si no hay sesión, intentar getUser como fallback
-  if (!session && !sessionError) {
-    console.log("[PanelLayout] No session, trying getUser as fallback...");
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+  // Si no hay sesión, verificar si hay cookies de autenticación
+  if (!session) {
+    // Verificar si hay cookies de autenticación (sesión puede estar inicializándose)
+    const hasAuthCookies = authCookies.length > 0;
     
-    console.log("[PanelLayout] getUser result:", {
-      hasUser: !!user,
-      userId: user?.id,
-      hasError: !!userError,
-      errorMessage: userError?.message,
-    });
-    
-    if (!user || userError) {
-      console.log("[PanelLayout] No session or user, redirecting to login");
+    if (hasAuthCookies) {
+      // REINTENTAR obtener la sesión si hay cookies presentes
+      // Esto permite darle tiempo a Supabase para hidratar correctamente la sesión
+      console.log("[PanelLayout] No session but auth cookies present, rechecking session...");
+      const { data: { session: recheckedSession }, error: recheckError } = await supabase.auth.getSession();
+      
+      if (recheckedSession) {
+        console.log("[PanelLayout] Rechecked session recovered, allowing access");
+        // La sesión se recuperó, continuar normalmente
+      } else {
+        // Si el reintento falla, intentar getUser como último recurso
+        console.log("[PanelLayout] Recheck failed, trying getUser as fallback...");
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        console.log("[PanelLayout] getUser result:", {
+          hasUser: !!user,
+          userId: user?.id,
+          hasError: !!userError,
+          errorMessage: userError?.message,
+        });
+        
+        if (!user || userError) {
+          console.log("[PanelLayout] No session, user, or cookies, redirecting to login");
+          redirect(`/login?redirect=${encodeURIComponent("/panel")}`);
+        }
+        // Si getUser funciona, continuar normalmente
+      }
+    } else {
+      // No hay cookies, redirigir al login
+      console.log("[PanelLayout] No session and no auth cookies, redirecting to login");
       redirect(`/login?redirect=${encodeURIComponent("/panel")}`);
     }
-  } else if (!session || sessionError) {
-    console.log("[PanelLayout] Session error or missing, redirecting to login", { 
+  } else if (sessionError) {
+    // Si hay un error de sesión, redirigir al login
+    console.log("[PanelLayout] Session error, redirecting to login", { 
       error: sessionError,
       errorMessage: sessionError?.message,
       errorName: sessionError?.name,

@@ -207,7 +207,8 @@ function VerifyCodeContent() {
       // CRÍTICO: Esperar un momento para asegurar que las cookies se establezcan
       // y luego forzar una recarga completa de la página
       // Esto es necesario porque el servidor necesita leer las cookies en la siguiente request
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Aumentar el delay a 500ms para dar más tiempo a que las cookies se establezcan
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       console.log("[VerifyCode] Executing redirect to:", redirectPath);
       // Usar window.location.href para forzar una navegación completa

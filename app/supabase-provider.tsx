@@ -53,22 +53,24 @@ export function SupabaseProvider({ children }: PropsWithChildren) {
 				
 				// IMPORTANTE: Esperar un momento antes de redirigir para asegurar que las cookies se establezcan
 				// Esto es crítico porque el servidor necesita leer las cookies en la siguiente request
-				setTimeout(() => {
-					// Redirigir si estamos en login o verify-code (pero no si ya estamos en panel)
-					// Esto asegura que el usuario sea redirigido después de autenticarse
-					if ((pathname === '/login' || pathname === '/login/verify-code') && 
-					    !window.location.pathname.startsWith('/panel') &&
-					    !window.location.pathname.startsWith('/admin')) {
-						// Obtener redirect de query params si existe
-						const searchParams = new URLSearchParams(window.location.search);
-						const redirectParam = searchParams.get('redirect');
-						const redirectPath = redirectParam || '/panel';
-						
-						console.log("[SupabaseProvider] Redirecting from login/verify-code to:", redirectPath);
-						// Usar window.location para forzar una navegación completa y asegurar que la sesión se persista
-						window.location.href = redirectPath;
-					}
-				}, 200); // Pequeño delay para asegurar que las cookies se establezcan
+				// NO redirigir desde aquí si estamos en verify-code, ya que esa página maneja su propia redirección
+				// Esto evita múltiples redirecciones compitiendo
+				if (pathname === '/login' && !pathname.startsWith('/login/verify-code')) {
+					setTimeout(() => {
+						// Solo redirigir desde /login (no desde verify-code)
+						if (!window.location.pathname.startsWith('/panel') &&
+						    !window.location.pathname.startsWith('/admin')) {
+							// Obtener redirect de query params si existe
+							const searchParams = new URLSearchParams(window.location.search);
+							const redirectParam = searchParams.get('redirect');
+							const redirectPath = redirectParam || '/panel';
+							
+							console.log("[SupabaseProvider] Redirecting from login to:", redirectPath);
+							// Usar window.location para forzar una navegación completa y asegurar que la sesión se persista
+							window.location.href = redirectPath;
+						}
+					}, 500); // Delay aumentado para asegurar que las cookies se establezcan
+				}
 			}
 
 			// Si el usuario cierra sesión (en esta pestaña o en otra)
