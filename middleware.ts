@@ -240,15 +240,24 @@ export async function middleware(req: NextRequest) {
 
     // Proteger rutas /panel/* (requiere sesión) - verificar ANTES del rewrite
     // IMPORTANTE: Solo redirigir si NO hay sesión y NO es una ruta pública
+    // NOTA: No redirigir inmediatamente si la sesión está cargándose (evitar redirecciones prematuras)
     if (finalPath.startsWith("/panel") && 
         !pathname.startsWith("/login") && 
         !pathname.startsWith("/auth") && 
         !pathname.startsWith("/api") &&
         !session) {
-      url.pathname = "/login";
-      url.searchParams.set("redirect", finalPath);
-      logDomainDebug(`[Pro Domain] No session for ${pathname}, redirecting to login with redirect=${finalPath}`);
-      return NextResponse.redirect(url);
+      // Verificar si hay cookies de sesión pendientes (sesión puede estar inicializándose)
+      const hasAuthCookies = req.cookies.has("sb-panel-auth-auth-token") || 
+                             req.cookies.has("sb-panel-auth-refresh-token");
+      
+      if (!hasAuthCookies) {
+        url.pathname = "/login";
+        url.searchParams.set("redirect", finalPath);
+        logDomainDebug(`[Pro Domain] No session and no auth cookies for ${pathname}, redirecting to login with redirect=${finalPath}`);
+        return NextResponse.redirect(url);
+      } else {
+        logDomainDebug(`[Pro Domain] No session but auth cookies present for ${pathname}, allowing access (session may be initializing)`);
+      }
     }
 
     // Si hay sesión, permitir acceso
