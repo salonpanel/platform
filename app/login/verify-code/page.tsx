@@ -90,12 +90,39 @@ function VerifyCodeContent() {
         hasRefreshToken: !!data.session.refresh_token,
       });
 
-      // Verificar que la sesión se guardó correctamente
-      // Esperar un momento para que la sesión se persista en localStorage
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // CRÍTICO: Establecer la sesión explícitamente para asegurar que se guarde en cookies
+      // Aunque verifyOtp devuelve la sesión, debemos llamar a setSession() para que
+      // se persista correctamente en cookies del navegador (necesario para Next.js SSR)
+      const { access_token, refresh_token } = data.session;
       
+      console.log("[VerifyCode] Setting session explicitly...");
+      const { data: sessionData, error: setSessionError } = await supabase.auth.setSession({
+        access_token,
+        refresh_token,
+      });
+
+      if (setSessionError) {
+        console.error("[VerifyCode] Error setting session:", setSessionError);
+        setError("Error al establecer la sesión. Por favor, intenta de nuevo.");
+        setVerifying(false);
+        return;
+      }
+
+      if (!sessionData.session) {
+        console.error("[VerifyCode] No session after setSession");
+        setError("La sesión no se estableció correctamente. Por favor, intenta de nuevo.");
+        setVerifying(false);
+        return;
+      }
+
+      console.log("[VerifyCode] Session established successfully:", {
+        userId: sessionData.session.user?.id,
+        email: sessionData.session.user?.email,
+      });
+
+      // Verificar que la sesión se guardó correctamente
       const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
-      console.log("[VerifyCode] Current session after verify:", {
+      console.log("[VerifyCode] Current session after setSession:", {
         hasSession: !!currentSession,
         userId: currentSession?.user?.id,
         hasError: !!sessionError,
@@ -103,37 +130,19 @@ function VerifyCodeContent() {
       });
 
       if (!currentSession) {
-        console.error("[VerifyCode] Session not persisted after verifyOtp");
-        // Intentar establecer la sesión manualmente si no se persistió
-        try {
-          await supabase.auth.setSession({
-            access_token: data.session.access_token,
-            refresh_token: data.session.refresh_token,
-          });
-          console.log("[VerifyCode] Session set manually");
-          
-          // Verificar nuevamente
-          const { data: { session: retrySession } } = await supabase.auth.getSession();
-          if (!retrySession) {
-            setError("La sesión no se guardó correctamente. Por favor, intenta de nuevo.");
-            setVerifying(false);
-            return;
-          }
-        } catch (setSessionError) {
-          console.error("[VerifyCode] Error setting session manually:", setSessionError);
-          setError("La sesión no se guardó correctamente. Por favor, intenta de nuevo.");
-          setVerifying(false);
-          return;
-        }
+        console.error("[VerifyCode] Session not persisted after setSession");
+        setError("La sesión no se guardó correctamente. Por favor, intenta de nuevo.");
+        setVerifying(false);
+        return;
       }
 
-      // Éxito: redirigir inmediatamente
-      // Usar window.location.href para forzar una navegación completa y asegurar que la sesión se persista
+      // Éxito: redirigir al panel
       const redirectParam = searchParams?.get("redirect");
       const redirectPath = redirectParam || "/panel";
-      console.log("[VerifyCode] Redirecting immediately to:", redirectPath);
+      console.log("[VerifyCode] Session confirmed, redirecting to:", redirectPath);
       
-      // Redirigir inmediatamente
+      // Usar window.location.href para forzar una navegación completa
+      // Esto asegura que las cookies se establezcan correctamente
       window.location.href = redirectPath;
     } catch (err: any) {
       console.error("[VerifyCode] Unexpected error verifying OTP:", err);
