@@ -13,6 +13,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
   const supabase = createServerComponentClient({ cookies });
   
   // Log de cookies disponibles para debugging
+  // NOTA: En Next.js 16, cookies() en server components puede requerir await
   const cookieStore = await cookies();
   const allCookies = cookieStore.getAll();
   const authCookies = allCookies.filter(c => c.name.includes('sb-panel-auth'));
