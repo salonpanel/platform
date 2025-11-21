@@ -1,15 +1,18 @@
 'use client';
 
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 let browserClient: SupabaseClient | null = null;
 
 /**
  * Cliente único en el navegador para evitar múltiples GoTrueClient
  * 
- * NOTA: Cuando se llama a supabase.auth.setSession() desde este cliente,
- * las cookies se establecen automáticamente y el servidor puede leerlas
- * usando createServerComponentClient({ cookies }) o createRouteHandlerClient({ cookies })
+ * CRÍTICO: Usamos createBrowserClient de @supabase/ssr (no createClient de @supabase/supabase-js)
+ * porque createBrowserClient establece cookies que el servidor puede leer usando
+ * createServerComponentClient({ cookies }) o createRouteHandlerClient({ cookies })
+ * 
+ * createClient solo guarda en localStorage, NO establece cookies HTTP que el servidor pueda leer
  */
 export function getSupabaseBrowser(): SupabaseClient {
   if (!browserClient) {
@@ -20,42 +23,20 @@ export function getSupabaseBrowser(): SupabaseClient {
       throw new Error("NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY no definidos");
     }
 
-    browserClient = createClient(url, key, {
-      auth: {
-        persistSession: true,
-        storageKey: "sb-panel-auth",
-        autoRefreshToken: true,
-        // IMPORTANTE: detectSessionInUrl debe ser false para OTP
-        // No queremos que Supabase intente detectar la sesión desde la URL (solo para Magic Link)
-        detectSessionInUrl: false,
-        // CRÍTICO: Habilitar explícitamente soporte multi-pestaña
-        // Esto permite compartir sesiones entre pestañas y ventanas del mismo dominio
-        flowType: 'pkce', // Usar PKCE para mejor seguridad
-        // multiTab está habilitado automáticamente cuando persistSession es true
-        // Esto usa BroadcastChannel para compartir cambios de sesión entre pestañas
-        // debug: true, // Descomentar para logs detallados de autenticación (solo en desarrollo)
-      },
-      // Configuración global para multi-tab
-      global: {
-        // Supabase usa BroadcastChannel por defecto para multi-tab cuando persistSession es true
-        // Esto sincroniza automáticamente cambios de sesión entre pestañas
+    // CRÍTICO: Usar createBrowserClient de @supabase/ssr en lugar de createClient
+    // createBrowserClient establece cookies automáticamente que el servidor puede leer
+    // La API de @supabase/ssr v0.7.0 usa una forma simplificada
+    browserClient = createBrowserClient(url, key, {
+      cookieOptions: {
+        name: 'sb-panel-auth',
+        path: '/',
       },
     });
 
-    // Configurar el cliente para que guarde las cookies correctamente
-    // Esto es necesario para Next.js SSR
-    if (typeof window !== 'undefined') {
-      // El cliente ya está configurado con persistSession: true
-      // Esto automáticamente guarda los tokens en localStorage y cookies
-    }
-
     // Log de depuración: verificar configuración de cookies
     if (typeof window !== 'undefined') {
-      console.log("[SupabaseBrowser] Client initialized with config:", {
+      console.log("[SupabaseBrowser] Client initialized with createBrowserClient from @supabase/ssr:", {
         url: url.substring(0, 30) + '...',
-        persistSession: true,
-        autoRefreshToken: true,
-        flowType: 'pkce',
         storageKey: "sb-panel-auth",
         domain: window.location.hostname,
       });
