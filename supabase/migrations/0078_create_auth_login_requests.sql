@@ -24,6 +24,11 @@ CREATE INDEX IF NOT EXISTS idx_auth_login_requests_secret_token ON public.auth_l
 ALTER TABLE public.auth_login_requests ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
+-- Drop policies if they exist (for idempotency)
+DROP POLICY IF EXISTS "Users can read own login requests without tokens" ON public.auth_login_requests;
+DROP POLICY IF EXISTS "Users can cancel own pending requests" ON public.auth_login_requests;
+DROP POLICY IF EXISTS "Anyone can create login requests" ON public.auth_login_requests;
+
 -- Policy: Users can only read their own requests (without tokens)
 CREATE POLICY "Users can read own login requests without tokens"
   ON public.auth_login_requests
