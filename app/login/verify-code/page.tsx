@@ -91,6 +91,9 @@ function VerifyCodeContent() {
       });
 
       // Verificar que la sesión se guardó correctamente
+      // Esperar un momento para que la sesión se persista en localStorage
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
       console.log("[VerifyCode] Current session after verify:", {
         hasSession: !!currentSession,
@@ -101,12 +104,30 @@ function VerifyCodeContent() {
 
       if (!currentSession) {
         console.error("[VerifyCode] Session not persisted after verifyOtp");
-        setError("La sesión no se guardó correctamente. Por favor, intenta de nuevo.");
-        setVerifying(false);
-        return;
+        // Intentar establecer la sesión manualmente si no se persistió
+        try {
+          await supabase.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+          });
+          console.log("[VerifyCode] Session set manually");
+          
+          // Verificar nuevamente
+          const { data: { session: retrySession } } = await supabase.auth.getSession();
+          if (!retrySession) {
+            setError("La sesión no se guardó correctamente. Por favor, intenta de nuevo.");
+            setVerifying(false);
+            return;
+          }
+        } catch (setSessionError) {
+          console.error("[VerifyCode] Error setting session manually:", setSessionError);
+          setError("La sesión no se guardó correctamente. Por favor, intenta de nuevo.");
+          setVerifying(false);
+          return;
+        }
       }
 
-      // Éxito: redirigir inmediatamente sin delay
+      // Éxito: redirigir inmediatamente
       // Usar window.location.href para forzar una navegación completa y asegurar que la sesión se persista
       const redirectParam = searchParams?.get("redirect");
       const redirectPath = redirectParam || "/panel";

@@ -25,14 +25,14 @@ export function getSupabaseBrowser(): SupabaseClient {
         persistSession: true,
         storageKey: "sb-panel-auth",
         autoRefreshToken: true,
-        // IMPORTANTE: detectSessionInUrl debe ser false porque usamos remote-callback
-        // No queremos que Supabase intente detectar la sesión desde la URL
+        // IMPORTANTE: detectSessionInUrl debe ser false para OTP
+        // No queremos que Supabase intente detectar la sesión desde la URL (solo para Magic Link)
         detectSessionInUrl: false,
         // CRÍTICO: Habilitar explícitamente soporte multi-pestaña
         // Esto permite compartir sesiones entre pestañas y ventanas del mismo dominio
         flowType: 'pkce', // Usar PKCE para mejor seguridad
-        // Habilitar explícitamente multiTab para sincronización entre pestañas
-        // Esto usa BroadcastChannel para compartir cambios de sesión
+        // multiTab está habilitado automáticamente cuando persistSession es true
+        // Esto usa BroadcastChannel para compartir cambios de sesión entre pestañas
         // debug: true, // Descomentar para logs detallados de autenticación (solo en desarrollo)
       },
       // Configuración global para multi-tab
