@@ -31,6 +31,7 @@ export function getSupabaseBrowser(): SupabaseClient {
         flowType: 'pkce', // Usar PKCE para mejor seguridad
         // Nota: multiTab está habilitado por defecto en Supabase v2+ cuando se usa localStorage/IndexedDB
         // pero es importante asegurar que persistSession esté en true
+        // debug: true, // Descomentar para logs detallados de autenticación (solo en desarrollo)
       },
       // Configuración global para multi-tab
       global: {
@@ -38,6 +39,18 @@ export function getSupabaseBrowser(): SupabaseClient {
         // Esto sincroniza automáticamente cambios de sesión entre pestañas
       },
     });
+
+    // Log de depuración: verificar configuración de cookies
+    if (typeof window !== 'undefined') {
+      console.log("[SupabaseBrowser] Client initialized with config:", {
+        url: url.substring(0, 30) + '...',
+        persistSession: true,
+        autoRefreshToken: true,
+        flowType: 'pkce',
+        storageKey: "sb-panel-auth",
+        domain: window.location.hostname,
+      });
+    }
   }
 
   return browserClient;

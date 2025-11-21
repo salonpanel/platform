@@ -130,6 +130,12 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
       return;
     }
 
+    console.log("[PanelLayoutClient] Auth status is UNAUTHENTICATED, redirecting to login", {
+      pathname,
+      authStatus,
+      authRedirectTriggered,
+    });
+
     setAuthRedirectTriggered(true);
     const currentPath = pathname || "/panel";
     router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);

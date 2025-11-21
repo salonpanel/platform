@@ -17,6 +17,15 @@ export async function middleware(req: NextRequest) {
 
   const host = req.nextUrl.host;
   const pathname = req.nextUrl.pathname;
+
+  // Log de depuración para sesión en middleware
+  if (pathname.startsWith("/panel") || pathname.startsWith("/admin")) {
+    logDomainDebug(`[Middleware] Session check for ${pathname}:`, {
+      hasSession: !!session,
+      userId: session?.user?.id,
+      email: session?.user?.email,
+    });
+  }
   const url = req.nextUrl.clone();
 
   // ============================================================================

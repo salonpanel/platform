@@ -19,6 +19,8 @@ function LoginContent() {
   const [secretToken, setSecretToken] = useState<string | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const realtimeSubscriptionRef = useRef<any>(null);
+  const sessionCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const authStateChangeSubscriptionRef = useRef<any>(null);
   
   // Estado para modo OTP (código de 6 dígitos)
   const [otpMode, setOtpMode] = useState(false);
@@ -43,7 +45,7 @@ function LoginContent() {
     };
   }, [supabase]);
 
-  // Limpiar polling y realtime al desmontar
+  // Limpiar polling, realtime y session check al desmontar
   useEffect(() => {
     return () => {
       if (pollingIntervalRef.current) {
@@ -52,8 +54,65 @@ function LoginContent() {
       if (realtimeSubscriptionRef.current) {
         realtimeSubscriptionRef.current.unsubscribe();
       }
+      if (sessionCheckIntervalRef.current) {
+        clearInterval(sessionCheckIntervalRef.current);
+      }
+      if (authStateChangeSubscriptionRef.current) {
+        authStateChangeSubscriptionRef.current.unsubscribe();
+      }
     };
   }, []);
+
+  // Configurar listener de onAuthStateChange para detectar sesión desde otras pestañas
+  useEffect(() => {
+    if (!waitingForApproval) return;
+
+    console.log("[Login] Setting up onAuthStateChange listener for session detection");
+    
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("[Login] onAuthStateChange event:", event, {
+        hasSession: !!session,
+        userId: session?.user?.id,
+        email: session?.user?.email,
+      });
+
+      // Si se detecta una sesión activa (puede venir de otra pestaña)
+      if (event === 'SIGNED_IN' && session) {
+        console.log("[Login] Session detected via onAuthStateChange, redirecting...");
+        
+        // Limpiar todos los intervalos y subscriptions
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
+        if (realtimeSubscriptionRef.current) {
+          realtimeSubscriptionRef.current.unsubscribe();
+          realtimeSubscriptionRef.current = null;
+        }
+        if (sessionCheckIntervalRef.current) {
+          clearInterval(sessionCheckIntervalRef.current);
+          sessionCheckIntervalRef.current = null;
+        }
+
+        // Redirigir al panel
+        const redirectParam = searchParams.get("redirect");
+        const redirectPath = redirectParam || "/panel";
+        console.log("[Login] Redirecting to:", redirectPath);
+        router.replace(redirectPath);
+      }
+    });
+
+    authStateChangeSubscriptionRef.current = subscription;
+
+    return () => {
+      if (authStateChangeSubscriptionRef.current) {
+        authStateChangeSubscriptionRef.current.unsubscribe();
+        authStateChangeSubscriptionRef.current = null;
+      }
+    };
+  }, [waitingForApproval, supabase, router, searchParams]);
 
   useEffect(() => {
     const errorParam = searchParams.get("error");
@@ -149,6 +208,46 @@ function LoginContent() {
     }
   };
 
+  // Verificar sesión directamente usando getSession() (complementa el polling)
+  const checkSessionDirectly = async () => {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      console.log("[Login] Direct session check:", {
+        hasSession: !!session,
+        userId: session?.user?.id,
+        email: session?.user?.email,
+        error: error?.message,
+      });
+
+      if (session && !error) {
+        console.log("[Login] Session found via direct check, redirecting...");
+        
+        // Limpiar todos los intervalos y subscriptions
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
+        if (realtimeSubscriptionRef.current) {
+          realtimeSubscriptionRef.current.unsubscribe();
+          realtimeSubscriptionRef.current = null;
+        }
+        if (sessionCheckIntervalRef.current) {
+          clearInterval(sessionCheckIntervalRef.current);
+          sessionCheckIntervalRef.current = null;
+        }
+
+        // Redirigir al panel
+        const redirectParam = searchParams.get("redirect");
+        const redirectPath = redirectParam || "/panel";
+        console.log("[Login] Redirecting to:", redirectPath);
+        router.replace(redirectPath);
+      }
+    } catch (err) {
+      console.error("[Login] Error checking session directly:", err);
+    }
+  };
+
   // Manejar request aprobada
   const handleApprovedRequest = async (accessToken: string, refreshToken: string, redirectPath: string) => {
     try {
@@ -158,7 +257,7 @@ function LoginContent() {
         redirectPath,
       });
       
-      // Limpiar polling y realtime ANTES de establecer la sesión para evitar múltiples llamadas
+      // Limpiar polling, realtime y session check ANTES de establecer la sesión para evitar múltiples llamadas
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
@@ -166,6 +265,10 @@ function LoginContent() {
       if (realtimeSubscriptionRef.current) {
         realtimeSubscriptionRef.current.unsubscribe();
         realtimeSubscriptionRef.current = null;
+      }
+      if (sessionCheckIntervalRef.current) {
+        clearInterval(sessionCheckIntervalRef.current);
+        sessionCheckIntervalRef.current = null;
       }
 
       // Establecer sesión directamente en el cliente
@@ -437,6 +540,12 @@ function LoginContent() {
         pollRequestStatus(requestId);
       }, 3000);
 
+      // 6. Configurar verificación directa de sesión (cada 2 segundos)
+      // Esto detecta cuando la sesión se establece desde otra pestaña o dispositivo
+      sessionCheckIntervalRef.current = setInterval(() => {
+        checkSessionDirectly();
+      }, 2000);
+
     } catch (err: any) {
       console.error("Error en flujo de aprobación remota:", err);
       setError(err?.message || "Error al iniciar el proceso de login");
@@ -458,12 +567,18 @@ function LoginContent() {
       }
     }
 
-    // Limpiar polling y realtime
+    // Limpiar polling, realtime y session check
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
     }
     if (realtimeSubscriptionRef.current) {
       realtimeSubscriptionRef.current.unsubscribe();
+      realtimeSubscriptionRef.current = null;
+    }
+    if (sessionCheckIntervalRef.current) {
+      clearInterval(sessionCheckIntervalRef.current);
+      sessionCheckIntervalRef.current = null;
     }
 
     setWaitingForApproval(false);

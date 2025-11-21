@@ -31,6 +31,19 @@ export function SupabaseProvider({ children }: PropsWithChildren) {
 				pathname,
 			});
 
+			// Log adicional para depuración: verificar sesión directamente después del evento
+			try {
+				const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+				console.log("[SupabaseProvider] getSession() after event:", {
+					hasSession: !!currentSession,
+					userId: currentSession?.user?.id,
+					hasError: !!sessionError,
+					errorMessage: sessionError?.message,
+				});
+			} catch (err) {
+				console.warn("[SupabaseProvider] Error calling getSession() after event:", err);
+			}
+
 			// Si el usuario se autentica (en esta pestaña o en otra)
 			if (event === 'SIGNED_IN' && session) {
 				console.log("[SupabaseProvider] User signed in, session active");
