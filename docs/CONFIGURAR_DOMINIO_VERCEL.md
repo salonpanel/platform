@@ -160,3 +160,5 @@ Si no está validado, espera unos minutos (Vercel necesita generar el certificad
 - [DNS Propagation Checker](https://www.whatsmydns.net)
 - `docs/DEPLOY_VERCEL.md` - Guía completa de deployment
 
+
+

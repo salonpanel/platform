@@ -156,3 +156,5 @@ https://pro.bookfast.es
 ### Problema: Polling muestra `status: 'pending'` indefinidamente
 **Solución:** Revisar logs de Vercel para ver si `/auth/remote-callback` se está ejecutando correctamente
 
+
+

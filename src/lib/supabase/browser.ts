@@ -12,6 +12,11 @@ let browserClient: SupabaseClient | null = null;
  * 1. Establece cookies HTTP automáticamente (sb-panel-auth-auth-token y sb-panel-auth-refresh-token)
  * 2. Estas cookies son accesibles por el servidor Next.js
  * 3. createClient solo guarda en localStorage, NO establece cookies HTTP
+ * 
+ * SEGURIDAD:
+ * - SameSite=Lax para protección contra CSRF
+ * - Secure solo en producción (HTTPS)
+ * - Dominio dinámico según entorno (localhost en dev, .bookfast.es en prod)
  */
 export function getSupabaseBrowser(): SupabaseClient {
   if (!browserClient) {
@@ -22,8 +27,10 @@ export function getSupabaseBrowser(): SupabaseClient {
       throw new Error("NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY no definidos");
     }
 
+    const isDevelopment = process.env.NODE_ENV === 'development';
+
     // CRÍTICO: createBrowserClient de @supabase/ssr establece cookies HTTP automáticamente
-    // que el servidor puede leer usando createServerComponentClient({ cookies })
+    // que el servidor puede leer usando createServerClient
     browserClient = createBrowserClient(url, key, {
       cookies: {
         getAll() {
@@ -35,45 +42,69 @@ export function getSupabaseBrowser(): SupabaseClient {
         },
         setAll(cookiesToSet) {
           if (typeof document === 'undefined') return;
-          console.log("[SupabaseBrowser] setAll called with cookies:", cookiesToSet.map(c => c.name));
+          
+          if (isDevelopment) {
+            console.log("[SupabaseBrowser] setAll called with cookies:", cookiesToSet.map(c => c.name));
+          }
+          
           cookiesToSet.forEach(({ name, value, options }) => {
+            const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
             let cookieString = `${name}=${value}`;
-            // CRÍTICO: Configurar cookies con dominio, sameSite y secure
+            
+            // Path
             cookieString += `; Path=${options?.path || '/'}`;
+            
+            // Domain: Solo establecer en producción para subdominios de bookfast.es
             if (options?.domain) {
               cookieString += `; Domain=${options.domain}`;
-            } else {
-              // Por defecto, usar .bookfast.es para compartir entre subdominios
+            } else if (!isDevelopment && hostname.endsWith('.bookfast.es')) {
+              // En producción, usar .bookfast.es para compartir entre subdominios
               cookieString += `; Domain=.bookfast.es`;
             }
+            // En desarrollo (localhost), NO establecer Domain para que funcione correctamente
+            
+            // SameSite: Lax para mejor seguridad (protección contra CSRF)
+            // Lax permite cookies en navegación top-level (clicks en links)
+            // pero NO en requests cross-site (fetch, XHR desde otros dominios)
             if (options?.sameSite) {
               cookieString += `; SameSite=${options.sameSite}`;
             } else {
-              // Por defecto, SameSite=None para requests cross-site
-              cookieString += `; SameSite=None`;
+              cookieString += `; SameSite=Lax`;
             }
-            if (options?.secure !== false) {
+            
+            // Secure: Solo en producción (HTTPS)
+            if (!isDevelopment && options?.secure !== false) {
               cookieString += `; Secure`;
             }
+            
+            // Max-Age
             if (options?.maxAge) {
               cookieString += `; Max-Age=${options.maxAge}`;
             } else {
               cookieString += `; Max-Age=${60 * 60 * 24 * 7}`; // 7 días por defecto
             }
-            console.log("[SupabaseBrowser] Setting cookie:", name, "with options:", {
-              domain: options?.domain || '.bookfast.es',
-              sameSite: options?.sameSite || 'None',
-              secure: options?.secure !== false,
-            });
+            
+            if (isDevelopment) {
+              console.log("[SupabaseBrowser] Setting cookie:", name, "with options:", {
+                domain: options?.domain || (hostname.endsWith('.bookfast.es') ? '.bookfast.es' : 'none'),
+                sameSite: options?.sameSite || 'Lax',
+                secure: !isDevelopment && options?.secure !== false,
+                path: options?.path || '/',
+              });
+            }
+            
             document.cookie = cookieString;
           });
-          // Verificar que las cookies se establecieron
-          const allCookies = document.cookie.split(';').map(c => c.trim());
-          const authCookies = allCookies.filter(c => c.startsWith('sb-panel-auth'));
-          console.log("[SupabaseBrowser] Cookies after setAll:", {
-            allCookies: allCookies.length,
-            authCookies: authCookies.map(c => c.split('=')[0]),
-          });
+          
+          // Verificar que las cookies se establecieron (solo en desarrollo)
+          if (isDevelopment) {
+            const allCookies = document.cookie.split(';').map(c => c.trim());
+            const authCookies = allCookies.filter(c => c.startsWith('sb-panel-auth'));
+            console.log("[SupabaseBrowser] Cookies after setAll:", {
+              allCookies: allCookies.length,
+              authCookies: authCookies.map(c => c.split('=')[0]),
+            });
+          }
         },
       },
       cookieOptions: {
@@ -84,15 +115,16 @@ export function getSupabaseBrowser(): SupabaseClient {
       },
     });
 
-    // Log de depuración: verificar configuración de cookies
-    if (typeof window !== 'undefined') {
+    // Log de depuración: verificar configuración de cookies (solo en desarrollo)
+    if (typeof window !== 'undefined' && isDevelopment) {
       console.log("[SupabaseBrowser] Client initialized with createBrowserClient from @supabase/ssr:", {
         url: url.substring(0, 30) + '...',
         storageKey: "sb-panel-auth",
-        domain: window.location.hostname,
-        cookieDomain: '.bookfast.es',
-        sameSite: 'None',
-        secure: true,
+        hostname: window.location.hostname,
+        cookieDomain: window.location.hostname.endsWith('.bookfast.es') ? '.bookfast.es' : 'none (localhost)',
+        sameSite: 'Lax',
+        secure: !isDevelopment,
+        environment: isDevelopment ? 'development' : 'production',
       });
     }
   }

@@ -190,3 +190,5 @@ Si no encuentras Database Webhooks, puedes usar **Auth Hooks** que están en:
 
 El endpoint `/api/webhooks/supabase-auth` soporta ambos tipos.
 
+
+

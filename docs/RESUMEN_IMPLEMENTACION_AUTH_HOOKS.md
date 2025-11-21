@@ -172,3 +172,5 @@ Con esta implementación:
 - **Documentación:** `docs/CONFIGURAR_SUPABASE_AUTH_HOOKS.md`
 - **Tabla:** `auth_login_requests` (definida en `supabase/migrations/0078_create_auth_login_requests.sql`)
 
+
+

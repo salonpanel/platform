@@ -519,3 +519,5 @@ NEXT_PUBLIC_CLIENT_URL=https://barberia.bookfast.es
 **Última actualización:** 2024  
 **Versión:** 1.0.0
 
+
+

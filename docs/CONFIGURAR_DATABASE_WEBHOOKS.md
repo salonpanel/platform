@@ -195,3 +195,5 @@ Si el secret no coincide, el endpoint retorna `401 Unauthorized`.
 - [Supabase Auth Hooks](https://supabase.com/docs/guides/auth/auth-hooks)
 - [Next.js API Routes](https://nextjs.org/docs/app/building-your-application/routing/route-handlers)
 
+
+

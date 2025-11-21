@@ -220,3 +220,5 @@ const { inputMode, isTouch, isMouse } = useInputMode();
 5. Optimizar animaciones en listas largas
 
 
+
+

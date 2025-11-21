@@ -194,3 +194,5 @@ Este fallback debería funcionar incluso si Supabase no respeta `emailRedirectTo
 - `docs/CONFIGURAR_SUPABASE_REDIRECTS.md` - Guía detallada de configuración
 - `docs/DEBUG_LOGIN_REMOTO.md` - Debug del flujo remoto
 
+
+

@@ -486,3 +486,5 @@ Si en el futuro implementas Stripe Connect (para que las barberías reciban pago
 - [Mejores prácticas de webhooks](https://stripe.com/docs/webhooks/best-practices)
 
 
+
+

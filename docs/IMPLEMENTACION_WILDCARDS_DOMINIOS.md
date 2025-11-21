@@ -201,3 +201,5 @@ En Supabase Dashboard → Authentication → URL Configuration:
 - `docs/CONFIGURAR_DOMINIO_VERCEL.md` - Configuración de Vercel
 - `docs/SOLUCION_BUCLE_MAGIC_LINK.md` - Solución del bucle de magic links
 
+
+

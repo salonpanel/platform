@@ -95,3 +95,5 @@ COMMENT ON POLICY payments_update_service_role ON public.payments IS
 COMMENT ON POLICY payments_delete_service_role ON public.payments IS 
   'Solo service_role puede eliminar pagos (procesos de mantenimiento)';
 
+
+

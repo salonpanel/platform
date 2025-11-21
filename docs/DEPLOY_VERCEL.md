@@ -61,8 +61,9 @@ En **Settings** → **General** → **Build & Development Settings**:
 - **Build Command**: `npm run build` (ya configurado por defecto)
 - **Output Directory**: `.next` (ya configurado por defecto)
 - **Install Command**: `npm install` (ya configurado por defecto)
+- **Node.js Version**: `20.x` (configurado automáticamente desde `package.json` → `engines.node`)
 
-No necesitas cambiar nada aquí, Next.js está configurado correctamente.
+**Nota**: La versión de Node.js se especifica en `package.json` en el campo `engines.node: "20.x"`. Vercel detectará y usará esta versión automáticamente. No necesitas cambiar nada aquí, Next.js está configurado correctamente.
 
 ### 5. Configurar Dominio
 

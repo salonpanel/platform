@@ -348,3 +348,5 @@ El design system está consolidado y listo para aplicar en las siguientes págin
 **FIN DE LA CONSOLIDACIÓN**
 
 
+
+

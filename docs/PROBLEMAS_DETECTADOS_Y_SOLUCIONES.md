@@ -122,3 +122,5 @@ Después de que Vercel despliegue el nuevo código:
 - Que la request no haya expirado (menos de 15 minutos)
 - Los logs de Vercel para ver errores específicos
 
+
+

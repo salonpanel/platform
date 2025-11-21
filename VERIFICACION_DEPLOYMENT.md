@@ -114,3 +114,5 @@ RESEND_API_KEY=re_...
 **El proyecto está listo para deployment en Vercel**, aunque se recomienda corregir los errores de tipos de framer-motion para un deployment más limpio.
 
 
+
+

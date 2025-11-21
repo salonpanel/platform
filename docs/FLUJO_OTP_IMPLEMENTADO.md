@@ -124,3 +124,5 @@ Si es necesario volver a Magic Link:
 - [ ] Monitorear logs de autenticación
 - [ ] Considerar SMTP personalizado si hay muchos usuarios
 
+
+

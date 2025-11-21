@@ -104,3 +104,5 @@ http://localhost:3000/auth/magic-link-handler
 - `docs/CONFIGURAR_SUPABASE_REDIRECTS.md` - Guía completa
 - `docs/SOLUCION_ERROR_SUPABASE_URL.md` - Troubleshooting
 
+
+

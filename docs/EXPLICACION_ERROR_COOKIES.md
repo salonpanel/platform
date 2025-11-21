@@ -119,3 +119,5 @@ Después de aplicar estos fixes:
 ✅ Acceder a rutas privadas (`/panel`, `/panel/agenda`, etc.) sin pérdida de sesión  
 ✅ No más errores `this.context.cookies(...).get is not a function`
 
+
+

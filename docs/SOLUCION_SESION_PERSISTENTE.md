@@ -154,3 +154,5 @@ Después de que Vercel termine el deployment:
 - ✅ Magic links funcionan correctamente
 - ✅ Listo para producción
 
+
+

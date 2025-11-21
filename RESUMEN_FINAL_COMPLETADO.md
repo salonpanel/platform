@@ -139,3 +139,5 @@ const calculatedHourHeight = Math.max(40, Math.floor(availableForTimeline / hour
 **Listo para**: Continuar con Servicios y Ajustes, o pasar a nuevas funcionalidades.
 
 
+
+

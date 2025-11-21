@@ -129,3 +129,5 @@ Si después de verificar todo lo anterior el problema persiste:
 3. Verifica que todas las URLs estén correctamente configuradas
 4. Asegúrate de que las variables de entorno estén correctas
 
+
+

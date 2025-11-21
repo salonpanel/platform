@@ -147,3 +147,5 @@ window.location.href = "/panel";
 
 El código está listo para producción. Todos los puntos del plan técnico han sido implementados y verificados.
 
+
+

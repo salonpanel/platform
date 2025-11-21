@@ -19,3 +19,5 @@ COMMENT ON COLUMN public.tenants.stripe_onboarding_status IS 'Estado del onboard
 COMMENT ON COLUMN public.tenants.stripe_charges_enabled IS 'Indica si la cuenta Stripe puede recibir pagos';
 COMMENT ON COLUMN public.tenants.stripe_payouts_enabled IS 'Indica si la cuenta Stripe puede recibir payouts';
 
+
+
