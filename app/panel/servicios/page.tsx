@@ -31,10 +31,15 @@ export default async function ServiciosPage({ searchParams }: ServiciosPageProps
   // 3) Validamos sesión
   const {
     data: { session },
+    error: sessionError,
   } = await supabase.auth.getSession();
 
-  if (!session) {
-    redirect("/login");
+  if (!session || sessionError) {
+    return (
+      <Alert type="error" title="Sesión no disponible">
+        Tu sesión no está activa o ha expirado. Vuelve a iniciar sesión desde la página de login.
+      </Alert>
+    );
   }
 
   let tenantId: string | null = null;
