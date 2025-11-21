@@ -59,6 +59,104 @@ function LoginContent() {
     }
   }, [searchParams]);
 
+  // Detectar tokens en el hash cuando Supabase redirige a /login con tokens
+  useEffect(() => {
+    const handleHashTokens = async () => {
+      // Leer el hash de la URL (solo disponible en el cliente)
+      const hash = window.location.hash.substring(1);
+      if (!hash) return;
+
+      const hashParams = new URLSearchParams(hash);
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
+      const code = hashParams.get("code");
+      const type = hashParams.get("type");
+
+      // Si hay tokens en el hash, Supabase redirigió aquí en lugar de a remote-callback
+      if ((accessToken && refreshToken) || code) {
+        console.log("[Login] Detected tokens in hash, processing remote login", {
+          hasAccessToken: !!accessToken,
+          hasRefreshToken: !!refreshToken,
+          hasCode: !!code,
+          type,
+        });
+
+        // Si tenemos código, redirigir a remote-callback (buscará la request pendiente)
+        if (code) {
+          const remoteCallbackUrl = new URL("/auth/remote-callback", window.location.origin);
+          remoteCallbackUrl.searchParams.set("code", code);
+          if (type) remoteCallbackUrl.searchParams.set("type", type);
+          window.location.href = remoteCallbackUrl.toString();
+          return;
+        }
+
+        // Si tenemos tokens directos, establecer sesión temporal y buscar request pendiente
+        if (accessToken && refreshToken) {
+          try {
+            // Establecer sesión temporal para obtener el email
+            const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+
+            if (sessionError || !sessionData?.session?.user?.email) {
+              console.error("[Login] Error setting session from hash tokens:", sessionError);
+              // Redirigir a callback normal como fallback
+              const callbackUrl = new URL("/auth/callback", window.location.origin);
+              callbackUrl.searchParams.set("access_token", accessToken);
+              callbackUrl.searchParams.set("refresh_token", refreshToken);
+              window.location.href = callbackUrl.toString();
+              return;
+            }
+
+            const userEmail = sessionData.session.user.email;
+            console.log("[Login] Session established, looking up pending request for:", userEmail);
+
+            // Actualizar la request pendiente más reciente para este email
+            const updateResponse = await fetch("/api/auth/login-request/update", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: userEmail,
+                accessToken,
+                refreshToken,
+              }),
+            });
+
+            if (updateResponse.ok) {
+              const updateData = await updateResponse.json();
+              console.log("[Login] Request updated, redirecting to panel", updateData);
+              // La sesión ya está establecida, redirigir
+              const redirectPath = updateData.redirectPath || "/panel";
+              router.push(redirectPath);
+              return;
+            } else {
+              console.warn("[Login] Failed to update request, using normal callback");
+            }
+
+            // Si no encontramos request o falló la actualización, usar callback normal
+            console.log("[Login] No pending request found or update failed, using normal callback");
+            const callbackUrl = new URL("/auth/callback", window.location.origin);
+            callbackUrl.searchParams.set("access_token", accessToken);
+            callbackUrl.searchParams.set("refresh_token", refreshToken);
+            window.location.href = callbackUrl.toString();
+            return;
+          } catch (err) {
+            console.error("[Login] Error processing hash tokens:", err);
+            // Fallback: redirigir a callback normal
+            const callbackUrl = new URL("/auth/callback", window.location.origin);
+            callbackUrl.searchParams.set("access_token", accessToken);
+            callbackUrl.searchParams.set("refresh_token", refreshToken);
+            window.location.href = callbackUrl.toString();
+            return;
+          }
+        }
+      }
+    };
+
+    handleHashTokens();
+  }, [searchParams, supabase, router]);
+
   // Polling para verificar estado de la request (fallback si Realtime falla)
   const pollRequestStatus = async (requestId: string) => {
     try {
@@ -582,3 +680,4 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+
