@@ -46,37 +46,45 @@ export function SupabaseProvider({ children }: PropsWithChildren) {
 
 			// Si el usuario se autentica (en esta pestaña o en otra)
 			if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
+				const currentPath = window.location.pathname;
 				console.log("[SupabaseProvider] User signed in or token refreshed, session active", {
 					event,
 					pathname,
+					currentPath,
 					userId: session.user?.id,
-					currentPath: window.location.pathname,
+					isOnLogin: pathname === '/login' || pathname === '/login/verify-code',
+					isOnLoginWindow: currentPath === '/login' || currentPath === '/login/verify-code',
 				});
 				
-				// IMPORTANTE: Esperar un momento antes de redirigir para asegurar que las cookies se establezcan
-				// Esto es crítico porque el servidor necesita leer las cookies en la siguiente request
-				// Redirigir desde /login o /login/verify-code si hay sesión
-				const currentPath = window.location.pathname;
-				if ((pathname === '/login' || pathname === '/login/verify-code' || 
-				     currentPath === '/login' || currentPath === '/login/verify-code') && 
-				    !currentPath.startsWith('/panel') &&
-				    !currentPath.startsWith('/admin')) {
-					setTimeout(() => {
-						// Verificar que aún estamos en login/verify-code antes de redirigir
-						const stillOnLogin = window.location.pathname === '/login' || 
-						                    window.location.pathname === '/login/verify-code';
-						
-						if (stillOnLogin) {
-							// Obtener redirect de query params si existe
-							const searchParams = new URLSearchParams(window.location.search);
-							const redirectParam = searchParams.get('redirect');
-							const redirectPath = redirectParam || '/panel';
-							
-							console.log("[SupabaseProvider] Redirecting from", window.location.pathname, "to:", redirectPath);
-							// Usar window.location para forzar una navegación completa y asegurar que la sesión se persista
-							window.location.href = redirectPath;
-						}
-					}, 500); // Delay aumentado para asegurar que las cookies se establezcan
+				// IMPORTANTE: Redirigir inmediatamente si estamos en login y hay sesión
+				// No esperar delay porque las cookies ya están establecidas por el servidor
+				const isOnLoginPage = pathname === '/login' || pathname === '/login/verify-code' || 
+				                    currentPath === '/login' || currentPath === '/login/verify-code';
+				const isOnProtectedRoute = currentPath.startsWith('/panel') || currentPath.startsWith('/admin');
+				
+				if (isOnLoginPage && !isOnProtectedRoute) {
+					// Obtener redirect de query params si existe
+					const searchParams = new URLSearchParams(window.location.search);
+					const redirectParam = searchParams.get('redirect');
+					const redirectPath = redirectParam || '/panel';
+					
+					console.log("[SupabaseProvider] Redirecting immediately from", currentPath, "to:", redirectPath, {
+						event,
+						hasSession: !!session,
+						userId: session?.user?.id,
+					});
+					
+					// Redirigir inmediatamente sin delay
+					// Usar window.location para forzar una navegación completa y asegurar que la sesión se persista
+					window.location.href = redirectPath;
+					return; // Salir temprano para evitar procesamiento adicional
+				} else {
+					console.log("[SupabaseProvider] Not redirecting:", {
+						isOnLoginPage,
+						isOnProtectedRoute,
+						currentPath,
+						pathname,
+					});
 				}
 			}
 
