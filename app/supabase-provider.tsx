@@ -48,16 +48,17 @@ export function SupabaseProvider({ children }: PropsWithChildren) {
 			if (event === 'SIGNED_IN' && session) {
 				console.log("[SupabaseProvider] User signed in, session active");
 				
-				// Solo redirigir si estamos en la página de login
+				// Solo redirigir si estamos en la página de login o verify-code
 				// Esto evita redirecciones innecesarias cuando ya estamos en el panel
-				if (pathname === '/login' || pathname?.startsWith('/login')) {
+				if (pathname === '/login' || pathname === '/login/verify-code' || pathname?.startsWith('/login')) {
 					// Obtener redirect de query params si existe
 					const searchParams = new URLSearchParams(window.location.search);
 					const redirectParam = searchParams.get('redirect');
 					const redirectPath = redirectParam || '/panel';
 					
-					console.log("[SupabaseProvider] Redirecting from login to:", redirectPath);
-					router.replace(redirectPath);
+					console.log("[SupabaseProvider] Redirecting from login/verify-code to:", redirectPath);
+					// Usar window.location para forzar una navegación completa y asegurar que la sesión se persista
+					window.location.href = redirectPath;
 				}
 			}
 

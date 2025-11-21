@@ -78,10 +78,13 @@ function VerifyCodeContent() {
       setSuccess(true);
       
       // Redirigir al panel después de un breve delay
+      // Usar window.location.href para forzar una navegación completa y asegurar que la sesión se persista
       setTimeout(() => {
         const redirectParam = searchParams?.get("redirect");
-        router.replace(redirectParam || "/panel");
-      }, 1500);
+        const redirectPath = redirectParam || "/panel";
+        console.log("[VerifyCode] Redirecting to:", redirectPath);
+        window.location.href = redirectPath;
+      }, 1000);
     } catch (err: any) {
       console.error("Error inesperado verificando OTP:", err);
       setError(err?.message || "Error al verificar el código. Por favor, intenta de nuevo.");
