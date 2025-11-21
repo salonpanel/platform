@@ -38,8 +38,21 @@ export async function POST(req: Request) {
 
     console.log("[VerifyOTP API] Creando cliente Supabase...");
     // 👇 Patrón correcto en Next.js 16 App Router
-    const supabase = createRouteHandlerClient/*<Database>*/({ cookies });
-    console.log("[VerifyOTP API] Cliente Supabase creado correctamente");
+    let supabase;
+    try {
+      supabase = createRouteHandlerClient/*<Database>*/({ cookies });
+      console.log("[VerifyOTP API] Cliente Supabase creado correctamente");
+    } catch (clientError: any) {
+      console.error("[VerifyOTP API] Error al crear cliente Supabase:", {
+        message: clientError?.message,
+        name: clientError?.name,
+        stack: clientError?.stack,
+      });
+      return NextResponse.json(
+        { error: "Error al inicializar el cliente de autenticación." },
+        { status: 500 }
+      );
+    }
 
     // 1) Verificar OTP (tipo "email" porque estás usando código por email)
     console.log("[VerifyOTP API] Llamando a verifyOtp...", { 

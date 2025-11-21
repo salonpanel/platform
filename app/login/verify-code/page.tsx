@@ -72,10 +72,23 @@ function VerifyCodeContent() {
         }),
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonError) {
+        console.error("[VerifyCode] Error parseando respuesta JSON:", jsonError);
+        setError("Error al procesar la respuesta del servidor. Por favor, inténtalo de nuevo.");
+        setCode("");
+        setVerifying(false);
+        return;
+      }
 
       if (!res.ok || !data.ok) {
-        console.error("[VerifyCode] Error en verificación:", data);
+        console.error("[VerifyCode] Error en verificación:", {
+          status: res.status,
+          statusText: res.statusText,
+          data,
+        });
         setError(
           data?.error ||
             "No hemos podido verificar el código. Por favor, inténtalo de nuevo."
