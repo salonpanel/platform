@@ -160,14 +160,14 @@ function LoginContent() {
   // Polling para verificar estado de la request (fallback si Realtime falla)
   const pollRequestStatus = async (requestId: string) => {
     try {
-      const response = await fetch(`/api/auth/login-request/status?requestId=${encodeURIComponent(requestId)}`);
+      const response = await fetch(`/api/auth/login-request/status?request_id=${encodeURIComponent(requestId)}`);
       if (!response.ok) {
-        console.warn("[Polling] Response not OK:", response.status);
+        console.warn("[LoginPolling] Response not OK:", response.status);
         return;
       }
 
       const data = await response.json();
-      console.log("[Login Waiting] status update", {
+      console.log("[LoginPolling] status response", {
         status: data.status,
         hasTokens: !!data.accessToken && !!data.refreshToken,
         redirectPath: data.redirectPath,
@@ -175,17 +175,17 @@ function LoginContent() {
       
       if (data.status === "approved" && data.accessToken && data.refreshToken) {
         // Request aprobada, establecer sesión
-        console.log("[Login Waiting] Request approved, setting session...");
+        console.log("[LoginPolling] Request approved, setting session...");
         await handleApprovedRequest(data.accessToken, data.refreshToken, data.redirectPath || "/panel");
       } else if (data.status === "expired" || data.status === "cancelled") {
         // Request expirada o cancelada
-        console.log("[Polling] Request expired or cancelled:", data.status);
+        console.log("[LoginPolling] Request expired or cancelled:", data.status);
         setWaitingForApproval(false);
         setSent(false);
         setError(data.status === "expired" ? "El enlace ha expirado. Por favor, solicita uno nuevo." : "Login cancelado.");
       }
     } catch (err) {
-      console.error("[Polling] Error polling request status:", err);
+      console.error("[LoginPolling] Error polling request status:", err);
     }
   };
 
