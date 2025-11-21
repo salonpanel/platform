@@ -85,6 +85,12 @@ export async function POST(req: NextRequest) {
             });
           },
         },
+        // CRÍTICO: usar el mismo nombre de cookie que el cliente del navegador
+        // (definido en src/lib/supabase/browser.ts como "sb-panel-auth")
+        cookieOptions: {
+          name: "sb-panel-auth",
+          path: "/",
+        },
       }
     );
     if (process.env.NODE_ENV === 'development') {
@@ -119,6 +125,19 @@ export async function POST(req: NextRequest) {
         userId: data.session.user?.id,
         email: data.session.user?.email,
       });
+
+      // Log adicional: inspeccionar las cookies que se han escrito en la respuesta
+      try {
+        const allCookies = response.cookies.getAll();
+        const authCookies = allCookies.filter((c) => c.name.startsWith("sb-panel-auth"));
+        console.log("[VerifyOTP API] Cookies en respuesta tras verifyOtp:", {
+          totalCookies: allCookies.length,
+          allCookieNames: allCookies.map((c) => c.name),
+          authCookieNames: authCookies.map((c) => c.name),
+        });
+      } catch (cookieError) {
+        console.warn("[VerifyOTP API] Error inspeccionando cookies de respuesta:", cookieError);
+      }
     }
 
     // ⚠️ Importante:

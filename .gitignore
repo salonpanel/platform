@@ -65,3 +65,5 @@ security-reports/
 *.noir.yaml
 
 .vercel
+
+.vercel
