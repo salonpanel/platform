@@ -1,7 +1,7 @@
 // app/api/auth/verify-otp/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,36 +37,28 @@ export async function POST(req: NextRequest) {
     const token = String(body.token).trim();
 
     console.log("[VerifyOTP API] Creando cliente Supabase...");
-    // ✅ Patrón correcto en Next 16: cachear cookies() y pasar función que retorna Promise
-    let cookieStore;
-    try {
-      cookieStore = await cookies();
-      console.log("[VerifyOTP API] CookieStore obtenido correctamente");
-    } catch (cookieError: any) {
-      console.error("[VerifyOTP API] Error obteniendo cookies:", cookieError);
-      return NextResponse.json(
-        { ok: false, error: "Error al acceder a las cookies." },
-        { status: 500 }
-      );
-    }
-
-    let supabase;
-    try {
-      supabase = createRouteHandlerClient({ 
-        cookies: () => Promise.resolve(cookieStore) 
-      });
-      console.log("[VerifyOTP API] Cliente Supabase creado correctamente");
-    } catch (clientError: any) {
-      console.error("[VerifyOTP API] Error creando cliente Supabase:", {
-        message: clientError?.message,
-        name: clientError?.name,
-        stack: clientError?.stack,
-      });
-      return NextResponse.json(
-        { ok: false, error: "Error al inicializar el cliente de autenticación." },
-        { status: 500 }
-      );
-    }
+    // ✅ Usar createServerClient de @supabase/ssr para Next.js 16
+    // Este helper maneja correctamente las cookies en route handlers
+    const cookieStore = await cookies();
+    const response = NextResponse.next();
+    
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              response.cookies.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+    console.log("[VerifyOTP API] Cliente Supabase creado correctamente");
 
     console.log("[VerifyOTP API] Verificando OTP para:", email);
 
@@ -95,17 +87,22 @@ export async function POST(req: NextRequest) {
     });
 
     // ⚠️ Importante:
-    // - createRouteHandlerClient + verifyOtp escriben las cookies de sesión
+    // - createServerClient + verifyOtp escriben las cookies de sesión en response
     //   (sb-panel-auth-auth-token, sb-panel-auth-refresh-token, etc.)
-    // - No hace falta hacer setSession manual ni devolver tokens.
+    // - Devolver la respuesta con los headers de cookies establecidos
 
-    return NextResponse.json({
-      ok: true,
-      user: {
-        id: data.session.user?.id,
-        email: data.session.user?.email,
+    return NextResponse.json(
+      {
+        ok: true,
+        user: {
+          id: data.session.user?.id,
+          email: data.session.user?.email,
+        },
       },
-    });
+      {
+        headers: response.headers,
+      }
+    );
   } catch (err: any) {
     console.error("[VerifyOTP API] Error inesperado:", {
       message: err?.message,
