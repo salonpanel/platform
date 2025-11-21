@@ -25,12 +25,18 @@ export async function middleware(req: NextRequest) {
       c.name.includes('sb-panel-auth')
     );
     
+    // Log también todas las cookies para debugging
+    const allCookies = Array.from(req.cookies.getAll());
+    const cookieNames = allCookies.map(c => c.name);
+    
     logDomainDebug(`[Middleware] Session check for ${pathname}:`, {
       hasSession: !!session,
       userId: session?.user?.id,
       email: session?.user?.email,
       authCookiesCount: authCookies.length,
       authCookieNames: authCookies.map(c => c.name),
+      allCookiesCount: allCookies.length,
+      allCookieNames: cookieNames,
     });
   }
   const url = req.nextUrl.clone();
