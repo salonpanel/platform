@@ -38,28 +38,86 @@ export async function POST(req: NextRequest) {
       }
     );
 
-    let query = supabaseAdmin
-      .from("auth_login_requests")
-      .update({
-        status: "approved",
-        approved_at: new Date().toISOString(),
-        supabase_access_token: accessToken,
-        supabase_refresh_token: refreshToken,
-      })
-      .eq("status", "pending");
+    let updated;
 
     if (requestId) {
-      query = query.eq("id", requestId);
+      // Actualizar por requestId
+      const { data, error: updateError } = await supabaseAdmin
+        .from("auth_login_requests")
+        .update({
+          status: "approved",
+          approved_at: new Date().toISOString(),
+          supabase_access_token: accessToken,
+          supabase_refresh_token: refreshToken,
+        })
+        .eq("id", requestId)
+        .eq("status", "pending")
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error("[UpdateAPI] Error updating request:", updateError);
+        return NextResponse.json(
+          { error: "Error al actualizar la solicitud" },
+          { status: 500 }
+        );
+      }
+      updated = data;
     } else if (email) {
       // Buscar la request pendiente más reciente para este email (últimos 15 minutos)
-      query = query
+      const { data: pendingRequest, error: lookupError } = await supabaseAdmin
+        .from("auth_login_requests")
+        .select("id, secret_token, created_at, redirect_path")
         .eq("email", email.toLowerCase())
+        .eq("status", "pending")
         .gte("created_at", new Date(Date.now() - 15 * 60 * 1000).toISOString())
         .order("created_at", { ascending: false })
-        .limit(1);
-    }
+        .limit(1)
+        .maybeSingle();
 
-    const { data: updated, error: updateError } = await query.select().single();
+      if (lookupError) {
+        console.error("[UpdateAPI] Error looking up request:", lookupError);
+        return NextResponse.json(
+          { error: "Error al buscar la solicitud" },
+          { status: 500 }
+        );
+      }
+
+      if (!pendingRequest) {
+        return NextResponse.json(
+          { error: "No se encontró solicitud pendiente para este email" },
+          { status: 404 }
+        );
+      }
+
+      // Actualizar la request encontrada
+      const { data, error: updateError } = await supabaseAdmin
+        .from("auth_login_requests")
+        .update({
+          status: "approved",
+          approved_at: new Date().toISOString(),
+          supabase_access_token: accessToken,
+          supabase_refresh_token: refreshToken,
+        })
+        .eq("id", pendingRequest.id)
+        .eq("status", "pending")
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error("[UpdateAPI] Error updating request:", updateError);
+        return NextResponse.json(
+          { error: "Error al actualizar la solicitud" },
+          { status: 500 }
+        );
+      }
+      updated = data;
+    } else {
+      return NextResponse.json(
+        { error: "requestId o email requerido" },
+        { status: 400 }
+      );
+    }
 
     if (updateError) {
       console.error("[UpdateAPI] Error updating request:", updateError);
