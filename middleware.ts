@@ -65,18 +65,27 @@ export async function middleware(req: NextRequest) {
   // PROTECCIÓN DE APIs POR DOMINIO (aplicar antes de lógica por contexto)
   // ============================================================================
 
-  const appContext = getAppContextFromHost(host);
-
-  // Bloquear APIs internas desde dominios que no corresponden
-  if (pathname.startsWith("/api/admin") || pathname.startsWith("/api/internal")) {
-    if (appContext !== "pro" && appContext !== "admin") {
-      logDomainDebug(`Intento de acceso a API interna desde contexto no permitido: ${appContext} (${host})`);
-      return NextResponse.json(
-        { error: "Esta API no está disponible desde este dominio" },
-        { status: 403 }
-      );
+  // Permitir todas las rutas de API pasar sin procesamiento adicional
+  // (excepto las que requieren verificación de dominio específico)
+  if (pathname.startsWith("/api/")) {
+    const appContext = getAppContextFromHost(host);
+    
+    // Bloquear APIs internas desde dominios que no corresponden
+    if (pathname.startsWith("/api/admin") || pathname.startsWith("/api/internal")) {
+      if (appContext !== "pro" && appContext !== "admin") {
+        logDomainDebug(`Intento de acceso a API interna desde contexto no permitido: ${appContext} (${host})`);
+        return NextResponse.json(
+          { error: "Esta API no está disponible desde este dominio" },
+          { status: 403 }
+        );
+      }
     }
+    
+    // Permitir que todas las demás rutas de API pasen sin procesamiento
+    return NextResponse.next();
   }
+
+  const appContext = getAppContextFromHost(host);
 
   // Log de depuración (solo en desarrollo)
   logDomainDebug(`Request recibida`, {
