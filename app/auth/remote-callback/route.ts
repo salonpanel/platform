@@ -32,16 +32,16 @@ export async function GET(req: NextRequest) {
     fullUrl: url.toString(),
   });
 
-  if (!code || !requestId || !secretToken) {
-    console.error("[remote-callback] Missing required params:", { 
-      code: !!code, 
-      requestId: requestId || null, 
-      secretToken: !!secretToken 
-    });
+  // Si no tenemos code, no podemos continuar
+  if (!code) {
+    console.error("[remote-callback] Missing code parameter");
     return NextResponse.redirect(
       new URL("/login?error=invalid_link", url.origin)
     );
   }
+
+  // Si no tenemos request_id o secretToken, intentaremos encontrarlos después de obtener la sesión
+  let needsRequestLookup = !requestId || !secretToken;
 
   try {
     // 1) Intercambiar code por session en ESTE dispositivo (móvil)
@@ -65,7 +65,15 @@ export async function GET(req: NextRequest) {
       hasRefreshToken: !!refresh_token,
     });
 
-    // 2) Actualizar la request con tokens mediante SERVICE_ROLE
+    if (!user?.email) {
+      console.error("[remote-callback] No user email in session");
+      await supabase.auth.signOut();
+      return NextResponse.redirect(
+        new URL("/login?error=no_email", url.origin)
+      );
+    }
+
+    // 2) Si no tenemos requestId o secretToken, buscar la request pendiente más reciente para este email
     const admin = createAdminClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -77,9 +85,43 @@ export async function GET(req: NextRequest) {
       }
     );
 
+    let finalRequestId = requestId;
+    let finalSecretToken = secretToken;
+
+    if (needsRequestLookup) {
+      console.log("[remote-callback] Looking up pending request for email:", user.email);
+      
+      // Buscar la request pendiente más reciente para este email (últimos 15 minutos)
+      const { data: pendingRequest, error: lookupError } = await admin
+        .from("auth_login_requests")
+        .select("id, secret_token, created_at")
+        .eq("email", user.email.toLowerCase())
+        .eq("status", "pending")
+        .gte("created_at", new Date(Date.now() - 15 * 60 * 1000).toISOString()) // Últimos 15 minutos
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (lookupError || !pendingRequest) {
+        console.error("[remote-callback] No pending request found for email:", user.email, lookupError);
+        await supabase.auth.signOut();
+        return NextResponse.redirect(
+          new URL("/login?error=no_pending_request", url.origin)
+        );
+      }
+
+      finalRequestId = pendingRequest.id;
+      finalSecretToken = pendingRequest.secret_token;
+      
+      console.log("[remote-callback] Found pending request:", {
+        requestId: finalRequestId,
+        created_at: pendingRequest.created_at,
+      });
+    }
+
     console.log("[remote-callback] Updating login request", {
-      requestId,
-      secretToken: secretToken ? "present" : "missing",
+      requestId: finalRequestId,
+      secretToken: finalSecretToken ? "present" : "missing",
     });
 
     const { data: updated, error: updateError } = await admin
@@ -90,18 +132,18 @@ export async function GET(req: NextRequest) {
         approved_at: new Date().toISOString(),
         supabase_access_token: access_token,
         supabase_refresh_token: refresh_token,
-        email: user?.email ?? null,
+        email: user.email,
       })
-      .eq("id", requestId)
-      .eq("secret_token", secretToken)
+      .eq("id", finalRequestId)
+      .eq("secret_token", finalSecretToken)
       .eq("status", "pending")
       .select()
       .single();
 
     if (updateError) {
       console.error("[remote-callback] updateError", updateError, {
-        requestId,
-        secretToken: secretToken ? "present" : "missing",
+        requestId: finalRequestId,
+        secretToken: finalSecretToken ? "present" : "missing",
         errorMessage: updateError.message,
         errorDetails: updateError.details,
         errorHint: updateError.hint,
@@ -114,8 +156,8 @@ export async function GET(req: NextRequest) {
 
     if (!updated) {
       console.error("[remote-callback] update returned no rows", {
-        requestId,
-        secretToken: secretToken ? "present" : "missing",
+        requestId: finalRequestId,
+        secretToken: finalSecretToken ? "present" : "missing",
         message: "Login request not found or already processed",
       });
       await supabase.auth.signOut();
