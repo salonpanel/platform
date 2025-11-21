@@ -20,6 +20,10 @@ export const metadata: Metadata = {
     index: false, // Por defecto, no indexar (se sobrescribe en páginas públicas)
     follow: false,
   },
+  icons: {
+    icon: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
