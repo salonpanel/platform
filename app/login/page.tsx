@@ -1,18 +1,24 @@
 'use client';
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, CheckCircle2, AlertCircle, Loader2, Sparkles } from "lucide-react";
+import { Mail, CheckCircle2, AlertCircle, Loader2, Sparkles, X } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 
 function LoginContent() {
   const supabase = getSupabaseBrowser();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [waitingForApproval, setWaitingForApproval] = useState(false);
+  const [loginRequestId, setLoginRequestId] = useState<string | null>(null);
+  const [secretToken, setSecretToken] = useState<string | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const realtimeSubscriptionRef = useRef<any>(null);
 
   // Limpiar cualquier sesión previa para evitar errores de refresh token reciclado
   useEffect(() => {
@@ -32,6 +38,18 @@ function LoginContent() {
     };
   }, [supabase]);
 
+  // Limpiar polling y realtime al desmontar
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+      if (realtimeSubscriptionRef.current) {
+        realtimeSubscriptionRef.current.unsubscribe();
+      }
+    };
+  }, []);
+
   useEffect(() => {
     const errorParam = searchParams.get("error");
     if (errorParam === "unauthorized") {
@@ -41,12 +59,122 @@ function LoginContent() {
     }
   }, [searchParams]);
 
+  // Polling para verificar estado de la request (fallback si Realtime falla)
+  const pollRequestStatus = async (requestId: string) => {
+    try {
+      const response = await fetch(`/api/auth/login-request/status?requestId=${requestId}`);
+      if (!response.ok) return;
+
+      const data = await response.json();
+      
+      if (data.status === "approved" && data.accessToken && data.refreshToken) {
+        // Request aprobada, establecer sesión
+        await handleApprovedRequest(data.accessToken, data.refreshToken, data.redirectPath);
+      } else if (data.status === "expired" || data.status === "cancelled") {
+        // Request expirada o cancelada
+        setWaitingForApproval(false);
+        setSent(false);
+        setError(data.status === "expired" ? "El enlace ha expirado. Por favor, solicita uno nuevo." : "Login cancelado.");
+      }
+    } catch (err) {
+      console.error("Error polling request status:", err);
+    }
+  };
+
+  // Manejar request aprobada
+  const handleApprovedRequest = async (accessToken: string, refreshToken: string, redirectPath: string) => {
+    try {
+      // Establecer sesión con los tokens
+      const { data, error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+
+      if (error || !data.session) {
+        console.error("Error setting session:", error);
+        setError("Error al establecer la sesión. Por favor, intenta de nuevo.");
+        setWaitingForApproval(false);
+        setSent(false);
+        return;
+      }
+
+      // Limpiar tokens del servidor (seguridad)
+      if (loginRequestId) {
+        try {
+          await fetch("/api/auth/login-request/consume", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ requestId: loginRequestId }),
+          });
+        } catch (err) {
+          console.warn("Error consuming tokens (no crítico):", err);
+        }
+      }
+
+      // Limpiar polling y realtime
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+      if (realtimeSubscriptionRef.current) {
+        realtimeSubscriptionRef.current.unsubscribe();
+      }
+
+      // Redirigir al panel
+      router.replace(redirectPath || "/panel");
+    } catch (err: any) {
+      console.error("Error handling approved request:", err);
+      setError("Error al procesar la aprobación. Por favor, intenta de nuevo.");
+      setWaitingForApproval(false);
+      setSent(false);
+    }
+  };
+
+  // Configurar Realtime subscription para detectar cambios
+  const setupRealtimeSubscription = (requestId: string) => {
+    // Limpiar subscription anterior si existe
+    if (realtimeSubscriptionRef.current) {
+      realtimeSubscriptionRef.current.unsubscribe();
+    }
+
+    // Suscribirse a cambios en auth_login_requests
+    const channel = supabase
+      .channel(`login-request-${requestId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "auth_login_requests",
+          filter: `id=eq.${requestId}`,
+        },
+        (payload) => {
+          const newData = payload.new as any;
+          
+          if (newData.status === "approved" && newData.supabase_access_token && newData.supabase_refresh_token) {
+            handleApprovedRequest(
+              newData.supabase_access_token,
+              newData.supabase_refresh_token,
+              newData.redirect_path || "/panel"
+            );
+          } else if (newData.status === "expired" || newData.status === "cancelled") {
+            setWaitingForApproval(false);
+            setSent(false);
+            setError(newData.status === "expired" ? "El enlace ha expirado. Por favor, solicita uno nuevo." : "Login cancelado.");
+          }
+        }
+      )
+      .subscribe();
+
+    realtimeSubscriptionRef.current = channel;
+  };
+
   const sendLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     
     const redirectParam = searchParams.get("redirect");
+    const redirectPath = redirectParam || "/panel";
     
     // Auto-login para email de desarrollo (sin verificación)
     const DEV_EMAIL = "u0136986872@gmail.com";
@@ -61,7 +189,6 @@ function LoginContent() {
           body: JSON.stringify({ email: email.toLowerCase() }),
         });
 
-        // Verificar que la respuesta es JSON antes de parsear
         const contentType = response.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
           const text = await response.text();
@@ -71,45 +198,25 @@ function LoginContent() {
 
         const data = await response.json();
 
-        // Si el endpoint indica usar el flujo normal, continuar sin error
         if (data.error === "USE_NORMAL_FLOW") {
           console.log("Usando flujo normal de magic link");
-          // Continuar con el flujo normal (no lanzar error)
-        } else if (!response.ok) {
-          // Mostrar el error detallado
-          const errorMsg = data.error || `Error en auto-login (${response.status})`;
-          console.error("Error en dev-login:", data);
-          throw new Error(errorMsg);
-        }
-
-        // Si el endpoint indica usar el flujo normal, continuar sin hacer nada más
-        if (data.error === "USE_NORMAL_FLOW") {
-          // Continuar con el flujo normal de magic link (no hacer return)
-          console.log("Usando flujo normal de magic link");
+          // Continuar con el flujo normal
         } else if (data.magicLink) {
-          // Si hay un magic link, redirigir directamente y dejar que Supabase maneje la autenticación
-          console.log("Redirigiendo a magic link...");
           window.location.href = data.magicLink;
           setLoading(false);
           return;
         } else if (data.success && data.session) {
-          // Si el auto-login fue exitoso con sesión directa, redirigir
-          console.log("Auto-login exitoso, redirigiendo...");
           const redirectTo = redirectParam || "/panel";
           window.location.href = redirectTo;
           setLoading(false);
           return;
-        } else {
-          // Si hay algún otro resultado, también intentar usar el magic link si existe
-          if (data.magicLink) {
-            window.location.href = data.magicLink;
-            setLoading(false);
-            return;
-          }
+        } else if (data.magicLink) {
+          window.location.href = data.magicLink;
+          setLoading(false);
+          return;
         }
       } catch (err: any) {
         console.error("Error en auto-login:", err);
-        // Mostrar error más específico
         const errorMessage = err?.message || "No se pudo iniciar sesión automáticamente. El usuario puede no existir o hay un problema con la base de datos. Verifica los logs del servidor.";
         setError(errorMessage);
         setSent(false);
@@ -118,31 +225,95 @@ function LoginContent() {
       }
     }
     
-    // Flujo normal de magic link (solo si no es el email de desarrollo o si el auto-login no se ejecutó)
-    // Usar URL absoluta para callbacks de auth (Supabase requiere URL completa)
-    // IMPORTANTE: El callback debe usar redirect_to (no redirect) para que Supabase lo pase correctamente
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-      (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
-    
-    const redirectTo = redirectParam || "/panel";
-    const callbackUrl = `${baseUrl}/auth/callback?redirect_to=${encodeURIComponent(redirectTo)}`;
-    
-    const { error: authError } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: callbackUrl,
-        shouldCreateUser: true,
-      },
-    });
-    
-    setLoading(false);
-    
-    if (authError) {
-      console.error("Error al enviar Magic Link:", authError);
-      setError(authError.message || "Error al enviar el enlace mágico");
-    } else {
+    // FLUJO DE APROBACIÓN REMOTA
+    try {
+      // 1. Crear login request
+      const createResponse = await fetch("/api/auth/login-request/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          redirectPath: redirectPath,
+        }),
+      });
+
+      if (!createResponse.ok) {
+        const errorData = await createResponse.json();
+        throw new Error(errorData.error || "Error al crear la solicitud de login");
+      }
+
+      const { requestId, secretToken: token } = await createResponse.json();
+      setLoginRequestId(requestId);
+      setSecretToken(token);
+
+      // 2. Enviar magic link con callback a remote-callback
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+        (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
+      
+      const callbackUrl = `${baseUrl}/auth/remote-callback?request_id=${requestId}&token=${token}`;
+
+      const { error: authError } = await supabase.auth.signInWithOtp({
+        email: email.toLowerCase().trim(),
+        options: {
+          emailRedirectTo: callbackUrl,
+          shouldCreateUser: true,
+        },
+      });
+
+      if (authError) {
+        console.error("Error al enviar Magic Link:", authError);
+        setError(authError.message || "Error al enviar el enlace mágico");
+        setLoading(false);
+        return;
+      }
+
+      // 3. Cambiar a pantalla de espera
       setSent(true);
+      setWaitingForApproval(true);
+      setLoading(false);
+
+      // 4. Configurar Realtime subscription
+      setupRealtimeSubscription(requestId);
+
+      // 5. Configurar polling como fallback (cada 3 segundos)
+      pollingIntervalRef.current = setInterval(() => {
+        pollRequestStatus(requestId);
+      }, 3000);
+
+    } catch (err: any) {
+      console.error("Error en flujo de aprobación remota:", err);
+      setError(err?.message || "Error al iniciar el proceso de login");
+      setLoading(false);
+      setSent(false);
     }
+  };
+
+  const cancelLogin = async () => {
+    if (loginRequestId) {
+      try {
+        await fetch("/api/auth/login-request/cancel", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ requestId: loginRequestId }),
+        });
+      } catch (err) {
+        console.warn("Error cancelando login (no crítico):", err);
+      }
+    }
+
+    // Limpiar polling y realtime
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+    if (realtimeSubscriptionRef.current) {
+      realtimeSubscriptionRef.current.unsubscribe();
+    }
+
+    setWaitingForApproval(false);
+    setSent(false);
+    setLoginRequestId(null);
+    setSecretToken(null);
+    setError(null);
   };
 
   return (
@@ -197,9 +368,42 @@ function LoginContent() {
             )}
           </AnimatePresence>
 
-          {/* Formulario o mensaje de confirmación */}
+          {/* Formulario, mensaje de confirmación o pantalla de espera */}
           <AnimatePresence mode="wait">
-            {!sent ? (
+            {waitingForApproval ? (
+              <motion.div
+                key="waiting"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="text-center py-6"
+              >
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                  className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/20 mb-4"
+                >
+                  <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+                </motion.div>
+                <h2 className="text-xl font-bold text-white mb-3 font-satoshi">
+                  Esperando confirmación de login...
+                </h2>
+                <p className="text-slate-400 text-sm mb-2">
+                  Hemos enviado un enlace a <span className="font-semibold text-white">{email}</span>
+                </p>
+                <p className="text-slate-500 text-xs mb-6">
+                  Puedes abrirlo desde cualquier dispositivo. Esta ventana se actualizará automáticamente cuando confirmes el login.
+                </p>
+                <button
+                  onClick={cancelLogin}
+                  className="text-sm text-slate-400 hover:text-slate-300 font-medium transition-colors flex items-center gap-2 mx-auto"
+                >
+                  <X className="w-4 h-4" />
+                  Cancelar
+                </button>
+              </motion.div>
+            ) : !sent ? (
               <motion.form
                 key="form"
                 initial={{ opacity: 0 }}
