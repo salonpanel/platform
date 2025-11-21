@@ -26,6 +26,13 @@ export function getSupabaseBrowser(): SupabaseClient {
         storageKey: "sb-panel-auth",
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        // Habilitar sincronización multi-pestaña para detectar cambios de auth en otras pestañas
+        // Esto permite que cuando el usuario se autentica en una pestaña, las demás se enteren
+        flowType: 'pkce', // Usar PKCE para mejor seguridad
+      },
+      // Configuración global para multi-tab
+      global: {
+        // Supabase usa BroadcastChannel por defecto para multi-tab, no necesita configuración adicional
       },
     });
   }

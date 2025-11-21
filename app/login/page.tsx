@@ -147,13 +147,13 @@ function LoginContent() {
   // Manejar request aprobada
   const handleApprovedRequest = async (accessToken: string, refreshToken: string, redirectPath: string) => {
     try {
-      console.log("[handleApprovedRequest] Setting session with tokens...", {
+      console.log("[handleApprovedRequest] Request approved, setting session...", {
         hasAccessToken: !!accessToken,
         hasRefreshToken: !!refreshToken,
         redirectPath,
       });
       
-      // Limpiar polling y realtime ANTES de redirigir para evitar múltiples llamadas
+      // Limpiar polling y realtime ANTES de establecer la sesión para evitar múltiples llamadas
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
@@ -163,28 +163,53 @@ function LoginContent() {
         realtimeSubscriptionRef.current = null;
       }
 
-      console.log("[handleApprovedRequest] Request approved, redirecting to callback with tokens", {
-        hasAccessToken: !!accessToken,
-        hasRefreshToken: !!refreshToken,
-        redirectPath,
+      // Establecer sesión directamente en el cliente
+      // onAuthStateChange se disparará automáticamente y redirigirá
+      const { data, error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
       });
 
-      // IMPORTANTE: NO establecer la sesión en el cliente aquí.
-      // Redirigir directamente a /auth/callback con los tokens para que el servidor
-      // establezca las cookies correctamente. Esto garantiza que el middleware y el layout
-      // del servidor vean la sesión.
+      if (error) {
+        console.error("[handleApprovedRequest] Error setting session:", error);
+        setError("Error al establecer la sesión. Por favor, intenta de nuevo.");
+        setWaitingForApproval(false);
+        setSent(false);
+        return;
+      }
+
+      if (!data.session) {
+        console.error("[handleApprovedRequest] No session returned after setSession");
+        setError("No se pudo establecer la sesión. Por favor, intenta de nuevo.");
+        setWaitingForApproval(false);
+        setSent(false);
+        return;
+      }
+
+      console.log("[handleApprovedRequest] Session established successfully:", {
+        userId: data.session.user?.id,
+        email: data.session.user?.email,
+      });
+
+      // Limpiar tokens del servidor (seguridad) - no crítico si falla
+      if (loginRequestId) {
+        try {
+          await fetch("/api/auth/login-request/consume", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ requestId: loginRequestId }),
+          });
+          console.log("[handleApprovedRequest] Tokens consumed from server");
+        } catch (err) {
+          console.warn("[handleApprovedRequest] Error consuming tokens (non-critical):", err);
+        }
+      }
+
+      // Redirigir al panel
+      // onAuthStateChange también redirigirá, pero hacemos esto explícitamente para asegurar
       const finalRedirectPath = redirectPath || "/panel";
-      console.log("[Login Waiting] Redirecting to callback to establish session server-side:", finalRedirectPath);
-      
-      // Redirigir a /auth/callback con los tokens para que el servidor los procese
-      // El callback establecerá las cookies correctamente y luego redirigirá al panel
-      const callbackUrl = new URL("/auth/callback", window.location.origin);
-      callbackUrl.searchParams.set("access_token", accessToken);
-      callbackUrl.searchParams.set("refresh_token", refreshToken);
-      callbackUrl.searchParams.set("redirect", finalRedirectPath);
-      
-      console.log("[Login Waiting] Redirecting to:", callbackUrl.toString());
-      window.location.href = callbackUrl.toString();
+      console.log("[handleApprovedRequest] Redirecting to:", finalRedirectPath);
+      router.replace(finalRedirectPath);
     } catch (err: any) {
       console.error("[handleApprovedRequest] Unexpected error:", err);
       setError("Error al procesar la aprobación. Por favor, intenta de nuevo.");
