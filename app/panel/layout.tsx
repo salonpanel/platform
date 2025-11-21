@@ -11,8 +11,10 @@ import PanelLayoutClient from "./layout-client";
 export default async function PanelLayout({ children }: { children: ReactNode }) {
   // CRÍTICO: En Next.js 16, cookies() NO es async en server components
   // Debe llamarse directamente sin await
-  const cookieStore = cookies();
-  const supabase = createServerComponentClient({ cookies: () => cookieStore });
+  // createServerComponentClient espera cookies como función que retorna el objeto
+  const supabase = createServerComponentClient({ 
+    cookies: () => cookies() 
+  });
   
   // Verificar sesión en el servidor usando getSession
   const {
