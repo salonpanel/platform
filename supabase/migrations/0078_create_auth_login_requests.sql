@@ -81,7 +81,19 @@ END;
 $$;
 
 -- Enable Realtime for this table (required for remote login flow)
-ALTER PUBLICATION supabase_realtime ADD TABLE public.auth_login_requests;
+-- Use DO block to make it idempotent (check if already exists before adding)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 
+    FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' 
+      AND schemaname = 'public' 
+      AND tablename = 'auth_login_requests'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.auth_login_requests;
+  END IF;
+END $$;
 
 -- Add comment
 COMMENT ON TABLE public.auth_login_requests IS 'Stores login requests for remote approval flow. Tokens are only accessible via service_role.';
