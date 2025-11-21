@@ -86,11 +86,8 @@ export async function GET(request: Request) {
 
   try {
     // Crear cliente de Supabase con cookies (Next.js 16+)
-    // Usar el mismo patrón que funciona en remote-callback
-    const cookieStore = await cookies();
-    const supabaseClient = createRouteHandlerClient({ 
-      cookies: () => cookieStore
-    });
+    // En Next.js 16, cookies() no es async, se pasa directamente
+    const supabaseClient = createRouteHandlerClient({ cookies });
     
     let session;
     
