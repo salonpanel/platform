@@ -7,10 +7,16 @@
  * - Un usuario confirma su email mediante Magic Link (POST_CONFIRMATION)
  * - Un usuario inicia sesión (POST_SIGN_IN)
  * 
- * Propósito:
- * - Actualizar automáticamente auth_login_requests cuando se detecta un sign-in
- * - Permitir que la ventana original detecte el login sin necesidad de polling agresivo
- * - Sincronizar el estado de autenticación entre dispositivos
+ * IMPORTANTE: Los webhooks se ejecutan en el servidor y NO pueden establecer cookies
+ * para el cliente que hizo clic en el magic link. Su propósito es:
+ * 
+ * 1. Actualizar auth_login_requests para que el frontend detecte el cambio
+ * 2. Sincronizar el estado de autenticación entre dispositivos
+ * 3. Permitir que la ventana original detecte el login sin polling agresivo
+ * 
+ * La sesión se establece cuando el cliente procesa el callback:
+ * - /auth/remote-callback usa exchangeCodeForSession() que establece las cookies automáticamente
+ * - /auth/magic-link-handler llama a /api/auth/login/approve que establece la sesión
  * 
  * Seguridad:
  * - Valida que el request viene de Supabase usando SUPABASE_WEBHOOK_SECRET
@@ -125,15 +131,21 @@ export async function POST(req: NextRequest) {
     }
 
     // Actualizar la request como "approved"
-    // Nota: No tenemos los tokens aquí porque el hook se ejecuta antes de que se establezcan
-    // Los tokens se establecerán cuando el cliente llame a /api/auth/login-request/update
-    // Pero marcamos la request como aprobada para que el frontend sepa que el login fue exitoso
+    // 
+    // IMPORTANTE: Los webhooks NO pueden establecer cookies para el cliente.
+    // La sesión se establece cuando el cliente procesa el callback:
+    // - Si el cliente tiene el code en la URL, /auth/remote-callback usa exchangeCodeForSession()
+    // - Si el cliente tiene tokens en el hash, /auth/magic-link-handler los procesa
+    // 
+    // Este hook solo marca la request como aprobada para que el frontend detecte el cambio
+    // y sepa que puede proceder a establecer la sesión usando los tokens disponibles.
     const { data: updated, error: updateError } = await supabaseAdmin
       .from("auth_login_requests")
       .update({
         status: "approved",
         approved_at: new Date().toISOString(),
-        // Los tokens se establecerán después cuando el cliente procese el callback
+        // Los tokens (access_token, refresh_token) se establecerán cuando el cliente
+        // procese el callback y llame a /api/auth/login-request/update o /api/auth/login/approve
       })
       .eq("id", pendingRequest.id)
       .eq("status", "pending")
