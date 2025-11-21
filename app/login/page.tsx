@@ -69,11 +69,16 @@ function LoginContent() {
       }
 
       const data = await response.json();
-      console.log("[Polling] Status check:", { status: data.status, hasTokens: !!(data.accessToken && data.refreshToken) });
+      console.log("[Polling] Status check:", { 
+        status: data.status, 
+        hasAccessToken: !!data.accessToken,
+        hasRefreshToken: !!data.refreshToken,
+        redirectPath: data.redirectPath 
+      });
       
       if (data.status === "approved" && data.accessToken && data.refreshToken) {
         // Request aprobada, establecer sesión
-        console.log("[Polling] Request approved, setting session...");
+        console.log("[Polling] Request approved, setting session with tokens...");
         await handleApprovedRequest(data.accessToken, data.refreshToken, data.redirectPath || "/panel");
       } else if (data.status === "expired" || data.status === "cancelled") {
         // Request expirada o cancelada
