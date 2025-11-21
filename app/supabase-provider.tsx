@@ -45,31 +45,33 @@ export function SupabaseProvider({ children }: PropsWithChildren) {
 			}
 
 			// Si el usuario se autentica (en esta pestaña o en otra)
-			if (event === 'SIGNED_IN' && session) {
-				console.log("[SupabaseProvider] User signed in, session active", {
+			if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
+				console.log("[SupabaseProvider] User signed in or token refreshed, session active", {
+					event,
 					pathname,
 					userId: session.user?.id,
 				});
 				
 				// IMPORTANTE: Esperar un momento antes de redirigir para asegurar que las cookies se establezcan
 				// Esto es crítico porque el servidor necesita leer las cookies en la siguiente request
-				// NO redirigir desde aquí si estamos en verify-code, ya que esa página maneja su propia redirección
-				// Esto evita múltiples redirecciones compitiendo
-				if (pathname === '/login' && !pathname.startsWith('/login/verify-code')) {
+				// Redirigir desde /login o /login/verify-code si hay sesión
+				if ((pathname === '/login' || pathname === '/login/verify-code') && 
+				    !window.location.pathname.startsWith('/panel') &&
+				    !window.location.pathname.startsWith('/admin')) {
 					setTimeout(() => {
-						// Solo redirigir desde /login (no desde verify-code)
-						if (!window.location.pathname.startsWith('/panel') &&
-						    !window.location.pathname.startsWith('/admin')) {
+						// Verificar que aún estamos en login/verify-code antes de redirigir
+						if (window.location.pathname === '/login' || 
+						    window.location.pathname === '/login/verify-code') {
 							// Obtener redirect de query params si existe
 							const searchParams = new URLSearchParams(window.location.search);
 							const redirectParam = searchParams.get('redirect');
 							const redirectPath = redirectParam || '/panel';
 							
-							console.log("[SupabaseProvider] Redirecting from login to:", redirectPath);
+							console.log("[SupabaseProvider] Redirecting from", pathname, "to:", redirectPath);
 							// Usar window.location para forzar una navegación completa y asegurar que la sesión se persista
 							window.location.href = redirectPath;
 						}
-					}, 500); // Delay aumentado para asegurar que las cookies se establezcan
+					}, 300); // Delay para asegurar que las cookies se establezcan
 				}
 			}
 
@@ -85,10 +87,7 @@ export function SupabaseProvider({ children }: PropsWithChildren) {
 				}
 			}
 
-			// Si el token se refresca, no hacer nada (es normal y automático)
-			if (event === 'TOKEN_REFRESHED') {
-				console.log("[SupabaseProvider] Token refreshed successfully");
-			}
+			// TOKEN_REFRESHED ahora se maneja arriba junto con SIGNED_IN
 
 			// Si el usuario cambia (raro, pero puede pasar con impersonación)
 			if (event === 'USER_UPDATED') {
