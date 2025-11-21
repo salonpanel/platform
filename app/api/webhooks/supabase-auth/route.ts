@@ -112,8 +112,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Para Database Webhooks, solo procesar UPDATE en auth.users
+    // Nota: Supabase puede enviar "users" o "auth.users" dependiendo de la configuración
     if (isDatabaseWebhook) {
-      if (payload.table !== "auth.users" || payload.type !== "UPDATE") {
+      const isAuthUsersTable = payload.table === "auth.users" || payload.table === "users";
+      if (!isAuthUsersTable || payload.type !== "UPDATE") {
         console.log("[SupabaseWebhook] Ignoring database webhook:", { table: payload.table, type: payload.type });
         return NextResponse.json({ ok: true, ignored: true });
       }
