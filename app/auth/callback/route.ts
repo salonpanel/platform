@@ -85,9 +85,11 @@ export async function GET(request: Request) {
   }
 
   try {
+    console.log("[AuthCallback] Creating Supabase client...");
     // Crear cliente de Supabase con cookies (Next.js 16+)
     // En Next.js 16, cookies() no es async, se pasa directamente
     const supabaseClient = createRouteHandlerClient({ cookies });
+    console.log("[AuthCallback] Supabase client created");
     
     let session;
     
@@ -124,14 +126,23 @@ export async function GET(request: Request) {
     }
     // Caso 2: Establecer sesión directamente con tokens (flujo alternativo)
     else if (accessToken && refreshToken) {
-      console.log("[AuthCallback] Setting session with tokens...");
+      console.log("[AuthCallback] Setting session with tokens...", {
+        hasAccessToken: !!accessToken,
+        hasRefreshToken: !!refreshToken,
+        accessTokenLength: accessToken?.length,
+        refreshTokenLength: refreshToken?.length,
+      });
+      
       const { data, error } = await supabaseClient.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,
       });
       
       if (error) {
-        console.error("[AuthCallback] Error setting session:", error);
+        console.error("[AuthCallback] Error setting session:", error, {
+          errorMessage: error.message,
+          errorName: error.name,
+        });
         return NextResponse.json(
           { error: error.message ?? "No se pudo establecer la sesión." },
           { status: 400 }
@@ -139,7 +150,10 @@ export async function GET(request: Request) {
       }
 
       session = data.session;
-      console.log("[AuthCallback] Session established via tokens:", { userId: session?.user?.id });
+      console.log("[AuthCallback] Session established via tokens:", { 
+        userId: session?.user?.id,
+        hasSession: !!session,
+      });
     }
     
     if (!session) {
