@@ -132,12 +132,25 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(marketingUrl, { status: 301 });
     }
 
-    // Si viene de Supabase magic link (con type=magiclink y token), redirigir al callback
+    // Si viene de Supabase magic link (con type=magiclink y token), redirigir al callback apropiado
     if (pathname === "/") {
       const type = url.searchParams.get("type");
       const token = url.searchParams.get("token");
       const code = url.searchParams.get("code");
+      const requestId = url.searchParams.get("request_id");
+      const secretToken = url.searchParams.get("token");
       
+      // Si tiene request_id, es un magic link remoto → redirigir a remote-callback
+      if (requestId && secretToken && (code || (type === "magiclink" && token))) {
+        const callbackUrl = new URL("/auth/remote-callback", url);
+        url.searchParams.forEach((value, key) => {
+          callbackUrl.searchParams.set(key, value);
+        });
+        logDomainDebug(`Magic link remoto detectado en raíz, redirigiendo a remote-callback`);
+        return NextResponse.redirect(callbackUrl);
+      }
+      
+      // Si es un magic link normal (sin request_id), redirigir a callback normal
       if ((type === "magiclink" && token) || code) {
         const callbackUrl = new URL("/auth/callback", url);
         url.searchParams.forEach((value, key) => {
@@ -375,6 +388,6 @@ export const config = {
      * - /robots.txt
      * - /sitemap.xml
      */
-    "/((?!_next/static|_next/image|favicon.ico|api/health|api/webhooks/stripe|api/internal/cron|auth/callback|auth/magic-link-handler|public|_vercel|static|assets|img|fonts|docs|legal|robots.txt|sitemap.xml).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/|auth/callback|auth/magic-link-handler|auth/remote-callback|auth/remote-confirmed|public|_vercel|static|assets|img|fonts|docs|legal|robots.txt|sitemap.xml).*)",
   ],
 };
