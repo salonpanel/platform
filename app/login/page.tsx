@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, AlertCircle, Loader2, Sparkles } from "lucide-react";
@@ -13,6 +13,22 @@ function LoginContent() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+
+  // Verificar si ya hay una sesión activa y redirigir al panel
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          console.log("[Login] Session already exists, redirecting to panel");
+          router.replace("/panel");
+        }
+      } catch (err) {
+        console.warn("[Login] Error checking session:", err);
+      }
+    };
+    checkSession();
+  }, [supabase, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
