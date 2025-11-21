@@ -139,7 +139,8 @@ export async function middleware(req: NextRequest) {
     }
 
     // Si viene de Supabase magic link (con type=magiclink y token), redirigir al callback apropiado
-    if (pathname === "/" || pathname === "/login") {
+    // SOLO verificar en "/" para evitar bucles con "/login"
+    if (pathname === "/") {
       const type = url.searchParams.get("type");
       const token = url.searchParams.get("token");
       const code = url.searchParams.get("code");
