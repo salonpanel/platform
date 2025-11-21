@@ -193,8 +193,9 @@ export async function middleware(req: NextRequest) {
       // Rewrite / a /panel si hay sesión
       else if (pathname === "/" && session) {
         url.pathname = "/panel";
-      logDomainDebug(`[Pro Domain] Rewriting / to /panel (session exists)`);
-      return NextResponse.rewrite(url);
+        logDomainDebug(`[Pro Domain] Rewriting / to /panel (session exists)`);
+        return NextResponse.rewrite(url);
+      }
     }
 
     // Detectar si Supabase redirige a /login con parámetros del magic link
