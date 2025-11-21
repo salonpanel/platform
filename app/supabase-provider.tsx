@@ -51,20 +51,24 @@ export function SupabaseProvider({ children }: PropsWithChildren) {
 					userId: session.user?.id,
 				});
 				
-				// Redirigir si estamos en login o verify-code (pero no si ya estamos en panel)
-				// Esto asegura que el usuario sea redirigido después de autenticarse
-				if ((pathname === '/login' || pathname === '/login/verify-code') && 
-				    !window.location.pathname.startsWith('/panel') &&
-				    !window.location.pathname.startsWith('/admin')) {
-					// Obtener redirect de query params si existe
-					const searchParams = new URLSearchParams(window.location.search);
-					const redirectParam = searchParams.get('redirect');
-					const redirectPath = redirectParam || '/panel';
-					
-					console.log("[SupabaseProvider] Redirecting from login/verify-code to:", redirectPath);
-					// Usar window.location para forzar una navegación completa y asegurar que la sesión se persista
-					window.location.href = redirectPath;
-				}
+				// IMPORTANTE: Esperar un momento antes de redirigir para asegurar que las cookies se establezcan
+				// Esto es crítico porque el servidor necesita leer las cookies en la siguiente request
+				setTimeout(() => {
+					// Redirigir si estamos en login o verify-code (pero no si ya estamos en panel)
+					// Esto asegura que el usuario sea redirigido después de autenticarse
+					if ((pathname === '/login' || pathname === '/login/verify-code') && 
+					    !window.location.pathname.startsWith('/panel') &&
+					    !window.location.pathname.startsWith('/admin')) {
+						// Obtener redirect de query params si existe
+						const searchParams = new URLSearchParams(window.location.search);
+						const redirectParam = searchParams.get('redirect');
+						const redirectPath = redirectParam || '/panel';
+						
+						console.log("[SupabaseProvider] Redirecting from login/verify-code to:", redirectPath);
+						// Usar window.location para forzar una navegación completa y asegurar que la sesión se persista
+						window.location.href = redirectPath;
+					}
+				}, 200); // Pequeño delay para asegurar que las cookies se establezcan
 			}
 
 			// Si el usuario cierra sesión (en esta pestaña o en otra)

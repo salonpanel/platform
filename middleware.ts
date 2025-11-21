@@ -201,7 +201,23 @@ export async function middleware(req: NextRequest) {
         logDomainDebug(`[Pro Domain] No session and no auth cookies for ${pathname}, redirecting to login with redirect=${finalPath}`);
         return NextResponse.redirect(url);
       } else {
-        logDomainDebug(`[Pro Domain] No session but auth cookies present for ${pathname}, allowing access (session may be initializing)`);
+        // REINTENTAR obtener la sesión si hay cookies presentes
+        // Esto permite darle tiempo a Supabase para hidratar correctamente la sesión
+        logDomainDebug(`[Pro Domain] No session but auth cookies present for ${pathname}, rechecking session...`);
+        const {
+          data: { session: recheckedSession },
+        } = await supabase.auth.getSession();
+        
+        if (!recheckedSession) {
+          // Si después del reintento aún no hay sesión, redirigir al login
+          url.pathname = "/login";
+          url.searchParams.set("redirect", finalPath);
+          logDomainDebug(`[Pro Domain] Rechecked session still missing for ${pathname}, redirecting to login`);
+          return NextResponse.redirect(url);
+        } else {
+          logDomainDebug(`[Pro Domain] Rechecked session recovered for ${pathname}, allowing access`);
+          // La sesión se recuperó, continuar con el flujo normal
+        }
       }
     }
 
@@ -361,9 +377,27 @@ export async function middleware(req: NextRequest) {
 
     // Proteger /panel (requiere sesión)
     if (isPanel && !session) {
-      url.pathname = "/login";
-      url.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(url);
+      // Verificar si hay cookies de sesión pendientes
+      const hasAuthCookies = req.cookies.has("sb-panel-auth-auth-token") || 
+                             req.cookies.has("sb-panel-auth-refresh-token");
+      
+      if (!hasAuthCookies) {
+        url.pathname = "/login";
+        url.searchParams.set("redirect", pathname);
+        return NextResponse.redirect(url);
+      } else {
+        // REINTENTAR obtener la sesión si hay cookies presentes
+        const {
+          data: { session: recheckedSession },
+        } = await supabase.auth.getSession();
+        
+        if (!recheckedSession) {
+          url.pathname = "/login";
+          url.searchParams.set("redirect", pathname);
+          return NextResponse.redirect(url);
+        }
+        // Si se recuperó la sesión, continuar normalmente
+      }
     }
 
     // Proteger /admin (requiere sesión + platform admin)
