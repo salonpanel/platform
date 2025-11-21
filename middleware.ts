@@ -97,6 +97,19 @@ export async function middleware(req: NextRequest) {
 
   // 2. Panel profesional (pro.bookfast.es)
   if (subdomain === "pro" || (host.includes("localhost") && pathname.startsWith("/panel"))) {
+    // AISLAMIENTO: Bloquear /admin y redirigir a admin.bookfast.es (antes de rewrites)
+    if (pathname.startsWith("/admin")) {
+      const adminUrl = new URL(pathname, URLS.ADMIN_BASE);
+      adminUrl.search = req.nextUrl.search;
+      return NextResponse.redirect(adminUrl, { status: 301 });
+    }
+
+    // AISLAMIENTO: Bloquear /r/* y redirigir a marketing (antes de rewrites)
+    if (pathname.startsWith("/r/")) {
+      const marketingUrl = new URL("/", URLS.ROOT);
+      return NextResponse.redirect(marketingUrl, { status: 301 });
+    }
+
     // Si viene de Supabase magic link (con type=magiclink y token), redirigir al callback
     if (pathname === "/") {
       const type = url.searchParams.get("type");
@@ -112,13 +125,31 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(callbackUrl);
       }
       
+      // Proteger antes de rewrite: si no hay sesión, redirigir a login
+      if (!session) {
+        url.pathname = "/login";
+        url.searchParams.set("redirect", "/panel");
+        return NextResponse.redirect(url);
+      }
+      
       // Rewrite / a /panel
       url.pathname = "/panel";
       logDomainDebug(`Rewriting / to /panel for pro domain`);
       return NextResponse.rewrite(url);
     }
 
-    // Rewrite todas las rutas a /panel/* (excepto /auth, /api, etc.)
+    // Determinar la ruta final después del rewrite
+    const finalPath = pathname.startsWith("/panel") ? pathname : `/panel${pathname}`;
+
+    // Proteger rutas /panel/* (requiere sesión) - verificar ANTES del rewrite
+    if (finalPath.startsWith("/panel") && !pathname.startsWith("/login") && !pathname.startsWith("/auth") && !session) {
+      url.pathname = "/login";
+      url.searchParams.set("redirect", finalPath);
+      logDomainDebug(`No session found, redirecting to login with redirect=${finalPath}`);
+      return NextResponse.redirect(url);
+    }
+
+    // Rewrite todas las rutas a /panel/* (excepto /auth, /api, /login, etc.)
     if (!pathname.startsWith("/panel") && 
         !pathname.startsWith("/auth") && 
         !pathname.startsWith("/api") &&
@@ -130,68 +161,33 @@ export async function middleware(req: NextRequest) {
       return NextResponse.rewrite(url);
     }
 
-    // AISLAMIENTO: Bloquear /admin y redirigir a admin.bookfast.es
-    if (pathname.startsWith("/admin")) {
-      const adminUrl = new URL(pathname, URLS.ADMIN_BASE);
-      adminUrl.search = req.nextUrl.search;
-      return NextResponse.redirect(adminUrl, { status: 301 });
-    }
-
-    // AISLAMIENTO: Bloquear /r/* y redirigir a marketing
-    if (pathname.startsWith("/r/")) {
-      const marketingUrl = new URL("/", URLS.ROOT);
-      return NextResponse.redirect(marketingUrl, { status: 301 });
-    }
-
-    // Proteger /panel/* (requiere sesión)
-    if (pathname.startsWith("/panel") && !session) {
-      url.pathname = "/login";
-      url.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(url);
-    }
-
     return NextResponse.next();
   }
 
   // 3. Panel administrador (admin.bookfast.es)
   if (subdomain === "admin" || (host.includes("localhost") && pathname.startsWith("/admin"))) {
-    // Rewrite / a /admin
-    if (pathname === "/") {
-      url.pathname = "/admin";
-      logDomainDebug(`Rewriting / to /admin for admin domain`);
-      return NextResponse.rewrite(url);
-    }
-
-    // Rewrite todas las rutas a /admin/* (excepto /auth, /api, etc.)
-    if (!pathname.startsWith("/admin") && 
-        !pathname.startsWith("/auth") && 
-        !pathname.startsWith("/api") &&
-        !pathname.startsWith("/login") &&
-        !pathname.startsWith("/logout") &&
-        !pathname.startsWith("/_next")) {
-      url.pathname = `/admin${pathname}`;
-      logDomainDebug(`Rewriting ${pathname} to /admin${pathname} for admin domain`);
-      return NextResponse.rewrite(url);
-    }
-
-    // AISLAMIENTO: Bloquear /panel y redirigir a pro.bookfast.es
+    // AISLAMIENTO: Bloquear /panel y redirigir a pro.bookfast.es (antes de rewrites)
     if (pathname.startsWith("/panel")) {
       const proUrl = new URL(pathname, URLS.PRO_BASE);
       proUrl.search = req.nextUrl.search;
       return NextResponse.redirect(proUrl, { status: 301 });
     }
 
-    // AISLAMIENTO: Bloquear /r/* y redirigir a marketing
+    // AISLAMIENTO: Bloquear /r/* y redirigir a marketing (antes de rewrites)
     if (pathname.startsWith("/r/")) {
       const marketingUrl = new URL("/", URLS.ROOT);
       return NextResponse.redirect(marketingUrl, { status: 301 });
     }
 
-    // Proteger /admin/* (requiere sesión + Platform Admin)
-    if (pathname.startsWith("/admin")) {
+    // Determinar la ruta final después del rewrite
+    const finalPath = pathname.startsWith("/admin") ? pathname : `/admin${pathname}`;
+
+    // Proteger rutas /admin/* (requiere sesión + Platform Admin) - verificar ANTES del rewrite
+    if (finalPath.startsWith("/admin") && !pathname.startsWith("/login") && !pathname.startsWith("/auth")) {
       if (!session) {
         url.pathname = "/login";
-        url.searchParams.set("redirect", pathname);
+        url.searchParams.set("redirect", finalPath);
+        logDomainDebug(`No session found for admin, redirecting to login`);
         return NextResponse.redirect(url);
       }
 
@@ -204,8 +200,28 @@ export async function middleware(req: NextRequest) {
       if (error || !isAdmin) {
         url.pathname = "/login";
         url.searchParams.set("error", "unauthorized");
+        logDomainDebug(`User is not platform admin, redirecting to login`);
         return NextResponse.redirect(url);
       }
+    }
+
+    // Rewrite / a /admin
+    if (pathname === "/") {
+      url.pathname = "/admin";
+      logDomainDebug(`Rewriting / to /admin for admin domain`);
+      return NextResponse.rewrite(url);
+    }
+
+    // Rewrite todas las rutas a /admin/* (excepto /auth, /api, /login, etc.)
+    if (!pathname.startsWith("/admin") && 
+        !pathname.startsWith("/auth") && 
+        !pathname.startsWith("/api") &&
+        !pathname.startsWith("/login") &&
+        !pathname.startsWith("/logout") &&
+        !pathname.startsWith("/_next")) {
+      url.pathname = `/admin${pathname}`;
+      logDomainDebug(`Rewriting ${pathname} to /admin${pathname} for admin domain`);
+      return NextResponse.rewrite(url);
     }
 
     return NextResponse.next();
