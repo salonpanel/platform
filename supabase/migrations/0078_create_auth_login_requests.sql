@@ -80,6 +80,9 @@ BEGIN
 END;
 $$;
 
+-- Enable Realtime for this table (required for remote login flow)
+ALTER PUBLICATION supabase_realtime ADD TABLE public.auth_login_requests;
+
 -- Add comment
 COMMENT ON TABLE public.auth_login_requests IS 'Stores login requests for remote approval flow. Tokens are only accessible via service_role.';
 COMMENT ON COLUMN public.auth_login_requests.secret_token IS 'Secret token sent in email link for security verification';
