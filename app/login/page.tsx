@@ -60,6 +60,7 @@ function LoginContent() {
   }, [searchParams]);
 
   // Detectar tokens en el hash cuando Supabase redirige a /login con tokens
+  // Esto solo debería pasar como fallback si el middleware no redirigió correctamente
   useEffect(() => {
     const handleHashTokens = async () => {
       // Leer el hash de la URL (solo disponible en el cliente)
@@ -72,85 +73,39 @@ function LoginContent() {
       const code = hashParams.get("code");
       const type = hashParams.get("type");
 
-      // Si hay tokens en el hash, Supabase redirigió aquí en lugar de a remote-callback
+      // También buscar request_id en query params (puede venir del middleware)
+      const requestId = searchParams?.get("request_id");
+      const secretToken = searchParams?.get("token");
+
+      // Si hay tokens en el hash, redirigir al handler apropiado
       if ((accessToken && refreshToken) || code) {
-        console.log("[Login] Detected tokens in hash, processing remote login", {
+        console.log("[Login] Detected tokens in hash, redirecting to appropriate handler", {
           hasAccessToken: !!accessToken,
           hasRefreshToken: !!refreshToken,
           hasCode: !!code,
+          hasRequestId: !!requestId,
           type,
         });
 
-        // Si tenemos código, redirigir a remote-callback (buscará la request pendiente)
-        if (code) {
-          const remoteCallbackUrl = new URL("/auth/remote-callback", window.location.origin);
-          remoteCallbackUrl.searchParams.set("code", code);
-          if (type) remoteCallbackUrl.searchParams.set("type", type);
-          window.location.href = remoteCallbackUrl.toString();
+        // Si tenemos request_id, es un magic link remoto → redirigir a magic-link-handler
+        if (requestId && secretToken) {
+          const handlerUrl = new URL("/auth/magic-link-handler", window.location.origin);
+          handlerUrl.searchParams.set("request_id", requestId);
+          handlerUrl.searchParams.set("token", secretToken);
+          if (code) handlerUrl.searchParams.set("code", code);
+          if (type) handlerUrl.searchParams.set("type", type);
+          window.location.href = handlerUrl.toString();
           return;
         }
 
-        // Si tenemos tokens directos, establecer sesión temporal y buscar request pendiente
-        if (accessToken && refreshToken) {
-          try {
-            // Establecer sesión temporal para obtener el email
-            const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            });
-
-            if (sessionError || !sessionData?.session?.user?.email) {
-              console.error("[Login] Error setting session from hash tokens:", sessionError);
-              // Redirigir a callback normal como fallback
-              const callbackUrl = new URL("/auth/callback", window.location.origin);
-              callbackUrl.searchParams.set("access_token", accessToken);
-              callbackUrl.searchParams.set("refresh_token", refreshToken);
-              window.location.href = callbackUrl.toString();
-              return;
-            }
-
-            const userEmail = sessionData.session.user.email;
-            console.log("[Login] Session established, looking up pending request for:", userEmail);
-
-            // Actualizar la request pendiente más reciente para este email
-            const updateResponse = await fetch("/api/auth/login-request/update", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                email: userEmail,
-                accessToken,
-                refreshToken,
-              }),
-            });
-
-            if (updateResponse.ok) {
-              const updateData = await updateResponse.json();
-              console.log("[Login] Request updated, redirecting to panel", updateData);
-              // La sesión ya está establecida, redirigir
-              const redirectPath = updateData.redirectPath || "/panel";
-              router.push(redirectPath);
-              return;
-            } else {
-              console.warn("[Login] Failed to update request, using normal callback");
-            }
-
-            // Si no encontramos request o falló la actualización, usar callback normal
-            console.log("[Login] No pending request found or update failed, using normal callback");
-            const callbackUrl = new URL("/auth/callback", window.location.origin);
-            callbackUrl.searchParams.set("access_token", accessToken);
-            callbackUrl.searchParams.set("refresh_token", refreshToken);
-            window.location.href = callbackUrl.toString();
-            return;
-          } catch (err) {
-            console.error("[Login] Error processing hash tokens:", err);
-            // Fallback: redirigir a callback normal
-            const callbackUrl = new URL("/auth/callback", window.location.origin);
-            callbackUrl.searchParams.set("access_token", accessToken);
-            callbackUrl.searchParams.set("refresh_token", refreshToken);
-            window.location.href = callbackUrl.toString();
-            return;
-          }
-        }
+        // Si no hay request_id, es un magic link normal → redirigir a callback
+        const callbackUrl = new URL("/auth/callback", window.location.origin);
+        if (code) callbackUrl.searchParams.set("code", code);
+        if (type) callbackUrl.searchParams.set("type", type);
+        if (accessToken) callbackUrl.searchParams.set("access_token", accessToken);
+        if (refreshToken) callbackUrl.searchParams.set("refresh_token", refreshToken);
+        window.location.href = callbackUrl.toString();
+        return;
       }
     };
 
@@ -656,5 +611,6 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+
 
 
