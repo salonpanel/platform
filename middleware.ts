@@ -89,8 +89,24 @@ export async function middleware(req: NextRequest) {
 
   // --- PRO (pro.bookfast.es) ---
   if (appContext === "pro") {
-    // Redirigir / a /panel
+    // Si viene de Supabase magic link (con type=magiclink y token), redirigir al callback
     if (pathname === "/") {
+      const type = url.searchParams.get("type");
+      const token = url.searchParams.get("token");
+      const code = url.searchParams.get("code");
+      
+      // Si viene de Supabase con magic link, redirigir al callback
+      if ((type === "magiclink" && token) || code) {
+        const callbackUrl = new URL("/auth/callback", url);
+        // Preservar todos los query params
+        url.searchParams.forEach((value, key) => {
+          callbackUrl.searchParams.set(key, value);
+        });
+        logDomainDebug(`Magic link detectado en raíz, redirigiendo a callback`);
+        return NextResponse.redirect(callbackUrl);
+      }
+      
+      // Redirigir / a /panel (solo si no es un magic link)
       url.pathname = "/panel";
       return NextResponse.redirect(url);
     }

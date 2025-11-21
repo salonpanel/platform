@@ -83,6 +83,22 @@ export async function GET(request: Request) {
   // También buscar access_token en query params (por si viene del cliente)
   let accessToken = url.searchParams.get("access_token");
   
+  // Buscar token de Supabase (cuando viene directamente desde el magic link)
+  const token = url.searchParams.get("token");
+  const type = url.searchParams.get("type");
+  
+  // Si viene de Supabase con token pero sin code, redirigir al cliente para que maneje el hash
+  // Esto puede pasar cuando Supabase redirige directamente a la raíz en lugar de /auth/callback
+  if (type === "magiclink" && token && !code && !accessToken) {
+    // Redirigir a una página del cliente que maneje el token/hash
+    const clientHandlerUrl = new URL("/auth/magic-link-handler", allowedAppUrl);
+    // Pasar todos los query params
+    url.searchParams.forEach((value, key) => {
+      clientHandlerUrl.searchParams.set(key, value);
+    });
+    return NextResponse.redirect(clientHandlerUrl);
+  }
+  
   // Nota: El hash (#) no está disponible en el servidor, así que el cliente debe extraerlo
   // y pasarlo como query param antes de redirigir
 

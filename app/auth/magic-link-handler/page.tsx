@@ -16,12 +16,32 @@ function MagicLinkHandlerContent() {
         const hash = window.location.hash.substring(1);
         const hashParams = new URLSearchParams(hash);
         
-        const accessToken = hashParams.get("access_token");
-        const refreshToken = hashParams.get("refresh_token");
-        const code = hashParams.get("code");
+        // También buscar en query params (por si viene desde Supabase directamente)
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get("token");
+        const type = urlParams.get("type");
+        
+        let accessToken = hashParams.get("access_token");
+        let refreshToken = hashParams.get("refresh_token");
+        let code = hashParams.get("code") || urlParams.get("code");
+        
+        // Si viene con token de Supabase pero sin hash, necesitamos usar el token
+        // En este caso, Supabase debería haber redirigido con el hash, pero si no,
+        // podemos intentar usar el token para obtener la sesión
+        if (token && type === "magiclink" && !accessToken && !code) {
+          console.log("Token de Supabase detectado, pero sin hash. Redirigiendo al callback...");
+          // Redirigir al callback con el token para que lo procese
+          const callbackUrl = new URL("/auth/callback", window.location.origin);
+          urlParams.forEach((value, key) => {
+            callbackUrl.searchParams.set(key, value);
+          });
+          window.location.href = callbackUrl.toString();
+          return;
+        }
         
         console.log("Magic link handler - access_token:", accessToken ? "presente" : "no presente");
         console.log("Magic link handler - code:", code ? "presente" : "no presente");
+        console.log("Magic link handler - token:", token ? "presente" : "no presente");
         
         if (accessToken) {
           // Establecer sesión con access_token
