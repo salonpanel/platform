@@ -72,15 +72,16 @@ function LoginContent() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("[Login] onAuthStateChange event:", event, {
+      console.log("[Login] 🔔 onAuthStateChange event:", event, {
         hasSession: !!session,
         userId: session?.user?.id,
         email: session?.user?.email,
+        waitingForApproval,
       });
 
       // Si se detecta una sesión activa (puede venir de otra pestaña)
       if (event === 'SIGNED_IN' && session) {
-        console.log("[Login] Session detected via onAuthStateChange, redirecting...");
+        console.log("[Login] ✅ Session detected via onAuthStateChange, redirecting...");
         
         // Limpiar todos los intervalos y subscriptions
         if (pollingIntervalRef.current) {
@@ -101,6 +102,10 @@ function LoginContent() {
         const redirectPath = redirectParam || "/panel";
         console.log("[Login] Redirecting to:", redirectPath);
         router.replace(redirectPath);
+      } else if (event === 'SIGNED_OUT') {
+        console.log("[Login] ⚠️ User signed out while waiting for approval");
+      } else if (event === 'TOKEN_REFRESHED') {
+        console.log("[Login] 🔄 Token refreshed");
       }
     });
 
@@ -210,18 +215,26 @@ function LoginContent() {
 
   // Verificar sesión directamente usando getSession() (complementa el polling)
   const checkSessionDirectly = async () => {
+    // Solo verificar si estamos esperando aprobación
+    if (!waitingForApproval) {
+      return;
+    }
+    
     try {
+      console.log("[Login] Running direct session check...");
       const { data: { session }, error } = await supabase.auth.getSession();
       
-      console.log("[Login] Direct session check:", {
+      console.log("[Login] Direct session check result:", {
         hasSession: !!session,
         userId: session?.user?.id,
         email: session?.user?.email,
-        error: error?.message,
+        hasError: !!error,
+        errorMessage: error?.message,
+        waitingForApproval,
       });
 
       if (session && !error) {
-        console.log("[Login] Session found via direct check, redirecting...");
+        console.log("[Login] ✅ Session found via direct check, redirecting...");
         
         // Limpiar todos los intervalos y subscriptions
         if (pollingIntervalRef.current) {
@@ -242,6 +255,8 @@ function LoginContent() {
         const redirectPath = redirectParam || "/panel";
         console.log("[Login] Redirecting to:", redirectPath);
         router.replace(redirectPath);
+      } else {
+        console.log("[Login] No session found yet, will check again in 2s");
       }
     } catch (err) {
       console.error("[Login] Error checking session directly:", err);
@@ -542,9 +557,14 @@ function LoginContent() {
 
       // 6. Configurar verificación directa de sesión (cada 2 segundos)
       // Esto detecta cuando la sesión se establece desde otra pestaña o dispositivo
+      console.log("[Login] Setting up session check interval (every 2s)");
       sessionCheckIntervalRef.current = setInterval(() => {
         checkSessionDirectly();
       }, 2000);
+      
+      // Ejecutar una verificación inmediata
+      console.log("[Login] Running initial session check...");
+      checkSessionDirectly();
 
     } catch (err: any) {
       console.error("Error en flujo de aprobación remota:", err);
