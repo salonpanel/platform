@@ -95,9 +95,23 @@ function LoginContent() {
   // Manejar request aprobada
   const handleApprovedRequest = async (accessToken: string, refreshToken: string, redirectPath: string) => {
     try {
-      console.log("[handleApprovedRequest] Setting session with tokens...");
+      console.log("[handleApprovedRequest] Setting session with tokens...", {
+        hasAccessToken: !!accessToken,
+        hasRefreshToken: !!refreshToken,
+        redirectPath,
+      });
       
-      // Establecer sesión con los tokens
+      // Limpiar polling y realtime ANTES de establecer la sesión para evitar múltiples llamadas
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+      if (realtimeSubscriptionRef.current) {
+        realtimeSubscriptionRef.current.unsubscribe();
+        realtimeSubscriptionRef.current = null;
+      }
+
+      // Establecer sesión con los tokens usando el cliente del navegador
       const { data, error } = await supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,
@@ -119,9 +133,12 @@ function LoginContent() {
         return;
       }
 
-      console.log("[handleApprovedRequest] Session established successfully:", { userId: data.session.user?.id });
+      console.log("[handleApprovedRequest] Session established successfully:", { 
+        userId: data.session.user?.id,
+        email: data.session.user?.email,
+      });
 
-      // Limpiar tokens del servidor (seguridad)
+      // Limpiar tokens del servidor (seguridad) - no crítico si falla
       if (loginRequestId) {
         try {
           await fetch("/api/auth/login-request/consume", {
@@ -129,23 +146,18 @@ function LoginContent() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ requestId: loginRequestId }),
           });
+          console.log("[handleApprovedRequest] Tokens consumed from server");
         } catch (err) {
-          console.warn("Error consuming tokens (no crítico):", err);
+          console.warn("[handleApprovedRequest] Error consuming tokens (non-critical):", err);
         }
       }
 
-      // Limpiar polling y realtime
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
-      if (realtimeSubscriptionRef.current) {
-        realtimeSubscriptionRef.current.unsubscribe();
-      }
-
       // Redirigir al panel
-      router.replace(redirectPath || "/panel");
+      const finalRedirectPath = redirectPath || "/panel";
+      console.log("[handleApprovedRequest] Redirecting to:", finalRedirectPath);
+      router.replace(finalRedirectPath);
     } catch (err: any) {
-      console.error("Error handling approved request:", err);
+      console.error("[handleApprovedRequest] Unexpected error:", err);
       setError("Error al procesar la aprobación. Por favor, intenta de nuevo.");
       setWaitingForApproval(false);
       setSent(false);

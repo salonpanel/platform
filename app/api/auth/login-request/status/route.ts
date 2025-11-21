@@ -66,6 +66,14 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    // Log cada respuesta para debug
+    console.log("[StatusAPI] status", {
+      id: data.id,
+      email: data.email,
+      status: data.status,
+      hasTokens: !!(data.supabase_access_token && data.supabase_refresh_token),
+    });
+
     // Return status and tokens if approved
     return NextResponse.json({
       id: data.id,
