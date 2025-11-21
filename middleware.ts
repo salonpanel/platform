@@ -147,53 +147,19 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(marketingUrl, { status: 301 });
     }
 
-    // Si viene de Supabase magic link, redirigir al handler apropiado
-    // Verificar en "/", "/auth/callback", "/auth/remote-callback" y "/login" para capturar todas las redirecciones
-    if (pathname === "/" || pathname === "/auth/callback" || pathname === "/auth/remote-callback" || pathname === "/login") {
-      const type = url.searchParams.get("type");
-      const token = url.searchParams.get("token");
+    // Manejar redirecciones en "/" y "/login"
+    if (pathname === "/" || pathname === "/login") {
+      // Si hay código de callback de Supabase (por si acaso), redirigir a callback
       const code = url.searchParams.get("code");
-      const requestId = url.searchParams.get("request_id");
-      const secretToken = url.searchParams.get("token");
+      if (code && pathname === "/login") {
+        const callbackUrl = new URL("/auth/callback", url);
+        callbackUrl.searchParams.set("code", code);
+        logDomainDebug(`[Pro Domain] Code detected in /login, redirecting to callback`);
+        return NextResponse.redirect(callbackUrl);
+      }
       
-      // Si estamos en /auth/remote-callback con code, dejar que el endpoint lo procese
-      if (pathname === "/auth/remote-callback" && code) {
-        logDomainDebug(`[Pro Domain] Remote callback con code, dejando que el endpoint lo procese`);
-        // No hacer nada, dejar que el route handler procese
-      }
-      // Si tiene request_id, es un magic link remoto → redirigir a remote-callback o magic-link-handler
-      else if (requestId && secretToken && (code || (type === "magiclink" && token))) {
-        // Si ya estamos en /auth/remote-callback, no redirigir (evitar bucle)
-        if (pathname !== "/auth/remote-callback") {
-          const callbackUrl = new URL("/auth/remote-callback", url);
-          callbackUrl.searchParams.set("request_id", requestId);
-          callbackUrl.searchParams.set("token", secretToken);
-          if (code) callbackUrl.searchParams.set("code", code);
-          if (type) callbackUrl.searchParams.set("type", type);
-          if (token && token !== secretToken) callbackUrl.searchParams.set("supabase_token", token);
-          logDomainDebug(`[Pro Domain] Magic link remoto detectado, redirigiendo a remote-callback`);
-          return NextResponse.redirect(callbackUrl);
-        }
-      }
-      // Si es un magic link normal (sin request_id), redirigir a callback normal
-      else if ((type === "magiclink" && token) || code) {
-        // Solo redirigir si no estamos ya en /auth/callback
-        if (pathname !== "/auth/callback") {
-          const callbackUrl = new URL("/auth/callback", url);
-          if (code) callbackUrl.searchParams.set("code", code);
-          if (type) callbackUrl.searchParams.set("type", type);
-          if (token) callbackUrl.searchParams.set("token", token);
-          logDomainDebug(`[Pro Domain] Magic link normal detectado, redirigiendo a callback`);
-          return NextResponse.redirect(callbackUrl);
-        }
-      }
-      // Si estamos en /login con error pero sin parámetros de auth, continuar normalmente
-      else if (pathname === "/login") {
-        // Dejar que la página de login maneje el error
-        logDomainDebug(`[Pro Domain] En /login, continuando normalmente`);
-      }
       // Proteger antes de rewrite: si no hay sesión y estamos en "/", redirigir a login
-      else if (pathname === "/" && !session) {
+      if (pathname === "/" && !session) {
         url.pathname = "/login";
         url.searchParams.set("redirect", "/panel");
         logDomainDebug(`[Pro Domain] No session at /, redirecting to login`);
@@ -204,34 +170,6 @@ export async function middleware(req: NextRequest) {
         url.pathname = "/panel";
         logDomainDebug(`[Pro Domain] Rewriting / to /panel (session exists)`);
         return NextResponse.rewrite(url);
-      }
-    }
-
-    // Detectar si Supabase redirige a /login con parámetros del magic link
-    // Esto pasa cuando Supabase ignora emailRedirectTo y redirige a su Site URL
-    if (pathname === "/login") {
-      const type = url.searchParams.get("type");
-      const token = url.searchParams.get("token");
-      const code = url.searchParams.get("code");
-      const redirectTo = url.searchParams.get("redirect_to");
-      
-      // Si hay parámetros de magic link, intentar extraer request_id del hash o de otra forma
-      // O redirigir a /auth/callback para procesar el magic link normal
-      if ((type === "magiclink" && token) || code) {
-        // Si hay redirect_to con espacios, limpiarlo
-        let cleanRedirectTo = redirectTo;
-        if (redirectTo) {
-          cleanRedirectTo = redirectTo.trim().replace(/%20+/g, '');
-        }
-        
-        // Redirigir a callback normal (no tenemos request_id aquí, así que es login normal)
-        const callbackUrl = new URL("/auth/callback", url);
-        if (code) callbackUrl.searchParams.set("code", code);
-        if (type) callbackUrl.searchParams.set("type", type);
-        if (token) callbackUrl.searchParams.set("token", token);
-        if (cleanRedirectTo) callbackUrl.searchParams.set("redirect_to", cleanRedirectTo);
-        logDomainDebug(`[Pro Domain] Magic link detected in /login, redirecting to callback`);
-        return NextResponse.redirect(callbackUrl);
       }
     }
 
@@ -457,7 +395,7 @@ export const config = {
      * - api/webhooks/stripe (Stripe webhooks)
      * - api/internal/cron/* (internal cron jobs)
      * - auth/callback (Supabase auth callback)
-     * - auth/magic-link-handler (client-side magic link handler)
+     * - login/verify-code (OTP verification page)
      * - /public (public assets)
      * - /_vercel (Vercel internal routes)
      * - /static (static assets)
@@ -469,6 +407,6 @@ export const config = {
      * - /robots.txt
      * - /sitemap.xml
      */
-    "/((?!_next/static|_next/image|favicon.ico|api/|auth/callback|auth/magic-link-handler|auth/remote-callback|auth/remote-confirmed|public|_vercel|static|assets|img|fonts|docs|legal|robots.txt|sitemap.xml).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/|auth/callback|login/verify-code|public|_vercel|static|assets|img|fonts|docs|legal|robots.txt|sitemap.xml).*)",
   ],
 };
