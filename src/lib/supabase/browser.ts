@@ -1,43 +1,17 @@
 'use client';
 
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 let browserClient: SupabaseClient | null = null;
 
 /**
- * Storage personalizado que establece cookies con la configuración correcta
- * CRÍTICO: Esto es necesario para que las cookies sean accesibles por el servidor Next.js
- */
-function createCookieStorage() {
-  return {
-    getItem: (key: string): string | null => {
-      if (typeof document === 'undefined') return null;
-      const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-        const [k, v] = cookie.trim().split('=');
-        acc[k] = v;
-        return acc;
-      }, {} as Record<string, string>);
-      return cookies[key] || null;
-    },
-    setItem: (key: string, value: string): void => {
-      if (typeof document === 'undefined') return;
-      // CRÍTICO: Configurar cookies con dominio, sameSite y secure
-      const cookieString = `${key}=${value}; Path=/; Domain=.bookfast.es; SameSite=None; Secure; Max-Age=${60 * 60 * 24 * 7}`;
-      document.cookie = cookieString;
-    },
-    removeItem: (key: string): void => {
-      if (typeof document === 'undefined') return;
-      document.cookie = `${key}=; Path=/; Domain=.bookfast.es; Max-Age=0`;
-    },
-  };
-}
-
-/**
  * Cliente único en el navegador para evitar múltiples GoTrueClient
  * 
- * CRÍTICO: cookieOptions es OBLIGATORIO para PKCE para que las cookies sean accesibles por el servidor
- * Sin cookieOptions, las cookies se crean pero NO son aptas para ser enviadas a Next.js (server)
- * Esto causa que el middleware vea hasSession: false aunque las cookies existan en document.cookie
+ * CRÍTICO: Usamos createBrowserClient de @supabase/ssr porque:
+ * 1. Establece cookies HTTP automáticamente (sb-panel-auth-auth-token y sb-panel-auth-refresh-token)
+ * 2. Estas cookies son accesibles por el servidor Next.js
+ * 3. createClient solo guarda en localStorage, NO establece cookies HTTP
  */
 export function getSupabaseBrowser(): SupabaseClient {
   if (!browserClient) {
@@ -48,22 +22,58 @@ export function getSupabaseBrowser(): SupabaseClient {
       throw new Error("NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY no definidos");
     }
 
-    // CRÍTICO: Usar storage personalizado que establece cookies con la configuración correcta
-    // Esto asegura que las cookies tengan domain, sameSite y secure correctos
-    browserClient = createClient(url, key, {
-      auth: {
-        persistSession: true,
-        storageKey: "sb-panel-auth",
-        autoRefreshToken: true,
-        detectSessionInUrl: false,
-        flowType: 'pkce',
-        storage: createCookieStorage(), // CRÍTICO: Storage personalizado con cookies configuradas
+    // CRÍTICO: createBrowserClient de @supabase/ssr establece cookies HTTP automáticamente
+    // que el servidor puede leer usando createServerComponentClient({ cookies })
+    browserClient = createBrowserClient(url, key, {
+      cookies: {
+        getAll() {
+          if (typeof document === 'undefined') return [];
+          return document.cookie.split(';').map(cookie => {
+            const [name, value] = cookie.trim().split('=');
+            return { name, value };
+          });
+        },
+        setAll(cookiesToSet) {
+          if (typeof document === 'undefined') return;
+          cookiesToSet.forEach(({ name, value, options }) => {
+            let cookieString = `${name}=${value}`;
+            // CRÍTICO: Configurar cookies con dominio, sameSite y secure
+            cookieString += `; Path=${options?.path || '/'}`;
+            if (options?.domain) {
+              cookieString += `; Domain=${options.domain}`;
+            } else {
+              // Por defecto, usar .bookfast.es para compartir entre subdominios
+              cookieString += `; Domain=.bookfast.es`;
+            }
+            if (options?.sameSite) {
+              cookieString += `; SameSite=${options.sameSite}`;
+            } else {
+              // Por defecto, SameSite=None para requests cross-site
+              cookieString += `; SameSite=None`;
+            }
+            if (options?.secure !== false) {
+              cookieString += `; Secure`;
+            }
+            if (options?.maxAge) {
+              cookieString += `; Max-Age=${options.maxAge}`;
+            } else {
+              cookieString += `; Max-Age=${60 * 60 * 24 * 7}`; // 7 días por defecto
+            }
+            document.cookie = cookieString;
+          });
+        },
+      },
+      cookieOptions: {
+        name: 'sb-panel-auth',
+        path: '/',
+        // CRÍTICO: Estas opciones se aplican a todas las cookies de Supabase
+        // El dominio se establece en setAll() para cada cookie individualmente
       },
     });
 
     // Log de depuración: verificar configuración de cookies
     if (typeof window !== 'undefined') {
-      console.log("[SupabaseBrowser] Client initialized with custom cookie storage:", {
+      console.log("[SupabaseBrowser] Client initialized with createBrowserClient from @supabase/ssr:", {
         url: url.substring(0, 30) + '...',
         storageKey: "sb-panel-auth",
         domain: window.location.hostname,
