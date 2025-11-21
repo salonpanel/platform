@@ -59,7 +59,19 @@ export async function middleware(req: NextRequest) {
   }
 
   // Extraer subdominio para routing simplificado
-  const [subdomain] = host.split(".");
+  // IMPORTANTE: Para bookfast.es (sin subdominio), subdomain será null
+  // Para www.bookfast.es, subdomain será "www"
+  // Para pro.bookfast.es, subdomain será "pro"
+  const hostParts = host.split(".");
+  let subdomain: string | null = null;
+  
+  // Si tiene más de 2 partes (subdominio.bookfast.es), extraer el subdominio
+  // Ej: ["www", "bookfast", "es"] -> subdomain = "www"
+  // Ej: ["pro", "bookfast", "es"] -> subdomain = "pro"
+  // Ej: ["bookfast", "es"] -> subdomain = null
+  if (hostParts.length > 2 && hostParts[hostParts.length - 2] === "bookfast" && hostParts[hostParts.length - 1] === "es") {
+    subdomain = hostParts[0];
+  }
 
   // ============================================================================
   // PROTECCIÓN DE APIs POR DOMINIO (aplicar antes de lógica por contexto)
@@ -100,7 +112,8 @@ export async function middleware(req: NextRequest) {
   // ============================================================================
 
   // 1. bookfast.es y www.bookfast.es → público (marketing)
-  if (host === "bookfast.es" || subdomain === "www") {
+  // Verificar antes de cualquier otra lógica para evitar bucles
+  if (host === "bookfast.es" || host === "www.bookfast.es" || subdomain === "www") {
     return NextResponse.next();
   }
 
