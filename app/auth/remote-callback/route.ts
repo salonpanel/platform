@@ -51,10 +51,9 @@ export async function GET(req: NextRequest) {
   try {
     console.log("[remote-callback] Step 1: Creating Supabase client");
     // 1) Intercambiar code por session en ESTE dispositivo (móvil)
-    // En Next.js 16+, cookies() puede ser async, usar función async como en app/api/logout/route.ts
-    const supabase = createRouteHandlerClient({ 
-      cookies: async () => await cookies()
-    });
+    // En Next.js 16, cookies() NO es async en route handlers, se pasa directamente
+    // (igual que en app/auth/callback/route.ts que funciona correctamente)
+    const supabase = createRouteHandlerClient({ cookies });
     
     console.log("[remote-callback] Step 2: Exchanging code for session", {
       codeLength: code.length,
@@ -240,9 +239,7 @@ export async function GET(req: NextRequest) {
     
     // Intentar cerrar sesión si hay un cliente de Supabase activo
     try {
-      const supabase = createRouteHandlerClient({ 
-        cookies: async () => await cookies()
-      });
+      const supabase = createRouteHandlerClient({ cookies });
       await supabase.auth.signOut();
     } catch (signOutError) {
       console.warn("[remote-callback] Error during cleanup signOut:", signOutError);
