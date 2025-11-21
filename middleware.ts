@@ -138,32 +138,25 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(marketingUrl, { status: 301 });
     }
 
-    // Si viene de Supabase magic link (con type=magiclink y token), redirigir al callback apropiado
-    // SOLO verificar en "/" para evitar bucles con "/login"
-    if (pathname === "/") {
+    // Si viene de Supabase magic link, redirigir a magic-link-handler
+    // SOLO verificar en "/" y "/auth/callback" para evitar bucles
+    if (pathname === "/" || pathname === "/auth/callback") {
       const type = url.searchParams.get("type");
       const token = url.searchParams.get("token");
       const code = url.searchParams.get("code");
       const requestId = url.searchParams.get("request_id");
       const secretToken = url.searchParams.get("token");
-      const redirectTo = url.searchParams.get("redirect_to");
       
-      // Si hay redirect_to con espacios codificados, limpiarlo
-      let cleanRedirectTo = redirectTo;
-      if (redirectTo) {
-        cleanRedirectTo = redirectTo.trim().replace(/%20+/g, '');
-      }
-      
-      // Si tiene request_id, es un magic link remoto → redirigir a remote-callback
+      // Si tiene request_id, es un magic link remoto → redirigir a magic-link-handler
       if (requestId && secretToken && (code || (type === "magiclink" && token))) {
-        const callbackUrl = new URL("/auth/remote-callback", url);
-        callbackUrl.searchParams.set("request_id", requestId);
-        callbackUrl.searchParams.set("token", secretToken);
-        if (code) callbackUrl.searchParams.set("code", code);
-        if (type) callbackUrl.searchParams.set("type", type);
-        if (token && token !== secretToken) callbackUrl.searchParams.set("supabase_token", token);
-        logDomainDebug(`Magic link remoto detectado, redirigiendo a remote-callback`);
-        return NextResponse.redirect(callbackUrl);
+        const handlerUrl = new URL("/auth/magic-link-handler", url);
+        handlerUrl.searchParams.set("request_id", requestId);
+        handlerUrl.searchParams.set("token", secretToken);
+        if (code) handlerUrl.searchParams.set("code", code);
+        if (type) handlerUrl.searchParams.set("type", type);
+        if (token && token !== secretToken) handlerUrl.searchParams.set("supabase_token", token);
+        logDomainDebug(`[Pro Domain] Magic link remoto detectado, redirigiendo a magic-link-handler`);
+        return NextResponse.redirect(handlerUrl);
       }
       
       // Si es un magic link normal (sin request_id), redirigir a callback normal
@@ -172,8 +165,7 @@ export async function middleware(req: NextRequest) {
         if (code) callbackUrl.searchParams.set("code", code);
         if (type) callbackUrl.searchParams.set("type", type);
         if (token) callbackUrl.searchParams.set("token", token);
-        if (cleanRedirectTo) callbackUrl.searchParams.set("redirect_to", cleanRedirectTo);
-        logDomainDebug(`Magic link detectado, redirigiendo a callback`);
+        logDomainDebug(`[Pro Domain] Magic link normal detectado, redirigiendo a callback`);
         return NextResponse.redirect(callbackUrl);
       }
       

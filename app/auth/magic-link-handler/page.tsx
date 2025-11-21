@@ -1,100 +1,158 @@
 "use client";
 
-import { useEffect, Suspense } from "react";
+import { useEffect, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 function MagicLinkHandlerContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const supabase = createClientComponentClient();
+  const [status, setStatus] = useState<"processing" | "success" | "error">("processing");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const handleMagicLink = async () => {
       try {
-        // Leer el hash de la URL (solo disponible en el cliente)
+        // Leer parámetros de la URL
+        const requestId = searchParams?.get("request_id");
+        const secretToken = searchParams?.get("token");
+        const code = searchParams?.get("code");
+        const type = searchParams?.get("type");
+        
+        // También buscar en el hash (por si Supabase redirige con tokens en hash)
         const hash = window.location.hash.substring(1);
         const hashParams = new URLSearchParams(hash);
-        
-        // También buscar en query params (por si viene desde Supabase directamente)
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get("token");
-        const type = urlParams.get("type");
-        
-        let accessToken = hashParams.get("access_token");
-        let refreshToken = hashParams.get("refresh_token");
-        let code = hashParams.get("code") || urlParams.get("code");
-        
-        // Si viene con token de Supabase pero sin hash, necesitamos usar el token
-        // En este caso, Supabase debería haber redirigido con el hash, pero si no,
-        // podemos intentar usar el token para obtener la sesión
-        if (token && type === "magiclink" && !accessToken && !code) {
-          console.log("Token de Supabase detectado, pero sin hash. Redirigiendo al callback...");
-          // Redirigir al callback con el token para que lo procese
-          const callbackUrl = new URL("/auth/callback", window.location.origin);
-          urlParams.forEach((value, key) => {
-            callbackUrl.searchParams.set(key, value);
-          });
-          window.location.href = callbackUrl.toString();
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
+        const hashCode = hashParams.get("code") || code;
+
+        console.log("[MagicLinkHandler] Params:", {
+          requestId: requestId || null,
+          secretToken: secretToken ? "present" : "missing",
+          hasCode: !!hashCode,
+          hasAccessToken: !!accessToken,
+          hasRefreshToken: !!refreshToken,
+          type: type || null,
+        });
+
+        // Validar que tenemos request_id y token
+        if (!requestId || !secretToken) {
+          console.error("[MagicLinkHandler] Missing request_id or token");
+          setStatus("error");
+          setErrorMessage("Enlace inválido: faltan parámetros requeridos");
           return;
         }
-        
-        console.log("Magic link handler - access_token:", accessToken ? "presente" : "no presente");
-        console.log("Magic link handler - code:", code ? "presente" : "no presente");
-        console.log("Magic link handler - token:", token ? "presente" : "no presente");
-        
-        if (accessToken) {
-          // Establecer sesión con access_token
-          const { error: sessionError } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken || '',
-          });
-          
-          if (sessionError) {
-            console.error("Error al establecer sesión:", sessionError);
-            router.push("/login?error=session_error");
-            return;
-          }
-          
-          // Sesión establecida, redirigir
-          const redirectTo = searchParams?.get("redirect") || "/panel";
-          console.log("Sesión establecida, redirigiendo a:", redirectTo);
-          router.push(redirectTo);
-          return;
-        } else if (code) {
-          // Si hay código, intercambiarlo por sesión
-          const { data, error: codeError } = await supabase.auth.exchangeCodeForSession(code);
-          
-          if (codeError || !data.session) {
-            console.error("Error al intercambiar código:", codeError);
-            router.push("/login?error=code_error");
-            return;
-          }
-          
-          // Sesión establecida, redirigir
-          const redirectTo = searchParams?.get("redirect") || "/panel";
-          router.push(redirectTo);
-          return;
-        } else {
-          // No hay token ni código
-          console.error("No se encontró access_token ni code en el hash");
-          router.push("/login?error=no_token");
+
+        // Si no tenemos code ni tokens, error
+        if (!hashCode && !accessToken) {
+          console.error("[MagicLinkHandler] Missing code or tokens");
+          setStatus("error");
+          setErrorMessage("Enlace inválido: no se encontraron tokens de autenticación");
           return;
         }
+
+        // Llamar al endpoint de aprobación
+        console.log("[MagicLinkHandler] Calling /api/auth/login/approve...");
+        const response = await fetch("/api/auth/login/approve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            requestId,
+            secretToken,
+            code: hashCode,
+            accessToken,
+            refreshToken,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: "Error desconocido" }));
+          console.error("[MagicLinkHandler] Approve API error:", errorData);
+          setStatus("error");
+          setErrorMessage(errorData.error || "Error al aprobar el login");
+          return;
+        }
+
+        console.log("[MagicLinkHandler] Login approved successfully");
+        setStatus("success");
       } catch (err: any) {
-        console.error("Error inesperado en magic link handler:", err);
-        router.push("/login?error=unexpected");
+        console.error("[MagicLinkHandler] Unexpected error:", err);
+        setStatus("error");
+        setErrorMessage(err?.message || "Error inesperado");
       }
     };
 
     handleMagicLink();
-  }, [router, searchParams, supabase]);
+  }, [searchParams, router]);
 
+  if (status === "processing") {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+          <p className="text-gray-600">Procesando aprobación de login...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-4">
+          <div className="mb-4 text-red-600">
+            <svg
+              className="mx-auto h-12 w-12"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error</h2>
+          <p className="text-gray-600 mb-4">{errorMessage || "Ocurrió un error al procesar el login"}</p>
+          <button
+            onClick={() => router.push("/login")}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Volver al login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Success
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <div className="text-center">
-        <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-        <p className="text-gray-600">Iniciando sesión...</p>
+      <div className="text-center max-w-md mx-auto px-4">
+        <div className="mb-4 text-green-600">
+          <svg
+            className="mx-auto h-12 w-12"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        </div>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Login aprobado</h2>
+        <p className="text-gray-600 mb-4">
+          El login ha sido aprobado correctamente. Ya puedes volver a tu ordenador.
+        </p>
+        <p className="text-sm text-gray-500">
+          Esta ventana se puede cerrar.
+        </p>
       </div>
     </div>
   );
@@ -114,8 +172,3 @@ export default function MagicLinkHandlerPage() {
     </Suspense>
   );
 }
-
-
-
-
-

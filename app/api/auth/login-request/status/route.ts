@@ -10,14 +10,18 @@ import { createClient } from "@supabase/supabase-js";
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const requestId = searchParams.get("requestId");
+    // Aceptar tanto requestId como request_id para compatibilidad
+    const requestId = searchParams.get("request_id") || searchParams.get("requestId");
 
     if (!requestId) {
+      console.error("[StatusAPI] Missing request_id parameter");
       return NextResponse.json(
-        { error: "requestId requerido" },
+        { error: "request_id requerido" },
         { status: 400 }
       );
     }
+
+    console.log("[StatusAPI] Checking status for request:", requestId);
 
     // Use service role to read the request
     const supabaseAdmin = createClient(
