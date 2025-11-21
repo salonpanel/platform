@@ -66,9 +66,10 @@ function VerifyCodeContent() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include", // Asegurar que las cookies se incluyan
         body: JSON.stringify({
           email: email.toLowerCase().trim(),
-          code: code.trim(), // Cambiar de 'token' a 'code' para alinear con el route handler
+          token: code.trim(), // El route handler espera 'token', no 'code'
         }),
       });
 
@@ -100,19 +101,21 @@ function VerifyCodeContent() {
 
       console.log("[VerifyCode] OTP verificado correctamente");
 
-      // Éxito: redirigir al panel
-      // En este punto, el servidor YA ha escrito las cookies de sesión
-      // Simplemente redirigimos al panel
-      const redirectParam = searchParams?.get("redirect");
-      const redirectPath = redirectParam || "/panel";
-      console.log("[VerifyCode] OTP verificado, redirigiendo a:", redirectPath);
+      // ✅ En este punto, las cookies ya están escritas en la respuesta del route handler
+      // Ahora el middleware y el layout verán la sesión.
+      console.log("[VerifyCode] OTP verificado correctamente:", {
+        userId: data.user?.id,
+        email: data.user?.email,
+      });
       
       // Limpiar estado antes de redirigir
       setVerifying(false);
       setSuccess(true);
       
-      // Redirigir usando router.replace (más limpio que window.location)
-      router.replace(redirectPath);
+      // Redirigir usando window.location.href para asegurar que las cookies se envíen
+      const redirectParam = searchParams?.get("redirect");
+      const redirectPath = redirectParam || "/panel";
+      window.location.href = redirectPath;
     } catch (err: any) {
       console.error("[VerifyCode] Error inesperado:", err);
       setError("Ha ocurrido un error inesperado. Inténtalo de nuevo.");
