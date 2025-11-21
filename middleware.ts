@@ -20,10 +20,17 @@ export async function middleware(req: NextRequest) {
 
   // Log de depuración para sesión en middleware
   if (pathname.startsWith("/panel") || pathname.startsWith("/admin")) {
+    // Log de cookies disponibles
+    const authCookies = Array.from(req.cookies.getAll()).filter(c => 
+      c.name.includes('sb-panel-auth')
+    );
+    
     logDomainDebug(`[Middleware] Session check for ${pathname}:`, {
       hasSession: !!session,
       userId: session?.user?.id,
       email: session?.user?.email,
+      authCookiesCount: authCookies.length,
+      authCookieNames: authCookies.map(c => c.name),
     });
   }
   const url = req.nextUrl.clone();

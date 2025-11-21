@@ -184,6 +184,17 @@ function VerifyCodeContent() {
         return;
       }
 
+      // CRÍTICO: Verificar cookies en el navegador antes de redirigir
+      if (typeof document !== 'undefined') {
+        const cookies = document.cookie.split(';').map(c => c.trim());
+        const authCookies = cookies.filter(c => c.startsWith('sb-panel-auth'));
+        console.log("[VerifyCode] Cookies after setSession:", {
+          allCookies: cookies.length,
+          authCookies: authCookies.length,
+          authCookieNames: authCookies.map(c => c.split('=')[0]),
+        });
+      }
+
       // Éxito: redirigir al panel
       const redirectParam = searchParams?.get("redirect");
       const redirectPath = redirectParam || "/panel";
@@ -193,13 +204,15 @@ function VerifyCodeContent() {
       setVerifying(false);
       setSuccess(true);
       
+      // CRÍTICO: Esperar un momento para asegurar que las cookies se establezcan
+      // y luego forzar una recarga completa de la página
+      // Esto es necesario porque el servidor necesita leer las cookies en la siguiente request
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      console.log("[VerifyCode] Executing redirect to:", redirectPath);
       // Usar window.location.href para forzar una navegación completa
-      // Esto asegura que las cookies se establezcan correctamente
-      // Agregar un pequeño delay para asegurar que el estado se actualice
-      setTimeout(() => {
-        console.log("[VerifyCode] Executing redirect to:", redirectPath);
-        window.location.href = redirectPath;
-      }, 100);
+      // Esto asegura que las cookies se establezcan correctamente y el servidor las lea
+      window.location.href = redirectPath;
     } catch (err: any) {
       console.error("[VerifyCode] Unexpected error verifying OTP:", err);
       setError(err?.message || "Error al verificar el código. Por favor, intenta de nuevo.");
