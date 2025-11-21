@@ -5,9 +5,28 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => null);
+    console.log("[VerifyOTP API] Iniciando verificación OTP...");
+    
+    let body;
+    try {
+      body = await req.json();
+      console.log("[VerifyOTP API] Body recibido:", { 
+        hasEmail: !!body?.email, 
+        hasToken: !!body?.token 
+      });
+    } catch (parseError: any) {
+      console.error("[VerifyOTP API] Error parseando JSON:", parseError);
+      return NextResponse.json(
+        { ok: false, error: "Error al procesar la solicitud." },
+        { status: 400 }
+      );
+    }
 
     if (!body || !body.email || !body.token) {
+      console.error("[VerifyOTP API] Datos incompletos:", { 
+        hasEmail: !!body?.email, 
+        hasToken: !!body?.token 
+      });
       return NextResponse.json(
         { ok: false, error: "Datos de verificación incompletos." },
         { status: 400 }
@@ -17,11 +36,37 @@ export async function POST(req: NextRequest) {
     const email = String(body.email).toLowerCase().trim();
     const token = String(body.token).trim();
 
+    console.log("[VerifyOTP API] Creando cliente Supabase...");
     // ✅ Patrón correcto en Next 16: cachear cookies() y pasar función que retorna Promise
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ 
-      cookies: () => Promise.resolve(cookieStore) 
-    });
+    let cookieStore;
+    try {
+      cookieStore = await cookies();
+      console.log("[VerifyOTP API] CookieStore obtenido correctamente");
+    } catch (cookieError: any) {
+      console.error("[VerifyOTP API] Error obteniendo cookies:", cookieError);
+      return NextResponse.json(
+        { ok: false, error: "Error al acceder a las cookies." },
+        { status: 500 }
+      );
+    }
+
+    let supabase;
+    try {
+      supabase = createRouteHandlerClient({ 
+        cookies: () => Promise.resolve(cookieStore) 
+      });
+      console.log("[VerifyOTP API] Cliente Supabase creado correctamente");
+    } catch (clientError: any) {
+      console.error("[VerifyOTP API] Error creando cliente Supabase:", {
+        message: clientError?.message,
+        name: clientError?.name,
+        stack: clientError?.stack,
+      });
+      return NextResponse.json(
+        { ok: false, error: "Error al inicializar el cliente de autenticación." },
+        { status: 500 }
+      );
+    }
 
     console.log("[VerifyOTP API] Verificando OTP para:", email);
 
@@ -62,7 +107,12 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err: any) {
-    console.error("[VerifyOTP API] Error inesperado:", err);
+    console.error("[VerifyOTP API] Error inesperado:", {
+      message: err?.message,
+      name: err?.name,
+      stack: err?.stack,
+      cause: err?.cause,
+    });
     return NextResponse.json(
       {
         ok: false,
