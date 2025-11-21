@@ -189,52 +189,11 @@ export async function middleware(req: NextRequest) {
     // Determinar la ruta final después del rewrite
     const finalPath = pathname.startsWith("/panel") ? pathname : `/panel${pathname}`;
 
-    // Proteger rutas /panel/* (requiere sesión) - verificar ANTES del rewrite
-    // IMPORTANTE: Solo redirigir si NO hay sesión y NO es una ruta pública
-    // NOTA: No redirigir inmediatamente si la sesión está cargándose (evitar redirecciones prematuras)
-    const isProtectedPanelRoute = finalPath.startsWith("/panel") && 
-        !pathname.startsWith("/login") && 
-        !pathname.startsWith("/auth") && 
-        !pathname.startsWith("/api") &&
-        !pathname.startsWith("/_next") &&
-        !pathname.startsWith("/favicon.ico");
-    
-    if (isProtectedPanelRoute && !session) {
-      // Verificar si hay cookies de sesión pendientes (sesión puede estar inicializándose)
-      const hasAuthCookies = req.cookies.has("sb-panel-auth-auth-token") || 
-                             req.cookies.has("sb-panel-auth-refresh-token");
-      
-      if (hasAuthCookies) {
-        // REINTENTAR obtener la sesión si hay cookies presentes
-        // Esto permite darle tiempo a Supabase para hidratar correctamente la sesión
-        logDomainDebug(`[Pro Domain] No session but auth cookies present for ${pathname}, rechecking session...`);
-        const {
-          data: { session: recheckedSession },
-        } = await supabase.auth.getSession();
-        
-        if (recheckedSession) {
-          logDomainDebug(`[Pro Domain] Rechecked session recovered for ${pathname}, allowing access`);
-          // La sesión se recuperó, continuar con el flujo normal
-          return res;
-        }
-
-        // Si el reintento falla pero ya hay cookies de sesión, no forzar redirección desde middleware.
-        // Dejamos que el layout cliente gestione la autenticación para evitar bucles /panel ↔ /login.
-        logDomainDebug(`[Pro Domain] Auth cookies present but no session yet for ${pathname}, allowing request to proceed without redirect`);
-        return NextResponse.next();
-      }
-      
-      // Si no hay cookies, redirigir al login
-      url.pathname = "/login";
-      url.searchParams.set("redirect", finalPath);
-      logDomainDebug(`[Pro Domain] No session and no auth cookies for ${pathname}, redirecting to login with redirect=${finalPath}`);
-      return NextResponse.redirect(url);
-    }
-
-    // Si hay sesión, permitir acceso
-    if (session) {
-      logDomainDebug(`[Pro Domain] Session exists for ${pathname}, allowing access`);
-    }
+    // NOTA IMPORTANTE (Pro domain):
+    // A partir de aquí delegamos toda la protección de sesión del panel
+    // al layout cliente (`app/panel/layout-client.tsx`).
+    // El middleware ya NO redirige /panel → /login para evitar bucles;
+    // solo aplica rewrites de dominio/ruta.
 
     // Rewrite todas las rutas a /panel/* (excepto /auth, /api, /login, etc.)
     if (!pathname.startsWith("/panel") && 
