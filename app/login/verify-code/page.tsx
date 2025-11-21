@@ -56,8 +56,11 @@ function VerifyCodeContent() {
         setVerifying(false);
         setSuccess(true);
         
-        // Redirigir
-        window.location.href = redirectPath;
+        // Redirigir después de un pequeño delay para asegurar que el estado se actualice
+        setTimeout(() => {
+          console.log("[VerifyCode] Executing redirect from listener to:", redirectPath);
+          window.location.href = redirectPath;
+        }, 100);
       }
     });
 
@@ -186,9 +189,17 @@ function VerifyCodeContent() {
       const redirectPath = redirectParam || "/panel";
       console.log("[VerifyCode] Session confirmed, redirecting to:", redirectPath);
       
+      // Limpiar estado antes de redirigir
+      setVerifying(false);
+      setSuccess(true);
+      
       // Usar window.location.href para forzar una navegación completa
       // Esto asegura que las cookies se establezcan correctamente
-      window.location.href = redirectPath;
+      // Agregar un pequeño delay para asegurar que el estado se actualice
+      setTimeout(() => {
+        console.log("[VerifyCode] Executing redirect to:", redirectPath);
+        window.location.href = redirectPath;
+      }, 100);
     } catch (err: any) {
       console.error("[VerifyCode] Unexpected error verifying OTP:", err);
       setError(err?.message || "Error al verificar el código. Por favor, intenta de nuevo.");
