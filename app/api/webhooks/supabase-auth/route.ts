@@ -120,7 +120,9 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true, ignored: true });
       }
 
-      // Solo procesar si last_sign_in_at o email_confirmed_at cambió
+      // Procesar si hay un UPDATE en auth.users
+      // Nota: Puede que no siempre detectemos cambios específicos, pero si hay un UPDATE
+      // y hay una request pendiente, es probable que sea un sign-in
       const oldRecord = (payload as SupabaseDatabaseWebhookPayload).old_record;
       const newRecord = (payload as SupabaseDatabaseWebhookPayload).record;
       
@@ -129,20 +131,32 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true, skipped: "no_record" });
       }
 
+      // Verificar cambios específicos (pero no bloquear si no los hay)
       const lastSignInChanged = oldRecord?.last_sign_in_at !== newRecord.last_sign_in_at;
       const emailConfirmedChanged = !oldRecord?.email_confirmed_at && !!newRecord.email_confirmed_at;
+      
+      // Si hay un last_sign_in_at en el nuevo record, es un sign-in
+      const hasLastSignIn = !!newRecord.last_sign_in_at;
+      const hasEmailConfirmed = !!newRecord.email_confirmed_at;
 
-      if (!lastSignInChanged && !emailConfirmedChanged) {
-        console.log("[SupabaseWebhook] No relevant changes in auth.users update");
-        return NextResponse.json({ ok: true, skipped: "no_relevant_changes" });
-      }
-
+      // Log detallado para debugging
       console.log("[SupabaseWebhook] Database webhook - auth.users UPDATE:", {
         userId: newRecord.id,
         email: newRecord.email ? "present" : "missing",
         lastSignInChanged,
         emailConfirmedChanged,
+        hasLastSignIn,
+        hasEmailConfirmed,
+        oldLastSignIn: oldRecord?.last_sign_in_at || null,
+        newLastSignIn: newRecord.last_sign_in_at || null,
       });
+
+      // Si no hay cambios detectados pero hay un last_sign_in_at, procesar de todos modos
+      // (puede ser que el old_record no tenga la información completa)
+      if (!lastSignInChanged && !emailConfirmedChanged && !hasLastSignIn) {
+        console.log("[SupabaseWebhook] No relevant changes in auth.users update and no last_sign_in_at");
+        return NextResponse.json({ ok: true, skipped: "no_relevant_changes" });
+      }
     } else {
       // Auth Hook
       const authPayload = payload as SupabaseAuthHookPayload;
@@ -190,12 +204,13 @@ export async function POST(req: NextRequest) {
     );
 
     // Buscar la request pendiente más reciente para este email (últimos 15 minutos)
+    // Aumentamos el tiempo a 30 minutos para dar más margen
     const { data: pendingRequest, error: lookupError } = await supabaseAdmin
       .from("auth_login_requests")
       .select("id, email, status, created_at, redirect_path")
       .eq("email", userEmail.toLowerCase())
       .eq("status", "pending")
-      .gte("created_at", new Date(Date.now() - 15 * 60 * 1000).toISOString())
+      .gte("created_at", new Date(Date.now() - 30 * 60 * 1000).toISOString())
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
