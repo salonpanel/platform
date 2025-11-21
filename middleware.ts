@@ -6,6 +6,8 @@ import { getAppContextFromHost, resolveTenantByHost, getBaseUrlForContext, AppCo
 import { logDomainDebug, logTenantResolution } from "@/lib/middleware-debug";
 import { getMarketingUrl, URLS } from "@/lib/urls";
 
+const RESERVED = ["www", "pro", "admin"];
+
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const supabase = createMiddlewareClient({ req, res });
@@ -56,24 +58,17 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  const appContext = getAppContextFromHost(host);
-
-  // Log de depuración (solo en desarrollo)
-  logDomainDebug(`Request recibida`, {
-    host,
-    pathname,
-    context: appContext,
-  });
+  // Extraer subdominio para routing simplificado
+  const [subdomain] = host.split(".");
 
   // ============================================================================
   // PROTECCIÓN DE APIs POR DOMINIO (aplicar antes de lógica por contexto)
   // ============================================================================
 
+  const appContext = getAppContextFromHost(host);
+
   // Bloquear APIs internas desde dominios que no corresponden
-  // /api/admin/* solo accesible desde admin.bookfast.es o pro.bookfast.es
-  // /api/internal/* solo accesible desde admin.bookfast.es o pro.bookfast.es
   if (pathname.startsWith("/api/admin") || pathname.startsWith("/api/internal")) {
-    // Permitir solo desde contextos pro o admin
     if (appContext !== "pro" && appContext !== "admin") {
       logDomainDebug(`Intento de acceso a API interna desde contexto no permitido: ${appContext} (${host})`);
       return NextResponse.json(
@@ -83,22 +78,33 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  // Log de depuración (solo en desarrollo)
+  logDomainDebug(`Request recibida`, {
+    host,
+    pathname,
+    context: appContext,
+    subdomain,
+  });
+
   // ============================================================================
-  // LÓGICA POR CONTEXTO DE DOMINIO
+  // ROUTING POR DOMINIO CON REWRITES
   // ============================================================================
 
-  // --- PRO (pro.bookfast.es) ---
-  if (appContext === "pro") {
+  // 1. bookfast.es y www.bookfast.es → público (marketing)
+  if (host === "bookfast.es" || subdomain === "www") {
+    return NextResponse.next();
+  }
+
+  // 2. Panel profesional (pro.bookfast.es)
+  if (subdomain === "pro" || (host.includes("localhost") && pathname.startsWith("/panel"))) {
     // Si viene de Supabase magic link (con type=magiclink y token), redirigir al callback
     if (pathname === "/") {
       const type = url.searchParams.get("type");
       const token = url.searchParams.get("token");
       const code = url.searchParams.get("code");
       
-      // Si viene de Supabase con magic link, redirigir al callback
       if ((type === "magiclink" && token) || code) {
         const callbackUrl = new URL("/auth/callback", url);
-        // Preservar todos los query params
         url.searchParams.forEach((value, key) => {
           callbackUrl.searchParams.set(key, value);
         });
@@ -106,22 +112,35 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(callbackUrl);
       }
       
-      // Redirigir / a /panel (solo si no es un magic link)
+      // Rewrite / a /panel
       url.pathname = "/panel";
-      return NextResponse.redirect(url);
+      logDomainDebug(`Rewriting / to /panel for pro domain`);
+      return NextResponse.rewrite(url);
+    }
+
+    // Rewrite todas las rutas a /panel/* (excepto /auth, /api, etc.)
+    if (!pathname.startsWith("/panel") && 
+        !pathname.startsWith("/auth") && 
+        !pathname.startsWith("/api") &&
+        !pathname.startsWith("/login") &&
+        !pathname.startsWith("/logout") &&
+        !pathname.startsWith("/_next")) {
+      url.pathname = `/panel${pathname}`;
+      logDomainDebug(`Rewriting ${pathname} to /panel${pathname} for pro domain`);
+      return NextResponse.rewrite(url);
     }
 
     // AISLAMIENTO: Bloquear /admin y redirigir a admin.bookfast.es
     if (pathname.startsWith("/admin")) {
       const adminUrl = new URL(pathname, URLS.ADMIN_BASE);
       adminUrl.search = req.nextUrl.search;
-      return NextResponse.redirect(adminUrl);
+      return NextResponse.redirect(adminUrl, { status: 301 });
     }
 
     // AISLAMIENTO: Bloquear /r/* y redirigir a marketing
     if (pathname.startsWith("/r/")) {
       const marketingUrl = new URL("/", URLS.ROOT);
-      return NextResponse.redirect(marketingUrl);
+      return NextResponse.redirect(marketingUrl, { status: 301 });
     }
 
     // Proteger /panel/* (requiere sesión)
@@ -130,27 +149,42 @@ export async function middleware(req: NextRequest) {
       url.searchParams.set("redirect", pathname);
       return NextResponse.redirect(url);
     }
+
+    return NextResponse.next();
   }
 
-  // --- ADMIN (admin.bookfast.es) ---
-  if (appContext === "admin") {
-    // Redirigir / a /admin
+  // 3. Panel administrador (admin.bookfast.es)
+  if (subdomain === "admin" || (host.includes("localhost") && pathname.startsWith("/admin"))) {
+    // Rewrite / a /admin
     if (pathname === "/") {
       url.pathname = "/admin";
-      return NextResponse.redirect(url);
+      logDomainDebug(`Rewriting / to /admin for admin domain`);
+      return NextResponse.rewrite(url);
+    }
+
+    // Rewrite todas las rutas a /admin/* (excepto /auth, /api, etc.)
+    if (!pathname.startsWith("/admin") && 
+        !pathname.startsWith("/auth") && 
+        !pathname.startsWith("/api") &&
+        !pathname.startsWith("/login") &&
+        !pathname.startsWith("/logout") &&
+        !pathname.startsWith("/_next")) {
+      url.pathname = `/admin${pathname}`;
+      logDomainDebug(`Rewriting ${pathname} to /admin${pathname} for admin domain`);
+      return NextResponse.rewrite(url);
     }
 
     // AISLAMIENTO: Bloquear /panel y redirigir a pro.bookfast.es
     if (pathname.startsWith("/panel")) {
       const proUrl = new URL(pathname, URLS.PRO_BASE);
       proUrl.search = req.nextUrl.search;
-      return NextResponse.redirect(proUrl);
+      return NextResponse.redirect(proUrl, { status: 301 });
     }
 
     // AISLAMIENTO: Bloquear /r/* y redirigir a marketing
     if (pathname.startsWith("/r/")) {
       const marketingUrl = new URL("/", URLS.ROOT);
-      return NextResponse.redirect(marketingUrl);
+      return NextResponse.redirect(marketingUrl, { status: 301 });
     }
 
     // Proteger /admin/* (requiere sesión + Platform Admin)
@@ -173,33 +207,31 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(url);
       }
     }
+
+    return NextResponse.next();
   }
 
-  // --- TENANT PUBLIC ({tenant}.bookfast.es) ---
+  // 4. Tenants dinámicos ({tenant}.bookfast.es)
   if (appContext === "tenantPublic") {
-    const subdomain = parseSubdomain(host);
+    const tenantSubdomain = getTenantSubdomain(host);
     
     // Verificar si el subdominio está reservado
-    if (subdomain && isReservedSubdomain(subdomain)) {
-      logDomainDebug(`Subdominio reservado detectado: ${subdomain}, redirigiendo a marketing`);
+    if (tenantSubdomain && isReservedSubdomain(tenantSubdomain)) {
+      logDomainDebug(`Subdominio reservado detectado: ${tenantSubdomain}, redirigiendo a marketing`);
       const marketingUrl = new URL("/", getMarketingUrl());
       return NextResponse.redirect(marketingUrl);
     }
 
-    // Resolver tenant desde el host
+    // Resolver tenant desde el host (ahora también busca por public_subdomain)
     const tenant = await resolveTenantByHost(host);
     logTenantResolution(host, tenant, tenant !== null && tenant.id !== null && tenant.id !== "");
 
     // Si no se puede resolver el tenant o no tiene ID válido, manejar de forma segura
     if (!tenant || !tenant.id || tenant.id.trim() === "") {
-      // En desarrollo con localhost, permitir /r/[orgId] como fallback
       if (host.includes("localhost") || host.includes("127.0.0.1")) {
         logDomainDebug(`Tenant no resuelto en desarrollo, permitiendo acceso directo a /r/[orgId]`);
         // No hacer nada, dejar que la ruta /r/[orgId] maneje esto con notFound()
       } else {
-        // En producción o localtest.me, redirigir al dominio raíz con query param
-        // Opción elegida: redirigir a marketing con ?reason=unknown-tenant
-        // La página /r/[orgId] también manejará el caso con notFound() si se accede directamente
         logDomainDebug(`Tenant no encontrado o sin ID válido para ${host}, redirigiendo a marketing`);
         const marketingUrl = new URL("/", getMarketingUrl());
         marketingUrl.searchParams.set("reason", "unknown-tenant");
@@ -210,48 +242,35 @@ export async function middleware(req: NextRequest) {
       // SIEMPRE usar tenant.id (UUID) como fuente de verdad, nunca slug
       if (pathname === "/") {
         url.pathname = `/r/${tenant.id}`;
-        logDomainDebug(`Rewriting / to /r/${tenant.id.substring(0, 8)}...`);
+        logDomainDebug(`Rewriting / to /r/${tenant.id.substring(0, 8)}... for tenant domain`);
         return NextResponse.rewrite(url);
+      }
+
+      // Si la ruta ya es /r/[algo], verificar que sea el tenant correcto
+      if (pathname.startsWith("/r/")) {
+        const orgIdFromPath = pathname.split("/")[2];
+        // Si el orgId en la ruta no coincide con el tenant resuelto, hacer rewrite
+        if (orgIdFromPath !== tenant.id && orgIdFromPath !== tenant.slug) {
+          url.pathname = `/r/${tenant.id}`;
+          logDomainDebug(`Rewriting /r/${orgIdFromPath} to /r/${tenant.id.substring(0, 8)}... for tenant domain`);
+          return NextResponse.rewrite(url);
+        }
       }
     }
 
     // AISLAMIENTO: Bloquear /panel y redirigir a pro.bookfast.es
     if (pathname.startsWith("/panel")) {
-      const { URLS } = await import("@/lib/urls");
       const proUrl = new URL(pathname, URLS.PRO_BASE);
       proUrl.search = req.nextUrl.search;
-      return NextResponse.redirect(proUrl);
+      return NextResponse.redirect(proUrl, { status: 301 });
     }
 
     // AISLAMIENTO: Bloquear /admin y redirigir a admin.bookfast.es
     if (pathname.startsWith("/admin")) {
-      const { URLS } = await import("@/lib/urls");
       const adminUrl = new URL(pathname, URLS.ADMIN_BASE);
       adminUrl.search = req.nextUrl.search;
-      return NextResponse.redirect(adminUrl);
+      return NextResponse.redirect(adminUrl, { status: 301 });
     }
-  }
-
-  // --- MARKETING (bookfast.es) ---
-  if (appContext === "marketing") {
-    // Permitir /login, /legal/*, etc.
-    // No bloquear nada específico aquí por ahora
-    // En el futuro, aquí se puede añadir lógica para la web comercial
-    logDomainDebug(`Marketing domain, permitiendo acceso`);
-  }
-
-  // --- UNKNOWN (caso no contemplado) ---
-  if (appContext === "unknown") {
-    // Si el host no coincide con ningún patrón conocido:
-    // - pro.bookfast.es
-    // - admin.bookfast.es
-    // - *.bookfast.es (subdomain válido de tenant)
-    // - bookfast.es
-    // - localhost / 127.0.0.1
-    // Entonces redirigir SIEMPRE de forma segura a marketing
-    logDomainDebug(`Host desconocido/inválido detectado: ${host}, redirigiendo a marketing`);
-    const marketingUrl = new URL("/", getMarketingUrl());
-    return NextResponse.redirect(marketingUrl);
   }
 
   // ============================================================================
@@ -259,7 +278,6 @@ export async function middleware(req: NextRequest) {
   // ============================================================================
 
   // En desarrollo (localhost), aplicar protección normal sin redirecciones de dominio
-  // Nota: El bloqueo de APIs ya se aplicó arriba, así que aquí solo protegemos rutas de página
   if (host.includes("localhost") || host.includes("127.0.0.1")) {
     const isPanel = pathname.startsWith("/panel");
     const isAdmin = pathname.startsWith("/admin");
@@ -300,12 +318,25 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public files (public folder)
+     * - api/health (health check endpoint)
+     * - api/webhooks/stripe (Stripe webhooks)
+     * - api/internal/cron/* (internal cron jobs)
+     * - auth/callback (Supabase auth callback)
+     * - auth/magic-link-handler (client-side magic link handler)
+     * - /public (public assets)
+     * - /_vercel (Vercel internal routes)
+     * - /static (static assets)
+     * - /assets (assets folder)
+     * - /img (images folder)
+     * - /fonts (fonts folder)
+     * - /docs (documentation folder)
+     * - /legal (legal pages)
+     * - /robots.txt
+     * - /sitemap.xml
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/health|api/webhooks/stripe|api/internal/cron|auth/callback|auth/magic-link-handler|public|_vercel|static|assets|img|fonts|docs|legal|robots.txt|sitemap.xml).*)",
   ],
 };
