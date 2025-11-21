@@ -6,22 +6,13 @@
  * 
  * FLUJO ESPERADO:
  * 1. El usuario recibe un email con un magic link de Supabase
- * 2. El link puede venir en dos formatos:
- *    a) Con hash (#access_token=...&refresh_token=...) - típico de magic links
- *    b) Con query param (?code=...) - usado con PKCE o redirects del servidor
- * 3. Si viene con hash, el cliente (navegador) debe extraerlo y pasarlo como query param
- *    antes de redirigir a este endpoint, ya que el hash NO está disponible en el servidor
- * 4. Este handler intercambia el código/token por una sesión y redirige al usuario
+ * 2. El link apunta a /auth/callback?code=...&redirect_to=/panel
+ * 3. Este handler intercambia el código por una sesión usando exchangeCodeForSession
+ * 4. exchangeCodeForSession setea automáticamente las cookies de Supabase
+ * 5. Redirige al usuario a la ruta indicada en redirect_to
  * 
- * CASOS DE ERROR MANEJADOS:
- * - NEXT_PUBLIC_APP_URL no configurado: en dev, se infiere de la request; en prod, error 500
- * - Host/origen inválido: en prod, verificación estricta; en dev, más flexible
- * - Código/token ausente: error 400 con mensaje claro
- * - Código expirado o inválido: error 400 con sugerencia de solicitar nuevo link
- * - Error en logging de auth_logs: no rompe el flujo, solo warning en consola
- * 
- * NOTA: El logging en auth_logs es opcional y no debe interrumpir el flujo de autenticación
- * si falla (por ejemplo, si la tabla no existe o hay problemas de permisos RLS).
+ * IMPORTANTE: Este es el único punto donde se setean las cookies de sesión.
+ * El cliente NO debe manejar tokens directamente del hash.
  */
 import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
@@ -77,68 +68,37 @@ export async function GET(request: Request) {
     }
   }
 
-  // Buscar código en query params
-  let code = url.searchParams.get("code");
+  // Buscar código en query params (Supabase usa 'code' cuando emailRedirectTo apunta a /auth/callback)
+  const code = url.searchParams.get("code");
   
-  // También buscar access_token en query params (por si viene del cliente)
-  let accessToken = url.searchParams.get("access_token");
-  
-  // Buscar token de Supabase (cuando viene directamente desde el magic link)
-  const token = url.searchParams.get("token");
-  const type = url.searchParams.get("type");
-  
-  // Si viene de Supabase con token pero sin code, redirigir al cliente para que maneje el hash
-  // Esto puede pasar cuando Supabase redirige directamente a la raíz en lugar de /auth/callback
-  if (type === "magiclink" && token && !code && !accessToken) {
-    // Redirigir a una página del cliente que maneje el token/hash
-    const clientHandlerUrl = new URL("/auth/magic-link-handler", allowedAppUrl);
-    // Pasar todos los query params
-    url.searchParams.forEach((value, key) => {
-      clientHandlerUrl.searchParams.set(key, value);
-    });
-    return NextResponse.redirect(clientHandlerUrl);
-  }
-  
-  // Nota: El hash (#) no está disponible en el servidor, así que el cliente debe extraerlo
-  // y pasarlo como query param antes de redirigir
+  // Buscar redirect_to (parámetro estándar de Supabase) o redirect (fallback)
+  const redirectTo = url.searchParams.get("redirect_to") || url.searchParams.get("redirect") || "/panel";
 
-  if (!code && !accessToken) {
+  // Si no hay código, el magic link no pasó por el callback correctamente
+  if (!code) {
     return NextResponse.json(
-      { error: "Código de autenticación no proporcionado." },
+      { 
+        error: "Código de autenticación no proporcionado. Asegúrate de que el magic link apunta a /auth/callback.",
+        hint: "Verifica que emailRedirectTo en signInWithOtp apunta a /auth/callback"
+      },
       { status: 400 }
     );
   }
 
   try {
-    // En Next.js 16+, cookies() es async, pero createRouteHandlerClient espera la función directamente
-    const supabaseClient = createRouteHandlerClient({ cookies: async () => await cookies() });
+    // Crear cliente de Supabase con cookies (Next.js 16+)
+    // IMPORTANTE: Pasar la función cookies directamente, no el resultado await
+    const supabaseClient = createRouteHandlerClient({ cookies });
     
-    let data: any = null;
-    let error: any = null;
-    
-    // Si tenemos access_token directamente, usarlo
-    if (accessToken) {
-      const { data: sessionData, error: sessionError } = await supabaseClient.auth.setSession({
-        access_token: accessToken,
-        refresh_token: '', // Se obtendrá automáticamente
-      });
-      data = sessionData;
-      error = sessionError;
-    } else if (code) {
-      // Intentar intercambiar el código por una sesión
-      // Para Magic Links con emailRedirectTo, Supabase puede requerir PKCE
-      // Si falla, intentaremos métodos alternativos
-      const result = await supabaseClient.auth.exchangeCodeForSession(code);
-      data = result.data;
-      error = result.error;
-    }
+    // Intercambiar código por sesión - esto setea las cookies automáticamente
+    // exchangeCodeForSession es el método oficial de Supabase para magic links
+    const { data, error } = await supabaseClient.auth.exchangeCodeForSession(code);
     
     if (error) {
       console.error("Error al intercambiar código por sesión:", error);
       console.error("Detalles del error:", JSON.stringify(error, null, 2));
       
       // Si el error es de PKCE o token inválido, el código puede haber expirado
-      // o el code_verifier no está disponible
       if (
         error.message?.includes("code verifier") || 
         error.message?.includes("code_verifier") ||
@@ -161,8 +121,15 @@ export async function GET(request: Request) {
 
     const session = data.session;
     
+    if (!session) {
+      return NextResponse.json(
+        { error: "No se pudo establecer la sesión. Por favor, intenta de nuevo." },
+        { status: 400 }
+      );
+    }
+    
     // Intentar registrar en auth_logs (opcional, no debe romper el flujo si falla)
-    if (session?.user?.id) {
+    if (session.user?.id) {
       try {
         const sb = supabaseServer();
         const clientIp = getClientIp(requestHeaders);
@@ -180,8 +147,9 @@ export async function GET(request: Request) {
       }
     }
 
-    // Redirigir según el redirect param o a /panel por defecto
-    const redirectTo = url.searchParams.get("redirect") || "/panel";
+    // Redirigir al panel (o a la ruta indicada)
+    // IMPORTANTE: Usar allowedAppUrl para mantener el dominio correcto
+    // Las cookies ya están seteadas por exchangeCodeForSession
     return NextResponse.redirect(new URL(redirectTo, allowedAppUrl));
   } catch (err: any) {
     console.error("Error inesperado en callback:", err);
@@ -191,4 +159,3 @@ export async function GET(request: Request) {
     );
   }
 }
-

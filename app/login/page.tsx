@@ -120,14 +120,12 @@ function LoginContent() {
     
     // Flujo normal de magic link (solo si no es el email de desarrollo o si el auto-login no se ejecutó)
     // Usar URL absoluta para callbacks de auth (Supabase requiere URL completa)
-    // En producción: usar NEXT_PUBLIC_APP_URL, en desarrollo: usar el dominio actual
-    const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || window.location.origin).trim();
-    const callbackBase = redirectParam
-      ? `${baseUrl}/auth/callback?redirect=${encodeURIComponent(redirectParam)}`
-      : `${baseUrl}/auth/callback`;
+    // IMPORTANTE: El callback debe usar redirect_to (no redirect) para que Supabase lo pase correctamente
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+      (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
     
-    // Asegurarse de que la URL no tenga espacios y esté correctamente formateada
-    const callbackUrl = callbackBase.trim();
+    const redirectTo = redirectParam || "/panel";
+    const callbackUrl = `${baseUrl}/auth/callback?redirect_to=${encodeURIComponent(redirectTo)}`;
     
     const { error: authError } = await supabase.auth.signInWithOtp({
       email,
