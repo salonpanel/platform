@@ -208,12 +208,39 @@ function LoginContent() {
           console.log("[LoginPolling] Request approved but no tokens, checking session directly...");
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
           
+          console.log("[LoginPolling] Session check result:", {
+            hasSession: !!session,
+            userId: session?.user?.id,
+            email: session?.user?.email,
+            hasError: !!sessionError,
+            errorMessage: sessionError?.message,
+          });
+          
           if (session && !sessionError) {
             console.log("[LoginPolling] ✅ Session found, redirecting to panel...");
             const redirectPath = data.redirectPath || "/panel";
+            
+            // Limpiar intervalos antes de redirigir
+            if (pollingIntervalRef.current) {
+              clearInterval(pollingIntervalRef.current);
+              pollingIntervalRef.current = null;
+            }
+            if (realtimeSubscriptionRef.current) {
+              realtimeSubscriptionRef.current.unsubscribe();
+              realtimeSubscriptionRef.current = null;
+            }
+            if (sessionCheckIntervalRef.current) {
+              clearInterval(sessionCheckIntervalRef.current);
+              sessionCheckIntervalRef.current = null;
+            }
+            
+            setWaitingForApproval(false);
+            setSent(false);
             router.replace(redirectPath);
           } else {
-            console.log("[LoginPolling] No session found yet, will retry on next check...");
+            console.log("[LoginPolling] No session found yet, will retry on next check...", {
+              reason: sessionError ? `Error: ${sessionError.message}` : "No session in storage",
+            });
             // Continuar esperando, el callback puede estar procesándose
           }
         }
@@ -395,11 +422,38 @@ function LoginContent() {
               // Verificar si la sesión ya está establecida en el navegador
               console.log("[Realtime] Request approved but no tokens, checking session directly...");
               supabase.auth.getSession().then(({ data: { session }, error: sessionError }) => {
+                console.log("[Realtime] Session check result:", {
+                  hasSession: !!session,
+                  userId: session?.user?.id,
+                  email: session?.user?.email,
+                  hasError: !!sessionError,
+                  errorMessage: sessionError?.message,
+                });
+                
                 if (session && !sessionError) {
                   console.log("[Realtime] ✅ Session found, redirecting to panel...");
+                  
+                  // Limpiar intervalos antes de redirigir
+                  if (pollingIntervalRef.current) {
+                    clearInterval(pollingIntervalRef.current);
+                    pollingIntervalRef.current = null;
+                  }
+                  if (realtimeSubscriptionRef.current) {
+                    realtimeSubscriptionRef.current.unsubscribe();
+                    realtimeSubscriptionRef.current = null;
+                  }
+                  if (sessionCheckIntervalRef.current) {
+                    clearInterval(sessionCheckIntervalRef.current);
+                    sessionCheckIntervalRef.current = null;
+                  }
+                  
+                  setWaitingForApproval(false);
+                  setSent(false);
                   router.replace(newData.redirect_path || "/panel");
                 } else {
-                  console.log("[Realtime] No session found yet, will retry...");
+                  console.log("[Realtime] No session found yet, will retry...", {
+                    reason: sessionError ? `Error: ${sessionError.message}` : "No session in storage",
+                  });
                 }
               });
             }
