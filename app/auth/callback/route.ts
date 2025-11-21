@@ -87,12 +87,8 @@ export async function GET(request: Request) {
   try {
     console.log("[AuthCallback] Creating Supabase client...");
     // Crear cliente de Supabase con cookies (Next.js 16+)
-    // En Next.js 16, cookies() puede necesitar ser async en algunos contextos
-    // Usar el mismo patrón que funciona en otros route handlers
-    const cookieStore = await cookies();
-    const supabaseClient = createRouteHandlerClient({ 
-      cookies: () => cookieStore
-    });
+    // En Next.js 16, cookies() NO es async en route handlers, se pasa directamente
+    const supabaseClient = createRouteHandlerClient({ cookies });
     console.log("[AuthCallback] Supabase client created");
     
     let session;
