@@ -208,7 +208,14 @@ function LoginContent() {
           console.log("[LoginPolling] Request approved but no tokens, checking session directly...");
           
           try {
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+            console.log("[LoginPolling] About to call getSession()...");
+            const sessionPromise = supabase.auth.getSession();
+            const timeoutPromise = new Promise((_, reject) => 
+              setTimeout(() => reject(new Error("getSession timeout after 5s")), 5000)
+            );
+            
+            const result = await Promise.race([sessionPromise, timeoutPromise]) as { data: { session: any }, error: any };
+            const { data: { session }, error: sessionError } = result;
             
             console.log("[LoginPolling] Session check result:", {
               hasSession: !!session,
