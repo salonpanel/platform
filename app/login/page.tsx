@@ -198,7 +198,7 @@ function LoginContent() {
         redirectPath,
       });
       
-      // Limpiar polling y realtime ANTES de establecer la sesión para evitar múltiples llamadas
+      // Limpiar polling y realtime ANTES de redirigir para evitar múltiples llamadas
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
@@ -208,50 +208,15 @@ function LoginContent() {
         realtimeSubscriptionRef.current = null;
       }
 
-      // Establecer sesión con los tokens usando el cliente del navegador
-      const { data, error } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
+      console.log("[handleApprovedRequest] Request approved, redirecting to callback with tokens", {
+        hasAccessToken: !!accessToken,
+        hasRefreshToken: !!refreshToken,
+        redirectPath,
       });
 
-      if (error) {
-        console.error("[Login Waiting] setSession error", error);
-        setError("Error al establecer la sesión. Por favor, intenta de nuevo.");
-        setWaitingForApproval(false);
-        setSent(false);
-        return;
-      }
-
-      if (!data.session) {
-        console.error("[Login Waiting] No session returned after setSession");
-        setError("No se pudo establecer la sesión. Por favor, intenta de nuevo.");
-        setWaitingForApproval(false);
-        setSent(false);
-        return;
-      }
-
-      console.log("[Login Waiting] Session established successfully:", { 
-        userId: data.session.user?.id,
-        email: data.session.user?.email,
-      });
-
-      // Limpiar tokens del servidor (seguridad) - no crítico si falla
-      if (loginRequestId) {
-        try {
-          await fetch("/api/auth/login-request/consume", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ requestId: loginRequestId }),
-          });
-          console.log("[handleApprovedRequest] Tokens consumed from server");
-        } catch (err) {
-          console.warn("[handleApprovedRequest] Error consuming tokens (non-critical):", err);
-        }
-      }
-
-      // IMPORTANTE: En lugar de establecer la sesión en el cliente y esperar,
-      // redirigir a /auth/callback con los tokens para que el servidor establezca
-      // las cookies correctamente. Esto garantiza que el middleware y el layout
+      // IMPORTANTE: NO establecer la sesión en el cliente aquí.
+      // Redirigir directamente a /auth/callback con los tokens para que el servidor
+      // establezca las cookies correctamente. Esto garantiza que el middleware y el layout
       // del servidor vean la sesión.
       const finalRedirectPath = redirectPath || "/panel";
       console.log("[Login Waiting] Redirecting to callback to establish session server-side:", finalRedirectPath);
@@ -263,6 +228,7 @@ function LoginContent() {
       callbackUrl.searchParams.set("refresh_token", refreshToken);
       callbackUrl.searchParams.set("redirect", finalRedirectPath);
       
+      console.log("[Login Waiting] Redirecting to:", callbackUrl.toString());
       window.location.href = callbackUrl.toString();
     } catch (err: any) {
       console.error("[handleApprovedRequest] Unexpected error:", err);
@@ -690,4 +656,5 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+
 
