@@ -138,7 +138,7 @@ function LoginContent() {
                     />
                   </div>
                   <p className="text-xs text-slate-500 mt-2">
-                    Te enviaremos un código de 6 dígitos que expira en 10 minutos
+                    Te enviaremos un código de 8 dígitos que expira en 10 minutos
                   </p>
                 </div>
 

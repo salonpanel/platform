@@ -36,8 +36,8 @@ function VerifyCodeContent() {
     setError(null);
     setVerifying(true);
 
-    if (code.length !== 6) {
-      setError("El código debe tener 6 dígitos");
+    if (code.length !== 8) {
+      setError("El código debe tener 8 dígitos");
       setVerifying(false);
       return;
     }
@@ -192,7 +192,7 @@ function VerifyCodeContent() {
               Verifica tu código
             </h1>
             <p className="text-slate-400 text-sm">
-              Introduce el código de 6 dígitos enviado a
+              Introduce el código de 8 dígitos enviado a
             </p>
             <p className="text-white font-semibold mt-1">{email}</p>
           </motion.div>
@@ -251,31 +251,31 @@ function VerifyCodeContent() {
                       id="code"
                       type="text"
                       inputMode="numeric"
-                      pattern="[0-9]{6}"
-                      maxLength={6}
+                      pattern="[0-9]{8}"
+                      maxLength={8}
                       required
                       value={code}
                       onChange={(e) => {
                         // Solo permitir números
-                        const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 8);
                         setCode(value);
                         setError(null); // Limpiar error al escribir
                       }}
                       disabled={verifying}
                       className="w-full px-4 py-3.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 font-mono text-2xl text-center tracking-widest backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                      placeholder="000000"
+                      placeholder="00000000"
                       style={{ borderRadius: "12px" }}
                       autoFocus
                     />
                   </div>
                   <p className="text-xs text-slate-500 mt-2 text-center">
-                    El código expira en 10 minutos
+                    El código de 8 dígitos expira en 10 minutos
                   </p>
                 </div>
 
                 <motion.button
                   type="submit"
-                  disabled={verifying || code.length !== 6}
+                  disabled={verifying || code.length !== 8}
                   whileHover={{ scale: verifying ? 1 : 1.02 }}
                   whileTap={{ scale: verifying ? 1 : 0.98 }}
                   className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold font-satoshi shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
