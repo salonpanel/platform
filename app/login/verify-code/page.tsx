@@ -91,25 +91,29 @@ function VerifyCodeContent() {
       });
 
       // Verificar que la sesión se guardó correctamente
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
       console.log("[VerifyCode] Current session after verify:", {
         hasSession: !!currentSession,
         userId: currentSession?.user?.id,
+        hasError: !!sessionError,
+        errorMessage: sessionError?.message,
       });
 
-      // Éxito: mostrar mensaje y redirigir
-      setSuccess(true);
-      
-      // Redirigir al panel después de un breve delay
+      if (!currentSession) {
+        console.error("[VerifyCode] Session not persisted after verifyOtp");
+        setError("La sesión no se guardó correctamente. Por favor, intenta de nuevo.");
+        setVerifying(false);
+        return;
+      }
+
+      // Éxito: redirigir inmediatamente sin delay
       // Usar window.location.href para forzar una navegación completa y asegurar que la sesión se persista
       const redirectParam = searchParams?.get("redirect");
       const redirectPath = redirectParam || "/panel";
-      console.log("[VerifyCode] Scheduling redirect to:", redirectPath);
+      console.log("[VerifyCode] Redirecting immediately to:", redirectPath);
       
-      setTimeout(() => {
-        console.log("[VerifyCode] Executing redirect to:", redirectPath);
-        window.location.href = redirectPath;
-      }, 1000);
+      // Redirigir inmediatamente
+      window.location.href = redirectPath;
     } catch (err: any) {
       console.error("[VerifyCode] Unexpected error verifying OTP:", err);
       setError(err?.message || "Error al verificar el código. Por favor, intenta de nuevo.");
