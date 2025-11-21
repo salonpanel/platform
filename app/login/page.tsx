@@ -197,10 +197,26 @@ function LoginContent() {
         redirectPath: data.redirectPath,
       });
       
-      if (data.status === "approved" && data.accessToken && data.refreshToken) {
-        // Request aprobada, establecer sesión
-        console.log("[LoginPolling] Request approved, setting session...");
-        await handleApprovedRequest(data.accessToken, data.refreshToken, data.redirectPath || "/panel");
+      if (data.status === "approved") {
+        if (data.accessToken && data.refreshToken) {
+          // Request aprobada con tokens, establecer sesión
+          console.log("[LoginPolling] Request approved with tokens, setting session...");
+          await handleApprovedRequest(data.accessToken, data.refreshToken, data.redirectPath || "/panel");
+        } else {
+          // Request aprobada pero sin tokens (webhook marcó como aprobada)
+          // Verificar si la sesión ya está establecida en el navegador
+          console.log("[LoginPolling] Request approved but no tokens, checking session directly...");
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          
+          if (session && !sessionError) {
+            console.log("[LoginPolling] ✅ Session found, redirecting to panel...");
+            const redirectPath = data.redirectPath || "/panel";
+            router.replace(redirectPath);
+          } else {
+            console.log("[LoginPolling] No session found yet, will retry on next check...");
+            // Continuar esperando, el callback puede estar procesándose
+          }
+        }
       } else if (data.status === "expired" || data.status === "cancelled") {
         // Request expirada o cancelada
         console.log("[LoginPolling] Request expired or cancelled:", data.status);
@@ -365,13 +381,28 @@ function LoginContent() {
           console.log("[Realtime] Change detected:", payload);
           const newData = payload.new as any;
           
-          if (newData.status === "approved" && newData.supabase_access_token && newData.supabase_refresh_token) {
-            console.log("[Realtime] Request approved, setting session...");
-            handleApprovedRequest(
-              newData.supabase_access_token,
-              newData.supabase_refresh_token,
-              newData.redirect_path || "/panel"
-            );
+          if (newData.status === "approved") {
+            if (newData.supabase_access_token && newData.supabase_refresh_token) {
+              // Request aprobada con tokens, establecer sesión
+              console.log("[Realtime] Request approved with tokens, setting session...");
+              handleApprovedRequest(
+                newData.supabase_access_token,
+                newData.supabase_refresh_token,
+                newData.redirect_path || "/panel"
+              );
+            } else {
+              // Request aprobada pero sin tokens (webhook marcó como aprobada)
+              // Verificar si la sesión ya está establecida en el navegador
+              console.log("[Realtime] Request approved but no tokens, checking session directly...");
+              supabase.auth.getSession().then(({ data: { session }, error: sessionError }) => {
+                if (session && !sessionError) {
+                  console.log("[Realtime] ✅ Session found, redirecting to panel...");
+                  router.replace(newData.redirect_path || "/panel");
+                } else {
+                  console.log("[Realtime] No session found yet, will retry...");
+                }
+              });
+            }
           } else if (newData.status === "expired" || newData.status === "cancelled") {
             console.log("[Realtime] Request expired or cancelled:", newData.status);
             setWaitingForApproval(false);
