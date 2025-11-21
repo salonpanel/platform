@@ -1,7 +1,7 @@
 // app/api/auth/verify-otp/route.ts
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
 // import type { Database } from "@/lib/database.types"; // si tienes tipos
 
 export async function POST(req: Request) {
@@ -37,10 +37,31 @@ export async function POST(req: Request) {
     }
 
     console.log("[VerifyOTP API] Creando cliente Supabase...");
-    // 👇 Patrón correcto en Next.js 16 App Router
+    // 👇 Usar createServerClient de @supabase/ssr para Next.js 16
+    // Este helper maneja correctamente las cookies en Next.js 16
+    const response = NextResponse.next();
+    // En Next.js 16, cookies() puede ser async en algunos contextos
+    // pero en route handlers debería ser síncrono
+    const cookieStore = await Promise.resolve(cookies());
+    
     let supabase;
     try {
-      supabase = createRouteHandlerClient/*<Database>*/({ cookies });
+      supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            getAll() {
+              return cookieStore.getAll();
+            },
+            setAll(cookiesToSet) {
+              cookiesToSet.forEach(({ name, value, options }) => {
+                response.cookies.set(name, value, options);
+              });
+            },
+          },
+        }
+      );
       console.log("[VerifyOTP API] Cliente Supabase creado correctamente");
     } catch (clientError: any) {
       console.error("[VerifyOTP API] Error al crear cliente Supabase:", {
@@ -98,8 +119,13 @@ export async function POST(req: Request) {
       email: data.session.user?.email,
     });
 
-    // Puedes devolver solo OK; el cliente ya redirige a /panel
-    return NextResponse.json({ ok: true });
+    // Devolver la respuesta con las cookies establecidas
+    return NextResponse.json(
+      { ok: true },
+      {
+        headers: response.headers,
+      }
+    );
   } catch (err: any) {
     console.error("[VerifyOTP API] Error inesperado:", {
       message: err?.message,
