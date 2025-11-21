@@ -206,42 +206,49 @@ function LoginContent() {
           // Request aprobada pero sin tokens (webhook marcó como aprobada)
           // Verificar si la sesión ya está establecida en el navegador
           console.log("[LoginPolling] Request approved but no tokens, checking session directly...");
-          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
           
-          console.log("[LoginPolling] Session check result:", {
-            hasSession: !!session,
-            userId: session?.user?.id,
-            email: session?.user?.email,
-            hasError: !!sessionError,
-            errorMessage: sessionError?.message,
-          });
-          
-          if (session && !sessionError) {
-            console.log("[LoginPolling] ✅ Session found, redirecting to panel...");
-            const redirectPath = data.redirectPath || "/panel";
+          try {
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
             
-            // Limpiar intervalos antes de redirigir
-            if (pollingIntervalRef.current) {
-              clearInterval(pollingIntervalRef.current);
-              pollingIntervalRef.current = null;
-            }
-            if (realtimeSubscriptionRef.current) {
-              realtimeSubscriptionRef.current.unsubscribe();
-              realtimeSubscriptionRef.current = null;
-            }
-            if (sessionCheckIntervalRef.current) {
-              clearInterval(sessionCheckIntervalRef.current);
-              sessionCheckIntervalRef.current = null;
-            }
-            
-            setWaitingForApproval(false);
-            setSent(false);
-            router.replace(redirectPath);
-          } else {
-            console.log("[LoginPolling] No session found yet, will retry on next check...", {
-              reason: sessionError ? `Error: ${sessionError.message}` : "No session in storage",
+            console.log("[LoginPolling] Session check result:", {
+              hasSession: !!session,
+              userId: session?.user?.id,
+              email: session?.user?.email,
+              hasError: !!sessionError,
+              errorMessage: sessionError?.message,
             });
-            // Continuar esperando, el callback puede estar procesándose
+            
+            if (session && !sessionError) {
+              console.log("[LoginPolling] ✅ Session found, redirecting to panel...");
+              const redirectPath = data.redirectPath || "/panel";
+              
+              // Limpiar intervalos antes de redirigir
+              if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current);
+                pollingIntervalRef.current = null;
+              }
+              if (realtimeSubscriptionRef.current) {
+                realtimeSubscriptionRef.current.unsubscribe();
+                realtimeSubscriptionRef.current = null;
+              }
+              if (sessionCheckIntervalRef.current) {
+                clearInterval(sessionCheckIntervalRef.current);
+                sessionCheckIntervalRef.current = null;
+              }
+              
+              setWaitingForApproval(false);
+              setSent(false);
+              router.replace(redirectPath);
+              return; // Salir temprano para evitar más polling
+            } else {
+              console.log("[LoginPolling] No session found yet, will retry on next check...", {
+                reason: sessionError ? `Error: ${sessionError.message}` : "No session in storage",
+              });
+              // Continuar esperando, el callback puede estar procesándose
+            }
+          } catch (err: any) {
+            console.error("[LoginPolling] Error checking session:", err);
+            // Continuar esperando en caso de error
           }
         }
       } else if (data.status === "expired" || data.status === "cancelled") {
@@ -455,6 +462,8 @@ function LoginContent() {
                     reason: sessionError ? `Error: ${sessionError.message}` : "No session in storage",
                   });
                 }
+              }).catch((err: any) => {
+                console.error("[Realtime] Error checking session:", err);
               });
             }
           } else if (newData.status === "expired" || newData.status === "cancelled") {
