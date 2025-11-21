@@ -134,7 +134,78 @@ export function isValidTenantSlug(slug: string): boolean {
 }
 
 /**
+ * Tipo de host simplificado (nueva API unificada)
+ */
+export type HostType = "marketing" | "pro" | "admin" | "tenant";
+
+/**
+ * Determina el tipo de host de forma simplificada
+ * 
+ * @param host - Host completo de la request
+ * @returns Tipo de host
+ * 
+ * @example
+ * getHostType("pro.bookfast.es") // "pro"
+ * getHostType("admin.bookfast.es") // "admin"
+ * getHostType("barberstudio.bookfast.es") // "tenant"
+ * getHostType("bookfast.es") // "marketing"
+ * getHostType("localhost:3000") // "pro" (default en desarrollo)
+ */
+export function getHostType(host: string): HostType {
+  const normalized = host.toLowerCase();
+
+  // Quitar puerto si existe (localhost:3000)
+  const [hostname] = normalized.split(":");
+
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    // En local, tratamos siempre como host "pro" por defecto
+    return "pro";
+  }
+
+  if (hostname === "bookfast.es" || hostname === "www.bookfast.es") {
+    return "marketing";
+  }
+
+  if (hostname === "pro.bookfast.es") {
+    return "pro";
+  }
+
+  if (hostname === "admin.bookfast.es") {
+    return "admin";
+  }
+
+  // Cualquier otro subdominio de *.bookfast.es lo tratamos como tenant
+  if (hostname.endsWith(".bookfast.es")) {
+    return "tenant";
+  }
+
+  // Fallback sensato
+  return "marketing";
+}
+
+/**
+ * Extrae el subdominio del tenant desde el host
+ * 
+ * @param host - Host completo de la request
+ * @returns Subdominio del tenant o null
+ * 
+ * @example
+ * getTenantSubdomain("peluqueriajuan.bookfast.es") // "peluqueriajuan"
+ * getTenantSubdomain("pro.bookfast.es") // null (no es tenant)
+ */
+export function getTenantSubdomain(host: string): string | null {
+  const [hostname] = host.toLowerCase().split(":");
+  if (!hostname.endsWith(".bookfast.es")) return null;
+
+  const parts = hostname.replace(".bookfast.es", "").split(".");
+  // Ej: peluqueriajuan.bookfast.es → "peluqueriajuan"
+  return parts[0] || null;
+}
+
+/**
  * Determina el contexto de la aplicación basado en el host
+ * 
+ * @deprecated Usar getHostType() en su lugar. Se mantiene por compatibilidad.
  * 
  * @param host - Host completo de la request
  * @returns Contexto de la aplicación
@@ -147,34 +218,21 @@ export function isValidTenantSlug(slug: string): boolean {
  * getAppContextFromHost("localhost:3000") // "pro" (default en desarrollo)
  */
 export function getAppContextFromHost(host: string): AppContext {
-  const subdomain = parseSubdomain(host);
-
-  // En desarrollo (localhost), por defecto es "pro" (panel)
-  if (!subdomain) {
-    // Si es localhost, asumimos que es el panel por defecto
-    if (host.includes("localhost") || host.includes("127.0.0.1")) {
+  const hostType = getHostType(host);
+  
+  // Mapear HostType a AppContext para compatibilidad
+  switch (hostType) {
+    case "marketing":
+      return "marketing";
+    case "pro":
       return "pro";
-    }
-    // Si no hay subdominio en producción, es el dominio raíz (marketing)
-    return "marketing";
+    case "admin":
+      return "admin";
+    case "tenant":
+      return "tenantPublic";
+    default:
+      return "unknown";
   }
-
-  // Subdominios reservados específicos
-  if (subdomain === "pro") {
-    return "pro";
-  }
-
-  if (subdomain === "admin") {
-    return "admin";
-  }
-
-  // Si el subdominio no está reservado, es un tenant público
-  if (!isReservedSubdomain(subdomain)) {
-    return "tenantPublic";
-  }
-
-  // Por defecto, desconocido
-  return "unknown";
 }
 
 /**
@@ -200,21 +258,38 @@ export async function resolveTenantByHost(host: string): Promise<{ slug: string;
     return null;
   }
 
-  // Consultar Supabase para obtener el tenant por slug
+  // Consultar Supabase para obtener el tenant por slug o public_subdomain
   try {
     // Importación dinámica para evitar problemas de circular dependency
     const { getSupabaseServer } = await import("./supabase/server");
     const supabase = getSupabaseServer();
 
-    const { data: tenant, error } = await supabase
+    // Primero buscar por slug
+    let { data: tenant, error } = await supabase
       .from("tenants")
-      .select("id, slug")
+      .select("id, slug, public_subdomain")
       .eq("slug", subdomain)
       .maybeSingle();
 
     if (error) {
-      console.error("[resolveTenantByHost] Error consultando tenant:", error);
+      console.error("[resolveTenantByHost] Error consultando tenant por slug:", error);
       return null;
+    }
+
+    // Si no se encuentra por slug, buscar por public_subdomain
+    if (!tenant) {
+      const { data: tenantBySubdomain, error: subdomainError } = await supabase
+        .from("tenants")
+        .select("id, slug, public_subdomain")
+        .eq("public_subdomain", subdomain)
+        .maybeSingle();
+
+      if (subdomainError) {
+        console.error("[resolveTenantByHost] Error consultando tenant por public_subdomain:", subdomainError);
+        return null;
+      }
+
+      tenant = tenantBySubdomain || null;
     }
 
     if (!tenant) {

@@ -101,3 +101,67 @@ export function isValidTenantSlug(slug: string): boolean {
   return true;
 }
 
+/**
+ * Resuelve un tenant por slug o public_subdomain
+ * 
+ * Busca primero por slug, y si no encuentra, busca por public_subdomain.
+ * Esto permite que los tenants sean accesibles tanto por slug como por subdominio personalizado.
+ * 
+ * @param identifier - Slug o public_subdomain del tenant
+ * @returns Datos del tenant o null si no existe
+ * 
+ * @example
+ * const tenant = await resolveTenantBySlugOrSubdomain("barberstudio");
+ * // Busca primero por slug="barberstudio", luego por public_subdomain="barberstudio"
+ */
+export async function resolveTenantBySlugOrSubdomain(identifier: string): Promise<{ id: string; slug: string; public_subdomain?: string | null } | null> {
+  if (!identifier || identifier.trim() === "") {
+    return null;
+  }
+
+  try {
+    const sb = supabaseServer();
+    
+    // Primero buscar por slug
+    let { data, error } = await sb
+      .from("tenants")
+      .select("id, slug, public_subdomain")
+      .eq("slug", identifier.toLowerCase().trim())
+      .maybeSingle();
+
+    if (error) {
+      console.error("[resolveTenantBySlugOrSubdomain] Error consultando por slug:", error);
+      return null;
+    }
+
+    // Si no se encuentra por slug, buscar por public_subdomain
+    if (!data) {
+      const { data: bySubdomain, error: subdomainError } = await sb
+        .from("tenants")
+        .select("id, slug, public_subdomain")
+        .eq("public_subdomain", identifier.toLowerCase().trim())
+        .maybeSingle();
+
+      if (subdomainError) {
+        console.error("[resolveTenantBySlugOrSubdomain] Error consultando por public_subdomain:", subdomainError);
+        return null;
+      }
+
+      data = bySubdomain || null;
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    return {
+      id: data.id,
+      slug: data.slug,
+      public_subdomain: data.public_subdomain || null,
+    };
+  } catch (err) {
+    console.error("[resolveTenantBySlugOrSubdomain] Error inesperado:", err);
+    return null;
+  }
+}
+

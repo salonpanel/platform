@@ -3,6 +3,7 @@ import { ReserveClient, PublicService, PublicServiceWithSlots } from "./ReserveC
 import { format } from "date-fns";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { resolveTenantBySlugOrSubdomain } from "@/lib/multiTenant";
 
 type Props = {
   params: { orgId: string };
@@ -25,16 +26,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       .eq("id", params.orgId)
       .maybeSingle();
     
-    // Si no se encuentra por ID, intentar por slug
+    // Si no se encuentra por ID, intentar por slug o public_subdomain
     if (!tenantById) {
-      const { data: tenantBySlug } = await supabase
-        .from("tenants")
-        .select("name")
-        .eq("slug", params.orgId)
-        .maybeSingle();
-      
-      if (tenantBySlug) {
-        tenantName = tenantBySlug.name;
+      const resolvedTenant = await resolveTenantBySlugOrSubdomain(params.orgId);
+      if (resolvedTenant) {
+        const { data: tenantByName } = await supabase
+          .from("tenants")
+          .select("name")
+          .eq("id", resolvedTenant.id)
+          .maybeSingle();
+        
+        if (tenantByName) {
+          tenantName = tenantByName.name;
+        }
       }
     } else {
       tenantName = tenantById.name;
@@ -62,7 +66,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ReservePage({ params, searchParams }: Props) {
   const supabase = supabaseServer();
 
-  // P1.2: Resolver tenant_id (puede ser UUID o slug)
+  // P1.2: Resolver tenant_id (puede ser UUID, slug o public_subdomain)
   // Intentar primero por ID (UUID)
   let tenantId: string | null = null;
   let tenantTimezone: string = "Europe/Madrid";
@@ -72,16 +76,20 @@ export default async function ReservePage({ params, searchParams }: Props) {
     .eq("id", params.orgId)
     .maybeSingle();
 
-  // Si no se encuentra por ID, intentar por slug
+  // Si no se encuentra por ID, intentar por slug o public_subdomain usando el helper
   if (!tenantData && !tenantError) {
-    const { data: tenantBySlug, error: slugError } = await supabase
-      .from("tenants")
-      .select("id, timezone")
-      .eq("slug", params.orgId)
-      .maybeSingle();
-    
-    tenantData = tenantBySlug;
-    tenantError = slugError;
+    const resolvedTenant = await resolveTenantBySlugOrSubdomain(params.orgId);
+    if (resolvedTenant) {
+      // Obtener timezone del tenant resuelto
+      const { data: tenantWithTimezone } = await supabase
+        .from("tenants")
+        .select("id, timezone")
+        .eq("id", resolvedTenant.id)
+        .maybeSingle();
+      
+      tenantData = tenantWithTimezone;
+      tenantError = null;
+    }
   }
 
   if (tenantError || !tenantData) {

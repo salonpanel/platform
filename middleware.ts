@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
 import { getSupabaseServer } from "@/lib/supabase/server";
-import { getAppContextFromHost, resolveTenantByHost, getBaseUrlForContext, AppContext, parseSubdomain, isReservedSubdomain } from "@/lib/domains";
+import { getAppContextFromHost, resolveTenantByHost, getBaseUrlForContext, AppContext, parseSubdomain, isReservedSubdomain, getHostType, getTenantSubdomain } from "@/lib/domains";
 import { logDomainDebug, logTenantResolution } from "@/lib/middleware-debug";
 import { getMarketingUrl, URLS } from "@/lib/urls";
 
