@@ -30,6 +30,35 @@ function VerifyCodeContent() {
     return () => clearInterval(timer);
   }, [timeLeft]);
 
+  // Listener para detectar cuando la sesión se establece después de verificar OTP
+  useEffect(() => {
+    const checkSessionAndRedirect = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && success) {
+          // Si hay sesión y ya verificamos el código, redirigir
+          const redirectParam = searchParams?.get("redirect");
+          const redirectPath = redirectParam || "/panel";
+          console.log("[VerifyCode] Sesión detectada, redirigiendo a:", redirectPath);
+          window.location.href = redirectPath;
+        }
+      } catch (err) {
+        console.warn("[VerifyCode] Error checking session:", err);
+      }
+    };
+
+    // Verificar sesión periódicamente después de verificación exitosa
+    if (success) {
+      const interval = setInterval(checkSessionAndRedirect, 500);
+      // Limpiar después de 5 segundos para evitar loops infinitos
+      const timeout = setTimeout(() => clearInterval(interval), 5000);
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timeout);
+      };
+    }
+  }, [success, supabase, searchParams]);
+
   // Ya no necesitamos el listener de auth state porque la verificación se hace en el servidor
   // El servidor escribe las cookies y luego redirigimos
 
@@ -99,23 +128,27 @@ function VerifyCodeContent() {
         return;
       }
 
-      console.log("[VerifyCode] OTP verificado correctamente");
-
-      // ✅ En este punto, las cookies ya están escritas en la respuesta del route handler
-      // Ahora el middleware y el layout verán la sesión.
       console.log("[VerifyCode] OTP verificado correctamente:", {
         userId: data.user?.id,
         email: data.user?.email,
       });
-      
-      // Limpiar estado antes de redirigir
+
+      // ✅ En este punto, las cookies ya están escritas en la respuesta del route handler
+      // Ahora el middleware y el layout verán la sesión.
+      // Esperar un momento para asegurar que las cookies se establezcan antes de redirigir
       setVerifying(false);
       setSuccess(true);
       
       // Redirigir usando window.location.href para asegurar que las cookies se envíen
       const redirectParam = searchParams?.get("redirect");
       const redirectPath = redirectParam || "/panel";
-      window.location.href = redirectPath;
+      
+      console.log("[VerifyCode] Redirigiendo a:", redirectPath);
+      
+      // Pequeño delay para asegurar que las cookies se establezcan
+      setTimeout(() => {
+        window.location.href = redirectPath;
+      }, 200);
     } catch (err: any) {
       console.error("[VerifyCode] Error inesperado:", err);
       setError("Ha ocurrido un error inesperado. Inténtalo de nuevo.");
