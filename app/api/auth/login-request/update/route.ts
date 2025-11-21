@@ -119,14 +119,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (updateError) {
-      console.error("[UpdateAPI] Error updating request:", updateError);
-      return NextResponse.json(
-        { error: "Error al actualizar la solicitud" },
-        { status: 500 }
-      );
-    }
-
     if (!updated) {
       return NextResponse.json(
         { error: "Solicitud no encontrada o ya procesada" },
