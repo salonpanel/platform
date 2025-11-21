@@ -203,33 +203,11 @@ function LoginContent() {
           console.log("[LoginPolling] Request approved with tokens, setting session...");
           await handleApprovedRequest(data.accessToken, data.refreshToken, data.redirectPath || "/panel");
         } else {
-          // Request aprobada pero sin tokens (webhook marcó como aprobada)
-          // El callback debería haber establecido la sesión. Redirigir directamente.
-          // Si la sesión no está establecida, el middleware o layout del panel lo detectará
-          // y redirigirá de vuelta al login.
-          console.log("[LoginPolling] Request approved but no tokens, redirecting to panel...");
-          console.log("[LoginPolling] Note: If session is not established, middleware will redirect back to login");
-          
-          const redirectPath = data.redirectPath || "/panel";
-          
-          // Limpiar intervalos antes de redirigir
-          if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
-            pollingIntervalRef.current = null;
-          }
-          if (realtimeSubscriptionRef.current) {
-            realtimeSubscriptionRef.current.unsubscribe();
-            realtimeSubscriptionRef.current = null;
-          }
-          if (sessionCheckIntervalRef.current) {
-            clearInterval(sessionCheckIntervalRef.current);
-            sessionCheckIntervalRef.current = null;
-          }
-          
-          setWaitingForApproval(false);
-          setSent(false);
-          router.replace(redirectPath);
-          return; // Salir temprano para evitar más polling
+          // Request aprobada pero sin tokens (webhook marcó como aprobada antes de que el callback guarde tokens)
+          // Esperar un poco más para que el callback termine de procesar y guarde los tokens
+          console.log("[LoginPolling] Request approved but no tokens yet, waiting for callback to finish...");
+          console.log("[LoginPolling] Will retry on next poll to get tokens");
+          // Continuar polling - el callback debería guardar los tokens pronto
         }
       } else if (data.status === "expired" || data.status === "cancelled") {
         // Request expirada o cancelada
