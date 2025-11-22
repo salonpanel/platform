@@ -78,8 +78,27 @@ export function HourSlot({ hour, children, density = "default", className, isCur
         
         {/* Contenido dinámico */}
         <div className="relative z-10">
-          {children || (
+          {process.env.NODE_ENV === 'development' && (
+            <div className="absolute -top-2 -right-2 text-xs bg-red-500 text-white px-1 rounded">
+              {hour}h
+            </div>
+          )}
+          {children ? (
+            <div>
+              {process.env.NODE_ENV === 'development' && (
+                <div className="text-xs bg-green-500 text-white px-1 rounded mb-1">
+                  Has children
+                </div>
+              )}
+              {children}
+            </div>
+          ) : (
             <div className="flex items-center justify-center h-full min-h-[40px]">
+              {process.env.NODE_ENV === 'development' && (
+                <div className="text-xs bg-yellow-500 text-white px-1 rounded">
+                  No children
+                </div>
+              )}
               <div className="w-full h-px bg-[var(--glass-border-subtle)]/50" />
             </div>
           )}

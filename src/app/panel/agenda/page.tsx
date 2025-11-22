@@ -500,7 +500,22 @@ function AgendaContent() {
                     <div className="h-full flex flex-col min-h-0 overflow-hidden">
                       {/* Vista Timeline (Desktop/Tablet) */}
                       <div className="hidden md:flex flex-1 min-h-0">
-                        <div className="flex-1 min-h-0 overflow-y-auto">
+                        <div 
+                          className="flex-1 min-h-0 overflow-y-auto border border-red-500" // Debug border
+                          style={{ maxHeight: '800px' }} // Debug height limit
+                          ref={(el) => {
+                            if (el && process.env.NODE_ENV === 'development') {
+                              console.log('Timeline container:', {
+                                scrollHeight: el.scrollHeight,
+                                clientHeight: el.clientHeight,
+                                offsetHeight: el.offsetHeight,
+                                hourHeight: hourHeight,
+                                totalHours: 24,
+                                estimatedHeight: hourHeight * 24
+                              });
+                            }
+                          }}
+                        >
                           <Timeline
                             startHour={0}
                             endHour={23}
@@ -516,16 +531,24 @@ function AgendaContent() {
                               });
 
                               // Debug: mostrar información
-                              if (process.env.NODE_ENV === 'development' && bookings.length > 0) {
+                              if (process.env.NODE_ENV === 'development') {
                                 console.log(`Hour ${hour}: Found ${hourBookings.length} bookings`, {
                                   totalBookings: bookings.length,
                                   hourBookings: hourBookings.map(b => ({
                                     id: b.id,
                                     starts_at: b.starts_at,
-                                    hour: new Date(b.starts_at).getHours()
+                                    hour: new Date(b.starts_at).getHours(),
+                                    customer: b.customer?.name,
+                                    service: b.service?.name
                                   }))
                                 });
                               }
+
+                              // Siempre mostrar información de debug para esta hora
+                              console.log(`Hour ${hour} - Bookings: ${hourBookings.length}`, {
+                                hasBookings: hourBookings.length > 0,
+                                bookingDetails: hourBookings.slice(0, 2)
+                              });
 
                               if (hourBookings.length === 0) return null;
 

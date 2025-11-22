@@ -69,21 +69,35 @@ export function Timeline({
       </motion.div>
       
       {/* Horas del timeline */}
-      {hours.map((hour, index) => (
-        <div
-          key={hour}
-          style={{ minHeight: `${effectiveHourHeight}px` }}
-          className="relative"
-        >
-          <HourSlot 
-            hour={hour} 
-            density={density}
-            isCurrentHour={hour === currentHour}
+      <div 
+        className="relative"
+        style={{ 
+          height: `${hours.length * effectiveHourHeight}px`, // Altura total fija
+          minHeight: `${hours.length * effectiveHourHeight}px`
+        }}
+      >
+        {hours.map((hour, index) => (
+          <div
+            key={hour}
+            style={{ 
+              height: `${effectiveHourHeight}px`, // Altura fija por hora
+              position: 'absolute',
+              top: `${index * effectiveHourHeight}px`,
+              left: 0,
+              right: 0
+            }}
+            className="relative"
           >
-            {children && children(hour)}
-          </HourSlot>
-        </div>
-      ))}
+            <HourSlot 
+              hour={hour} 
+              density={density}
+              isCurrentHour={hour === currentHour}
+            >
+              {children && children(hour)}
+            </HourSlot>
+          </div>
+        ))}
+      </div>
       
       {/* Efecto degradado sutil al final */}
       <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[var(--bg-primary)] via-[var(--bg-primary)]/50 to-transparent pointer-events-none" />
