@@ -15,6 +15,7 @@ import { Booking, Staff, StaffBlocking, StaffSchedule, BookingStatus, CalendarSl
 import { GlassCard } from "@/components/agenda/primitives/GlassCard";
 import { theme } from "@/theme/ui";
 import { cn } from "@/lib/utils";
+import { SLOT_HEIGHT_PX, SLOT_DURATION_MINUTES, MIN_BOOKING_HEIGHT_PX } from "@/components/agenda/constants/layout";
 import { DayView } from "@/components/agenda/views/DayView";
 import { useCalendarData } from "@/components/agenda/hooks/useCalendarData";
 
@@ -71,10 +72,7 @@ const blockingColors = {
 };
 
 // Constantes centralizadas para cálculos de posición
-// Cada slot de 15 minutos = 64px de altura (updated from 60px)
-const SLOT_HEIGHT_PX = 64;
-const SLOT_DURATION_MINUTES = 15;
-const MIN_BOOKING_HEIGHT_PX = 64; // Altura mínima para una cita (15 min) - updated from 60px
+// Importadas desde layout.ts para consistencia
 const DEFAULT_SLOT_DURATION_MINUTES = 30; // Para pre-llenar modales desde gaps libres
 
 // Generar slots de tiempo (cada 15 minutos) - se genera dinámicamente según horarios del staff

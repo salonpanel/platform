@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { Booking } from "@/types/agenda";
+import { SLOT_HEIGHT_PX, SLOT_DURATION_MINUTES } from "../constants/layout";
 
 interface DragDropManagerProps {
   bookings?: Booking[];
@@ -45,8 +46,8 @@ export function useDragDropManager({
 
   // Utility functions
   const pixelsToMinutes = (pixels: number): number => {
-    const slots = Math.round(Math.max(0, pixels) / 64); // 64px per 15 minutes
-    const relativeMinutes = slots * 15;
+    const slots = Math.round(Math.max(0, pixels) / SLOT_HEIGHT_PX); // Use shared constants
+    const relativeMinutes = slots * SLOT_DURATION_MINUTES;
     return 8 * 60 + relativeMinutes; // Start from 8:00
   };
 
@@ -107,8 +108,8 @@ export function useDragDropManager({
         const newStaffId = getStaffIdFromElement(elementUnderMouse) || currentDrag.originalStaffId;
 
         const relativeY = moveEvent.clientY - bookingRect.top + currentDrag.dragOffset.y;
-        const slotIndex = Math.round(relativeY / 64);
-        const snappedY = slotIndex * 64;
+        const slotIndex = Math.round(relativeY / SLOT_HEIGHT_PX);
+        const snappedY = slotIndex * SLOT_HEIGHT_PX;
         const clampedY = Math.max(0, snappedY);
 
         const updatedDrag = {
