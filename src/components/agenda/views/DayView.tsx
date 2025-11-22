@@ -128,31 +128,28 @@ export function DayView({
         ref={timelineRef}
         className="relative flex-1 overflow-x-auto overflow-y-hidden scrollbar-hide"
       >
-        {/* Container con ancho responsivo */}
+        {/* Container con ancho responsivo y TimeColumn sticky */}
         <div 
-          className="flex h-full transition-all duration-150" 
-          style={{
-            // Default to desktop width, will update on client after hydration
-            minWidth: `${staffList.length * (useMediaQuery("(max-width: 768px)") ? STAFF_COLUMN_MIN_WIDTH_MOBILE : STAFF_COLUMN_MIN_WIDTH_DESKTOP)}px`,
-            // Ensure smooth transition
-            transitionProperty: "min-width",
-            transitionDuration: "150ms",
-            transitionTimingFunction: "ease-out"
-          }}
+          className="flex h-full relative" 
         >
-          {/* Time Column */}
-          <TimeColumn
-            startHour={8}
-            endHour={22}
-            timezone={timezone}
-          />
+          {/* Time Column - Sticky */}
+          <div className="sticky left-0 z-30 bg-primary shadow-md">
+            <TimeColumn
+              startHour={8}
+              endHour={22}
+              timezone={timezone}
+            />
+          </div>
 
-          {/* Staff Columns */}
+          {/* Staff Columns - Scrollable */}
           <motion.div
             variants={staggerPresets.staffColumns.variants}
             initial="hidden"
             animate="visible"
-            className="flex"
+            className="flex min-w-0"
+            style={{
+              width: `${staffList.length * (useMediaQuery("(max-width: 768px)") ? STAFF_COLUMN_MIN_WIDTH_MOBILE : STAFF_COLUMN_MIN_WIDTH_DESKTOP)}px`
+            }}
           >
             {staffList.map((staff, staffIndex) => {
               const staffBookings = bookingsByStaff.get(staff.id) || [];
@@ -165,7 +162,9 @@ export function DayView({
                   custom={staffIndex}
                   className={cn(
                     "flex-1 transition-all duration-150",
-                    "min-w-[260px] sm:min-w-[260px] md:min-w-[260px] lg:min-w-[300px]"
+                    useMediaQuery("(max-width: 768px)") 
+                      ? `min-w-[${STAFF_COLUMN_MIN_WIDTH_MOBILE}px]` 
+                      : `min-w-[${STAFF_COLUMN_MIN_WIDTH_DESKTOP}px]`
                   )}
                 >
                   <StaffColumn
