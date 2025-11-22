@@ -28,16 +28,17 @@ export default async function ServiciosPage({ searchParams }: ServiciosPageProps
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const impersonateOrgId = resolvedSearchParams?.impersonate ?? null;
 
-  // 3) Validamos sesión
+  // NOTA: La verificación de sesión ya la realiza el layout cliente del panel.
+  // Aquí solo necesitamos el usuario actual para poder cargar tenant y servicios.
   const {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession();
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  if (!session || sessionError) {
+  if (!user || userError) {
     return (
-      <Alert type="error" title="Sesión no disponible">
-        Tu sesión no está activa o ha expirado. Vuelve a iniciar sesión desde la página de login.
+      <Alert type="error" title="No se pudo obtener el usuario">
+        No hemos podido obtener la información de tu usuario. Vuelve a iniciar sesión o inténtalo de nuevo en unos minutos.
       </Alert>
     );
   }
@@ -48,7 +49,7 @@ export default async function ServiciosPage({ searchParams }: ServiciosPageProps
   if (impersonateOrgId) {
     const { data: isAdmin, error: adminError } = await supabase.rpc(
       "check_platform_admin",
-      { p_user_id: session.user.id }
+      { p_user_id: user.id }
     );
 
     if (adminError) {
@@ -65,7 +66,7 @@ export default async function ServiciosPage({ searchParams }: ServiciosPageProps
     const { data: membership, error: membershipError } = await supabase
       .from("memberships")
       .select("tenant_id")
-      .eq("user_id", session.user.id)
+      .eq("user_id", user.id)
       .order("created_at", { ascending: true })
       .limit(1)
       .maybeSingle();
