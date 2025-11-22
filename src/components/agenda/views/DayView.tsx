@@ -48,6 +48,7 @@ export function DayView({
   onPopoverShow,
 }: DayViewProps) {
   const timelineRef = useRef<HTMLDivElement>(null);
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   // Interaction handlers
   const interactions = useCalendarInteractions({
@@ -141,15 +142,12 @@ export function DayView({
             />
           </div>
 
-          {/* Staff Columns - Scrollable */}
+          {/* Staff Columns - Scrollable horizontal en mobile */}
           <motion.div
             variants={staggerPresets.staffColumns.variants}
             initial="hidden"
             animate="visible"
             className="flex min-w-0"
-            style={{
-              width: `${staffList.length * (useMediaQuery("(max-width: 768px)") ? STAFF_COLUMN_MIN_WIDTH_MOBILE : STAFF_COLUMN_MIN_WIDTH_DESKTOP)}px`
-            }}
           >
             {staffList.map((staff, staffIndex) => {
               const staffBookings = bookingsByStaff.get(staff.id) || [];
@@ -160,12 +158,11 @@ export function DayView({
                   key={staff.id}
                   variants={staggerPresets.staffColumns.variants}
                   custom={staffIndex}
-                  className={cn(
-                    "flex-1 transition-all duration-150",
-                    useMediaQuery("(max-width: 768px)") 
-                      ? `min-w-[${STAFF_COLUMN_MIN_WIDTH_MOBILE}px]` 
-                      : `min-w-[${STAFF_COLUMN_MIN_WIDTH_DESKTOP}px]`
-                  )}
+                  className="flex-1 transition-all duration-150"
+                  style={{
+                    minWidth: isMobile ? STAFF_COLUMN_MIN_WIDTH_MOBILE : STAFF_COLUMN_MIN_WIDTH_DESKTOP,
+                    flexShrink: 0
+                  }}
                 >
                   <StaffColumn
                     staff={staff}
