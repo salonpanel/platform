@@ -463,9 +463,10 @@ export function AgendaCalendarView({
   }, [visibleStaff, bookingsByStaff, bookings, startMinutes, timezone]);
   
   // Función para encontrar el siguiente booking en la dirección especificada
-  const findNextBooking = useMemo(() => {
-    return (currentBookingId: string, direction: "up" | "down" | "left" | "right") => {
-      const currentIndex = orderedBookings.findIndex((item) => item.booking.id === currentBookingId);
+  const findNextBooking = useCallback((currentBookingId: string, direction: "up" | "down" | "left" | "right") => {
+    const currentIndex = orderedBookings.findIndex(
+      (item) => item.booking.id === currentBookingId
+    );
       if (currentIndex === -1) return null;
       
       const current = orderedBookings[currentIndex];
@@ -500,7 +501,6 @@ export function AgendaCalendarView({
       }
       
       return null;
-    };
   }, [orderedBookings, visibleStaff]);
 
   // Calcular posición y altura de cada bloqueo
@@ -1230,35 +1230,37 @@ export function AgendaCalendarView({
 
   return (
     <>
-      <DayView
-        bookings={displayBookings}
-        staffBlockings={displayStaffBlockings}
-        staffList={visibleStaff}
-        staffSchedules={displayStaffSchedules}
-        selectedDate={selectedDate}
-        timezone={timezone}
-        showFreeSlots={showFreeSlots}
-        onBookingClick={onBookingClick}
-        onSlotClick={handleSlotClick}
-        onFreeSlotClick={(slot) => onNewBooking?.(slot)}
-        onBookingMove={onBookingMove}
-        onBookingResize={onBookingResize}
-        onPopoverShow={(position, slot, booking) => {
-          if (booking) {
-            setBookingActionPopover({
-              isOpen: true,
-              position,
-              booking,
-            });
-          } else if (slot) {
-            setPopoverState({
-              isOpen: true,
-              position,
-              slot,
-            });
-          }
-        }}
-      />
+      <div className="h-full w-full flex-1 min-h-0">
+        <DayView
+          bookings={displayBookings}
+          staffBlockings={displayStaffBlockings}
+          staffList={visibleStaff}
+          staffSchedules={displayStaffSchedules}
+          selectedDate={selectedDate}
+          timezone={timezone}
+          showFreeSlots={showFreeSlots}
+          onBookingClick={onBookingClick}
+          onSlotClick={handleSlotClick}
+          onFreeSlotClick={(slot) => onNewBooking?.(slot)}
+          onBookingMove={onBookingMove}
+          onBookingResize={onBookingResize}
+          onPopoverShow={(position, slot, booking) => {
+            if (booking) {
+              setBookingActionPopover({
+                isOpen: true,
+                position,
+                booking,
+              });
+            } else if (slot) {
+              setPopoverState({
+                isOpen: true,
+                position,
+                slot,
+              });
+            }
+          }}
+        />
+      </div>
 
       {/* Popover de acciones para slots vacíos */}
       {popoverState.isOpen && popoverState.slot && (
@@ -1367,4 +1369,3 @@ export function AgendaCalendarView({
     </>
   );
 }
-
