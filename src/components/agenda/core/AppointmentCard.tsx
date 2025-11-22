@@ -29,12 +29,12 @@ interface StatusTokens {
 
 const getStatusTokens = (status: string): StatusTokens => {
   const statusMap: Record<string, StatusTokens> = {
-    pending: { bg: "rgba(255,193,7,0.08)", border: "rgba(255,193,7,0.2)", text: "#FFC107", borderLeft: "#FFC107" },
-    confirmed: { bg: "rgba(79,227,193,0.08)", border: "rgba(79,227,193,0.2)", text: "#4FE3C1", borderLeft: "#4FE3C1" },
-    paid: { bg: "rgba(58,109,255,0.08)", border: "rgba(58,109,255,0.2)", text: "#3A6DFF", borderLeft: "#3A6DFF" },
-    cancelled: { bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.2)", text: "#EF4444", borderLeft: "#EF4444" },
-    completed: { bg: "rgba(79,227,193,0.08)", border: "rgba(79,227,193,0.2)", text: "#4FE3C1", borderLeft: "#4FE3C1" },
-    "no_show": { bg: "rgba(255,109,163,0.08)", border: "rgba(255,109,163,0.2)", text: "#FF6DA3", borderLeft: "#FF6DA3" },
+    pending: { bg: "rgba(21,23,28,0.6)", border: "rgba(255,255,255,0.1)", text: "#FFC107", borderLeft: "#FFC107" },
+    confirmed: { bg: "rgba(21,23,28,0.6)", border: "rgba(255,255,255,0.1)", text: "#4FE3C1", borderLeft: "#4FE3C1" },
+    paid: { bg: "rgba(21,23,28,0.6)", border: "rgba(255,255,255,0.1)", text: "#3A6DFF", borderLeft: "#3A6DFF" },
+    cancelled: { bg: "rgba(21,23,28,0.6)", border: "rgba(255,255,255,0.1)", text: "#EF4444", borderLeft: "#EF4444" },
+    completed: { bg: "rgba(21,23,28,0.6)", border: "rgba(255,255,255,0.1)", text: "#4FE3C1", borderLeft: "#4FE3C1" },
+    "no_show": { bg: "rgba(21,23,28,0.6)", border: "rgba(255,255,255,0.1)", text: "#FF6DA3", borderLeft: "#FF6DA3" },
   };
   return statusMap[status] || statusMap.pending;
 };
@@ -109,29 +109,29 @@ export const AppointmentCard = React.memo(function AppointmentCard({
         onClick?.(booking);
       }}
       className={cn(
-        "absolute left-3 right-3 rounded-xl border-r border-t border-b relative transition-all duration-200",
-        "hover:z-30 focus:outline-none focus:ring-2 focus:ring-accent-blue/40 focus:ring-offset-1 focus:ring-offset-primary/50 focus:z-30",
+        "absolute left-3 right-3 rounded-xl border relative transition-all duration-200",
+        "hover:z-30 focus:outline-none focus:ring-2 focus:ring-accent-blue/40 focus:ring-offset-1 focus:ring-offset-transparent focus:z-30",
         "min-h-[48px] touch-manipulation",
-        "backdrop-blur-xl shadow-sm hover:shadow-lg border-l-[4px]",
-        "before:absolute before:inset-0 before:rounded-xl before:bg-gradient-to-br before:from-white/5 before:to-transparent before:pointer-events-none",
+        "backdrop-blur-md shadow-lg hover:shadow-xl border-l-[3px]",
+        "hover:bg-[#15171C]/80 hover:scale-[1.02]",
         isGhost ? "opacity-30 border-dashed" : "",
         isPast && !isDragging ? "opacity-70 saturate-50" : "",
         isDragging && !isGhost ? "cursor-grabbing z-50 shadow-2xl scale-[1.03]" : isDragging ? "" : "cursor-grab z-20",
         height >= 80 ? "p-3" : height >= 64 ? "p-2.5" : "p-2"
       )}
       style={{
-        borderRadius: "14px",
+        borderRadius: height >= 80 ? "16px" : "12px",
         top: `${top}px`,
         height: `${Math.max(height, 48)}px`,
         minHeight: "48px",
-        background: `linear-gradient(135deg, ${getStatusTokens(booking.status).bg}, ${getStatusTokens(booking.status).bg}ee)`,
+        background: getStatusTokens(booking.status).bg,
         borderLeftColor: getStatusTokens(booking.status).borderLeft,
         borderRightColor: getStatusTokens(booking.status).border,
         borderTopColor: getStatusTokens(booking.status).border,
         borderBottomColor: getStatusTokens(booking.status).border,
         boxShadow: isDragging && !isGhost
-          ? `0 12px 32px -12px ${getStatusTokens(booking.status).borderLeft}50, 0 0 0 1px ${getStatusTokens(booking.status).borderLeft}20`
-          : `0 2px 8px -2px ${getStatusTokens(booking.status).borderLeft}20`,
+          ? `0 20px 48px -12px rgba(0,0,0,0.5), 0 0 0 1px ${getStatusTokens(booking.status).borderLeft}40, inset 0 1px 0 rgba(255,255,255,0.05)`
+          : `0 8px 24px -8px rgba(0,0,0,0.3), 0 0 0 1px ${getStatusTokens(booking.status).borderLeft}30, inset 0 1px 0 rgba(255,255,255,0.05)`,
         // Hardware acceleration
         transform: "translateZ(0)",
         willChange: "transform, opacity",
@@ -143,8 +143,8 @@ export const AppointmentCard = React.memo(function AppointmentCard({
         {/* Header: Horario y Estado */}
         <div className="flex items-center justify-between gap-2 flex-shrink-0 mb-0.5">
           <span className={cn(
-            "text-xs font-mono font-semibold leading-tight whitespace-nowrap",
-            "text-secondary font-mono"
+            "text-[10px] font-mono leading-tight whitespace-nowrap",
+            "text-gray-400"
           )}>
             {format(localStartsAt, "HH:mm")} – {format(localEndsAt, "HH:mm")}
           </span>
@@ -157,20 +157,20 @@ export const AppointmentCard = React.memo(function AppointmentCard({
         <div className="flex-1 min-h-0 flex flex-col justify-center overflow-hidden">
           <div
             className={cn(
-              "font-semibold truncate tracking-tight",
+              "font-medium truncate",
               height >= 80 ? "text-sm leading-snug" : height >= 64 ? "text-xs leading-snug" : "text-xs leading-snug",
-              "text-primary font-sans"
+              "text-white font-sans"
             )}
             title={booking.customer?.name || "Sin cliente"}
           >
             {booking.customer?.name || "Sin cliente"}
           </div>
 
-          {height >= 64 && (
+          {height >= 60 && (
             <div
               className={cn(
                 "truncate leading-tight mt-0.5",
-                "text-xs text-secondary font-sans"
+                "text-xs text-gray-500 font-sans"
               )}
               title={booking.service?.name || "Sin servicio"}
             >
@@ -183,12 +183,12 @@ export const AppointmentCard = React.memo(function AppointmentCard({
         {height >= 80 && (paidAmount > 0 || totalPrice > 0) && (
           <div className={cn(
             "flex items-center justify-end gap-1.5 flex-shrink-0 mt-auto pt-1.5",
-            "border-t border-border-default"
+            "border-t border-white/5"
           )}>
             {paidAmount > 0 && (
               <span className={cn(
                 "font-semibold text-xs leading-tight whitespace-nowrap",
-                "text-accent-aqua font-sans"
+                "text-[#4FE3C1] font-sans"
               )}>
                 {(paidAmount / 100).toFixed(2)}€
               </span>
@@ -196,7 +196,7 @@ export const AppointmentCard = React.memo(function AppointmentCard({
             {totalPrice > 0 && (
               <span className={cn(
                 "font-medium text-xs leading-tight whitespace-nowrap",
-                paidAmount > 0 ? "text-secondary" : "text-secondary",
+                paidAmount > 0 ? "text-gray-400" : "text-gray-400",
                 "font-sans"
               )}>
                 {(totalPrice / 100).toFixed(2)}€

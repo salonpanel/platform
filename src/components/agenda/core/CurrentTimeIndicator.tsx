@@ -21,9 +21,9 @@ export function CurrentTimeIndicator({ currentMinutes }: CurrentTimeIndicatorPro
         height: "2px",
       }}
     >
-      <div className="absolute left-0 top-0 w-full h-full bg-gradient-to-r from-status-cancelled via-accent-pink to-status-cancelled shadow-status-cancelled/40" />
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-status-cancelled rounded-full -translate-x-1.5 border-2 border-primary shadow-status-cancelled/60" />
-      <div className="absolute left-6 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-status-cancelled/90 backdrop-blur-sm rounded-lg text-xs font-semibold text-primary font-sans">
+      <div className="absolute left-0 top-0 w-full h-full bg-gradient-to-r from-[#4FE3C1] via-[#4FE3C1] to-transparent opacity-80" style={{ boxShadow: "0 0 8px rgba(79,227,193,0.4)" }} />
+      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-[#4FE3C1] rounded-full -translate-x-1.5 border-2 border-[#0B0C10]" style={{ boxShadow: "0 0 12px rgba(79,227,193,0.6)" }} />
+      <div className="absolute left-6 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-[#4FE3C1]/20 backdrop-blur-md rounded-lg text-[10px] font-semibold text-[#4FE3C1] font-sans border border-[#4FE3C1]/30">
         Ahora
       </div>
     </div>

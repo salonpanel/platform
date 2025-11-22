@@ -124,17 +124,27 @@ export function DayView({
   }
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden bg-primary">
+    <div className="w-full h-full flex flex-col overflow-hidden relative bg-[#0B0C10]">
+      {/* Radial gradient background */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div 
+          className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 rounded-full opacity-10 blur-3xl"
+          style={{
+            background: "radial-gradient(circle, rgba(58,109,255,0.3) 0%, rgba(160,107,255,0.2) 50%, transparent 100%)"
+          }}
+        />
+      </div>
+
       <div
         ref={timelineRef}
-        className="relative flex-1 overflow-x-auto overflow-y-hidden scrollbar-hide"
+        className="relative flex-1 overflow-x-auto overflow-y-hidden scrollbar-hide z-10"
       >
         {/* Container con ancho responsivo y TimeColumn sticky */}
         <div 
           className="flex h-full relative" 
         >
           {/* Time Column - Sticky */}
-          <div className="sticky left-0 z-30 bg-primary shadow-md">
+          <div className="sticky left-0 z-30">
             <TimeColumn
               startHour={8}
               endHour={22}

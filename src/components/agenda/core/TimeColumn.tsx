@@ -24,19 +24,19 @@ export function TimeColumn({ startHour, endHour, timezone }: TimeColumnProps) {
   }, [startHour, endHour]);
 
   return (
-    <div className={`border-r border-border-default bg-primary sticky left-0 z-10 flex flex-col h-full`} style={{ width: `${TIME_COLUMN_WIDTH_PX}px` }}>
+    <div className={`border-r border-white/5 bg-[#0B0C10]/80 backdrop-blur-xl sticky left-0 z-30 flex flex-col h-full`} style={{ width: `${TIME_COLUMN_WIDTH_PX}px` }}>
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-primary border-b border-border-default px-4 py-4 backdrop-blur-md flex items-center flex-shrink-0" style={{ height: `${TIMELINE_HEADER_HEIGHT_PX}px` }}>
+      <div className="sticky top-0 z-20 bg-[#0B0C10]/90 border-b border-white/5 px-4 py-4 backdrop-blur-md flex items-center flex-shrink-0" style={{ height: `${TIMELINE_HEADER_HEIGHT_PX}px` }}>
         <div className={cn(
           "text-xs font-semibold uppercase tracking-wider",
-          "text-tertiary font-sans"
+          "text-gray-500 font-sans"
         )}>
           Hora
         </div>
       </div>
 
       {/* Time slots */}
-      <div className="relative flex-1 overflow-y-auto scrollbar-hide bg-primary" style={{ height: `calc(100% - ${TIMELINE_HEADER_HEIGHT_PX}px)` }}>
+      <div className="relative flex-1 overflow-y-auto scrollbar-hide bg-transparent" style={{ height: `calc(100% - ${TIMELINE_HEADER_HEIGHT_PX}px)` }}>
         {timeSlots.map((time, index) => {
           const [hour, minute] = time.split(":").map(Number);
           const isHour = minute === 0;
@@ -46,7 +46,7 @@ export function TimeColumn({ startHour, endHour, timezone }: TimeColumnProps) {
               key={time}
               className={cn(
                 "absolute left-0 right-0 flex items-start justify-end pr-3 pt-1",
-                isHour ? `border-t ${theme.colors.borderHover}` : `border-t border-dashed ${theme.colors.borderDefault}`
+                isHour ? "border-t border-white/[0.03]" : "border-t border-dashed border-white/[0.02]"
               )}
               style={{
                 top: `${index * SLOT_HEIGHT_PX}px`,
@@ -59,8 +59,8 @@ export function TimeColumn({ startHour, endHour, timezone }: TimeColumnProps) {
             >
               {isHour && (
                 <span className={cn(
-                  "text-xs font-semibold font-mono",
-                  "text-secondary"
+                  "text-xs font-mono",
+                  "text-gray-500"
                 )}>
                   {time}
                 </span>

@@ -214,49 +214,49 @@ export const StaffColumn = React.memo(function StaffColumn({
       initial={{ opacity: 0, x: 12 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.05, duration: 0.2, ease: "easeOut" }}
-      className="flex-1 min-w-[300px] border-r border-border-default last:border-r-0 relative bg-primary"
+      className="flex-1 min-w-[300px] border-r border-white/5 last:border-r-0 relative bg-transparent"
     >
       {/* Header */}
-      <div className="sticky top-0 z-20 px-5 py-4 flex-shrink-0" style={{ height: "72px" }}>
-        <GlassCard variant="inset" padding="md" className="h-full">
-          <div className="flex items-center gap-3 h-full">
-            <motion.div
-              className={cn(
-                "h-8 w-8 rounded-full flex items-center justify-center text-sm font-semibold shadow-sm",
-                "bg-accent-blue/10 border border-accent-blue/25 text-accent-blue"
-              )}
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.15 }}
-            >
-              {staff.name.charAt(0).toUpperCase()}
-            </motion.div>
-            <div className="flex-1 min-w-0">
-              <div className={cn(
-                "font-semibold text-sm tracking-tight truncate",
-                "text-primary font-sans"
-              )}>
-                {staff.name}
-              </div>
-              <div className={cn(
-                "text-xs mt-0.5 flex items-center gap-1.5",
-                "text-tertiary font-sans"
-              )}>
-                <div className="h-1.5 w-1.5 rounded-full bg-accent-aqua" />
-                {(() => {
-                  const schedule = staffSchedules.find(s => s.staff_id === staff.id);
-                  return schedule ? `${schedule.start_time} - ${schedule.end_time}` : "09:00 - 19:00";
-                })()}
-              </div>
+      <div className="sticky top-0 z-20 px-5 py-4 flex-shrink-0 bg-white/[0.02] backdrop-blur-md border-b border-white/5" style={{ height: "72px" }}>
+        <div className="flex items-center gap-3 h-full">
+          <motion.div
+            className={cn(
+              "h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold",
+              "bg-gradient-to-br from-[#3A6DFF]/20 to-[#A06BFF]/20",
+              "border-2 border-[#0B0C10] ring-2 ring-white/10",
+              "text-white shadow-lg"
+            )}
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.15 }}
+          >
+            {staff.name.charAt(0).toUpperCase()}
+          </motion.div>
+          <div className="flex-1 min-w-0">
+            <div className={cn(
+              "font-semibold text-sm tracking-wide truncate",
+              "text-white font-sans"
+            )}>
+              {staff.name}
+            </div>
+            <div className={cn(
+              "text-xs mt-0.5 flex items-center gap-1.5",
+              "text-gray-400 font-sans"
+            )}>
+              <div className="h-1.5 w-1.5 rounded-full bg-[#4FE3C1] shadow-sm shadow-[#4FE3C1]/50" />
+              {(() => {
+                const schedule = staffSchedules.find(s => s.staff_id === staff.id);
+                return schedule ? `${schedule.start_time} - ${schedule.end_time}` : "09:00 - 19:00";
+              })()}
             </div>
           </div>
-        </GlassCard>
+        </div>
       </div>
 
       {/* Content area */}
       <div
         ref={columnRef}
         data-staff-column={staff.id}
-        className="relative flex-1 overflow-y-auto scrollbar-hide bg-primary"
+        className="relative flex-1 overflow-y-auto scrollbar-hide bg-transparent"
         style={{ height: `calc(100% - 72px)` }}
       >
         {/* Grid */}
