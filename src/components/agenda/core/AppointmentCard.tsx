@@ -19,13 +19,22 @@ interface AppointmentCardProps {
   onMouseDown?: (e: React.MouseEvent, booking: Booking, top: number) => void;
 }
 
-const getStatusTokens = (status: string) => {
-  const statusMap: Record<string, any> = {
-    pending: theme.statusTokens?.pending || { bg: "rgba(255,193,7,0.12)", border: "rgba(255,193,7,0.25)", text: "#FFC107" },
-    confirmed: theme.statusTokens?.confirmed || { bg: "rgba(79,227,193,0.12)", border: "rgba(79,227,193,0.25)", text: "#4FE3C1" },
-    cancelled: theme.statusTokens?.cancelled || { bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.25)", text: "#EF4444" },
-    completed: theme.statusTokens?.completed || { bg: "rgba(58,109,255,0.12)", border: "rgba(58,109,255,0.25)", text: "#3A6DFF" },
-    "no-show": theme.statusTokens?.["no-show"] || { bg: "rgba(255,109,163,0.12)", border: "rgba(255,109,163,0.25)", text: "#FF6DA3" },
+// Type para tokens de status
+interface StatusTokens {
+  bg: string;
+  border: string;
+  text: string;
+  borderLeft: string;
+}
+
+const getStatusTokens = (status: string): StatusTokens => {
+  const statusMap: Record<string, StatusTokens> = {
+    pending: { bg: "rgba(255,193,7,0.08)", border: "rgba(255,193,7,0.2)", text: "#FFC107", borderLeft: "#FFC107" },
+    confirmed: { bg: "rgba(79,227,193,0.08)", border: "rgba(79,227,193,0.2)", text: "#4FE3C1", borderLeft: "#4FE3C1" },
+    paid: { bg: "rgba(58,109,255,0.08)", border: "rgba(58,109,255,0.2)", text: "#3A6DFF", borderLeft: "#3A6DFF" },
+    cancelled: { bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.2)", text: "#EF4444", borderLeft: "#EF4444" },
+    completed: { bg: "rgba(79,227,193,0.08)", border: "rgba(79,227,193,0.2)", text: "#4FE3C1", borderLeft: "#4FE3C1" },
+    "no_show": { bg: "rgba(255,109,163,0.08)", border: "rgba(255,109,163,0.2)", text: "#FF6DA3", borderLeft: "#FF6DA3" },
   };
   return statusMap[status] || statusMap.pending;
 };
@@ -100,13 +109,14 @@ export const AppointmentCard = React.memo(function AppointmentCard({
         onClick?.(booking);
       }}
       className={cn(
-        "absolute left-3 right-3 rounded-xl border relative transition-all duration-150",
-        "hover:z-30 focus:outline-none focus:ring-2 focus:ring-accent-blue/50 focus:ring-offset-2 focus:ring-offset-primary focus:z-30",
-        "min-h-[48px] touch-manipulation", // Ensure minimum 48px tap target for mobile
-        "backdrop-blur-md shadow-sm hover:shadow-md border-l-4",
+        "absolute left-3 right-3 rounded-xl border-r border-t border-b relative transition-all duration-200",
+        "hover:z-30 focus:outline-none focus:ring-2 focus:ring-accent-blue/40 focus:ring-offset-1 focus:ring-offset-primary/50 focus:z-30",
+        "min-h-[48px] touch-manipulation",
+        "backdrop-blur-xl shadow-sm hover:shadow-lg border-l-[4px]",
+        "before:absolute before:inset-0 before:rounded-xl before:bg-gradient-to-br before:from-white/5 before:to-transparent before:pointer-events-none",
         isGhost ? "opacity-30 border-dashed" : "",
-        isPast && !isDragging ? "opacity-75 grayscale-[0.1]" : "",
-        isDragging && !isGhost ? "cursor-grabbing z-50 shadow-lg scale-[1.02]" : isDragging ? "" : "cursor-grab z-20",
+        isPast && !isDragging ? "opacity-70 saturate-50" : "",
+        isDragging && !isGhost ? "cursor-grabbing z-50 shadow-2xl scale-[1.03]" : isDragging ? "" : "cursor-grab z-20",
         height >= 80 ? "p-3" : height >= 64 ? "p-2.5" : "p-2"
       )}
       style={{
@@ -114,11 +124,14 @@ export const AppointmentCard = React.memo(function AppointmentCard({
         top: `${top}px`,
         height: `${Math.max(height, 48)}px`,
         minHeight: "48px",
-        background: `linear-gradient(${getStatusTokens(booking.status).bg}, ${getStatusTokens(booking.status).bg}dd)`,
-        borderColor: getStatusTokens(booking.status).text,
+        background: `linear-gradient(135deg, ${getStatusTokens(booking.status).bg}, ${getStatusTokens(booking.status).bg}ee)`,
+        borderLeftColor: getStatusTokens(booking.status).borderLeft,
+        borderRightColor: getStatusTokens(booking.status).border,
+        borderTopColor: getStatusTokens(booking.status).border,
+        borderBottomColor: getStatusTokens(booking.status).border,
         boxShadow: isDragging && !isGhost
-          ? `0 8px 24px -8px ${getStatusTokens(booking.status).text}40`
-          : undefined,
+          ? `0 12px 32px -12px ${getStatusTokens(booking.status).borderLeft}50, 0 0 0 1px ${getStatusTokens(booking.status).borderLeft}20`
+          : `0 2px 8px -2px ${getStatusTokens(booking.status).borderLeft}20`,
         // Hardware acceleration
         transform: "translateZ(0)",
         willChange: "transform, opacity",

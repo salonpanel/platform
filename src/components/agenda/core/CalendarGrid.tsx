@@ -52,7 +52,7 @@ export function CalendarGrid({ startHour, endHour, onSlotClick, staffId }: Calen
               top: index * SLOT_HEIGHT_PX,
               height: SLOT_HEIGHT_PX,
               backgroundColor: "transparent",
-              zIndex: 1,
+              zIndex: 0, // Grid lines always behind everything
             }}
             data-time-slot={time}
           />
