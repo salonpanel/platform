@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { theme } from "@/theme/ui";
 import { cn } from "@/lib/utils";
+import { SLOT_HEIGHT_PX, SLOT_DURATION_MINUTES } from "../constants/layout";
 
 interface CalendarGridProps {
   startHour: number;
@@ -15,7 +16,7 @@ export function CalendarGrid({ startHour, endHour, onSlotClick, staffId }: Calen
   const timeSlots = useMemo(() => {
     const slots = [];
     for (let hour = startHour; hour < endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += 15) {
+      for (let minute = 0; minute < 60; minute += SLOT_DURATION_MINUTES) {
         slots.push(`${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`);
       }
     }
@@ -35,16 +36,26 @@ export function CalendarGrid({ startHour, endHour, onSlotClick, staffId }: Calen
         const isHour = time.endsWith(":00");
         const hasBooking = hasBookingAtPosition(time);
 
+        const borderColor = isHour ? theme.colors.borderHover : theme.colors.borderDefault;
+        const borderStyle = isHour ? "solid" : "dashed";
+
         return (
           <div
             key={time}
             onClick={(e) => onSlotClick?.(e, staffId, time)}
             className={cn(
-              "absolute left-0 right-0 cursor-pointer transition-colors duration-150",
-              isHour ? `border-t ${theme.colors.borderHover}` : `border-t border-dashed ${theme.colors.borderDefault}`,
-              !hasBooking ? "hover:bg-glass" : ""
+              "absolute inset-x-0 cursor-pointer transition-colors duration-150",
+              !hasBooking && "hover:bg-glass/20"
             )}
-            style={{ top: `${index * 64}px`, height: "64px" }}
+            style={{
+              top: index * SLOT_HEIGHT_PX,
+              height: SLOT_HEIGHT_PX,
+              borderTopStyle: borderStyle,
+              borderTopWidth: 1,
+              borderTopColor: borderColor,
+              backgroundColor: "transparent",
+              zIndex: 5,
+            }}
             data-time-slot={time}
           />
         );

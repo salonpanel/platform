@@ -8,6 +8,7 @@ import { theme } from "@/theme/ui";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { interactionPresets, getMotionSafeProps } from "../motion/presets";
+import { SLOT_HEIGHT_PX, SLOT_DURATION_MINUTES, MIN_BOOKING_HEIGHT_PX } from "../constants/layout";
 
 interface AppointmentCardProps {
   booking: Booking;
@@ -101,6 +102,7 @@ export const AppointmentCard = React.memo(function AppointmentCard({
       className={cn(
         "absolute left-3 right-3 rounded-xl border relative transition-all duration-150",
         "hover:z-20 focus:outline-none focus:ring-2 focus:ring-accent-blue/50 focus:ring-offset-2 focus:ring-offset-primary focus:z-30",
+        "min-h-[48px] touch-manipulation", // Ensure minimum 48px tap target for mobile
         isGhost ? "opacity-30 border-dashed" : "",
         isPast && !isDragging ? "opacity-50 grayscale-[0.2]" : "",
         isDragging && !isGhost ? "cursor-grabbing opacity-85 z-50" : isDragging ? "" : "cursor-grab z-10",

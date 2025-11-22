@@ -11,6 +11,7 @@ import { BlockingOverlay } from "./BlockingOverlay";
 import { FreeSlotOverlay } from "./FreeSlotOverlay";
 import { CurrentTimeIndicator } from "./CurrentTimeIndicator";
 import { CalendarGrid } from "./CalendarGrid";
+import { STAFF_COLUMN_MIN_WIDTH_DESKTOP, STAFF_COLUMN_MIN_WIDTH_MOBILE } from "../constants/layout";
 
 interface StaffColumnProps {
   staff: Staff;

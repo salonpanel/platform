@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { theme } from "@/theme/ui";
+import { SLOT_HEIGHT_PX, SLOT_DURATION_MINUTES } from "../constants/layout";
 
 interface CurrentTimeIndicatorProps {
   currentMinutes: number | null;
@@ -10,7 +11,7 @@ interface CurrentTimeIndicatorProps {
 export function CurrentTimeIndicator({ currentMinutes }: CurrentTimeIndicatorProps) {
   if (currentMinutes === null) return null;
 
-  const top = (currentMinutes / 15) * 64; // 64px per 15 minutes
+  const top = (currentMinutes / SLOT_DURATION_MINUTES) * SLOT_HEIGHT_PX; // Use shared constants
 
   return (
     <div
