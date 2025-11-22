@@ -1208,7 +1208,7 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-[#0E0F11]"
+      className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-slate-950"
     >
       {/* Premium Header */}
       <div className="flex-shrink-0 px-4 lg:px-6 pt-4 pb-3">
@@ -1310,7 +1310,7 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="absolute left-0 top-0 bottom-0 w-[88vw] sm:w-[360px] max-w-[90%] bg-[#15171A] border-r border-white/10 backdrop-blur-md shadow-[0px_8px_32px_rgba(0,0,0,0.5)] overflow-hidden"
+              className="absolute left-0 top-0 bottom-0 w-[88vw] sm:w-[360px] max-w-[90%] bg-slate-950 border-r border-white/10 backdrop-blur-md shadow-[0px_8px_32px_rgba(0,0,0,0.5)] overflow-hidden"
             >
               <div className="h-full overflow-y-auto scrollbar-hide p-5">
                 <AgendaSidebar
@@ -1332,7 +1332,7 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
       {/* Layout principal - Dashboard con 3 áreas claras */}
       <div className="flex-1 flex flex-col lg:flex-row gap-4 lg:gap-6 overflow-hidden px-4 lg:px-6 pb-4">
         {/* Contenido principal - Card premium */}
-        <div className="flex-1 min-w-0 flex flex-col overflow-hidden bg-[#15171A] rounded-2xl border border-white/5 shadow-[0px_8px_32px_rgba(0,0,0,0.35)]">
+        <div className="flex-1 min-w-0 flex flex-col overflow-hidden bg-slate-950 rounded-2xl border border-white/5 shadow-[0px_8px_32px_rgba(0,0,0,0.35)]">
           {loading ? (
             <div className="flex items-center justify-center flex-1">
               <Spinner size="lg" />

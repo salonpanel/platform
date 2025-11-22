@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { StaffBlocking } from "@/types/agenda";
 import { theme } from "@/theme/ui";
 import { cn } from "@/lib/utils";
+import { SLOT_HEIGHT_PX, SLOT_DURATION_MINUTES, MIN_BOOKING_HEIGHT_PX } from "../constants/layout";
 
 interface BlockingOverlayProps {
   blockings: StaffBlocking[];
@@ -31,9 +32,9 @@ export function BlockingOverlay({ blockings, timezone }: BlockingOverlayProps) {
     const startMinutesFromMidnight = localStartsAt.getHours() * 60 + localStartsAt.getMinutes();
     const endMinutesFromMidnight = localEndsAt.getHours() * 60 + localEndsAt.getMinutes();
 
-    // Position in pixels (64px per 15 minutes)
-    const top = Math.max(0, Math.round(startMinutesFromMidnight / 15) * 64);
-    const height = Math.max(64, Math.round((endMinutesFromMidnight - startMinutesFromMidnight) / 15) * 64);
+    // Position in pixels using shared constants
+    const top = Math.max(0, Math.round(startMinutesFromMidnight / SLOT_DURATION_MINUTES) * SLOT_HEIGHT_PX);
+    const height = Math.max(MIN_BOOKING_HEIGHT_PX, Math.round((endMinutesFromMidnight - startMinutesFromMidnight) / SLOT_DURATION_MINUTES) * SLOT_HEIGHT_PX);
 
     return { top, height, startMinutes: startMinutesFromMidnight, endMinutes: endMinutesFromMidnight };
   };
@@ -61,8 +62,8 @@ export function BlockingOverlay({ blockings, timezone }: BlockingOverlayProps) {
             )}
             style={{
               top: `${top}px`,
-              height: `${Math.max(height, 40)}px`,
-              minHeight: "40px",
+              height: `${Math.max(height, MIN_BOOKING_HEIGHT_PX)}px`,
+              minHeight: `${MIN_BOOKING_HEIGHT_PX}px`,
             }}
             title={blocking.reason || typeLabels[blocking.type]}
           >

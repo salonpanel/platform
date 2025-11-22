@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { minutesToTime } from "@/lib/timezone";
 import { theme } from "@/theme/ui";
 import { cn } from "@/lib/utils";
+import { SLOT_HEIGHT_PX, SLOT_DURATION_MINUTES, MIN_BOOKING_HEIGHT_PX } from "../constants/layout";
 
 interface FreeSlot {
   startMinutes: number;
@@ -30,11 +31,11 @@ export function FreeSlotOverlay({
         const relativeStartMinutes = gap.startMinutes;
         const relativeEndMinutes = gap.endMinutes;
 
-        // Calculate position (64px per 15 minutes)
-        const slotIndexStart = Math.round(relativeStartMinutes / 15);
-        const slotIndexEnd = Math.round(relativeEndMinutes / 15);
-        const top = Math.max(0, slotIndexStart * 64);
-        const height = Math.max(64, (slotIndexEnd - slotIndexStart) * 64);
+        // Calculate position using shared constants
+        const slotIndexStart = Math.round(relativeStartMinutes / SLOT_DURATION_MINUTES);
+        const slotIndexEnd = Math.round(relativeEndMinutes / SLOT_DURATION_MINUTES);
+        const top = Math.max(0, slotIndexStart * SLOT_HEIGHT_PX);
+        const height = Math.max(MIN_BOOKING_HEIGHT_PX, (slotIndexEnd - slotIndexStart) * SLOT_HEIGHT_PX);
 
         const durationHours = Math.floor(gap.duration / 60);
         const durationMins = gap.duration % 60;
@@ -66,7 +67,7 @@ export function FreeSlotOverlay({
             style={{
               top: `${top}px`,
               height: `${height}px`,
-              minHeight: "64px",
+              minHeight: `${MIN_BOOKING_HEIGHT_PX}px`,
             }}
             title={`Hueco libre: ${minutesToTime(gap.startMinutes)} - ${minutesToTime(gap.endMinutes)} (${durationLabel})`}
           >

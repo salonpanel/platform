@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { format } from "date-fns";
 import { theme } from "@/theme/ui";
 import { cn } from "@/lib/utils";
+import { SLOT_HEIGHT_PX, SLOT_DURATION_MINUTES, TIMELINE_HEADER_HEIGHT_PX, TIME_COLUMN_WIDTH_PX } from "../constants/layout";
 
 interface TimeColumnProps {
   startHour: number;
@@ -23,9 +24,9 @@ export function TimeColumn({ startHour, endHour, timezone }: TimeColumnProps) {
   }, [startHour, endHour]);
 
   return (
-    <div className="w-20 border-r border-border-default bg-primary sticky left-0 z-10 flex flex-col h-full">
+    <div className={`border-r border-border-default bg-primary sticky left-0 z-10 flex flex-col h-full`} style={{ width: `${TIME_COLUMN_WIDTH_PX}px` }}>
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-primary border-b border-border-default px-4 py-4 backdrop-blur-md flex items-center flex-shrink-0" style={{ height: "72px" }}>
+      <div className="sticky top-0 z-20 bg-primary border-b border-border-default px-4 py-4 backdrop-blur-md flex items-center flex-shrink-0" style={{ height: `${TIMELINE_HEADER_HEIGHT_PX}px` }}>
         <div className={cn(
           "text-xs font-semibold uppercase tracking-wider",
           "text-tertiary font-sans"
@@ -35,7 +36,7 @@ export function TimeColumn({ startHour, endHour, timezone }: TimeColumnProps) {
       </div>
 
       {/* Time slots */}
-      <div className="relative flex-1 overflow-y-auto scrollbar-hide bg-primary" style={{ height: `calc(100% - 72px)` }}>
+      <div className="relative flex-1 overflow-y-auto scrollbar-hide bg-primary" style={{ height: `calc(100% - ${TIMELINE_HEADER_HEIGHT_PX}px)` }}>
         {timeSlots.map((time, index) => {
           const [hour, minute] = time.split(":").map(Number);
           const isHour = minute === 0;
@@ -48,8 +49,8 @@ export function TimeColumn({ startHour, endHour, timezone }: TimeColumnProps) {
                 isHour ? `border-t ${theme.colors.borderHover}` : `border-t border-dashed ${theme.colors.borderDefault}`
               )}
               style={{
-                top: `${index * 64}px`,
-                height: "64px",
+                top: `${index * SLOT_HEIGHT_PX}px`,
+                height: `${SLOT_HEIGHT_PX}px`,
                 width: "100%",
                 left: 0,
                 right: 0,
