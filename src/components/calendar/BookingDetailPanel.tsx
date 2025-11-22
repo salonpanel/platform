@@ -108,31 +108,49 @@ export function BookingDetailPanel({
 
           {/* Cliente */}
           {booking.customer && (
-            <div className="p-4 bg-white/3 border border-white/5 rounded-[14px]">
-              <div className="flex items-center gap-2 mb-3">
-                <User className="h-4 w-4 text-[#3A6DFF]" />
-                <h4 className="text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
-                  Cliente
-                </h4>
-              </div>
-              <div className="space-y-2.5">
-                <div className="text-base font-semibold text-white font-['Plus_Jakarta_Sans']">
-                  {booking.customer.name}
+            <>
+              <div className="p-4 bg-white/3 border border-white/5 rounded-[14px]">
+                <div className="flex items-center gap-2 mb-3">
+                  <User className="h-4 w-4 text-[#3A6DFF]" />
+                  <h4 className="text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
+                    Cliente
+                  </h4>
                 </div>
-                {booking.customer.phone && (
-                  <div className="flex items-center gap-2 text-sm text-[#d1d4dc] font-['Plus_Jakarta_Sans']">
-                    <Phone className="h-4 w-4 text-[#9ca3af]" />
-                    <span>{booking.customer.phone}</span>
+                <div className="space-y-2.5">
+                  <div className="text-base font-semibold text-white font-['Plus_Jakarta_Sans']">
+                    {booking.customer.name}
                   </div>
-                )}
-                {booking.customer.email && (
-                  <div className="flex items-center gap-2 text-sm text-[#d1d4dc] font-['Plus_Jakarta_Sans']">
-                    <Mail className="h-4 w-4 text-[#9ca3af]" />
-                    <span>{booking.customer.email}</span>
-                  </div>
-                )}
+                  {booking.customer.phone && (
+                    <div className="flex items-center gap-2 text-sm text-[#d1d4dc] font-['Plus_Jakarta_Sans']">
+                      <Phone className="h-4 w-4 text-[#9ca3af]" />
+                      <span>{booking.customer.phone}</span>
+                    </div>
+                  )}
+                  {booking.customer.email && (
+                    <div className="flex items-center gap-2 text-sm text-[#d1d4dc] font-['Plus_Jakarta_Sans']">
+                      <Mail className="h-4 w-4 text-[#9ca3af]" />
+                      <span>{booking.customer.email}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+
+              {/* Notas internas del cliente (IA) - Mobile */}
+              {booking.customer.internal_notes && (
+                <div className="p-4 bg-gradient-to-br from-amber-500/10 to-amber-600/5 border border-amber-500/30 rounded-[14px]">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-base">🤖</span>
+                    <h4 className="text-sm font-semibold text-amber-300 font-['Plus_Jakarta_Sans']">Notas para IA y Staff</h4>
+                  </div>
+                  <p className="text-sm text-white/90 font-['Plus_Jakarta_Sans'] leading-relaxed whitespace-pre-wrap">
+                    {booking.customer.internal_notes}
+                  </p>
+                  <p className="mt-2 text-xs text-amber-300/70 font-['Plus_Jakarta_Sans']">
+                    💡 La IA de voz usa estas notas para personalizar las llamadas
+                  </p>
+                </div>
+              )}
+            </>
           )}
 
           {/* Detalles de la cita */}
@@ -306,29 +324,47 @@ export function BookingDetailPanel({
           {/* Columna izquierda */}
           <div className="space-y-4">
             {booking.customer && (
-              <div className="p-4 bg-white/3 border border-white/5 rounded-[14px]">
-                <div className="flex items-center gap-2 mb-3">
-                  <User className="h-4 w-4 text-[#3A6DFF]" />
-                  <h4 className="text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">Cliente</h4>
-                </div>
-                <div className="space-y-2.5">
-                  <div className="text-base font-semibold text-white font-['Plus_Jakarta_Sans']">
-                    {booking.customer.name}
+              <>
+                <div className="p-4 bg-white/3 border border-white/5 rounded-[14px]">
+                  <div className="flex items-center gap-2 mb-3">
+                    <User className="h-4 w-4 text-[#3A6DFF]" />
+                    <h4 className="text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">Cliente</h4>
                   </div>
-                  {booking.customer.phone && (
-                    <div className="flex items-center gap-2 text-sm text-[#d1d4dc] font-['Plus_Jakarta_Sans']">
-                      <Phone className="h-4 w-4 text-[#9ca3af]" />
-                      <span>{booking.customer.phone}</span>
+                  <div className="space-y-2.5">
+                    <div className="text-base font-semibold text-white font-['Plus_Jakarta_Sans']">
+                      {booking.customer.name}
                     </div>
-                  )}
-                  {booking.customer.email && (
-                    <div className="flex items-center gap-2 text-sm text-[#d1d4dc] font-['Plus_Jakarta_Sans']">
-                      <Mail className="h-4 w-4 text-[#9ca3af]" />
-                      <span>{booking.customer.email}</span>
-                    </div>
-                  )}
+                    {booking.customer.phone && (
+                      <div className="flex items-center gap-2 text-sm text-[#d1d4dc] font-['Plus_Jakarta_Sans']">
+                        <Phone className="h-4 w-4 text-[#9ca3af]" />
+                        <span>{booking.customer.phone}</span>
+                      </div>
+                    )}
+                    {booking.customer.email && (
+                      <div className="flex items-center gap-2 text-sm text-[#d1d4dc] font-['Plus_Jakarta_Sans']">
+                        <Mail className="h-4 w-4 text-[#9ca3af]" />
+                        <span>{booking.customer.email}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+
+                {/* Notas internas del cliente (IA) */}
+                {booking.customer.internal_notes && (
+                  <div className="p-4 bg-gradient-to-br from-amber-500/10 to-amber-600/5 border border-amber-500/30 rounded-[14px]">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-base">🤖</span>
+                      <h4 className="text-sm font-semibold text-amber-300 font-['Plus_Jakarta_Sans']">Notas para IA y Staff</h4>
+                    </div>
+                    <p className="text-sm text-white/90 font-['Plus_Jakarta_Sans'] leading-relaxed whitespace-pre-wrap">
+                      {booking.customer.internal_notes}
+                    </p>
+                    <p className="mt-2 text-xs text-amber-300/70 font-['Plus_Jakarta_Sans']">
+                      💡 La IA de voz usa estas notas para personalizar las llamadas
+                    </p>
+                  </div>
+                )}
+              </>
             )}
 
             <div className="p-4 bg-white/3 border border-white/5 rounded-[14px]">
