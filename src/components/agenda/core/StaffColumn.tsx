@@ -11,7 +11,7 @@ import { BlockingOverlay } from "./BlockingOverlay";
 import { FreeSlotOverlay } from "./FreeSlotOverlay";
 import { CurrentTimeIndicator } from "./CurrentTimeIndicator";
 import { CalendarGrid } from "./CalendarGrid";
-import { STAFF_COLUMN_MIN_WIDTH_DESKTOP, STAFF_COLUMN_MIN_WIDTH_MOBILE } from "../constants/layout";
+import { STAFF_COLUMN_MIN_WIDTH_DESKTOP, STAFF_COLUMN_MIN_WIDTH_MOBILE, SLOT_HEIGHT_PX, SLOT_DURATION_MINUTES, MIN_BOOKING_HEIGHT_PX } from "../constants/layout";
 
 interface StaffColumnProps {
   staff: Staff;
@@ -199,9 +199,10 @@ export const StaffColumn = React.memo(function StaffColumn({
     const relativeEndMinutes = endMinutesFromMidnight - startMinutes;
     const duration = relativeEndMinutes - relativeStartMinutes;
 
-    const slotIndex = Math.round(relativeStartMinutes / 15);
-    const top = Math.max(0, slotIndex * 64);
-    const height = Math.max(64, Math.ceil(duration / 15) * 64);
+    // Use shared constants for consistent positioning
+    const slotIndex = Math.round(relativeStartMinutes / SLOT_DURATION_MINUTES);
+    const top = Math.max(0, slotIndex * SLOT_HEIGHT_PX);
+    const height = Math.max(MIN_BOOKING_HEIGHT_PX, Math.ceil(duration / SLOT_DURATION_MINUTES) * SLOT_HEIGHT_PX);
 
     return { top, height, startMinutes: startMinutesFromMidnight, endMinutes: endMinutesFromMidnight };
   };

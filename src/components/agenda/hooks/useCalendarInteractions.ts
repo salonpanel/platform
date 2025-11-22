@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { Booking, CalendarSlot } from "@/types/agenda";
+import { SLOT_HEIGHT_PX, SLOT_DURATION_MINUTES } from "../constants/layout";
 
 interface UseCalendarInteractionsProps {
   onSlotClick?: (e: React.MouseEvent, staffId: string, timeSlot: string) => void;
@@ -28,8 +29,8 @@ export function useCalendarInteractions({
 }: UseCalendarInteractionsProps = {}) {
   // Utility functions
   const pixelsToMinutes = (pixels: number): number => {
-    const slots = Math.round(Math.max(0, pixels) / 64);
-    const relativeMinutes = slots * 15;
+    const slots = Math.round(Math.max(0, pixels) / SLOT_HEIGHT_PX);
+    const relativeMinutes = slots * SLOT_DURATION_MINUTES;
     return 8 * 60 + relativeMinutes; // Start from 8:00
   };
 
