@@ -28,6 +28,7 @@ import { SearchPanel } from "@/components/calendar/SearchPanel";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { calculateStaffUtilization } from "@/lib/agenda-insights";
 import { getBookingsNeedingStatusUpdate } from "@/lib/booking-status-transitions";
+import { useAgendaData } from "@/hooks/useAgendaData";
 
 export default function AgendaPage() {
   const supabase = getSupabaseBrowser();
@@ -50,30 +51,53 @@ export default function AgendaPage() {
     }
     return "day";
   });
-  const [staffList, setStaffList] = useState<Staff[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [staffBlockings, setStaffBlockings] = useState<StaffBlocking[]>([]);
-  const [staffSchedules, setStaffSchedules] = useState<StaffSchedule[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+  // Estados de UI locales (no manejados por hooks)
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [showFreeSlots, setShowFreeSlots] = useState(false);
   const [showNewBookingModal, setShowNewBookingModal] = useState(false);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
-const [showCustomerView, setShowCustomerView] = useState(false);
-const [showBookingDetail, setShowBookingDetail] = useState(false);
-const [showBlockingModal, setShowBlockingModal] = useState(false);
-
-const [selectedSlot, setSelectedSlot] = useState<CalendarSlot | null>(null);
-  const [services, setServices] = useState<Array<{ id: string; name: string; duration_min: number; price_cents: number; buffer_min: number }>>([]);
-  const [customers, setCustomers] = useState<Array<{ id: string; name: string; email: string | null; phone: string | null; notes?: string | null }>>([]);
+  const [showCustomerView, setShowCustomerView] = useState(false);
+  const [showBookingDetail, setShowBookingDetail] = useState(false);
+  const [showBlockingModal, setShowBlockingModal] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<CalendarSlot | null>(null);
   
   const { showToast, ToastComponent } = useToast();
+
+  // Hook para datos de la agenda (reemplaza estados locales)
+  const agendaData = useAgendaData({
+    tenantId,
+    supabase,
+    selectedDate,
+    viewMode,
+    timezone: tenantTimezone,
+    userRole,
+  });
+
+  // Extraer datos del hook para usar en el componente
+  const {
+    loading,
+    error,
+    staffList,
+    bookings,
+    staffBlockings,
+    staffSchedules,
+    services,
+    customers,
+    searchTerm,
+    setSearchTerm: setAgendaSearchTerm,
+    filters,
+    setFilters,
+    activeFiltersCount,
+    filteredBookings,
+    visibleStaff,
+    quickStats,
+    staffUtilization,
+    refreshDaySnapshots,
+  } = agendaData;
 
   // Hook para manejo de conflictos
   const conflictsHook = useAgendaConflicts({
@@ -83,27 +107,7 @@ const [selectedSlot, setSelectedSlot] = useState<CalendarSlot | null>(null);
     tenantTimezone,
   });
 
-  // Filtros (cargar desde localStorage)
-  const [filters, setFilters] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("agenda_filters");
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          // Si hay error, usar valores por defecto
-        }
-      }
-    }
-    return {
-      payment: [] as string[],
-      status: [] as string[],
-      staff: [] as string[],
-      highlighted: null as boolean | null,
-    };
-  });
-
-  // Cargar tenant y staff
+  // Cargar info del tenant (necesario para inicializar el hook useAgendaData)
   useEffect(() => {
     const loadTenant = async () => {
       try {
@@ -111,8 +115,6 @@ const [selectedSlot, setSelectedSlot] = useState<CalendarSlot | null>(null);
         const { tenant, role } = await getCurrentTenant(impersonateOrgId);
 
         if (!tenant) {
-          setError("No tienes acceso a ninguna barbería");
-          setLoading(false);
           return;
         }
 
@@ -132,107 +134,13 @@ const [selectedSlot, setSelectedSlot] = useState<CalendarSlot | null>(null);
             .maybeSingle();
           if (membership?.role) setUserRole(membership.role);
         }
-
-        const { data: staffData } = await supabase
-          .from("staff")
-          .select("id, name, active")
-          .eq("tenant_id", tenant.id)
-          .eq("active", true)
-          .order("name");
-
-        if (staffData) {
-          setStaffList(staffData as Staff[]);
-        }
-
-        // Cargar servicios
-        const { data: servicesData } = await supabase
-          .from("services")
-          .select("id, name, duration_min, price_cents, buffer_min")
-          .eq("tenant_id", tenant.id)
-          .eq("active", true)
-          .order("name");
-
-        if (servicesData) {
-          setServices(servicesData.map(s => ({ ...s, buffer_min: s.buffer_min ?? 0 })));
-        }
-
-        // Cargar clientes
-        const { data: customersData } = await supabase
-          .from("customers")
-          .select("id, name, email, phone, notes")
-          .eq("tenant_id", tenant.id)
-          .order("name")
-          .limit(100);
-
-        if (customersData) {
-          setCustomers(customersData);
-        }
       } catch (err) {
         console.error("Error al cargar tenant:", err);
-        setError("Error al cargar los datos");
-        setLoading(false);
       }
     };
 
     loadTenant();
   }, [supabase, searchParams]);
-
-  // Cargar bookings y bloqueos
-  useEffect(() => {
-    if (!tenantId) return;
-
-    const loadBookings = async () => {
-      try {
-        const start = startOfDay(parseISO(selectedDate));
-        const end = endOfDay(parseISO(selectedDate));
-
-        const [bookingsResult, blockingsResult, schedulesResult] = await Promise.all([
-          supabase
-            .from("bookings")
-            .select(`
-              *,
-              customer:customers(id, name, email, phone),
-              service:services(id, name, duration_min, price_cents),
-              staff:staff(id, name)
-            `)
-            .eq("tenant_id", tenantId)
-            .gte("starts_at", start.toISOString())
-            .lte("starts_at", end.toISOString())
-            .order("starts_at"),
-          supabase
-            .from("staff_blockings")
-            .select("*")
-            .eq("tenant_id", tenantId)
-            .gte("start_at", start.toISOString())
-            .lte("end_at", end.toISOString())
-            .order("start_at"),
-          supabase
-            .from("staff_schedules")
-            .select("staff_id, start_time, end_time")
-            .eq("tenant_id", tenantId)
-            .eq("is_active", true),
-        ]);
-
-        if (bookingsResult.data) {
-          setBookings(bookingsResult.data as Booking[]);
-        }
-        if (blockingsResult.data) {
-          setStaffBlockings(blockingsResult.data);
-        }
-        if (schedulesResult.data) {
-          setStaffSchedules(schedulesResult.data);
-        }
-
-        setLoading(false);
-      } catch (err) {
-        console.error("Error al cargar bookings:", err);
-        setError("Error al cargar las reservas");
-        setLoading(false);
-      }
-    };
-
-    loadBookings();
-  }, [tenantId, selectedDate, supabase]);
 
   // Transiciones automáticas de estado (paid -> completed cuando pasa la hora)
   useEffect(() => {
@@ -262,13 +170,8 @@ const [selectedSlot, setSelectedSlot] = useState<CalendarSlot | null>(null);
       const successful = results.filter((r): r is { bookingId: string; newStatus: BookingStatus } => r !== null);
 
       if (successful.length > 0) {
-        // Actualizar el estado local de los bookings actualizados
-        setBookings((prev) =>
-          prev.map((booking) => {
-            const update = successful.find((u) => u.bookingId === booking.id);
-            return update ? { ...booking, status: update.newStatus } : booking;
-          })
-        );
+        // Refrescar datos para obtener los cambios
+        await refreshDaySnapshots();
 
         // Mostrar toast solo si hay actualizaciones visibles
         if (successful.length === 1) {
@@ -305,42 +208,6 @@ const [selectedSlot, setSelectedSlot] = useState<CalendarSlot | null>(null);
     });
   };
 
-  const refreshDaySnapshots = async (targetDate?: string) => {
-    if (!tenantId) return;
-    // Si se proporciona una fecha objetivo, usarla; sino, usar la fecha seleccionada
-    const dateToRefresh = targetDate || selectedDate;
-    const start = startOfDay(parseISO(dateToRefresh));
-    const end = endOfDay(parseISO(dateToRefresh));
-
-    const [bookingsResult, blockingsResult] = await Promise.all([
-      supabase
-        .from("bookings")
-        .select(`
-          *,
-          customer:customers(id, name, email, phone),
-          service:services(id, name, duration_min, price_cents),
-          staff:staff(id, name)
-        `)
-        .eq("tenant_id", tenantId)
-        .gte("starts_at", start.toISOString())
-        .lte("starts_at", end.toISOString())
-        .order("starts_at"),
-      supabase
-        .from("staff_blockings")
-        .select("*")
-        .eq("tenant_id", tenantId)
-        .gte("start_at", start.toISOString())
-        .lte("end_at", end.toISOString())
-        .order("start_at"),
-    ]);
-
-    if (bookingsResult.data) {
-      setBookings(bookingsResult.data as Booking[]);
-    }
-    if (blockingsResult.data) {
-      setStaffBlockings(blockingsResult.data);
-    }
-  };
 
   const notifyError = (err: unknown, fallback: string) => {
     console.error(fallback, err);
@@ -895,55 +762,7 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
     );
   }
 
-  // Calcular número de filtros activos
-  const activeFiltersCount = useMemo(() => {
-    let count = 0;
-    if (filters.payment.length > 0) count += filters.payment.length;
-    if (filters.status.length > 0) count += filters.status.length;
-    if (filters.staff.length > 0 && !filters.staff.includes("all")) count += filters.staff.length;
-    if (filters.highlighted !== null) count += 1;
-    return count;
-  }, [filters]);
-
-  // Filtrar staff visible según filtros
-  const visibleStaff = useMemo(() => {
-    if (filters.staff.length === 0 || filters.staff.includes("all")) {
-      return staffList;
-    }
-    return staffList.filter((staff) => filters.staff.includes(staff.id));
-  }, [staffList, filters.staff]);
-
-  // Debounce del término de búsqueda (250ms)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  // Filtrar bookings por búsqueda (usando debouncedSearchTerm para mejor performance)
-  const filteredBookings = useMemo(() => {
-    if (!debouncedSearchTerm.trim()) return bookings;
-    
-    const term = debouncedSearchTerm.toLowerCase().trim();
-    return bookings.filter((booking) => {
-      const customerName = booking.customer?.name?.toLowerCase() || "";
-      const customerPhone = booking.customer?.phone?.toLowerCase() || "";
-      const customerEmail = booking.customer?.email?.toLowerCase() || "";
-      const serviceName = booking.service?.name?.toLowerCase() || "";
-      const internalNotes = booking.internal_notes?.toLowerCase() || "";
-      const clientMessage = booking.client_message?.toLowerCase() || "";
-      
-      return (
-        customerName.includes(term) ||
-        customerPhone.includes(term) ||
-        customerEmail.includes(term) ||
-        serviceName.includes(term) ||
-        internalNotes.includes(term) ||
-        clientMessage.includes(term)
-      );
-    });
-  }, [bookings, debouncedSearchTerm]);
+  // Los datos filtrados y stats ahora vienen del hook useAgendaData
 
   // Helper para obtener bookings en el rango actual según viewMode
   const getBookingsInCurrentRange = useMemo(() => {
@@ -984,87 +803,6 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
     };
   }, []);
 
-  // Quick stats range-aware
-  const quickStats = useMemo(() => {
-    const rangeBookings = getBookingsInCurrentRange(bookings, selectedDate, viewMode, tenantTimezone);
-    const statsBookings = searchTerm.trim() 
-      ? rangeBookings.filter((b) => {
-          const term = searchTerm.toLowerCase();
-          return (
-            b.customer?.name?.toLowerCase().includes(term) ||
-            b.customer?.phone?.toLowerCase().includes(term) ||
-            b.customer?.email?.toLowerCase().includes(term) ||
-            b.service?.name?.toLowerCase().includes(term) ||
-            b.internal_notes?.toLowerCase().includes(term) ||
-            b.client_message?.toLowerCase().includes(term)
-          );
-        })
-      : rangeBookings;
-    
-    const totalBookings = statsBookings.length;
-    const totalMinutes = statsBookings.reduce((acc, b) => {
-      const start = new Date(b.starts_at);
-      const end = new Date(b.ends_at);
-      return acc + Math.round((end.getTime() - start.getTime()) / (1000 * 60));
-    }, 0);
-    const totalAmount = statsBookings.reduce((acc, b) => {
-      return acc + (b.service?.price_cents || 0);
-    }, 0);
-
-    // Calcular label del rango
-    const selectedDateObj = parseISO(selectedDate);
-    const tenantToday = startOfDay(toTenantLocalDate(new Date(), tenantTimezone));
-    let rangeLabel = "";
-    switch (viewMode) {
-      case "day": {
-        const selectedDay = startOfDay(selectedDateObj);
-        const isToday = selectedDay.getTime() === tenantToday.getTime();
-        rangeLabel = isToday ? "Hoy" : format(selectedDateObj, "d 'de' MMMM");
-        break;
-      }
-      case "week": {
-        const weekStart = startOfWeek(selectedDateObj, { weekStartsOn: 1 });
-        const weekEnd = endOfWeek(selectedDateObj, { weekStartsOn: 1 });
-        const isCurrentWeek = isSameWeek(selectedDateObj, tenantToday, { weekStartsOn: 1 });
-        const prefix = isCurrentWeek ? "Esta semana" : "Semana";
-        rangeLabel = `${prefix} (${format(weekStart, "d MMM")} - ${format(weekEnd, "d MMM")})`;
-        break;
-      }
-      case "month": {
-        const isCurrentMonth = isSameMonth(selectedDateObj, tenantToday);
-        const monthLabel = format(selectedDateObj, "MMMM yyyy");
-        rangeLabel = isCurrentMonth ? `Este mes (${monthLabel})` : monthLabel;
-        break;
-      }
-      case "list":
-        rangeLabel = format(selectedDateObj, "d 'de' MMMM");
-        break;
-    }
-
-    return {
-      totalBookings,
-      totalMinutes,
-      totalHours: Math.round((totalMinutes / 60) * 10) / 10,
-      totalAmount,
-      rangeLabel,
-    };
-  }, [bookings, selectedDate, viewMode, tenantTimezone, searchTerm, getBookingsInCurrentRange]);
-
-  // Calcular utilización por staff (solo para owners/admins/managers)
-  const staffUtilization = useMemo(() => {
-    if (!(userRole === "owner" || userRole === "admin" || userRole === "manager")) {
-      return [];
-    }
-    
-    return calculateStaffUtilization({
-      bookings,
-      staffList,
-      staffSchedules,
-      selectedDate,
-      viewMode,
-      timezone: tenantTimezone,
-    });
-  }, [bookings, staffList, staffSchedules, selectedDate, viewMode, tenantTimezone, userRole]);
 
   // Handler para filtrar por staff desde chips de utilización
   const handleStaffFilterChange = (staffId: string) => {
@@ -1242,10 +980,10 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
           onSearchClick={() => setSearchOpen(!searchOpen)}
           searchOpen={searchOpen}
           searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
+          onSearchChange={setAgendaSearchTerm}
           onSearchClose={() => {
             setSearchOpen(false);
-            setSearchTerm("");
+            setAgendaSearchTerm("");
           }}
           quickStats={quickStats}
           searchResultCount={filteredBookings.length}
@@ -1463,7 +1201,7 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
                 viewMode={viewMode}
                 bookings={filteredBookings}
                 timezone={tenantTimezone}
-                searchTerm={debouncedSearchTerm}
+                searchTerm={searchTerm}
                 onBookingClick={(booking) => {
                   const fullBooking = bookings.find((b) => b.id === booking.id);
                   if (fullBooking) {
