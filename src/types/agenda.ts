@@ -15,9 +15,19 @@ export interface Booking {
   staff_id: string | null;
   tenant_id?: string;
   customer?: {
+    id?: string;
     name: string;
     email: string | null;
     phone: string | null;
+    internal_notes?: string | null;
+    preferred_staff_id?: string | null;
+    preferred_time_of_day?: 'mañana' | 'tarde' | 'noche' | null;
+    preferred_days?: string[] | null;
+    last_call_status?: string | null;
+    last_call_date?: string | null;
+    next_due_date?: string | null;
+    call_attempts?: number;
+    prefers_whatsapp?: boolean;
   } | null;
   service?: {
     name: string;
@@ -37,6 +47,29 @@ export interface Staff {
   id: string;
   name: string;
   active: boolean;
+}
+
+/**
+ * Extended Customer interface with AI preferences
+ */
+export interface Customer {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  notes?: string | null; // Public notes visible to customer
+  internal_notes?: string | null; // Internal notes for staff/AI only
+  preferred_staff_id?: string | null;
+  preferred_time_of_day?: 'mañana' | 'tarde' | 'noche' | null;
+  preferred_days?: string[] | null; // ['lunes', 'martes', ...]
+  last_call_status?: string | null; // 'answered', 'no_answer', 'voicemail', 'declined', 'scheduled'
+  last_call_date?: string | null;
+  next_due_date?: string | null;
+  call_attempts?: number;
+  prefers_whatsapp?: boolean;
+  tenant_id?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface StaffBlocking {
