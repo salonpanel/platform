@@ -17,7 +17,6 @@ import { theme } from "@/theme/ui";
 import { cn } from "@/lib/utils";
 import { SLOT_HEIGHT_PX, SLOT_DURATION_MINUTES, MIN_BOOKING_HEIGHT_PX } from "@/components/agenda/constants/layout";
 import { DayView } from "@/components/agenda/views/DayView";
-import { useCalendarData } from "@/components/agenda/hooks/useCalendarData";
 
 interface AgendaCalendarViewProps {
   bookings: Booking[];
@@ -109,24 +108,10 @@ export function AgendaCalendarView({
   canCancel = true,
 }: AgendaCalendarViewProps) {
 
-  // Load data using the new hook
-  const calendarData = useCalendarData({
-    tenantId: "tenant-123", // This should come from auth context
-    selectedDate,
-    staffList,
-  });
-
-  const {
-    bookings: loadedBookings,
-    staffBlockings: loadedStaffBlockings,
-    staffSchedules: loadedStaffSchedules,
-    loading,
-  } = calendarData;
-
-  // Use loaded data if available, otherwise fall back to props
-  const displayBookings = loadedBookings.length > 0 ? loadedBookings : bookings;
-  const displayStaffBlockings = loadedStaffBlockings.length > 0 ? loadedStaffBlockings : staffBlockings;
-  const displayStaffSchedules = loadedStaffSchedules.length > 0 ? loadedStaffSchedules : staffSchedules;
+  // Use props directly instead of loading data again
+  const displayBookings = bookings;
+  const displayStaffBlockings = staffBlockings;
+  const displayStaffSchedules = staffSchedules;
   
   // Calcular rango horario basado en horarios operativos del staff
   const { startHour, endHour, startMinutes } = useMemo(() => {
@@ -1320,7 +1305,6 @@ export function AgendaCalendarView({
         selectedDate={selectedDate}
         timezone={timezone}
         showFreeSlots={showFreeSlots}
-        loading={loading}
         onBookingClick={onBookingClick}
         onSlotClick={handleSlotClick}
         onFreeSlotClick={(slot) => onNewBooking?.(slot)}
