@@ -27,16 +27,18 @@ interface StatusTokens {
   borderLeft: string;
 }
 
-const getStatusTokens = (status: string): StatusTokens => {
-  const statusMap: Record<string, StatusTokens> = {
-    pending: { bg: "rgba(21,23,28,0.6)", border: "rgba(255,255,255,0.1)", text: "#FFC107", borderLeft: "#FFC107" },
-    confirmed: { bg: "rgba(21,23,28,0.6)", border: "rgba(255,255,255,0.1)", text: "#4FE3C1", borderLeft: "#4FE3C1" },
-    paid: { bg: "rgba(21,23,28,0.6)", border: "rgba(255,255,255,0.1)", text: "#3A6DFF", borderLeft: "#3A6DFF" },
-    cancelled: { bg: "rgba(21,23,28,0.6)", border: "rgba(255,255,255,0.1)", text: "#EF4444", borderLeft: "#EF4444" },
-    completed: { bg: "rgba(21,23,28,0.6)", border: "rgba(255,255,255,0.1)", text: "#4FE3C1", borderLeft: "#4FE3C1" },
-    "no_show": { bg: "rgba(21,23,28,0.6)", border: "rgba(255,255,255,0.1)", text: "#FF6DA3", borderLeft: "#FF6DA3" },
+// Neo-Glass Status Colors (Neon/Vibrant)
+const getStatusColor = (status: string) => {
+  const colors: Record<string, string> = {
+    pending: "#FFC107",   // Neon Yellow
+    confirmed: "#4FE3C1", // Neon Aqua
+    paid: "#3A6DFF",      // Electric Blue
+    completed: "#3A6DFF", // Electric Blue
+    cancelled: "#EF4444", // Neon Red
+    "no-show": "#FF6DA3", // Neon Pink
+    "no_show": "#FF6DA3", // Neon Pink (alternative)
   };
-  return statusMap[status] || statusMap.pending;
+  return colors[status] || colors.pending;
 };
 
 export const AppointmentCard = React.memo(function AppointmentCard({
@@ -60,8 +62,8 @@ export const AppointmentCard = React.memo(function AppointmentCard({
   );
 
   const isPast = localEndsAt < new Date();
-  const totalPrice = booking.service?.price_cents || 0;
-  const paidAmount = (booking.status === "paid" || booking.status === "completed") ? totalPrice : 0;
+  const statusColor = getStatusColor(booking.status);
+  const isSmallSlot = height < 60;
 
   return (
     <motion.div
@@ -109,99 +111,58 @@ export const AppointmentCard = React.memo(function AppointmentCard({
         onClick?.(booking);
       }}
       className={cn(
-        "absolute left-3 right-3 rounded-xl border relative transition-all duration-200",
-        "hover:z-30 focus:outline-none focus:ring-2 focus:ring-accent-blue/40 focus:ring-offset-1 focus:ring-offset-transparent focus:z-30",
-        "min-h-[48px] touch-manipulation",
-        "backdrop-blur-md shadow-lg hover:shadow-xl border-l-[3px]",
-        "hover:bg-[#15171C]/80 hover:scale-[1.02]",
-        isGhost ? "opacity-30 border-dashed" : "",
-        isPast && !isDragging ? "opacity-70 saturate-50" : "",
-        isDragging && !isGhost ? "cursor-grabbing z-50 shadow-2xl scale-[1.03]" : isDragging ? "" : "cursor-grab z-20",
-        height >= 80 ? "p-3" : height >= 64 ? "p-2.5" : "p-2"
+        "absolute left-2 right-2 rounded-xl md:rounded-2xl transition-all duration-200",
+        "border border-white/10",
+        "backdrop-blur-md",
+        isGhost ? "opacity-30 border-dashed border-white/20" : "bg-[#15171C]/60 shadow-lg",
+        isPast && !isDragging ? "opacity-60 grayscale-[0.3]" : "",
+        isDragging && !isGhost ? "cursor-grabbing z-50 shadow-2xl scale-105 ring-1 ring-white/20" : "cursor-grab z-20",
+        "group overflow-hidden"
       )}
       style={{
-        borderRadius: height >= 80 ? "16px" : "12px",
         top: `${top}px`,
-        height: `${Math.max(height, 48)}px`,
-        minHeight: "48px",
-        background: getStatusTokens(booking.status).bg,
-        borderLeftColor: getStatusTokens(booking.status).borderLeft,
-        borderRightColor: getStatusTokens(booking.status).border,
-        borderTopColor: getStatusTokens(booking.status).border,
-        borderBottomColor: getStatusTokens(booking.status).border,
-        boxShadow: isDragging && !isGhost
-          ? `0 20px 48px -12px rgba(0,0,0,0.5), 0 0 0 1px ${getStatusTokens(booking.status).borderLeft}40, inset 0 1px 0 rgba(255,255,255,0.05)`
-          : `0 8px 24px -8px rgba(0,0,0,0.3), 0 0 0 1px ${getStatusTokens(booking.status).borderLeft}30, inset 0 1px 0 rgba(255,255,255,0.05)`,
-        // Hardware acceleration
-        transform: "translateZ(0)",
-        willChange: "transform, opacity",
+        height: `${Math.max(height, isSmallSlot ? 36 : 48)}px`,
+        minHeight: isSmallSlot ? "36px" : "48px",
+        borderLeftWidth: "3px",
+        borderLeftColor: statusColor,
+        // Inset top highlight for glass effect
+        boxShadow: isDragging ? "0 20px 40px -10px rgba(0,0,0,0.5)" : "inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 12px rgba(0,0,0,0.1)",
       }}
       title={`${booking.customer?.name || "Sin cliente"} - ${booking.service?.name || "Sin servicio"} (${format(localStartsAt, "HH:mm")} - ${format(localEndsAt, "HH:mm")})`}
     >
-      {/* Contenedor principal con layout flexible y responsive */}
-      <div className="flex flex-col h-full min-h-0 overflow-hidden">
-        {/* Header: Horario y Estado */}
-        <div className="flex items-center justify-between gap-2 flex-shrink-0 mb-0.5">
-          <span className={cn(
-            "text-[10px] font-mono leading-tight whitespace-nowrap",
-            "text-gray-400"
-          )}>
-            {format(localStartsAt, "HH:mm")} – {format(localEndsAt, "HH:mm")}
-          </span>
-          {height >= 64 && (
-            <StatusBadge status={booking.status} size="xs" />
-          )}
-        </div>
+      <div className={cn("flex flex-col h-full w-full", isSmallSlot ? "justify-center px-2" : "p-3")}>
+        
+        {/* Top Row: Time & Status (Only show if space permits) */}
+        {!isSmallSlot && (
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-mono font-medium text-gray-400 tracking-wide">
+              {format(localStartsAt, "HH:mm")}
+            </span>
+          </div>
+        )}
 
-        {/* Contenido principal: Cliente y Servicio */}
-        <div className="flex-1 min-h-0 flex flex-col justify-center overflow-hidden">
-          <div
-            className={cn(
-              "font-medium truncate",
-              height >= 80 ? "text-sm leading-snug" : height >= 64 ? "text-xs leading-snug" : "text-xs leading-snug",
-              "text-white font-sans"
-            )}
-            title={booking.customer?.name || "Sin cliente"}
-          >
+        {/* Main Content */}
+        <div className="flex items-center gap-2 min-w-0">
+          {/* Client Name */}
+          <div className={cn(
+            "font-medium truncate text-white",
+            isSmallSlot ? "text-xs" : "text-sm"
+          )}>
             {booking.customer?.name || "Sin cliente"}
           </div>
-
-          {height >= 60 && (
-            <div
-              className={cn(
-                "truncate leading-tight mt-0.5",
-                "text-xs text-gray-500 font-sans"
-              )}
-              title={booking.service?.name || "Sin servicio"}
-            >
-              {booking.service?.name || "Sin servicio"}
-            </div>
+          
+          {/* Time for small slots (inline) */}
+          {isSmallSlot && (
+            <span className="text-[10px] text-gray-500 font-mono shrink-0">
+              {format(localStartsAt, "HH:mm")}
+            </span>
           )}
         </div>
 
-        {/* Footer: Precios */}
-        {height >= 80 && (paidAmount > 0 || totalPrice > 0) && (
-          <div className={cn(
-            "flex items-center justify-end gap-1.5 flex-shrink-0 mt-auto pt-1.5",
-            "border-t border-white/5"
-          )}>
-            {paidAmount > 0 && (
-              <span className={cn(
-                "font-semibold text-xs leading-tight whitespace-nowrap",
-                "text-[#4FE3C1] font-sans"
-              )}>
-                {(paidAmount / 100).toFixed(2)}€
-              </span>
-            )}
-            {totalPrice > 0 && (
-              <span className={cn(
-                "font-medium text-xs leading-tight whitespace-nowrap",
-                paidAmount > 0 ? "text-gray-400" : "text-gray-400",
-                "font-sans"
-              )}>
-                {(totalPrice / 100).toFixed(2)}€
-              </span>
-            )}
+        {/* Secondary Info (Service) - Hide on small slots */}
+        {!isSmallSlot && (
+          <div className="text-xs text-gray-500 truncate mt-0.5 font-medium">
+            {booking.service?.name || "Sin servicio"}
           </div>
         )}
       </div>

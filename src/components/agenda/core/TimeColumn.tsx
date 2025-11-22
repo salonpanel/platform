@@ -24,19 +24,19 @@ export function TimeColumn({ startHour, endHour, timezone }: TimeColumnProps) {
   }, [startHour, endHour]);
 
   return (
-    <div className={`border-r border-white/5 bg-[#0B0C10]/80 backdrop-blur-xl sticky left-0 z-30 flex flex-col h-full`} style={{ width: `${TIME_COLUMN_WIDTH_PX}px` }}>
+    <div 
+      className="bg-[#0B0C10]/80 backdrop-blur-xl border-r border-white/5 flex flex-col h-full z-30"
+      style={{ width: `${TIME_COLUMN_WIDTH_PX}px` }}
+    >
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-[#0B0C10]/90 border-b border-white/5 px-4 py-4 backdrop-blur-md flex items-center flex-shrink-0" style={{ height: `${TIMELINE_HEADER_HEIGHT_PX}px` }}>
-        <div className={cn(
-          "text-xs font-semibold uppercase tracking-wider",
-          "text-gray-500 font-sans"
-        )}>
+      <div className="sticky top-0 z-40 bg-[#0B0C10]/90 backdrop-blur-md border-b border-white/5 px-0 py-4 flex items-center justify-center flex-shrink-0" style={{ height: `${TIMELINE_HEADER_HEIGHT_PX}px` }}>
+        <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest font-mono">
           Hora
         </div>
       </div>
 
       {/* Time slots */}
-      <div className="relative flex-1 overflow-y-auto scrollbar-hide bg-transparent" style={{ height: `calc(100% - ${TIMELINE_HEADER_HEIGHT_PX}px)` }}>
+      <div className="relative flex-1 w-full">
         {timeSlots.map((time, index) => {
           const [hour, minute] = time.split(":").map(Number);
           const isHour = minute === 0;
@@ -45,23 +45,16 @@ export function TimeColumn({ startHour, endHour, timezone }: TimeColumnProps) {
             <div
               key={time}
               className={cn(
-                "absolute left-0 right-0 flex items-start justify-end pr-3 pt-1",
-                isHour ? "border-t border-white/[0.03]" : "border-t border-dashed border-white/[0.02]"
+                "absolute left-0 right-0 flex items-start justify-center",
+                isHour ? "border-t border-white/[0.03]" : "border-t border-white/[0.015]"
               )}
               style={{
                 top: `${index * SLOT_HEIGHT_PX}px`,
                 height: `${SLOT_HEIGHT_PX}px`,
-                width: "100%",
-                left: 0,
-                right: 0,
-                pointerEvents: "none"
               }}
             >
               {isHour && (
-                <span className={cn(
-                  "text-xs font-mono",
-                  "text-gray-500"
-                )}>
+                <span className="text-[11px] font-mono font-medium text-gray-500 -mt-2.5 bg-[#0B0C10] px-1">
                   {time}
                 </span>
               )}
