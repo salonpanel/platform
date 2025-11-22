@@ -84,7 +84,22 @@ export function useAgendaData({
             .order("name"),
           supabase
             .from("customers")
-            .select("id, name, email, phone, notes")
+            .select(`
+              id, 
+              name, 
+              email, 
+              phone, 
+              notes, 
+              internal_notes,
+              preferred_staff_id,
+              preferred_time_of_day,
+              preferred_days,
+              last_call_status,
+              last_call_date,
+              next_due_date,
+              call_attempts,
+              prefers_whatsapp
+            `)
             .eq("tenant_id", tenantId)
             .order("name")
             .limit(100),
