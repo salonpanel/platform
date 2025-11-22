@@ -3,6 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Calendar, XCircle, Ban } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { GlassCard } from "@/components/agenda/primitives/GlassCard";
+import { theme } from "@/theme/ui";
+import { cn } from "@/lib/utils";
 
 interface AgendaActionPopoverProps {
   isOpen: boolean;
@@ -115,58 +118,74 @@ export function AgendaActionPopover({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          ref={popoverRef}
           initial={{ opacity: 0, scale: 0.96, y: 8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 8 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
-          className="fixed z-[9999] min-w-[240px] rounded-2xl py-2 bg-[#15171A] border border-white/10 shadow-[0px_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-md"
           style={{
+            position: 'fixed',
             left: `${adjustedPosition.x}px`,
             top: `${adjustedPosition.y}px`,
+            zIndex: 9999,
             transform: 'translateZ(0)',
           }}
         >
-      <div className="flex flex-col gap-0.5 p-1">
-        <motion.button
-          whileHover={{ x: 2, backgroundColor: "rgba(58,109,255,0.12)" }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => {
-            onNewBooking();
-            onClose();
-          }}
-          className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm font-semibold text-white hover:bg-[rgba(58,109,255,0.12)] transition-all duration-150 rounded-[10px] font-['Plus_Jakarta_Sans']"
-        >
-          <Calendar className="h-4 w-4 text-[#3A6DFF]" />
-          <span>Nueva cita</span>
-        </motion.button>
+          <div role="menu" aria-label="Opciones de agenda">
+            <GlassCard variant="popover" padding="sm" className="min-w-60">
+              <div className="flex flex-col gap-0.5">
+              <motion.button
+                whileHover={{ x: 2, backgroundColor: theme.colors.bgGlass }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  onNewBooking();
+                  onClose();
+                }}
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm font-semibold rounded-xl transition-all duration-150",
+                  "text-primary hover:bg-glass font-sans"
+                )}
+                role="menuitem"
+              >
+                <Calendar className="h-4 w-4 text-accent-blue" />
+                <span>Nueva cita</span>
+              </motion.button>
 
-        <motion.button
-          whileHover={{ x: 2, backgroundColor: "rgba(255,193,7,0.12)" }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => {
-            onUnavailability();
-            onClose();
-          }}
-          className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm font-semibold text-white hover:bg-[rgba(255,193,7,0.12)] transition-all duration-150 rounded-[10px] font-['Plus_Jakarta_Sans']"
-        >
-          <Ban className="h-4 w-4 text-[#FFC107]" />
-          <span>Añadir falta de disponibilidad</span>
-        </motion.button>
+              <motion.button
+                whileHover={{ x: 2, backgroundColor: theme.colors.bgGlass }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  onUnavailability();
+                  onClose();
+                }}
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm font-semibold rounded-xl transition-all duration-150",
+                  "text-primary hover:bg-glass font-sans"
+                )}
+                role="menuitem"
+              >
+                <Ban className="h-4 w-4 text-status-pending" />
+                <span>Añadir falta de disponibilidad</span>
+              </motion.button>
 
-        <motion.button
-          whileHover={{ x: 2, backgroundColor: "rgba(255,109,163,0.12)" }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => {
-            onAbsence();
-            onClose();
-          }}
-          className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm font-semibold text-white hover:bg-[rgba(255,109,163,0.12)] transition-all duration-150 rounded-[10px] font-['Plus_Jakarta_Sans']"
-        >
-          <XCircle className="h-4 w-4 text-[#FF6DA3]" />
-          <span>Añadir ausencia</span>
-        </motion.button>
-      </div>
+              <motion.button
+                whileHover={{ x: 2, backgroundColor: theme.colors.bgGlass }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  onAbsence();
+                  onClose();
+                }}
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm font-semibold rounded-xl transition-all duration-150",
+                  "text-primary hover:bg-glass font-sans"
+                )}
+                role="menuitem"
+              >
+                <XCircle className="h-4 w-4 text-accent-pink" />
+                <span>Añadir ausencia</span>
+              </motion.button>
+            </div>
+          </GlassCard>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

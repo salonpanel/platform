@@ -4,12 +4,14 @@ import { useMemo } from "react";
 import React from "react";
 import { format, parseISO, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
-import { Card } from "@/components/ui/Card";
+import { GlassCard } from "@/components/agenda/primitives/GlassCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { EmptyState } from "@/components/ui/EmptyState";
 import { motion } from "framer-motion";
 import { toTenantLocalDate, formatInTenantTz } from "@/lib/timezone";
 import { Booking, ViewMode } from "@/types/agenda";
+import { theme } from "@/theme/ui";
+import { cn } from "@/lib/utils";
+import { getMotionSafeProps, interactionPresets } from "@/components/agenda/motion/presets";
 
 interface ListViewProps {
   bookings: Booking[];
@@ -59,29 +61,48 @@ export function ListView({
     const isEmptySearch = searchTerm.trim().length > 0;
     return (
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
+        {...getMotionSafeProps({
+          initial: { opacity: 0, y: 12 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.2, ease: "easeOut" },
+        })}
         className="flex items-center justify-center h-full p-6"
       >
-        <div className="bg-[#15171A] rounded-2xl p-12 border border-white/5 shadow-[0px_8px_32px_rgba(0,0,0,0.35)] backdrop-blur-md text-center">
+        <GlassCard variant="elevated" padding="xl" className="text-center">
           {isEmptySearch ? (
             <>
               <div className="text-4xl mb-4">🔍</div>
-              <h3 className="text-lg font-semibold text-white mb-2 font-['Plus_Jakarta_Sans']">
+              <h3 className={cn(
+                "text-lg font-semibold mb-2",
+                "text-primary font-sans"
+              )}>
                 No hay coincidencias
               </h3>
-              <p className="text-sm text-[#9ca3af] font-['Plus_Jakarta_Sans']">
+              <p className={cn(
+                "text-sm",
+                "text-secondary font-sans"
+              )}>
                 No se encontraron reservas que coincidan con "{searchTerm}"
               </p>
             </>
           ) : (
-            <EmptyState
-              title="No hay reservas"
-              description="No hay reservas para el rango seleccionado."
-            />
+            <>
+              <div className="text-4xl mb-4">📅</div>
+              <h3 className={cn(
+                "text-lg font-semibold mb-2",
+                "text-primary font-sans"
+              )}>
+                No hay reservas
+              </h3>
+              <p className={cn(
+                "text-sm",
+                "text-secondary font-sans"
+              )}>
+                No hay reservas para el rango seleccionado.
+              </p>
+            </>
           )}
-        </div>
+        </GlassCard>
       </motion.div>
     );
   }
@@ -90,48 +111,69 @@ export function ListView({
     <div className="space-y-3 h-full overflow-y-auto scrollbar-hide p-4">
       {/* Vista Desktop: Tabla */}
       <div className="hidden md:block overflow-x-auto">
-        <div className="bg-[#15171A] rounded-2xl border border-white/5 shadow-[0px_8px_32px_rgba(0,0,0,0.35)] backdrop-blur-md overflow-hidden">
+        <GlassCard variant="elevated" padding="none" className="overflow-hidden">
           <table className="w-full">
-            <thead className="border-b border-white/5 bg-[#15171A]">
+            <thead className="border-b border-border-default">
               <tr>
-                <th className="px-6 py-4 text-left text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider font-['Plus_Jakarta_Sans']">
+                <th className={cn(
+                  "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider",
+                  "text-tertiary font-sans"
+                )}>
                   Hora
                 </th>
-                <th className="px-6 py-4 text-left text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider font-['Plus_Jakarta_Sans']">
+                <th className={cn(
+                  "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider",
+                  "text-tertiary font-sans"
+                )}>
                   Cliente
                 </th>
-                <th className="px-6 py-4 text-left text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider font-['Plus_Jakarta_Sans']">
+                <th className={cn(
+                  "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider",
+                  "text-tertiary font-sans"
+                )}>
                   Servicio
                 </th>
-                <th className="px-6 py-4 text-left text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider font-['Plus_Jakarta_Sans']">
+                <th className={cn(
+                  "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider",
+                  "text-tertiary font-sans"
+                )}>
                   Barbero
                 </th>
-                <th className="px-6 py-4 text-left text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider font-['Plus_Jakarta_Sans']">
+                <th className={cn(
+                  "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider",
+                  "text-tertiary font-sans"
+                )}>
                   Estado
                 </th>
-                <th className="px-6 py-4 text-left text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider font-['Plus_Jakarta_Sans']">
+                <th className={cn(
+                  "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider",
+                  "text-tertiary font-sans"
+                )}>
                   Precio
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-border-default">
               {bookingsByDate.map(([dateKey, dateBookings]) => {
                 const dateObj = parseISO(dateKey);
                 const showDateSeparator = bookingsByDate.length > 1;
-                
+
                 return (
                   <React.Fragment key={dateKey}>
                     {/* Separador de fecha cuando hay múltiples días */}
                     {showDateSeparator && (
-                      <tr className="bg-white/3 sticky top-0 z-10">
-                        <td colSpan={6} className="px-6 py-3 border-b border-white/10">
-                          <div className="text-xs font-semibold text-[#9ca3af] uppercase tracking-wider font-['Plus_Jakarta_Sans']">
+                      <tr className="bg-glass sticky top-0 z-10">
+                        <td colSpan={6} className="px-6 py-3 border-b border-border-hover">
+                          <div className={cn(
+                            "text-xs font-semibold uppercase tracking-wider",
+                            "text-tertiary font-sans"
+                          )}>
                             {format(dateObj, "EEEE, d 'de' MMMM", { locale: es })}
                           </div>
                         </td>
                       </tr>
                     )}
-                    
+
                     {dateBookings.map((booking, index) => {
                       const startTime = formatInTenantTz(booking.starts_at, timezone, "HH:mm");
                       const endTime = formatInTenantTz(booking.ends_at, timezone, "HH:mm");
@@ -139,9 +181,11 @@ export function ListView({
                       return (
                         <motion.tr
                           key={booking.id}
-                          initial={{ opacity: 0, x: -12 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.02, duration: 0.15, ease: "easeOut" }}
+                          {...getMotionSafeProps({
+                            initial: { opacity: 0, x: -12 },
+                            animate: { opacity: 1, x: 0 },
+                            transition: { delay: index * 0.02, duration: 0.15, ease: "easeOut" },
+                          })}
                           onClick={() => onBookingClick(booking)}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" || e.key === " ") {
@@ -152,35 +196,56 @@ export function ListView({
                           tabIndex={0}
                           role="button"
                           aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime}`}
-                          className="hover:bg-white/3 focus:bg-white/5 focus:outline-none focus:ring-2 focus:ring-[#3A6DFF]/50 transition-colors cursor-pointer group"
+                          className={cn(
+                            "hover:bg-glass focus:bg-glass focus:outline-none focus:ring-2 focus:ring-accent-blue/50 focus:ring-offset-2 focus:ring-offset-primary transition-colors cursor-pointer",
+                            "text-primary"
+                          )}
                         >
                     <td className="px-6 py-4">
-                      <div className="text-sm font-semibold text-white font-mono font-['Plus_Jakarta_Sans']">
+                      <div className={cn(
+                        "text-sm font-semibold font-mono",
+                        "text-primary font-sans"
+                      )}>
                         {startTime} - {endTime}
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
+                      <div className={cn(
+                        "text-sm font-semibold",
+                        "text-primary font-sans"
+                      )}>
                         {booking.customer?.name || "Sin cliente"}
                       </div>
                       {booking.customer?.phone && (
-                        <div className="text-xs text-[#9ca3af] mt-1 font-['Plus_Jakarta_Sans']">
+                        <div className={cn(
+                          "text-xs mt-1",
+                          "text-tertiary font-sans"
+                        )}>
                           {booking.customer.phone}
                         </div>
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
+                      <div className={cn(
+                        "text-sm font-semibold",
+                        "text-primary font-sans"
+                      )}>
                         {booking.service?.name || "Sin servicio"}
                       </div>
                       {booking.service && (
-                        <div className="text-xs text-[#9ca3af] mt-1 font-['Plus_Jakarta_Sans']">
+                        <div className={cn(
+                          "text-xs mt-1",
+                          "text-tertiary font-sans"
+                        )}>
                           {booking.service.duration_min} min
                         </div>
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
+                      <div className={cn(
+                        "text-sm font-semibold",
+                        "text-primary font-sans"
+                      )}>
                         {booking.staff?.name || "Sin asignar"}
                       </div>
                     </td>
@@ -188,7 +253,10 @@ export function ListView({
                       <StatusBadge status={booking.status} />
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
+                      <div className={cn(
+                        "text-sm font-semibold",
+                        "text-primary font-sans"
+                      )}>
                         {booking.service
                           ? `${(booking.service.price_cents / 100).toFixed(2)} €`
                           : "-"}
@@ -202,7 +270,7 @@ export function ListView({
               })}
             </tbody>
           </table>
-        </div>
+        </GlassCard>
       </div>
 
       {/* Vista Mobile: Cards */}
@@ -210,18 +278,21 @@ export function ListView({
         {bookingsByDate.map(([dateKey, dateBookings]) => {
           const dateObj = parseISO(dateKey);
           const showDateSeparator = bookingsByDate.length > 1;
-          
+
           return (
             <div key={dateKey} className="space-y-3">
               {/* Separador de fecha cuando hay múltiples días */}
               {showDateSeparator && (
-                <div className="sticky top-0 z-10 py-2 bg-[#15171A] border-b border-white/10 mb-2">
-                  <div className="text-xs font-semibold text-[#9ca3af] uppercase tracking-wider font-['Plus_Jakarta_Sans']">
+                <div className="sticky top-0 z-10 py-2 bg-primary border-b border-border-default mb-2">
+                  <div className={cn(
+                    "text-xs font-semibold uppercase tracking-wider",
+                    "text-tertiary font-sans"
+                  )}>
                     {format(dateObj, "EEEE, d 'de' MMMM", { locale: es })}
                   </div>
                 </div>
               )}
-              
+
               {dateBookings.map((booking, index) => {
                 const startTime = formatInTenantTz(booking.starts_at, timezone, "HH:mm");
                 const endTime = formatInTenantTz(booking.ends_at, timezone, "HH:mm");
@@ -229,9 +300,11 @@ export function ListView({
                 return (
                   <motion.div
                     key={booking.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.02, duration: 0.15, ease: "easeOut" }}
+                    {...getMotionSafeProps({
+                      initial: { opacity: 0, y: 8 },
+                      animate: { opacity: 1, y: 0 },
+                      transition: { delay: index * 0.02, duration: 0.15, ease: "easeOut" },
+                    })}
                   >
                     <div
                       onClick={() => onBookingClick(booking)}
@@ -244,30 +317,55 @@ export function ListView({
                       tabIndex={0}
                       role="button"
                       aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime}`}
-                      className="p-4 cursor-pointer bg-[#15171A] border border-white/5 hover:border-white/10 hover:bg-white/3 focus:bg-white/5 focus:outline-none focus:ring-2 focus:ring-[#3A6DFF]/50 transition-all rounded-2xl backdrop-blur-md shadow-[0px_2px_8px_rgba(0,0,0,0.25)]"
+                      className="cursor-pointer"
                     >
-                      {/* Fila superior: Hora + Estado */}
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="text-sm font-semibold text-white font-mono font-['Plus_Jakarta_Sans']">
-                          {startTime} - {endTime}
+                      <motion.div
+                        {...getMotionSafeProps({
+                          whileHover: interactionPresets.appointmentCard.hover,
+                          whileTap: interactionPresets.appointmentCard.tap,
+                        })}
+                        className="focus:outline-none focus:ring-2 focus:ring-accent-blue/50 focus:ring-offset-2 focus:ring-offset-primary"
+                      >
+                        <GlassCard
+                          variant="elevated"
+                          padding="md"
+                        >
+                        {/* Fila superior: Hora + Estado */}
+                        <div className="flex items-start justify-between mb-2">
+                          <div className={cn(
+                            "text-sm font-semibold font-mono",
+                            "text-primary font-sans"
+                          )}>
+                            {startTime} - {endTime}
+                          </div>
+                          <StatusBadge status={booking.status} size="xs" />
                         </div>
-                        <StatusBadge status={booking.status} size="xs" />
-                      </div>
-                      {/* Fila media: Cliente + Servicio */}
-                      <div className="text-base font-semibold text-white mb-1.5 font-['Plus_Jakarta_Sans']">
-                        {booking.customer?.name || "Sin cliente"}
-                      </div>
-                      <div className="text-sm text-[#d1d4dc] mb-2 font-['Plus_Jakarta_Sans']">
-                        {booking.service?.name || "Sin servicio"}
-                        {booking.service && ` • ${booking.service.duration_min} min`}
-                        {booking.staff && ` • ${booking.staff.name}`}
-                      </div>
-                      {/* Fila inferior: Precio */}
-                      {booking.service && (
-                        <div className="text-sm font-semibold text-white pt-2 border-t border-white/5 font-['Plus_Jakarta_Sans']">
-                          {(booking.service.price_cents / 100).toFixed(2)} €
+                        {/* Fila media: Cliente + Servicio */}
+                        <div className={cn(
+                          "text-base font-semibold mb-1.5",
+                          "text-primary font-sans"
+                        )}>
+                          {booking.customer?.name || "Sin cliente"}
                         </div>
-                      )}
+                        <div className={cn(
+                          "text-sm mb-2",
+                          "text-secondary font-sans"
+                        )}>
+                          {booking.service?.name || "Sin servicio"}
+                          {booking.service && ` • ${booking.service.duration_min} min`}
+                          {booking.staff && ` • ${booking.staff.name}`}
+                        </div>
+                        {/* Fila inferior: Precio */}
+                        {booking.service && (
+                          <div className={cn(
+                            "text-sm font-semibold pt-2 border-t border-border-default",
+                            "text-primary font-sans"
+                          )}>
+                            {(booking.service.price_cents / 100).toFixed(2)} €
+                          </div>
+                        )}
+                      </GlassCard>
+                      </motion.div>
                     </div>
                   </motion.div>
                 );

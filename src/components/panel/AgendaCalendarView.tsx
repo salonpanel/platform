@@ -12,6 +12,11 @@ import { BookingResizeConfirmModal } from "@/components/calendar/BookingResizeCo
 import { motion, AnimatePresence } from "framer-motion";
 import { toTenantLocalDate } from "@/lib/timezone";
 import { Booking, Staff, StaffBlocking, StaffSchedule, BookingStatus, CalendarSlot } from "@/types/agenda";
+import { GlassCard } from "@/components/agenda/primitives/GlassCard";
+import { theme } from "@/theme/ui";
+import { cn } from "@/lib/utils";
+import { DayView } from "@/components/agenda/views/DayView";
+import { useCalendarData } from "@/components/agenda/hooks/useCalendarData";
 
 interface AgendaCalendarViewProps {
   bookings: Booking[];
@@ -36,7 +41,19 @@ interface AgendaCalendarViewProps {
   canCancel?: boolean;
 }
 
-// Colores premium según estado - Pastel con bordes sutiles
+// Status colors using theme tokens
+const getStatusTokens = (status: string) => {
+  const statusMap: Record<string, any> = {
+    pending: theme.statusTokens?.pending || { bg: "rgba(255,193,7,0.12)", border: "rgba(255,193,7,0.25)", text: "#FFC107" },
+    confirmed: theme.statusTokens?.confirmed || { bg: "rgba(79,227,193,0.12)", border: "rgba(79,227,193,0.25)", text: "#4FE3C1" },
+    cancelled: theme.statusTokens?.cancelled || { bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.25)", text: "#EF4444" },
+    completed: theme.statusTokens?.completed || { bg: "rgba(58,109,255,0.12)", border: "rgba(58,109,255,0.25)", text: "#3A6DFF" },
+    "no-show": theme.statusTokens?.["no-show"] || { bg: "rgba(255,109,163,0.12)", border: "rgba(255,109,163,0.25)", text: "#FF6DA3" },
+  };
+  return statusMap[status] || statusMap.pending;
+};
+
+// Status colors for backwards compatibility
 const statusColors = {
   hold: "border-[#FFC107]/30 bg-[rgba(255,193,7,0.12)] text-[#FFC107]",
   pending: "border-[#FFC107]/30 bg-[rgba(255,193,7,0.12)] text-[#FFC107]",
@@ -54,10 +71,10 @@ const blockingColors = {
 };
 
 // Constantes centralizadas para cálculos de posición
-// Cada slot de 15 minutos = 60px de altura
-const SLOT_HEIGHT_PX = 60;
+// Cada slot de 15 minutos = 64px de altura (updated from 60px)
+const SLOT_HEIGHT_PX = 64;
 const SLOT_DURATION_MINUTES = 15;
-const MIN_BOOKING_HEIGHT_PX = 60; // Altura mínima para una cita (15 min)
+const MIN_BOOKING_HEIGHT_PX = 64; // Altura mínima para una cita (15 min) - updated from 60px
 const DEFAULT_SLOT_DURATION_MINUTES = 30; // Para pre-llenar modales desde gaps libres
 
 // Generar slots de tiempo (cada 15 minutos) - se genera dinámicamente según horarios del staff
@@ -93,6 +110,25 @@ export function AgendaCalendarView({
   onBookingStatusChange,
   canCancel = true,
 }: AgendaCalendarViewProps) {
+
+  // Load data using the new hook
+  const calendarData = useCalendarData({
+    tenantId: "tenant-123", // This should come from auth context
+    selectedDate,
+    staffList,
+  });
+
+  const {
+    bookings: loadedBookings,
+    staffBlockings: loadedStaffBlockings,
+    staffSchedules: loadedStaffSchedules,
+    loading,
+  } = calendarData;
+
+  // Use loaded data if available, otherwise fall back to props
+  const displayBookings = loadedBookings.length > 0 ? loadedBookings : bookings;
+  const displayStaffBlockings = loadedStaffBlockings.length > 0 ? loadedStaffBlockings : staffBlockings;
+  const displayStaffSchedules = loadedStaffSchedules.length > 0 ? loadedStaffSchedules : staffSchedules;
   
   // Calcular rango horario basado en horarios operativos del staff
   const { startHour, endHour, startMinutes } = useMemo(() => {
@@ -1277,565 +1313,37 @@ export function AgendaCalendarView({
   }
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden bg-[#15171A]">
-      <div 
-        ref={timelineRef}
-        className="relative flex-1 overflow-x-auto overflow-y-hidden scrollbar-hide"
-      >
-        <div className="flex h-full" style={{ minWidth: `${visibleStaff.length * 300}px` }}>
-          {/* Columna de horas - Premium */}
-          <div className="w-24 border-r border-white/5 bg-[#15171A] sticky left-0 z-10 flex flex-col h-full">
-            {/* Header vacío para alineación con columnas de staff */}
-            <div className="sticky top-0 z-20 bg-[#15171A] border-b border-white/5 px-4 py-4 backdrop-blur-md flex items-center flex-shrink-0" style={{ height: "72px" }}>
-              <div className="text-[10px] font-semibold text-[#9ca3af] uppercase font-['Plus_Jakarta_Sans'] tracking-wider">Hora</div>
-            </div>
-            
-            {/* Área de slots de tiempo - Premium */}
-            <div 
-              ref={timeColumnRef}
-              className="relative flex-1 overflow-y-auto scrollbar-hide bg-[#15171A]" 
-              style={{ 
-                height: `calc(100% - 72px)`
-              }}
-            >
-              {timeSlots.map((time, index) => {
-                const [hour, minute] = time.split(":").map(Number);
-                const isHour = minute === 0;
-                
-                return (
-                  <div
-                    key={time}
-                    className={`
-                      absolute left-0 right-0
-                      flex items-start justify-end pr-3 pt-1
-                      ${isHour ? "border-t border-white/5" : "border-t border-dashed border-white/3"}
-                    `}
-                    style={{ 
-                      top: `${index * 60}px`, 
-                      height: "60px",
-                      width: "100%",
-                      left: 0,
-                      right: 0,
-                      pointerEvents: "none"
-                    }}
-                  >
-                    {isHour && (
-                      <span className="text-xs font-semibold text-white font-['Plus_Jakarta_Sans'] font-mono">
-                        {time}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Columnas de staff - Premium */}
-          {visibleStaff.map((staff, staffIndex) => {
-            const staffBookings = bookingsByStaff.get(staff.id) || [];
-            const staffBlockingsList = blockingsByStaff.get(staff.id) || [];
-            
-            return (
-              <motion.div
-                key={staff.id}
-                data-staff-id={staff.id}
-                initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: staffIndex * 0.05, duration: 0.2, ease: "easeOut" }}
-                className="flex-1 min-w-[300px] border-r border-white/5 last:border-r-0 relative bg-[#15171A]"
-              >
-                {/* Header del staff - Premium glassmorphism */}
-                <div className="sticky top-0 z-20 bg-[#15171A] border-b border-white/5 px-5 py-4 backdrop-blur-md flex-shrink-0" style={{ height: "72px" }}>
-                  <div className="flex items-center gap-3 h-full">
-                    <motion.div 
-                      className="h-10 w-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-sm font-semibold text-white shadow-[0px_2px_8px_rgba(0,0,0,0.15)]"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.15 }}
-                    >
-                      {staff.name.charAt(0).toUpperCase()}
-                    </motion.div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-white text-sm font-['Plus_Jakarta_Sans'] tracking-tight">{staff.name}</div>
-                      <div className="text-xs text-[#9ca3af] font-medium mt-0.5 flex items-center gap-1.5 font-['Plus_Jakarta_Sans']">
-                        <div className="h-1.5 w-1.5 rounded-full bg-[#4FE3C1]" />
-                        {(() => {
-                          const schedule = staffSchedules.find(s => s.staff_id === staff.id);
-                          return schedule ? `${schedule.start_time} - ${schedule.end_time}` : "09:00 - 19:00";
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Área de bookings - Premium */}
-                <div 
-                  ref={(el) => {
-                    if (el) {
-                      staffColumnsRefs.current.set(staff.id, el);
-                    } else {
-                      staffColumnsRefs.current.delete(staff.id);
-                    }
-                  }}
-                  data-staff-column={staff.id}
-                  className="relative flex-1 overflow-y-auto scrollbar-hide bg-[#15171A]" 
-                  style={{ 
-                    height: `calc(100% - 72px)`
-                  }}
-                >
-                  {/* Línea para hora actual (solo si es hoy) - Premium moderna */}
-                  {currentMinutes !== null && (
-                    <div
-                      className="absolute left-0 right-0 z-30 pointer-events-none"
-                      style={{
-                        top: `${(currentMinutes / 15) * 60}px`,
-                        height: "2px",
-                      }}
-                    >
-                      <div className="absolute left-0 top-0 w-full h-full bg-gradient-to-r from-[#EF4444] via-[#FF6DA3] to-[#EF4444] shadow-[0px_0px_8px_rgba(239,68,68,0.4)]" />
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-[#EF4444] rounded-full -translate-x-1.5 border-2 border-[#15171A] shadow-[0px_0px_12px_rgba(239,68,68,0.6)]" />
-                      <div className="absolute left-6 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-[#EF4444]/90 backdrop-blur-sm rounded-[6px] text-[10px] font-semibold text-white font-['Plus_Jakarta_Sans']">
-                        Ahora
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Slots de tiempo clickeables - Premium */}
-                  {timeSlots.map((time, index) => {
-                    const isHour = time.endsWith(":00");
-                    const [hour, minute] = time.split(":").map(Number);
-                    const startMinutes = hour * 60 + minute;
-                    const hasBooking = hasBookingAtPosition(staff.id, time, startMinutes);
-
-                    return (
-                      <div
-                        key={time}
-                        onClick={(e) => handleSlotClick(e, staff.id, time)}
-                        className={`
-                          absolute left-0 right-0 cursor-pointer
-                          ${isHour ? "border-t border-white/5" : "border-t border-dashed border-white/3"}
-                          ${!hasBooking ? "hover:bg-white/3 transition-colors duration-150" : ""}
-                        `}
-                        style={{ top: `${index * 60}px`, height: "60px" }}
-                        data-time-slot={time}
-                      />
-                    );
-                  })}
-
-                  {/* Free slots overlay (solo cuando showFreeSlots está activo) */}
-                  {showFreeSlots && freeSlotsByStaff.get(staff.id)?.map((gap, gapIndex) => {
-                    const relativeStartMinutes = gap.startMinutes - startMinutes;
-                    const relativeEndMinutes = gap.endMinutes - startMinutes;
-                    // Usar constantes centralizadas para cálculos de posición
-                    const slotIndexStart = Math.round(relativeStartMinutes / SLOT_DURATION_MINUTES);
-                    const slotIndexEnd = Math.round(relativeEndMinutes / SLOT_DURATION_MINUTES);
-                    const top = Math.max(0, slotIndexStart * SLOT_HEIGHT_PX);
-                    const height = Math.max(MIN_BOOKING_HEIGHT_PX, (slotIndexEnd - slotIndexStart) * SLOT_HEIGHT_PX);
-                    const durationHours = Math.floor(gap.duration / 60);
-                    const durationMins = gap.duration % 60;
-                    const durationLabel = durationHours > 0 
-                      ? `${durationHours}h ${durationMins > 0 ? durationMins + "m" : ""}`.trim()
-                      : `${durationMins}m`;
-
-                    return (
-                      <motion.div
-                        key={`free-slot-${gapIndex}`}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.2, delay: gapIndex * 0.05 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const gapStartTime = minutesToTime(gap.startMinutes);
-                          const gapEndTime = minutesToTime(gap.endMinutes);
-                    onNewBooking?.({
-                      staffId: staff.id,
-                      time: gapStartTime,
-                      endTime: gapEndTime,
-                      date: selectedDate,
-                    });
-                        }}
-                        className="absolute left-3 right-3 rounded-[10px] border-2 border-dashed border-[#4FE3C1]/40 bg-[rgba(79,227,193,0.08)] hover:bg-[rgba(79,227,193,0.12)] hover:border-[#4FE3C1]/60 cursor-pointer transition-all duration-150 z-0 group"
-                        style={{
-                          top: `${top}px`,
-                          height: `${height}px`,
-                          minHeight: "60px",
-                        }}
-                        title={`Hueco libre: ${minutesToTime(gap.startMinutes)} - ${minutesToTime(gap.endMinutes)} (${durationLabel})`}
-                      >
-                        <div className="flex items-center justify-center h-full p-2">
-                          <div className="text-center">
-                            <div className="text-xs font-semibold text-[#4FE3C1] font-['Plus_Jakarta_Sans'] mb-0.5">
-                              Libre {durationLabel}
-                            </div>
-                            <div className="text-[10px] text-[#4FE3C1]/70 font-mono font-['Plus_Jakarta_Sans']">
-                              {minutesToTime(gap.startMinutes)} - {minutesToTime(gap.endMinutes)}
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-
-                  {/* Bloqueos/Ausencias (mostrar detrás de bookings) - Menos intrusivos */}
-                  {staffBlockingsList.map((blocking) => {
-                    const pos = getBlockingPosition(blocking);
-                    if (!pos) return null;
-                    
-                    const { top, height } = pos;
-                    
-                    // Estilos según tipo
-                    const typeLabels = {
-                      block: "Bloqueo",
-                      absence: "Ausencia",
-                      vacation: "Vacaciones",
-                    };
-                    
-                    // Convertir fechas a timezone local antes de formatear
-                    const startAt = new Date(blocking.start_at);
-                    const endAt = new Date(blocking.end_at);
-                    const localStartAt = new Date(
-                      startAt.toLocaleString("en-US", { timeZone: timezone })
-                    );
-                    const localEndAt = new Date(
-                      endAt.toLocaleString("en-US", { timeZone: timezone })
-                    );
-                    
-                    return (
-                      <div
-                        key={blocking.id}
-                        data-blocking
-                        className={`
-                          absolute left-3 right-3 rounded-[10px] border-l-[3px] p-2
-                          ${blockingColors[blocking.type] || blockingColors.block}
-                          z-5
-                        `}
-                        style={{
-                          top: `${top}px`,
-                          height: `${Math.max(height, 40)}px`,
-                          minHeight: "40px",
-                        }}
-                        title={blocking.reason || typeLabels[blocking.type]}
-                      >
-                        <div className="flex items-start justify-between h-full opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 mb-1">
-                              <span className="text-[10px] font-mono font-semibold">
-                                {format(localStartAt, "HH:mm")}{" "}
-                                -{" "}
-                                {format(localEndAt, "HH:mm")}
-                              </span>
-                            </div>
-                            <div className="text-[10px] font-medium truncate">
-                              {blocking.reason || typeLabels[blocking.type]}
-                            </div>
-                            {blocking.notes && (
-                              <div className="text-[10px] opacity-60 truncate mt-0.5">
-                                {blocking.notes}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {/* Bookings (mostrar encima de bloqueos) */}
-                  {staffBookings.map((booking, bookingIndex) => {
-                    const { top, height, startMinutes, endMinutes } = getBookingPosition(booking);
-                    
-                    // Si este booking se está arrastrando, usar la posición del drag
-                    const isDragging = draggingBooking?.bookingId === booking.id;
-                    const isResizing = resizingBooking?.bookingId === booking.id;
-                    
-                    let displayTop = isDragging ? draggingBooking.currentTop : top;
-                    let displayHeight = isResizing ? resizingBooking.currentHeight : height;
-                    const displayStaffId = isDragging ? draggingBooking.currentStaffId : booking.staff_id;
-                    
-                    // Si se está redimensionando desde el inicio, ajustar el top
-                    if (isResizing && resizingBooking.resizeType === "start") {
-                      const originalBottom = top + height;
-                      displayTop = originalBottom - displayHeight;
-                    }
-                    
-                    // Determinar en qué columnas mostrar el booking
-                    const isOriginalColumn = booking.staff_id === staff.id;
-                    const isTargetColumn = isDragging && displayStaffId === staff.id;
-                    
-                    // Mostrar booking: siempre en su columna original, o en la columna destino si se está arrastrando
-                    const showInThisColumn = isOriginalColumn || isTargetColumn;
-                    
-                    // Si se está arrastrando y estamos en la columna original (pero no es el destino), mostrar ghost
-                    const isGhost = isDragging && isOriginalColumn && !isTargetColumn;
-                    
-                    // Convertir fechas a timezone local antes de formatear
-                    const startsAt = new Date(booking.starts_at);
-                    const endsAt = new Date(booking.ends_at);
-                    const localStartsAt = new Date(
-                      startsAt.toLocaleString("en-US", { timeZone: timezone })
-                    );
-                    const localEndsAt = new Date(
-                      endsAt.toLocaleString("en-US", { timeZone: timezone })
-                    );
-                    
-                    // Verificar si la cita ya pasó (para decolorarla)
-                    const now = new Date();
-                    const isPast = localEndsAt < now;
-                    
-                    // Calcular precios
-                    const totalPrice = booking.service?.price_cents || 0;
-                    const paidAmount = booking.status === "paid" || booking.status === "completed" 
-                      ? totalPrice 
-                      : 0;
-                    
-                    if (!showInThisColumn) return null;
-                    
-                    return (
-                      <motion.div
-                        key={booking.id}
-                        initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                        transition={{ 
-                          duration: 0.15, 
-                          delay: bookingIndex * 0.02,
-                          ease: "easeOut" 
-                        }}
-                        whileHover={!isDragging ? { 
-                          y: -2, 
-                          scale: 1.01,
-                          boxShadow: "0px 4px 20px rgba(58,109,255,0.25), inset 0px 1px 0px rgba(255,255,255,0.1)"
-                        } : {}}
-                        data-booking
-                        tabIndex={0}
-                        role="button"
-                        aria-label={`Cita de ${booking.customer?.name || "cliente"} de ${format(localStartsAt, "HH:mm")} a ${format(localEndsAt, "HH:mm")}`}
-                        ref={(el) => {
-                          if (el) {
-                            bookingRefs.current.set(booking.id, el);
-                          } else {
-                            bookingRefs.current.delete(booking.id);
-                          }
-                        }}
-                        onFocus={() => setFocusedBookingId(booking.id)}
-                        onBlur={() => {
-                          // Solo limpiar focus si no estamos moviendo el focus a otro booking
-                          setTimeout(() => {
-                            if (document.activeElement && !bookingRefs.current.has(booking.id)) {
-                              setFocusedBookingId(null);
-                            }
-                          }, 0);
-                        }}
-                        onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
-                          // Verificar si el usuario está escribiendo en un input
-                          const target = e.target as HTMLElement;
-                          const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
-                          if (isInput) return;
-                          
-                          // Manejar Enter/Space para abrir detalles
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            onBookingClick?.(booking);
-                            return;
-                          }
-                          
-                          // Manejar flechas para navegar entre bookings
-                          if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            
-                            const direction = e.key === "ArrowUp" ? "up" 
-                              : e.key === "ArrowDown" ? "down"
-                              : e.key === "ArrowLeft" ? "left"
-                              : "right";
-                            
-                            const nextBookingId = findNextBooking(booking.id, direction);
-                            if (nextBookingId) {
-                              const nextBookingRef = bookingRefs.current.get(nextBookingId);
-                              if (nextBookingRef) {
-                                nextBookingRef.focus();
-                                // Scroll para hacer visible el booking enfocado
-                                nextBookingRef.scrollIntoView({ behavior: "smooth", block: "nearest" });
-                              }
-                            }
-                            return;
-                          }
-                        }}
-                        onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => {
-                          // Si se hace clic en un handle de resize, no iniciar drag
-                          if ((e.target as HTMLElement).closest('[data-resize-handle]')) {
-                            return;
-                          }
-                          if (!onBookingMove) return; // Solo permitir drag si hay callback
-                          
-                          // Prevenir el onClick si vamos a hacer drag
-                          e.stopPropagation();
-                          handleBookingMouseDown(e, booking, top);
-                        }}
-                        onClick={(e: React.MouseEvent<HTMLDivElement>) => {
-                          // Verificar si realmente hubo un drag o resize significativo
-                          // Solo bloquear onClick si el movimiento fue mayor a 5px
-                          const wasDragged = draggingRef.current && 
-                            Math.abs((draggingRef.current.currentTop || 0) - (draggingRef.current.originalTop || 0)) > 5;
-                          const wasResized = resizingRef.current && 
-                            Math.abs((resizingRef.current.currentHeight || 0) - (resizingRef.current.originalHeight || 0)) > 5;
-                          
-                          // Si se hizo drag o resize significativo, no ejecutar onClick
-                          if (wasDragged || wasResized) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            return;
-                          }
-                          
-                          // Si acabamos de terminar un drag o resize, no ejecutar onClick
-                          // Los flags solo se setean si realmente hubo movimiento
-                          if (justFinishedDragRef.current || justFinishedResizeRef.current) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            return;
-                          }
-                          
-                          // Si hay un drag/resize activo PERO no hubo movimiento significativo, limpiar y permitir onClick
-                          // Esto maneja el caso donde onMouseDown inicializó el drag pero no hubo movimiento
-                          if (draggingRef.current || resizingRef.current) {
-                            // Limpiar estados si no hubo movimiento real
-                            draggingRef.current = null;
-                            setDraggingBooking(null);
-                            resizingRef.current = null;
-                            setResizingBooking(null);
-                            // Continuar con el onClick normalmente
-                          }
-                          
-                          e.stopPropagation();
-                          
-                          // Obtener posición del clic para el popover
-                          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                          const x = e.clientX;
-                          const y = e.clientY;
-                          
-                          // Si hay handlers de acciones, mostrar popover; sino, usar callback normal
-                          if (onBookingEdit || onBookingCancel || onBookingSendMessage || onBookingStatusChange) {
-                            setBookingActionPopover({
-                              isOpen: true,
-                              position: { x, y },
-                              booking,
-                            });
-                          } else {
-                            onBookingClick?.(booking);
-                          }
-                        }}
-                        className={`
-                          absolute left-3 right-3 rounded-xl border relative transition-all duration-150
-                          hover:z-20
-                          focus:outline-none focus:ring-2 focus:ring-[#3A6DFF]/50 focus:ring-offset-2 focus:ring-offset-[#15171A] focus:z-30
-                          ${statusColors[booking.status] || statusColors.pending}
-                          ${isGhost ? "opacity-30 border-dashed" : ""}
-                          ${isPast && !isDragging ? "opacity-50 grayscale-[0.2]" : ""}
-                          ${isDragging && !isGhost ? "cursor-grabbing opacity-85 z-50" : isDragging ? "" : "cursor-grab z-10"}
-                          ${focusedBookingId === booking.id ? "ring-2 ring-[#3A6DFF]/50 ring-offset-2 ring-offset-[#15171A]" : ""}
-                          backdrop-blur-md group
-                          ${displayHeight >= 80 ? "p-3" : displayHeight >= 64 ? "p-2.5" : "p-2"}
-                        `}
-                        style={{
-                          borderRadius: "14px",
-                          top: `${displayTop}px`,
-                          height: `${Math.max(displayHeight, 48)}px`,
-                          minHeight: "48px",
-                          boxShadow: isDragging && !isGhost 
-                            ? "0px 8px 32px rgba(58, 109, 255, 0.4)" 
-                            : "0px 2px 8px rgba(0,0,0,0.25), inset 0px 1px 0px rgba(255,255,255,0.08)",
-                        }}
-                        title={`${booking.customer?.name || "Sin cliente"} - ${booking.service?.name || "Sin servicio"} (${format(localStartsAt, "HH:mm")} - ${format(localEndsAt, "HH:mm")})`}
-                      >
-                        {/* Handles para redimensionar (solo si hay callback) - Premium */}
-                        {onBookingResize && !isDragging && (
-                          <>
-                            {/* Handle superior */}
-                            <div
-                              data-resize-handle="top"
-                              onMouseDown={(e) => {
-                                e.stopPropagation();
-                                handleBookingResizeStart(e, booking, height, top, "start");
-                              }}
-                              className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-[#3A6DFF]/30 z-20 rounded-t-xl transition-colors duration-150"
-                              title="Redimensionar desde el inicio"
-                            />
-                            {/* Handle inferior */}
-                            <div
-                              data-resize-handle="bottom"
-                              onMouseDown={(e) => {
-                                e.stopPropagation();
-                                handleBookingResizeStart(e, booking, height, top, "end");
-                              }}
-                              className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-[#3A6DFF]/30 z-20 rounded-b-xl transition-colors duration-150"
-                              title="Redimensionar duración"
-                            />
-                          </>
-                        )}
-                        {/* Contenedor principal con layout flexible y responsive */}
-                        <div className="flex flex-col h-full min-h-0 overflow-hidden">
-                          {/* Header: Horario y Estado (siempre visible, compacto) */}
-                          <div className="flex items-center justify-between gap-2 flex-shrink-0 mb-0.5">
-                            <span className="text-[10px] font-mono font-semibold text-white/80 font-['Plus_Jakarta_Sans'] leading-tight whitespace-nowrap">
-                              {format(localStartsAt, "HH:mm")} – {format(localEndsAt, "HH:mm")}
-                            </span>
-                            {/* Estado compacto - solo visible si hay espacio mínimo */}
-                            {displayHeight >= 64 && (
-                              <StatusBadge status={booking.status} size="xs" />
-                            )}
-                          </div>
-
-                          {/* Contenido principal: Cliente y Servicio (flexible, se adapta al espacio) */}
-                          <div className="flex-1 min-h-0 flex flex-col justify-center overflow-hidden">
-                            {/* Nombre del cliente - siempre visible, tamaño adaptativo según altura */}
-                            <div 
-                              className={`font-semibold text-white truncate font-['Plus_Jakarta_Sans'] tracking-tight ${
-                                displayHeight >= 80 ? "text-sm leading-snug" : displayHeight >= 64 ? "text-xs leading-snug" : "text-[11px] leading-snug"
-                              }`}
-                              title={booking.customer?.name || "Sin cliente"}
-                            >
-                              {booking.customer?.name || "Sin cliente"}
-                            </div>
-                            
-                            {/* Servicio - solo visible si hay espacio suficiente (≥64px) */}
-                            {displayHeight >= 64 && (
-                              <div 
-                                className="text-[11px] text-white/70 truncate font-['Plus_Jakarta_Sans'] leading-tight mt-0.5"
-                                title={booking.service?.name || "Sin servicio"}
-                              >
-                                {booking.service?.name || "Sin servicio"}
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Footer: Precios (solo si hay espacio suficiente ≥80px y hay precios) */}
-                          {displayHeight >= 80 && (paidAmount > 0 || totalPrice > 0) && (
-                            <div className="flex items-center justify-end gap-1.5 flex-shrink-0 mt-auto pt-1.5 border-t border-white/5">
-                              {paidAmount > 0 && (
-                                <span className="text-[#4FE3C1] font-semibold text-[11px] font-['Plus_Jakarta_Sans'] leading-tight whitespace-nowrap">
-                                  {(paidAmount / 100).toFixed(2)}€
-                                </span>
-                              )}
-                              {totalPrice > 0 && (
-                                <span className={`font-medium text-[11px] font-['Plus_Jakarta_Sans'] leading-tight whitespace-nowrap ${
-                                  paidAmount > 0 ? "text-white/60" : "text-white/70"
-                                }`}>
-                                  {(totalPrice / 100).toFixed(2)}€
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Línea de ahora - Premium (ya renderizada dentro de cada columna) */}
+    <>
+      <DayView
+        bookings={displayBookings}
+        staffBlockings={displayStaffBlockings}
+        staffList={visibleStaff}
+        staffSchedules={displayStaffSchedules}
+        selectedDate={selectedDate}
+        timezone={timezone}
+        showFreeSlots={showFreeSlots}
+        loading={loading}
+        onBookingClick={onBookingClick}
+        onSlotClick={handleSlotClick}
+        onFreeSlotClick={(slot) => onNewBooking?.(slot)}
+        onBookingMove={onBookingMove}
+        onBookingResize={onBookingResize}
+        onPopoverShow={(position, slot, booking) => {
+          if (booking) {
+            setBookingActionPopover({
+              isOpen: true,
+              position,
+              booking,
+            });
+          } else if (slot) {
+            setPopoverState({
+              isOpen: true,
+              position,
+              slot,
+            });
+          }
+        }}
+      />
 
       {/* Popover de acciones para slots vacíos */}
       {popoverState.isOpen && popoverState.slot && (
@@ -1941,7 +1449,7 @@ export function AgendaCalendarView({
           newEndTime={resizeConfirmModal.newEndTime}
         />
       )}
-    </div>
+    </>
   );
 }
 

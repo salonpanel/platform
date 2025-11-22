@@ -113,6 +113,40 @@ export const theme = {
     backdropBlur: "12px",
     border: "1px solid rgba(255,255,255,0.06)",
   },
+
+  // Status tokens for appointment cards
+  statusTokens: {
+    pending: {
+      bg: "rgba(255, 193, 7, 0.12)",
+      border: "rgba(255, 193, 7, 0.25)",
+      text: "#FFC107",
+      shadow: "0px 2px 8px rgba(255, 193, 7, 0.15)"
+    },
+    confirmed: {
+      bg: "rgba(79, 227, 193, 0.12)",
+      border: "rgba(79, 227, 193, 0.25)",
+      text: "#4FE3C1",
+      shadow: "0px 2px 8px rgba(79, 227, 193, 0.15)"
+    },
+    cancelled: {
+      bg: "rgba(239, 68, 68, 0.12)",
+      border: "rgba(239, 68, 68, 0.25)",
+      text: "#EF4444",
+      shadow: "0px 2px 8px rgba(239, 68, 68, 0.15)"
+    },
+    completed: {
+      bg: "rgba(58, 109, 255, 0.12)",
+      border: "rgba(58, 109, 255, 0.25)",
+      text: "#3A6DFF",
+      shadow: "0px 2px 8px rgba(58, 109, 255, 0.15)"
+    },
+    "no-show": {
+      bg: "rgba(255, 109, 163, 0.12)",
+      border: "rgba(255, 109, 163, 0.25)",
+      text: "#FF6DA3",
+      shadow: "0px 2px 8px rgba(255, 109, 163, 0.15)"
+    }
+  },
 } as const;
 
 // Utilidades para usar en componentes

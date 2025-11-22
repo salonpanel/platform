@@ -2,11 +2,14 @@
 
 import { useMemo } from "react";
 import { format, startOfWeek, addDays, parseISO, isSameDay, startOfToday } from "date-fns";
-import { Card } from "@/components/ui/Card";
+import { GlassCard } from "@/components/agenda/primitives/GlassCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { toTenantLocalDate, formatInTenantTz } from "@/lib/timezone";
 import { Booking, BOOKING_STATUS_CONFIG } from "@/types/agenda";
+import { theme } from "@/theme/ui";
+import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { interactionPresets, getMotionSafeProps } from "@/components/agenda/motion/presets";
 
 interface WeekViewProps {
   bookings: Booking[];
@@ -71,26 +74,27 @@ export function WeekView({
     return { top: `${top}%`, height: `${height}%` };
   };
 
-  // Usar la misma paleta de colores que Day view (desde BOOKING_STATUS_CONFIG)
-  const getStatusColor = (status: Booking["status"]) => {
-    // Mapeo directo basado en los colores de Day view (statusColors)
-    const statusColorMap: Record<Booking["status"], string> = {
-      hold: "border-[#FFC107]/30 bg-[rgba(255,193,7,0.12)] text-[#FFC107]",
-      pending: "border-[#FFC107]/30 bg-[rgba(255,193,7,0.12)] text-[#FFC107]",
-      paid: "border-[#3A6DFF]/30 bg-[rgba(58,109,255,0.12)] text-[#3A6DFF]",
-      completed: "border-[#4FE3C1]/30 bg-[rgba(79,227,193,0.12)] text-[#4FE3C1]",
-      cancelled: "border-white/10 bg-white/3 text-[#9ca3af] opacity-60",
-      no_show: "border-[#FF6DA3]/30 bg-[rgba(255,109,163,0.12)] text-[#FF6DA3]",
+  // Use theme-based status colors
+  const getStatusTokens = (status: string) => {
+    const statusMap: Record<string, any> = {
+      pending: theme.statusTokens?.pending || { bg: "rgba(255,193,7,0.12)", border: "rgba(255,193,7,0.25)", text: "#FFC107" },
+      confirmed: theme.statusTokens?.confirmed || { bg: "rgba(79,227,193,0.12)", border: "rgba(79,227,193,0.25)", text: "#4FE3C1" },
+      cancelled: theme.statusTokens?.cancelled || { bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.25)", text: "#EF4444" },
+      completed: theme.statusTokens?.completed || { bg: "rgba(58,109,255,0.12)", border: "rgba(58,109,255,0.25)", text: "#3A6DFF" },
+      "no-show": theme.statusTokens?.["no-show"] || { bg: "rgba(255,109,163,0.12)", border: "rgba(255,109,163,0.25)", text: "#FF6DA3" },
     };
-    return `${statusColorMap[status] || statusColorMap.pending} border-l-[3px] backdrop-blur-md`;
+    return statusMap[status] || statusMap.pending;
   };
 
   return (
-    <div className="w-full h-full overflow-x-auto scrollbar-hide bg-[#15171A]">
+    <div className="w-full h-full overflow-x-auto scrollbar-hide bg-primary">
       <div className="min-w-[800px] h-full">
-        {/* Header con días de la semana - Premium */}
-        <div className="grid grid-cols-8 border-b border-white/5 sticky top-0 bg-[#15171A] backdrop-blur-md z-10">
-          <div className="p-4 text-sm font-semibold text-white border-r border-white/5 font-['Plus_Jakarta_Sans']">
+        {/* Header with days of the week - Premium */}
+        <GlassCard variant="elevated" padding="md" className="grid grid-cols-8 border-b border-border-default sticky top-0 z-10">
+          <div className={cn(
+            "text-sm font-semibold border-r border-border-default",
+            "text-primary font-sans"
+          )}>
             Hora
           </div>
           {weekDays.map((day, idx) => {
@@ -99,77 +103,90 @@ export function WeekView({
             return (
               <div
                 key={idx}
-                className={`p-4 text-center border-r border-white/5 transition-colors relative ${
+                className={cn(
+                  "text-center border-r border-border-default transition-colors relative",
                   isSelected
-                    ? "bg-[rgba(58,109,255,0.12)] border-b-2 border-[#3A6DFF]"
+                    ? "bg-accent-blue/10 border-b-2 border-accent-blue"
                     : isTodayDate
-                    ? "bg-[rgba(79,227,193,0.08)] border-b-2 border-[#4FE3C1]/40"
-                    : "hover:bg-white/3"
-                }`}
+                    ? "bg-accent-aqua/8 border-b-2 border-accent-aqua/40"
+                    : "hover:bg-glass"
+                )}
               >
-                <div className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider mb-1 font-['Plus_Jakarta_Sans']">
+                <div className={cn(
+                  "text-xs font-semibold uppercase tracking-wider mb-1",
+                  "text-tertiary font-sans"
+                )}>
                   {new Intl.DateTimeFormat("es-ES", { weekday: "short" }).format(day)}
                 </div>
-                <div className={`text-lg font-semibold ${
+                <div className={cn(
+                  "text-lg font-semibold",
                   isSelected
-                    ? "text-[#3A6DFF]"
+                    ? "text-accent-blue"
                     : isTodayDate
-                    ? "text-[#4FE3C1]"
-                    : "text-white"
-                } font-['Plus_Jakarta_Sans']`}>
+                    ? "text-accent-aqua"
+                    : "text-primary",
+                  "font-sans"
+                )}>
                   {format(day, "d")}
                 </div>
                 {isTodayDate && !isSelected && (
-                  <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#4FE3C1]" />
+                  <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-accent-aqua" />
                 )}
               </div>
             );
           })}
-        </div>
+        </GlassCard>
 
         {/* Timeline */}
-        <div className="relative flex-1 overflow-y-auto scrollbar-hide bg-[#15171A]">
+        <div className="relative flex-1 overflow-y-auto scrollbar-hide bg-primary">
           <div className="grid grid-cols-8">
-            {/* Columna de horas */}
-            <div className="border-r border-white/5">
+            {/* Time Column */}
+            <div className="border-r border-border-default">
               {hours.map((hour) => (
                 <div
                   key={hour}
-                  className="p-3 text-xs font-semibold text-white border-b border-white/5 min-h-[60px] font-mono font-['Plus_Jakarta_Sans']"
+                  className={cn(
+                    "text-xs font-semibold border-b border-border-default min-h-[60px]",
+                    "text-secondary font-mono font-sans"
+                  )}
                 >
                   {hour}:00
                 </div>
               ))}
             </div>
-            {/* Columnas de días con bookings */}
+            {/* Day columns with bookings */}
             {weekDays.map((day, dayIdx) => {
               const dayBookings = getBookingsForDay(day);
               return (
                 <div
                   key={dayIdx}
-                  className="relative border-r border-white/5"
+                  className="relative border-r border-border-default"
                   style={{
                     minHeight: `${hours.length * 60}px`,
                   }}
                 >
-                  {/* Filas de horas (solo visual) */}
+                  {/* Hour rows (visual only) */}
                   {hours.map((hour) => (
                     <div
                       key={hour}
-                      className="border-b border-white/5 min-h-[60px]"
+                      className="border-b border-border-default min-h-[60px]"
                     />
                   ))}
-                  {/* Bookings para este día */}
+                  {/* Bookings for this day */}
                   {dayBookings.map((booking) => {
                     const position = getBookingPosition(booking);
                     const startTime = formatInTenantTz(booking.starts_at, timezone, "HH:mm");
+                    const statusTokens = getStatusTokens(booking.status);
+
                     return (
                       <motion.div
                         key={booking.id}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                        {...getMotionSafeProps({
+                          initial: { opacity: 0, scale: 0.95 },
+                          animate: { opacity: 1, scale: 1 },
+                          whileHover: interactionPresets.appointmentCard.hover,
+                          whileTap: interactionPresets.appointmentCard.tap,
+                        })}
                         onClick={() => onBookingClick(booking)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
@@ -180,31 +197,44 @@ export function WeekView({
                         tabIndex={0}
                         role="button"
                         aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime}`}
-                        className={`absolute left-2 right-2 rounded-[12px] p-2.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#3A6DFF]/50 focus:ring-offset-2 focus:ring-offset-[#15171A] transition-all border-l-[3px] z-10 ${getStatusColor(
-                          booking.status
-                        )}`}
+                        className={cn(
+                          "absolute left-2 right-2 rounded-xl border-l-4 cursor-pointer",
+                          "focus:outline-none focus:ring-2 focus:ring-accent-blue/50 focus:ring-offset-2 focus:ring-offset-primary",
+                          "transition-all backdrop-blur-md group"
+                        )}
                         style={{
                           top: position.top,
                           height: position.height,
                           minHeight: "50px",
-                          boxShadow: "0px 2px 8px rgba(0,0,0,0.25), inset 0px 1px 0px rgba(255,255,255,0.08)",
+                          background: statusTokens.bg,
+                          borderLeftColor: statusTokens.border,
+                          boxShadow: statusTokens.shadow,
                         }}
                       >
-                        {/* Hora de inicio - Prioridad 1 */}
-                        <div className="text-[9px] font-semibold text-current/90 mb-1 font-mono font-['Plus_Jakarta_Sans']">
+                        {/* Time - Priority 1 */}
+                        <div className={cn(
+                          "text-xs font-semibold mb-1 font-mono",
+                          "text-secondary font-sans"
+                        )}>
                           {startTime}
                         </div>
-                        {/* Cliente - Prioridad 2 */}
-                        <div className="text-[11px] font-semibold text-current truncate mb-1 font-['Plus_Jakarta_Sans']">
+                        {/* Customer - Priority 2 */}
+                        <div className={cn(
+                          "text-sm font-semibold truncate mb-1",
+                          "text-primary font-sans"
+                        )}>
                           {booking.customer?.name || "Sin cliente"}
                         </div>
-                        {/* Servicio - Prioridad 3 (truncar si no hay espacio) */}
+                        {/* Service - Priority 3 (if space) */}
                         {parseFloat(position.height.replace("%", "")) > 15 && (
-                          <div className="text-[10px] text-current/80 truncate mb-1.5 font-['Plus_Jakarta_Sans']">
+                          <div className={cn(
+                            "text-xs truncate mb-1.5",
+                            "text-secondary font-sans"
+                          )}>
                             {booking.service?.name || "Sin servicio"}
                           </div>
                         )}
-                        {/* Status badge solo si hay espacio suficiente */}
+                        {/* Status badge if space */}
                         {parseFloat(position.height.replace("%", "")) > 20 && (
                           <div>
                             <StatusBadge status={booking.status} size="xs" />
