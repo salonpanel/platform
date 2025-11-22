@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useEffect, useRef, useState } from "react";
+import { useMemo, useEffect, useRef, useState, useCallback } from "react";
 import { format, parseISO, startOfDay, addMinutes } from "date-fns";
 import { Card } from "@/components/ui/Card";
+import { devLog } from "@/lib/dev-logger";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CheckCircle2, MessageSquare, Star, CreditCard, AlertCircle } from "lucide-react";
 import { AgendaActionPopover } from "@/components/calendar/AgendaActionPopover";
@@ -41,9 +42,16 @@ interface AgendaCalendarViewProps {
   canCancel?: boolean;
 }
 
+// Status tokens type
+interface StatusTokens {
+  bg: string;
+  border: string;
+  text: string;
+}
+
 // Status colors using theme tokens
-const getStatusTokens = (status: string) => {
-  const statusMap: Record<string, any> = {
+const getStatusTokens = (status: string): StatusTokens => {
+  const statusMap: Record<string, StatusTokens> = {
     pending: theme.statusTokens?.pending || { bg: "rgba(255,193,7,0.12)", border: "rgba(255,193,7,0.25)", text: "#FFC107" },
     confirmed: theme.statusTokens?.confirmed || { bg: "rgba(79,227,193,0.12)", border: "rgba(79,227,193,0.25)", text: "#4FE3C1" },
     cancelled: theme.statusTokens?.cancelled || { bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.25)", text: "#EF4444" },
@@ -728,13 +736,13 @@ export function AgendaCalendarView({
 
     // Obtener la columna del staff usando la referencia correcta
     if (!booking.staff_id) {
-      console.warn("El booking no tiene staff_id asignado");
+      devLog.warn("El booking no tiene staff_id asignado");
       return;
     }
     
     const staffColumnElement = staffColumnsRefs.current.get(booking.staff_id);
     if (!staffColumnElement) {
-      console.warn("No se encontró la columna de staff para el drag:", booking.staff_id);
+      devLog.warn("No se encontró la columna de staff para el drag:", booking.staff_id);
       return;
     }
 
@@ -788,7 +796,7 @@ export function AgendaCalendarView({
         if (!staffColumnElement) {
           staffColumnElement = staffColumnsRefs.current.get(currentDrag.originalStaffId) || null;
           if (!staffColumnElement) {
-            console.warn("No se encontró la columna de staff");
+            devLog.warn("No se encontró la columna de staff");
             return;
           }
         }
@@ -796,31 +804,13 @@ export function AgendaCalendarView({
         const staffColumnRect = staffColumnElement.getBoundingClientRect();
         const actualScrollTop = staffColumnElement.scrollTop;
         
-        // Validar que los valores sean números válidos
-        if (
-          typeof moveEvent.clientY !== "number" || isNaN(moveEvent.clientY) ||
-          typeof staffColumnRect.top !== "number" || isNaN(staffColumnRect.top) ||
-          typeof currentDrag.dragOffset.y !== "number" || isNaN(currentDrag.dragOffset.y) ||
-          typeof actualScrollTop !== "number" || isNaN(actualScrollTop)
-        ) {
-          console.error("Valores inválidos en handleMouseMove:", {
-            clientY: moveEvent.clientY,
-            top: staffColumnRect.top,
-            dragOffsetY: currentDrag.dragOffset.y,
-            scrollTop: actualScrollTop,
-          });
-          return;
-        }
-
         // Calcular posición relativa dentro de la columna de staff
-        // El dragOffset.y es relativo al elemento booking dentro de su contenedor
-        // Necesitamos calcular la posición del mouse relativa a la columna y ajustar por el offset del click
         const mouseYRelativeToColumn = moveEvent.clientY - staffColumnRect.top + actualScrollTop;
         const relativeY = mouseYRelativeToColumn - currentDrag.dragOffset.y;
 
-        // Validar que relativeY sea válido
-        if (typeof relativeY !== "number" || isNaN(relativeY) || !isFinite(relativeY)) {
-          console.error("relativeY inválido:", relativeY);
+        // Validación segura contra valores inválidos
+        if (!isFinite(relativeY)) {
+          devLog.warn("Posición calculada inválida durante drag");
           return;
         }
 
@@ -832,12 +822,6 @@ export function AgendaCalendarView({
         const timelineHeight = staffColumnElement.scrollHeight;
         const maxY = Math.max(0, timelineHeight - SLOT_HEIGHT_PX);
         const clampedY = Math.max(0, Math.min(snappedY, maxY));
-        
-        // Validar que clampedY sea válido
-        if (typeof clampedY !== "number" || isNaN(clampedY) || !isFinite(clampedY)) {
-          console.error("clampedY inválido:", clampedY);
-          return;
-        }
 
         const updatedDrag = {
           ...currentDrag,
@@ -848,7 +832,7 @@ export function AgendaCalendarView({
         setDraggingBooking(updatedDrag);
         draggingRef.current = updatedDrag;
       } catch (error) {
-        console.error("Error en handleMouseMove:", error);
+        devLog.error("Error en handleMouseMove:", error);
         // No hacer nada, solo loguear el error
       }
     };
@@ -883,19 +867,9 @@ export function AgendaCalendarView({
           justFinishedDragRef.current = false;
         }, 100);
 
-        // Validar que currentTop sea un número válido
-        if (typeof currentDrag.currentTop !== "number" || isNaN(currentDrag.currentTop) || !isFinite(currentDrag.currentTop)) {
-          console.error("currentTop inválido:", currentDrag.currentTop);
-          setDraggingBooking(null);
-          draggingRef.current = null;
-          document.removeEventListener("mousemove", handleMouseMove);
-          document.removeEventListener("mouseup", handleMouseUp);
-          return;
-        }
-
-        // Validar que currentStaffId sea válido
-        if (!currentDrag.currentStaffId) {
-          console.error("currentStaffId inválido:", currentDrag.currentStaffId);
+        // Validar datos críticos del drag
+        if (!isFinite(currentDrag.currentTop) || !currentDrag.currentStaffId) {
+          devLog.warn("Datos de drag inválidos al soltar");
           setDraggingBooking(null);
           draggingRef.current = null;
           document.removeEventListener("mousemove", handleMouseMove);
@@ -907,9 +881,9 @@ export function AgendaCalendarView({
         const newMinutes = pixelsToMinutes(currentDrag.currentTop);
         const newTime = minutesToTime(newMinutes);
 
-        // Validar que newTime sea válido
-        if (!newTime || !newTime.match(/^\d{2}:\d{2}$/)) {
-          console.error("newTime inválido:", newTime);
+        // Validar formato de tiempo
+        if (!newTime?.match(/^\d{2}:\d{2}$/)) {
+          devLog.warn("Tiempo calculado inválido");
           setDraggingBooking(null);
           draggingRef.current = null;
           document.removeEventListener("mousemove", handleMouseMove);
@@ -922,37 +896,16 @@ export function AgendaCalendarView({
         if (bookingToMove && onBookingMove) {
           const originalStart = new Date(bookingToMove.starts_at);
           const originalEnd = new Date(bookingToMove.ends_at);
-          
-          // Validar que las fechas sean válidas
-          if (isNaN(originalStart.getTime()) || isNaN(originalEnd.getTime())) {
-            console.error("Fechas originales inválidas:", { originalStart, originalEnd });
-            setDraggingBooking(null);
-            draggingRef.current = null;
-            document.removeEventListener("mousemove", handleMouseMove);
-            document.removeEventListener("mouseup", handleMouseUp);
-            return;
-          }
-
           const durationMs = originalEnd.getTime() - originalStart.getTime();
           const durationMinutes = durationMs / (1000 * 60);
-
-          // Validar que durationMinutes sea válido
-          if (isNaN(durationMinutes) || !isFinite(durationMinutes) || durationMinutes <= 0) {
-            console.error("durationMinutes inválido:", durationMinutes);
-            setDraggingBooking(null);
-            draggingRef.current = null;
-            document.removeEventListener("mousemove", handleMouseMove);
-            document.removeEventListener("mouseup", handleMouseUp);
-            return;
-          }
 
           // Calcular nueva hora de fin
           const newEndMinutes = newMinutes + durationMinutes;
           const newEndTime = minutesToTime(Math.floor(newEndMinutes));
 
-          // Validar que newEndTime sea válido
-          if (!newEndTime || !newEndTime.match(/^\d{2}:\d{2}$/)) {
-            console.error("newEndTime inválido:", newEndTime);
+          // Validar resultado
+          if (!newEndTime?.match(/^\d{2}:\d{2}$/)) {
+            devLog.warn("Tiempo de fin calculado inválido");
             setDraggingBooking(null);
             draggingRef.current = null;
             document.removeEventListener("mousemove", handleMouseMove);
@@ -979,16 +932,6 @@ export function AgendaCalendarView({
             newEndsAt.setDate(newEndsAt.getDate() + 1);
           }
 
-          // Validar que las fechas sean válidas
-          if (isNaN(newStartsAt.getTime()) || isNaN(newEndsAt.getTime())) {
-            console.error("Fechas construidas inválidas:", { newStartsAt, newEndsAt });
-            setDraggingBooking(null);
-            draggingRef.current = null;
-            document.removeEventListener("mousemove", handleMouseMove);
-            document.removeEventListener("mouseup", handleMouseUp);
-            return;
-          }
-
           // Mostrar modal de confirmación en lugar de mover directamente
           setMoveConfirmModal({
             isOpen: true,
@@ -999,7 +942,7 @@ export function AgendaCalendarView({
           });
         }
       } catch (error) {
-        console.error("Error en handleMouseUp:", error);
+        devLog.error("Error en handleMouseUp:", error);
         alert("Error al mover la cita. Por favor, intenta de nuevo.");
       } finally {
         // Solo limpiar si realmente hubo un drag (ya se marcó justFinishedDragRef arriba si hubo movimiento)
@@ -1028,13 +971,13 @@ export function AgendaCalendarView({
 
     // Obtener la columna del staff donde está el booking
     if (!booking.staff_id) {
-      console.warn("El booking no tiene staff_id asignado");
+      devLog.warn("El booking no tiene staff_id asignado");
       return;
     }
     
     const staffColumnElement = staffColumnsRefs.current.get(booking.staff_id);
     if (!staffColumnElement) {
-      console.warn("No se encontró la columna del staff para el booking:", booking.staff_id);
+      devLog.warn("No se encontró la columna del staff para el booking:", booking.staff_id);
       return;
     }
 
@@ -1148,16 +1091,6 @@ export function AgendaCalendarView({
         // Si la hora de fin es menor que la de inicio, significa que pasó a otro día
         if (newEndsAt <= newStartsAt) {
           newEndsAt.setDate(newEndsAt.getDate() + 1);
-        }
-
-        // Validar que las fechas sean válidas
-        if (isNaN(newStartsAt.getTime()) || isNaN(newEndsAt.getTime())) {
-          console.error("Fechas construidas inválidas en resize:", { newStartsAt, newEndsAt });
-          setResizingBooking(null);
-          resizingRef.current = null;
-          document.removeEventListener("mousemove", handleMouseMove);
-          document.removeEventListener("mouseup", handleMouseUp);
-          return;
         }
 
         // Mostrar modal de confirmación en lugar de redimensionar directamente
