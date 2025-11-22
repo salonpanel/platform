@@ -6,11 +6,12 @@
     "node": "20.x"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "vercel-build": "next build",
+    "clean": "rm -rf .next",
     "type-check": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
