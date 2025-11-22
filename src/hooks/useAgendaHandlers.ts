@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from 'react';
 import { format, parseISO, startOfDay, endOfDay } from 'date-fns';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { Booking, BookingStatus, CalendarSlot } from '@/types/agenda';
+import { Booking, BookingStatus, CalendarSlot, StaffBlocking } from '@/types/agenda';
 import { useToast } from '@/components/ui/Toast';
 import { useAgendaConflicts } from './useAgendaConflicts';
+import { useAgendaModals } from './useAgendaModals';
 
 type BookingFormPayload = Booking & {
   internal_notes?: string | null;
@@ -26,6 +26,7 @@ interface UseAgendaHandlersProps {
   tenantId: string | null;
   supabase: SupabaseClient;
   bookings: Booking[];
+  staffBlockings: StaffBlocking[];
   selectedDate: string;
   timezone: string;
   userRole: string | null;
@@ -36,26 +37,24 @@ export function useAgendaHandlers({
   tenantId,
   supabase,
   bookings,
+  staffBlockings,
   selectedDate,
   timezone,
   userRole,
   refreshDaySnapshots,
 }: UseAgendaHandlersProps) {
   const { showToast } = useToast();
+  
+  // Hook para gestión de conflictos
   const conflictsHook = useAgendaConflicts({
     bookings,
-    staffBlockings: [],
+    staffBlockings,
     userRole: (userRole as "owner" | "admin" | "manager" | "staff") || "staff",
     tenantTimezone: timezone,
   });
 
-  // Estado local para modales y selección
-  const [showNewBookingModal, setShowNewBookingModal] = useState(false);
-  const [showBlockingModal, setShowBlockingModal] = useState(false);
-  const [showBookingDetail, setShowBookingDetail] = useState(false);
-  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<CalendarSlot | null>(null);
+  // Hook para gestión de modales (centralizado)
+  const modals = useAgendaModals();
 
   // Utilidades
   const notifyError = (err: unknown, fallback: string) => {
@@ -94,22 +93,7 @@ export function useAgendaHandlers({
     if (error) throw error;
   };
 
-  // Handlers
-  const onNewBooking = (slot: CalendarSlot) => {
-    setSelectedSlot(slot);
-    setShowNewBookingModal(true);
-    setEditingBooking(null);
-  };
-
-  const onUnavailability = (slot: CalendarSlot) => {
-    setSelectedSlot(slot);
-    setShowBlockingModal(true);
-  };
-
-  const onAbsence = (slot: CalendarSlot) => {
-    setSelectedSlot({ ...slot, type: "absence" });
-    setShowBlockingModal(true);
-  };
+  // Note: onNewBooking, onUnavailability, onAbsence now come from modals hook
 
   const onSave = async (bookingData: BookingFormPayload) => {
     if (!tenantId) return;
@@ -153,10 +137,7 @@ export function useAgendaHandlers({
     }
   };
 
-  const onBookingEdit = (booking: Booking) => {
-    setEditingBooking(booking);
-    setShowNewBookingModal(true);
-  };
+  // Note: onBookingEdit now comes from modals hook
 
   const onBookingCancel = async (bookingId: string) => {
     if (!tenantId) return;
@@ -438,8 +419,7 @@ export function useAgendaHandlers({
           .eq("tenant_id", tenantId);
       } else {
         result = { error: null, data: null };
-        setShowNewBookingModal(false);
-        setEditingBooking(null);
+        modals.closeNewBookingModal();
         conflictsHook.clearConflicts();
         return;
       }
@@ -505,8 +485,7 @@ export function useAgendaHandlers({
     const defaultMessage = bookingData.id ? "Cita actualizada correctamente" : "Cita creada correctamente";
     showToast(successMessage || defaultMessage, "success");
 
-    setShowNewBookingModal(false);
-    setEditingBooking(null);
+    modals.closeNewBookingModal();
     conflictsHook.clearConflicts();
   };
 
@@ -542,33 +521,20 @@ export function useAgendaHandlers({
     await refreshDaySnapshots();
     showToast("Bloqueo registrado correctamente.", "success");
 
-    setShowBlockingModal(false);
-    setSelectedSlot(null);
+    modals.closeBlockingModal();
     conflictsHook.clearConflicts();
   };
 
   return {
-    // Estado
-    showNewBookingModal,
-    showBlockingModal,
-    showBookingDetail,
-    editingBooking,
-    selectedBooking,
-    selectedSlot,
-    // Setters
-    setShowNewBookingModal,
-    setShowBlockingModal,
-    setShowBookingDetail,
-    setEditingBooking,
-    setSelectedBooking,
-    setSelectedSlot,
+    // Exponer el objeto modals completo
+    ...modals,
     // Handlers
-    onNewBooking,
-    onUnavailability,
-    onAbsence,
+    onNewBooking: modals.openNewBookingModal,
+    onUnavailability: modals.openBlockingModal,
+    onAbsence: (slot: CalendarSlot) => modals.openBlockingModal(slot, "absence"),
     onSave,
     onSaveBlocking,
-    onBookingEdit,
+    onBookingEdit: modals.openEditBookingModal,
     onBookingCancel,
     onBookingSendMessage,
     onBookingStatusChange,
