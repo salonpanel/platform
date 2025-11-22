@@ -103,10 +103,10 @@ export const AppointmentCard = React.memo(function AppointmentCard({
         "absolute left-3 right-3 rounded-xl border relative transition-all duration-150",
         "hover:z-20 focus:outline-none focus:ring-2 focus:ring-accent-blue/50 focus:ring-offset-2 focus:ring-offset-primary focus:z-30",
         "min-h-[48px] touch-manipulation", // Ensure minimum 48px tap target for mobile
+        "backdrop-blur-md shadow-sm hover:shadow-md",
         isGhost ? "opacity-30 border-dashed" : "",
-        isPast && !isDragging ? "opacity-50 grayscale-[0.2]" : "",
-        isDragging && !isGhost ? "cursor-grabbing opacity-85 z-50" : isDragging ? "" : "cursor-grab z-10",
-        "backdrop-blur-md group",
+        isPast && !isDragging ? "opacity-75 grayscale-[0.1]" : "",
+        isDragging && !isGhost ? "cursor-grabbing z-50 shadow-lg scale-[1.02]" : isDragging ? "" : "cursor-grab z-20",
         height >= 80 ? "p-3" : height >= 64 ? "p-2.5" : "p-2"
       )}
       style={{
@@ -114,11 +114,11 @@ export const AppointmentCard = React.memo(function AppointmentCard({
         top: `${top}px`,
         height: `${Math.max(height, 48)}px`,
         minHeight: "48px",
-        background: getStatusTokens(booking.status).bg,
+        background: `linear-gradient(${getStatusTokens(booking.status).bg}, ${getStatusTokens(booking.status).bg}dd)`,
         borderColor: getStatusTokens(booking.status).border,
         boxShadow: isDragging && !isGhost
-          ? theme.shadows.neon
-          : theme.shadows.sm,
+          ? `0 8px 24px -8px ${getStatusTokens(booking.status).text}40`
+          : undefined,
         // Hardware acceleration
         transform: "translateZ(0)",
         willChange: "transform, opacity",
