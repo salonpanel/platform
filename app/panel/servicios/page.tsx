@@ -1,84 +1,81 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Alert } from "@/components/ui/Alert";
 import type { Service } from "@/types/services";
 import { ServiciosClient } from "./ServiciosClient";
+import { getSupabaseBrowser } from "@/lib/supabase/browser";
+import { getCurrentTenant } from "@/lib/panel-tenant";
 
-type ServiciosPageProps = {
-  searchParams?: Promise<{
-    impersonate?: string;
-  }>;
-};
+export default function ServiciosPage() {
+  const supabase = getSupabaseBrowser();
+  const searchParams = useSearchParams();
 
-export default async function ServiciosPage({ searchParams }: ServiciosPageProps) {
-  // ❗ IMPORTANTE: NO "use client" en este archivo
+  const [tenantId, setTenantId] = useState<string | null>(null);
+  const [initialServices, setInitialServices] = useState<Service[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // 1) Obtenemos el store de cookies de Next (await porque es async en Next.js 15+)
-  const cookieStore = await cookies();
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const impersonateOrgId = searchParams?.get("impersonate") || null;
 
-  // 2) Se lo pasamos al helper. El helper espera una función, pero
-  //    en esta versión las cookies ya están resueltas, así que devolvemos el objeto.
-  const supabase = createServerComponentClient({
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error La versión actual del helper tipa este campo como función async
-    cookies: () => cookieStore,
-  });
+        // 1) Obtener tenant actual (igual que en Agenda)
+        const { tenant, role, status } = await getCurrentTenant(impersonateOrgId);
 
-  const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const impersonateOrgId = resolvedSearchParams?.impersonate ?? null;
+        if (!tenant) {
+          setError(
+            status === "UNAUTHENTICATED"
+              ? "Tu sesión no está activa. Vuelve a iniciar sesión."
+              : "No tienes acceso a ninguna barbería"
+          );
+          setLoading(false);
+          return;
+        }
 
-  // NOTA: La verificación de sesión ya la realiza el layout cliente del panel.
-  // Aquí solo necesitamos el usuario actual para poder cargar tenant y servicios.
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+        setTenantId(tenant.id);
 
-  if (!user || userError) {
+        // 2) Cargar servicios del tenant
+        const { data: services, error: servicesError } = await supabase
+          .from("services")
+          .select("*")
+          .eq("tenant_id", tenant.id)
+          .order("name");
+
+        if (servicesError) {
+          console.error("Error al cargar servicios:", servicesError);
+          setError("Error al cargar servicios");
+          setLoading(false);
+          return;
+        }
+
+        setInitialServices((services ?? []) as Service[]);
+        setLoading(false);
+      } catch (err) {
+        console.error("[Servicios] Error al cargar datos iniciales:", err);
+        setError("Error inesperado al cargar servicios");
+        setLoading(false);
+      }
+    };
+
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams?.toString()]);
+
+  if (loading) {
+    return <div className="p-4">Cargando servicios...</div>;
+  }
+
+  if (error) {
     return (
-      <Alert type="error" title="No se pudo obtener el usuario">
-        No hemos podido obtener la información de tu usuario. Vuelve a iniciar sesión o inténtalo de nuevo en unos minutos.
+      <Alert type="error" title="Error en servicios">
+        {error}
       </Alert>
     );
   }
 
-  let tenantId: string | null = null;
-
-  // 4) Soporte de impersonación para platform admins
-  if (impersonateOrgId) {
-    const { data: isAdmin, error: adminError } = await supabase.rpc(
-      "check_platform_admin",
-      { p_user_id: user.id }
-    );
-
-    if (adminError) {
-      console.error("Error check_platform_admin:", adminError);
-    }
-
-    if (isAdmin) {
-      tenantId = impersonateOrgId;
-    }
-  }
-
-  // 5) Fallback: primer tenant del usuario
-  if (!tenantId) {
-    const { data: membership, error: membershipError } = await supabase
-      .from("memberships")
-      .select("tenant_id")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-
-    if (membershipError) {
-      console.error("Error al obtener membership:", membershipError);
-    }
-
-    tenantId = membership?.tenant_id ?? null;
-  }
-
-  // 6) Sin barbería asignada
   if (!tenantId) {
     return (
       <Alert type="error" title="No se encontró ninguna barbería">
@@ -87,26 +84,10 @@ export default async function ServiciosPage({ searchParams }: ServiciosPageProps
     );
   }
 
-  // 7) Carga inicial de servicios
-  const { data: services, error: servicesError } = await supabase
-    .from("services")
-    .select("*")
-    .eq("tenant_id", tenantId)
-    .order("name");
-
-  if (servicesError) {
-    return (
-      <Alert type="error" title="Error al cargar servicios">
-        {servicesError.message}
-      </Alert>
-    );
-  }
-
-  // 8) Delegamos toda la UX/RT en el cliente
   return (
     <ServiciosClient
       tenantId={tenantId}
-      initialServices={(services ?? []) as Service[]}
+      initialServices={initialServices}
     />
   );
 }
