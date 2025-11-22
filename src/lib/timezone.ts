@@ -24,6 +24,16 @@ export function formatInTenantTz(iso: string, timezone: string, pattern: string)
 	return format(local, pattern);
 }
 
+/**
+ * Convierte minutos desde medianoche a formato HH:mm
+ */
+export function minutesToTime(minutes: number): string {
+	const clampedMinutes = Math.max(0, Math.min(1439, Math.floor(minutes)));
+	const hours = Math.floor(clampedMinutes / 60);
+	const mins = clampedMinutes % 60;
+	return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
+}
+
 
 
 

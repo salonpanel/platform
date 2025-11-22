@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { SearchPanel } from "./SearchPanel";
+import { GlassCard } from "@/components/agenda/primitives/GlassCard";
+import { theme } from "@/theme/ui";
 
 type ViewMode = "day" | "week" | "month" | "list";
 
@@ -132,8 +134,8 @@ export function AgendaHeader({
 
   return (
     <div className="w-full">
-      {/* Premium Header con glassmorphism */}
-      <div className="bg-[#15171A] rounded-2xl border border-white/5 backdrop-blur-md shadow-[0px_4px_20px_rgba(0,0,0,0.15)] px-5 py-4">
+      {/* Premium Header with GlassCard */}
+      <GlassCard variant="elevated" padding="lg" className="w-full">
         <div className="flex flex-col gap-4">
           {/* Primera fila: Navegación y acciones */}
           <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -141,7 +143,10 @@ export function AgendaHeader({
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <button
                 onClick={handlePrevious}
-                className="p-2 text-[#d1d4dc] hover:text-white hover:bg-white/5 rounded-[10px] transition-all duration-150"
+                className={cn(
+                  "p-2 rounded-xl transition-all duration-150",
+                  "text-secondary hover:text-primary hover:bg-glass"
+                )}
                 aria-label="Fecha anterior"
               >
                 <ChevronLeft className="h-5 w-5" />
@@ -149,14 +154,20 @@ export function AgendaHeader({
 
               <button
                 onClick={handleToday}
-                className="px-4 py-2 text-sm font-semibold text-white hover:bg-white/5 rounded-[10px] transition-all duration-150 font-['Plus_Jakarta_Sans']"
+                className={cn(
+                  "px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-150",
+                  "text-primary hover:bg-glass font-sans"
+                )}
               >
                 Hoy
               </button>
 
               <button
                 onClick={handleNext}
-                className="p-2 text-[#d1d4dc] hover:text-white hover:bg-white/5 rounded-[10px] transition-all duration-150"
+                className={cn(
+                  "p-2 rounded-xl transition-all duration-150",
+                  "text-secondary hover:text-primary hover:bg-glass"
+                )}
                 aria-label="Fecha siguiente"
               >
                 <ChevronRight className="h-5 w-5" />
@@ -165,7 +176,10 @@ export function AgendaHeader({
               {/* Selector de calendario */}
               <button
                 onClick={onCalendarClick}
-                className="p-2 text-[#d1d4dc] hover:text-white hover:bg-white/5 rounded-[10px] transition-all duration-150 ml-1"
+                className={cn(
+                  "p-2 rounded-xl transition-all duration-150 ml-1",
+                  "text-secondary hover:text-primary hover:bg-glass"
+                )}
                 aria-label="Seleccionar fecha"
               >
                 <CalendarIcon className="h-5 w-5" />
@@ -173,15 +187,24 @@ export function AgendaHeader({
 
               {/* Fecha actual - Premium badge */}
               <motion.div
-                className="ml-3 px-4 py-2 rounded-[14px] bg-[rgba(58,109,255,0.12)] border border-[rgba(58,109,255,0.25)] backdrop-blur-sm min-w-0"
+                className={cn(
+                  "ml-3 px-4 py-2 rounded-xl backdrop-blur-sm min-w-0",
+                  "bg-accent-blue/10 border border-accent-blue/25"
+                )}
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.15 }}
               >
-                <div className="text-sm font-semibold text-white font-['Plus_Jakarta_Sans'] tracking-tight truncate">
+                <div className={cn(
+                  "text-sm font-semibold truncate tracking-tight",
+                  "text-primary font-sans"
+                )}>
                   {getDateLabel()}
                 </div>
                 {timeRange && viewMode === "day" && (
-                  <div className="text-[10px] text-[#d1d4dc] font-mono mt-0.5 opacity-80">
+                  <div className={cn(
+                    "text-xs font-mono mt-0.5 opacity-80",
+                    "text-secondary"
+                  )}>
                     {timeRange}
                   </div>
                 )}
@@ -193,7 +216,10 @@ export function AgendaHeader({
               {showFiltersButton && (
                 <button
                   onClick={onFiltersClick}
-                  className="lg:hidden p-2 text-[#d1d4dc] hover:text-white hover:bg-white/5 rounded-[10px] transition-all duration-150"
+                  className={cn(
+                    "lg:hidden p-2 rounded-xl transition-all duration-150",
+                    "text-secondary hover:text-primary hover:bg-glass"
+                  )}
                   aria-label="Filtros"
                 >
                   <Filter className="h-5 w-5" />
@@ -201,22 +227,34 @@ export function AgendaHeader({
               )}
               <button
                 onClick={onSearchClick}
-                className="p-2 text-[#d1d4dc] hover:text-white hover:bg-white/5 rounded-[10px] transition-all duration-150"
+                className={cn(
+                  "p-2 rounded-xl transition-all duration-150",
+                  "text-secondary hover:text-primary hover:bg-glass"
+                )}
                 aria-label="Buscar"
               >
                 <Search className="h-5 w-5" />
               </button>
               <button
                 onClick={onNotificationsClick}
-                className="p-2 text-[#d1d4dc] hover:text-white hover:bg-white/5 rounded-[10px] transition-all duration-150 relative"
+                className={cn(
+                  "p-2 rounded-xl transition-all duration-150 relative",
+                  "text-secondary hover:text-primary hover:bg-glass"
+                )}
                 aria-label="Notificaciones"
               >
                 <Bell className="h-5 w-5" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#EF4444] rounded-full border-2 border-[#15171A]" />
+                <span className={cn(
+                  "absolute top-1.5 right-1.5 w-2 h-2 rounded-full border-2",
+                  "bg-status-cancelled border-primary"
+                )} />
               </button>
               <button
                 onClick={() => router.push("/panel/ajustes")}
-                className="p-2 text-[#d1d4dc] hover:text-white hover:bg-white/5 rounded-[10px] transition-all duration-150"
+                className={cn(
+                  "p-2 rounded-xl transition-all duration-150",
+                  "text-secondary hover:text-primary hover:bg-glass"
+                )}
                 aria-label="Ajustes"
               >
                 <Settings className="h-5 w-5" />
@@ -227,8 +265,16 @@ export function AgendaHeader({
           {/* Segunda fila: Selector de vista y quick stats */}
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3">
-              <span className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider font-['Plus_Jakarta_Sans']">Vista</span>
-              <div className="flex items-center gap-1 rounded-2xl p-1 bg-white/3 border border-white/5 relative overflow-hidden">
+              <span className={cn(
+                "text-xs font-semibold uppercase tracking-wider",
+                "text-tertiary font-sans"
+              )}>
+                Vista
+              </span>
+              <div className={cn(
+                "flex items-center gap-1 rounded-2xl p-1",
+                "bg-glass border border-border-default"
+              )}>
                 {viewModes.map((mode) => (
                   <motion.button
                     key={mode.value}
@@ -236,14 +282,15 @@ export function AgendaHeader({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className={cn(
-                      "relative px-4 py-2 text-xs font-semibold font-['Plus_Jakarta_Sans'] rounded-xl transition-all duration-150",
-                      viewMode === mode.value ? "text-white" : "text-[#d1d4dc] hover:text-white"
+                      "relative px-4 py-2 text-xs font-semibold rounded-xl transition-all duration-150",
+                      "font-sans",
+                      viewMode === mode.value ? "text-primary" : "text-secondary hover:text-primary"
                     )}
                   >
                     {viewMode === mode.value && (
                       <motion.span
                         layoutId="viewModeHighlight"
-                        className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#3A6DFF] to-[#4FE3C1] shadow-[0px_2px_8px_rgba(58,109,255,0.3)]"
+                        className="absolute inset-0 rounded-xl bg-gradient-to-r from-accent-blue to-accent-aqua shadow-accent-blue/30"
                         transition={{ type: "spring", stiffness: 350, damping: 30 }}
                       />
                     )}
@@ -256,24 +303,36 @@ export function AgendaHeader({
             {/* Quick Stats y Utilización */}
             <div className="flex items-center gap-3 flex-wrap">
               {quickStats && (
-                <div className="flex items-center gap-3 text-xs font-['Plus_Jakarta_Sans']">
+                <div className="flex items-center gap-3 text-xs font-sans">
                   {quickStats.rangeLabel && (
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-white/3 border border-white/5">
-                      <span className="text-[#9ca3af]">Rango:</span>
-                      <span className="text-white font-semibold">{quickStats.rangeLabel}</span>
+                    <div className={cn(
+                      "flex items-center gap-2 px-3 py-1.5 rounded-xl",
+                      "bg-glass border border-border-default"
+                    )}>
+                      <span className="text-tertiary">Rango:</span>
+                      <span className="text-primary font-semibold">{quickStats.rangeLabel}</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-white/3 border border-white/5">
-                    <span className="text-[#9ca3af]">Citas:</span>
-                    <span className="text-white font-semibold">{quickStats.totalBookings}</span>
+                  <div className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-xl",
+                    "bg-glass border border-border-default"
+                  )}>
+                    <span className="text-tertiary">Citas:</span>
+                    <span className="text-primary font-semibold">{quickStats.totalBookings}</span>
                   </div>
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-white/3 border border-white/5">
-                    <span className="text-[#9ca3af]">Tiempo:</span>
-                    <span className="text-white font-semibold">{quickStats.totalHours}h</span>
+                  <div className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-xl",
+                    "bg-glass border border-border-default"
+                  )}>
+                    <span className="text-tertiary">Tiempo:</span>
+                    <span className="text-primary font-semibold">{quickStats.totalHours}h</span>
                   </div>
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-white/3 border border-white/5">
-                    <span className="text-[#9ca3af]">Total:</span>
-                    <span className="text-white font-semibold">{(quickStats.totalAmount / 100).toFixed(2)} €</span>
+                  <div className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-xl",
+                    "bg-glass border border-border-default"
+                  )}>
+                    <span className="text-tertiary">Total:</span>
+                    <span className="text-primary font-semibold">{(quickStats.totalAmount / 100).toFixed(2)} €</span>
                   </div>
                 </div>
               )}
@@ -285,11 +344,11 @@ export function AgendaHeader({
                     // Color según % de utilización
                     const getUtilizationColor = (util: number) => {
                       if (util < 40) {
-                        return "bg-[rgba(58,109,255,0.12)] border-[#3A6DFF]/30 text-[#3A6DFF] hover:bg-[rgba(58,109,255,0.18)]";
+                        return "bg-accent-blue/10 border-accent-blue/25 text-accent-blue hover:bg-accent-blue/15";
                       } else if (util < 80) {
-                        return "bg-[rgba(79,227,193,0.12)] border-[#4FE3C1]/30 text-[#4FE3C1] hover:bg-[rgba(79,227,193,0.18)]";
+                        return "bg-accent-aqua/10 border-accent-aqua/25 text-accent-aqua hover:bg-accent-aqua/15";
                       } else {
-                        return "bg-[rgba(255,193,7,0.12)] border-[#FFC107]/30 text-[#FFC107] hover:bg-[rgba(255,193,7,0.18)]";
+                        return "bg-status-pending/10 border-status-pending/25 text-status-pending hover:bg-status-pending/15";
                       }
                     };
                     
@@ -308,14 +367,18 @@ export function AgendaHeader({
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => onStaffFilterChange(staff.staffId)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-[10px] border text-xs font-semibold transition-all cursor-pointer font-['Plus_Jakarta_Sans'] ${getUtilizationColor(staff.utilization)}`}
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer",
+                          "font-sans",
+                          getUtilizationColor(staff.utilization)
+                        )}
                         title={`Filtrar por ${staff.staffName} (${staff.utilization}% utilizado)`}
                         aria-label={`Filtrar por ${staff.staffName}, ${staff.utilization}% utilizado`}
                       >
-                        <div className="w-5 h-5 rounded-full bg-current/20 flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                        <div className="w-5 h-5 rounded-full bg-current/20 flex items-center justify-center text-xs font-bold flex-shrink-0">
                           {getInitials(staff.staffName)}
                         </div>
-                        <span className="truncate max-w-[80px]">{staff.staffName}</span>
+                        <span className="truncate max-w-20">{staff.staffName}</span>
                         <span className="font-mono flex-shrink-0">{staff.utilization}%</span>
                       </motion.button>
                     );
@@ -325,7 +388,7 @@ export function AgendaHeader({
             </div>
           </div>
         </div>
-      </div>
+      </GlassCard>
       
       {/* Search Panel */}
       {searchOpen && onSearchChange && onSearchClose && (

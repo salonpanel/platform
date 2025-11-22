@@ -6,6 +6,8 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Staff, BookingStatus, BOOKING_STATUS_CONFIG } from "@/types/agenda";
+import { GlassCard } from "@/components/agenda/primitives/GlassCard";
+import { theme } from "@/theme/ui";
 
 interface AgendaSidebarProps {
   selectedDate: string;
@@ -84,256 +86,369 @@ export function AgendaSidebar({
   return (
     <div className="h-full overflow-y-auto space-y-6 scrollbar-hide">
       {onClose && (
-        <div className="flex items-center justify-between pb-5 border-b border-white/5 mb-5">
-          <h3 className="text-lg font-semibold text-white font-['Plus_Jakarta_Sans']">Filtros</h3>
+        <GlassCard variant="inset" padding="md" className="flex items-center justify-between">
+          <h3 className={cn(
+            "text-lg font-semibold",
+            "text-primary font-sans"
+          )}>
+            Filtros
+          </h3>
           <button
             onClick={onClose}
-            className="text-[#d1d4dc] hover:text-white p-1.5 rounded-[10px] hover:bg-white/5 transition-all duration-150"
+            className={cn(
+              "p-1.5 rounded-xl transition-all duration-150",
+              "text-secondary hover:text-primary hover:bg-glass"
+            )}
           >
             <X className="h-5 w-5" />
           </button>
-        </div>
+        </GlassCard>
       )}
 
       {/* Saltos rápidos - Premium */}
-      <div className="space-y-3">
-        <h4 className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider font-['Plus_Jakarta_Sans'] flex items-center gap-2">
-          <div className="h-1 w-1 rounded-full bg-[#3A6DFF]" />
-          Saltos rápidos
-        </h4>
-        <div className="space-y-2">
-          <button
-            onClick={goToToday}
-            className="w-full px-4 py-2.5 text-sm font-semibold text-white bg-white/5 hover:bg-white/8 border border-white/5 rounded-[10px] transition-all duration-150 text-left font-['Plus_Jakarta_Sans']"
-          >
-            Hoy
-          </button>
-          <div className="flex gap-2">
+      <GlassCard variant="default" padding="md">
+        <div className="space-y-3">
+          <h4 className={cn(
+            "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
+            "text-tertiary font-sans"
+          )}>
+            <div className="h-1 w-1 rounded-full bg-accent-blue" />
+            Saltos rápidos
+          </h4>
+          <div className="space-y-2">
             <button
-              onClick={() => navigateWeek("prev")}
-              className="flex-1 px-3 py-2 text-xs font-medium text-[#d1d4dc] hover:text-white hover:bg-white/5 border border-white/5 rounded-[10px] transition-all duration-150 font-['Plus_Jakarta_Sans']"
+              onClick={goToToday}
+              className={cn(
+                "w-full px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-150 text-left",
+                "text-primary bg-glass hover:bg-glass border border-border-default font-sans"
+              )}
             >
-              -1 semana
+              Hoy
             </button>
-            <button
-              onClick={() => navigateWeek("next")}
-              className="flex-1 px-3 py-2 text-xs font-medium text-[#d1d4dc] hover:text-white hover:bg-white/5 border border-white/5 rounded-[10px] transition-all duration-150 font-['Plus_Jakarta_Sans']"
-            >
-              +1 semana
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => navigateWeek("prev")}
+                className={cn(
+                  "flex-1 px-3 py-2 text-xs font-medium rounded-xl transition-all duration-150",
+                  "text-secondary hover:text-primary hover:bg-glass border border-border-default font-sans"
+                )}
+              >
+                -1 semana
+              </button>
+              <button
+                onClick={() => navigateWeek("next")}
+                className={cn(
+                  "flex-1 px-3 py-2 text-xs font-medium rounded-xl transition-all duration-150",
+                  "text-secondary hover:text-primary hover:bg-glass border border-border-default font-sans"
+                )}
+              >
+                +1 semana
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </GlassCard>
 
       {/* Mini calendario - Premium */}
-      <div className="space-y-3">
-        <h4 className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider font-['Plus_Jakarta_Sans'] flex items-center gap-2">
-          <div className="h-1 w-1 rounded-full bg-[#4FE3C1]" />
-          Calendario
-        </h4>
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => onDateSelect(e.target.value)}
-          className="w-full rounded-[10px] px-4 py-3 text-sm font-semibold text-white bg-white/5 border border-white/5 hover:border-[#3A6DFF]/30 focus:border-[#3A6DFF] focus:outline-none focus:ring-2 focus:ring-[#3A6DFF]/30 transition-all duration-150 font-['Plus_Jakarta_Sans']"
-        />
-      </div>
+      <GlassCard variant="default" padding="md">
+        <div className="space-y-3">
+          <h4 className={cn(
+            "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
+            "text-tertiary font-sans"
+          )}>
+            <div className="h-1 w-1 rounded-full bg-accent-aqua" />
+            Calendario
+          </h4>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => onDateSelect(e.target.value)}
+            className={cn(
+              "w-full rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-150",
+              "text-primary bg-glass border border-border-default",
+              "hover:border-accent-blue/30 focus:border-accent-blue focus:outline-none focus:ring-2 focus:ring-accent-blue/30",
+              "font-sans"
+            )}
+          />
+        </div>
+      </GlassCard>
 
       {/* Filtros - Premium */}
       <div className="space-y-5">
         {/* Pagos */}
-        <div className="space-y-3">
-          <h4 className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider font-['Plus_Jakarta_Sans'] flex items-center gap-2">
-            <div className="h-1 w-1 rounded-full bg-[#A06BFF]" />
-            Pagos
-          </h4>
-          <div className="space-y-2">
-            {["paid", "unpaid"].map((option) => (
-              <label
-                key={option}
-                className="flex items-center gap-2.5 cursor-pointer group"
-              >
-                <input
-                  type="checkbox"
-                  checked={filters.payment.includes(option)}
-                  onChange={() => handleFilterChange("payment", option)}
-                  className="w-4 h-4 rounded-[8px] border-white/20 bg-white/3 text-[#3A6DFF] focus:ring-2 focus:ring-[#3A6DFF]/30 transition-all duration-150"
-                />
-                <span className="text-sm text-[#d1d4dc] group-hover:text-white transition-colors duration-150 font-medium capitalize font-['Plus_Jakarta_Sans']">
-                  {option === "paid" ? "Pagado" : "Sin pagar"}
-                </span>
-              </label>
-            ))}
+        <GlassCard variant="default" padding="md">
+          <div className="space-y-3">
+            <h4 className={cn(
+              "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
+              "text-tertiary font-sans"
+            )}>
+              <div className="h-1 w-1 rounded-full bg-accent-purple" />
+              Pagos
+            </h4>
+            <div className="space-y-2">
+              {["paid", "unpaid"].map((option) => (
+                <label
+                  key={option}
+                  className="flex items-center gap-2.5 cursor-pointer group"
+                >
+                  <input
+                    type="checkbox"
+                    checked={filters.payment.includes(option)}
+                    onChange={() => handleFilterChange("payment", option)}
+                    className={cn(
+                      "w-4 h-4 rounded-lg border bg-glass text-accent-blue",
+                      "border-border-default focus:ring-2 focus:ring-accent-blue/30 transition-all duration-150"
+                    )}
+                  />
+                  <span className={cn(
+                    "text-sm font-medium capitalize transition-colors duration-150",
+                    "text-secondary group-hover:text-primary font-sans"
+                  )}>
+                    {option === "paid" ? "Pagado" : "Sin pagar"}
+                  </span>
+                </label>
+              ))}
+            </div>
           </div>
-        </div>
+        </GlassCard>
 
         {/* Estado de la cita */}
-        <div className="space-y-3 pt-4 border-t border-white/5">
-          <h4 className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider font-['Plus_Jakarta_Sans'] flex items-center gap-2">
-            <div className="h-1 w-1 rounded-full bg-[#FF6DA3]" />
-            Estado de la cita
+        <GlassCard variant="default" padding="md">
+          <div className="space-y-3">
+            <h4 className={cn(
+              "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
+              "text-tertiary font-sans"
+            )}>
+              <div className="h-1 w-1 rounded-full bg-accent-pink" />
+              Estado de la cita
+            </h4>
+            <div className="space-y-2">
+              {([
+                "pending",
+                "paid",
+                "completed",
+                "cancelled",
+                "no_show",
+                "hold",
+              ] as BookingStatus[]).map((status) => (
+                <label
+                  key={status}
+                  className="flex items-center gap-2.5 cursor-pointer group"
+                >
+                  <input
+                    type="checkbox"
+                    checked={filters.status.includes(status)}
+                    onChange={() => handleFilterChange("status", status)}
+                    className={cn(
+                      "w-4 h-4 rounded-lg border bg-glass text-accent-blue",
+                      "border-border-default focus:ring-2 focus:ring-accent-blue/30 transition-all duration-150"
+                    )}
+                  />
+                  <span className={cn(
+                    "text-sm font-medium transition-colors duration-150",
+                    "text-secondary group-hover:text-primary font-sans"
+                  )}>
+                    {BOOKING_STATUS_CONFIG[status].label}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </GlassCard>
+
+        {/* Empleado */}
+        <GlassCard variant="default" padding="md">
+          <div className="space-y-3">
+            <h4 className={cn(
+              "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
+              "text-tertiary font-sans"
+            )}>
+              <div className="h-1 w-1 rounded-full bg-accent-blue" />
+              Empleado
+            </h4>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2.5 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={filters.staff.includes("all")}
+                  onChange={() => handleFilterChange("staff", "all")}
+                  className={cn(
+                    "w-4 h-4 rounded-lg border bg-glass text-accent-blue",
+                    "border-border-default focus:ring-2 focus:ring-accent-blue/30 transition-all duration-150"
+                  )}
+                />
+                <span className={cn(
+                  "text-sm font-medium transition-colors duration-150",
+                  "text-secondary group-hover:text-primary font-sans"
+                )}>
+                  Todos
+                </span>
+              </label>
+              {staffList.map((staff) => (
+                <label
+                  key={staff.id}
+                  className="flex items-center gap-2.5 cursor-pointer group"
+                >
+                  <input
+                    type="checkbox"
+                    checked={filters.staff.includes(staff.id)}
+                    onChange={() => handleFilterChange("staff", staff.id)}
+                    className={cn(
+                      "w-4 h-4 rounded-lg border bg-glass text-accent-blue",
+                      "border-border-default focus:ring-2 focus:ring-accent-blue/30 transition-all duration-150"
+                    )}
+                  />
+                  <span className={cn(
+                    "text-sm font-medium transition-colors duration-150",
+                    "text-secondary group-hover:text-primary font-sans"
+                  )}>
+                    {staff.name}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </GlassCard>
+
+        {/* Detalles */}
+        <GlassCard variant="default" padding="md">
+          <div className="space-y-3">
+            <h4 className={cn(
+              "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
+              "text-tertiary font-sans"
+            )}>
+              <div className="h-1 w-1 rounded-full bg-accent-aqua" />
+              Detalles
+            </h4>
+            <label className="flex items-center gap-2.5 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={filters.highlighted === true}
+                onChange={() => handleFilterChange("highlighted", true)}
+                className={cn(
+                  "w-4 h-4 rounded-lg border bg-glass text-accent-blue",
+                  "border-border-default focus:ring-2 focus:ring-accent-blue/30 transition-all duration-150"
+                )}
+              />
+              <span className={cn(
+                "text-sm font-medium transition-colors duration-150",
+                "text-secondary group-hover:text-primary font-sans"
+              )}>
+                Marcadas como destacadas
+              </span>
+            </label>
+            {onShowFreeSlotsChange && (
+              <label className="flex items-center gap-2.5 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={showFreeSlots}
+                  onChange={(e) => onShowFreeSlotsChange(e.target.checked)}
+                  className={cn(
+                    "w-4 h-4 rounded-lg border bg-glass text-accent-blue",
+                    "border-border-default focus:ring-2 focus:ring-accent-blue/30 transition-all duration-150"
+                  )}
+                />
+                <span className={cn(
+                  "text-sm font-medium transition-colors duration-150",
+                  "text-secondary group-hover:text-primary font-sans"
+                )}>
+                  Mostrar solo huecos libres
+                </span>
+              </label>
+            )}
+          </div>
+        </GlassCard>
+      </div>
+
+      {/* Leyenda - Premium */}
+      <GlassCard variant="default" padding="md">
+        <div className="space-y-3">
+          <h4 className={cn(
+            "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
+            "text-tertiary font-sans"
+          )}>
+            <div className="h-1 w-1 rounded-full bg-accent-aqua" />
+            Leyenda de estados
           </h4>
           <div className="space-y-2">
             {([
+              "hold",
               "pending",
               "paid",
               "completed",
               "cancelled",
               "no_show",
-              "hold",
-            ] as BookingStatus[]).map((status) => (
-              <label
-                key={status}
-                className="flex items-center gap-2.5 cursor-pointer group"
-              >
-                <input
-                  type="checkbox"
-                  checked={filters.status.includes(status)}
-                  onChange={() => handleFilterChange("status", status)}
-                  className="w-4 h-4 rounded-[8px] border-white/20 bg-white/3 text-[#3A6DFF] focus:ring-2 focus:ring-[#3A6DFF]/30 transition-all duration-150"
-                />
-                <span className="text-sm text-[#d1d4dc] group-hover:text-white transition-colors duration-150 font-medium font-['Plus_Jakarta_Sans']">
-                  {BOOKING_STATUS_CONFIG[status].label}
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Empleado */}
-        <div className="space-y-3 pt-4 border-t border-white/5">
-          <h4 className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider font-['Plus_Jakarta_Sans'] flex items-center gap-2">
-            <div className="h-1 w-1 rounded-full bg-[#3A6DFF]" />
-            Empleado
-          </h4>
-          <div className="space-y-2">
-            <label className="flex items-center gap-2.5 cursor-pointer group">
-              <input
-                type="checkbox"
-                checked={filters.staff.includes("all")}
-                onChange={() => handleFilterChange("staff", "all")}
-                className="w-4 h-4 rounded-[8px] border-white/20 bg-white/3 text-[#3A6DFF] focus:ring-2 focus:ring-[#3A6DFF]/30 transition-all duration-150"
+            ] as BookingStatus[]).map((status) => {
+              const config = BOOKING_STATUS_CONFIG[status];
+              return (
+                <div key={status} className={cn(
+                  "flex items-center gap-3 p-2 rounded-lg transition-colors duration-150",
+                  "hover:bg-glass"
+                )}>
+                  <div
+                    className="w-4 h-4 rounded border-l-4"
+                    style={{
+                      backgroundColor: config.legendBg,
+                      borderLeftColor: config.legendBorder.includes("/") 
+                        ? config.legendBorder.split("/")[0] 
+                        : config.legendBorder,
+                      boxShadow: `0px 0px 6px ${config.legendColor}30`,
+                    }}
+                  />
+                  <span className={cn(
+                    "text-xs font-semibold",
+                    "text-primary font-sans"
+                  )}>
+                    {config.label}
+                  </span>
+                </div>
+              );
+            })}
+            {/* Bloqueo (no es un estado de booking, pero se muestra en la leyenda) */}
+            <div className={cn(
+              "flex items-center gap-3 p-2 rounded-lg transition-colors duration-150",
+              "hover:bg-glass"
+            )}>
+              <div
+                className="w-4 h-4 rounded border-l-4"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.03)",
+                  borderLeftColor: "rgba(255,255,255,0.1)",
+                  boxShadow: `0px 0px 6px rgba(156,163,175,0.3)`,
+                }}
               />
-              <span className="text-sm text-[#d1d4dc] group-hover:text-white transition-colors duration-150 font-medium font-['Plus_Jakarta_Sans']">
-                Todos
+              <span className={cn(
+                "text-xs font-semibold",
+                "text-primary font-sans"
+              )}>
+                Bloqueo
               </span>
-            </label>
-            {staffList.map((staff) => (
-              <label
-                key={staff.id}
-                className="flex items-center gap-2.5 cursor-pointer group"
-              >
-                <input
-                  type="checkbox"
-                  checked={filters.staff.includes(staff.id)}
-                  onChange={() => handleFilterChange("staff", staff.id)}
-                  className="w-4 h-4 rounded-[8px] border-white/20 bg-white/3 text-[#3A6DFF] focus:ring-2 focus:ring-[#3A6DFF]/30 transition-all duration-150"
-                />
-                <span className="text-sm text-[#d1d4dc] group-hover:text-white transition-colors duration-150 font-medium font-['Plus_Jakarta_Sans']">
-                  {staff.name}
-                </span>
-              </label>
-            ))}
+            </div>
           </div>
         </div>
-
-        {/* Detalles */}
-        <div className="space-y-3 pt-4 border-t border-white/5">
-          <h4 className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider font-['Plus_Jakarta_Sans'] flex items-center gap-2">
-            <div className="h-1 w-1 rounded-full bg-[#4FE3C1]" />
-            Detalles
-          </h4>
-          <label className="flex items-center gap-2.5 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={filters.highlighted === true}
-              onChange={() => handleFilterChange("highlighted", true)}
-              className="w-4 h-4 rounded-[8px] border-white/20 bg-white/3 text-[#3A6DFF] focus:ring-2 focus:ring-[#3A6DFF]/30 transition-all duration-150"
-            />
-            <span className="text-sm text-[#d1d4dc] group-hover:text-white transition-colors duration-150 font-medium font-['Plus_Jakarta_Sans']">
-              Marcadas como destacadas
-            </span>
-          </label>
-          {onShowFreeSlotsChange && (
-            <label className="flex items-center gap-2.5 cursor-pointer group">
-              <input
-                type="checkbox"
-                checked={showFreeSlots}
-                onChange={(e) => onShowFreeSlotsChange(e.target.checked)}
-                className="w-4 h-4 rounded-[8px] border-white/20 bg-white/3 text-[#3A6DFF] focus:ring-2 focus:ring-[#3A6DFF]/30 transition-all duration-150"
-              />
-              <span className="text-sm text-[#d1d4dc] group-hover:text-white transition-colors duration-150 font-medium font-['Plus_Jakarta_Sans']">
-                Mostrar solo huecos libres
-              </span>
-            </label>
-          )}
-        </div>
-      </div>
-
-      {/* Leyenda - Premium */}
-      <div className="pt-5 border-t border-white/5 space-y-3">
-        <h4 className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider font-['Plus_Jakarta_Sans'] flex items-center gap-2">
-          <div className="h-1 w-1 rounded-full bg-[#4FE3C1]" />
-          Leyenda de estados
-        </h4>
-        <div className="space-y-2">
-          {([
-            "hold",
-            "pending",
-            "paid",
-            "completed",
-            "cancelled",
-            "no_show",
-          ] as BookingStatus[]).map((status) => {
-            const config = BOOKING_STATUS_CONFIG[status];
-            return (
-              <div key={status} className="flex items-center gap-3 p-2 rounded-[10px] hover:bg-white/3 transition-colors duration-150">
-                <div
-                  className="w-4 h-4 rounded border-l-[3px]"
-                  style={{
-                    backgroundColor: config.legendBg,
-                    borderLeftColor: config.legendBorder.includes("/") 
-                      ? config.legendBorder.split("/")[0] 
-                      : config.legendBorder,
-                    boxShadow: `0px 0px 6px ${config.legendColor}30`,
-                  }}
-                />
-                <span className="text-xs text-white font-semibold font-['Plus_Jakarta_Sans']">
-                  {config.label}
-                </span>
-              </div>
-            );
-          })}
-          {/* Bloqueo (no es un estado de booking, pero se muestra en la leyenda) */}
-          <div className="flex items-center gap-3 p-2 rounded-[10px] hover:bg-white/3 transition-colors duration-150">
-            <div
-              className="w-4 h-4 rounded border-l-[3px]"
-              style={{
-                backgroundColor: "rgba(255,255,255,0.03)",
-                borderLeftColor: "rgba(255,255,255,0.1)",
-                boxShadow: `0px 0px 6px rgba(156,163,175,0.3)`,
-              }}
-            />
-            <span className="text-xs text-white font-semibold font-['Plus_Jakarta_Sans']">
-              Bloqueo
-            </span>
-          </div>
-        </div>
-      </div>
+      </GlassCard>
 
       {/* Botones de acción - Premium */}
-      <div className="pt-5 border-t border-white/5 space-y-2">
+      <div className="pt-5 space-y-2">
         <button
           onClick={() => {
             // Los filtros ya se aplican automáticamente al cambiar el estado
           }}
-          className="w-full px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-[#3A6DFF] to-[#4FE3C1] hover:shadow-[0px_4px_12px_rgba(58,109,255,0.3)] rounded-[10px] transition-all duration-150 font-['Plus_Jakarta_Sans']"
+          className={cn(
+            "w-full px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-150",
+            "text-primary bg-gradient-to-r from-accent-blue to-accent-aqua shadow-accent-blue/30 hover:shadow-accent-blue/50",
+            "font-sans"
+          )}
         >
           Aplicar filtros
         </button>
         <button
           onClick={clearFilters}
-          className="w-full px-4 py-2.5 text-sm font-medium text-[#d1d4dc] hover:text-white hover:bg-white/5 border border-white/5 rounded-[10px] transition-all duration-150 font-['Plus_Jakarta_Sans']"
+          className={cn(
+            "w-full px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-150",
+            "text-secondary hover:text-primary hover:bg-glass border border-border-default",
+            "font-sans"
+          )}
         >
           Limpiar todo
         </button>
