@@ -371,13 +371,21 @@ export function useAgendaData({
   return {
     // Estado
     loading,
+    setLoading,
     error,
+    setError,
     staffList,
+    setStaffList,
     bookings,
+    setBookings,
     staffBlockings,
+    setStaffBlockings,
     staffSchedules,
+    setStaffSchedules,
     services,
+    setServices,
     customers,
+    setCustomers,
     // Búsqueda y filtros
     searchTerm,
     setSearchTerm,
