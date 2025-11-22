@@ -12,9 +12,9 @@ interface BlockingOverlayProps {
 }
 
 const blockingColors = {
-  block: "bg-glass border-l-4 border-accent-blue/25 text-secondary opacity-50 backdrop-blur-sm",
-  absence: "bg-status-cancelled/10 border-l-4 border-status-cancelled/25 text-status-cancelled opacity-60 backdrop-blur-sm",
-  vacation: "bg-accent-blue/10 border-l-4 border-accent-blue/25 text-accent-blue opacity-60 backdrop-blur-sm",
+  block: "bg-glass/30 border-l-4 border-accent-blue/25 text-secondary backdrop-blur-md",
+  absence: "bg-status-cancelled/10 border-l-4 border-status-cancelled/25 text-status-cancelled backdrop-blur-md",
+  vacation: "bg-accent-blue/10 border-l-4 border-accent-blue/25 text-accent-blue backdrop-blur-md",
 };
 
 export function BlockingOverlay({ blockings, timezone }: BlockingOverlayProps) {
@@ -57,7 +57,7 @@ export function BlockingOverlay({ blockings, timezone }: BlockingOverlayProps) {
             key={blocking.id}
             data-blocking
             className={cn(
-              "absolute left-3 right-3 rounded-xl border p-2 z-5",
+              "absolute left-3 right-3 rounded-xl border p-2 z-10 shadow-sm transition-all duration-150 hover:shadow-md group",
               blockingColors[blocking.type] || blockingColors.block
             )}
             style={{

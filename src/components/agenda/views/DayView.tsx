@@ -11,6 +11,8 @@ import { useScrollSyncManager } from "../interactions/ScrollSyncManager";
 import { motion } from "framer-motion";
 import { staggerPresets } from "../motion/presets";
 import { STAFF_COLUMN_MIN_WIDTH_DESKTOP, STAFF_COLUMN_MIN_WIDTH_MOBILE } from "../constants/layout";
+import { cn } from "@/lib/utils";
+import { useMediaQuery } from "../../../hooks/useMediaQuery";
 
 interface DayViewProps {
   bookings: Booking[];
@@ -126,13 +128,18 @@ export function DayView({
         ref={timelineRef}
         className="relative flex-1 overflow-x-auto overflow-y-hidden scrollbar-hide"
       >
-        <div className="flex h-full" style={{ minWidth: `${staffList.length * STAFF_COLUMN_MIN_WIDTH_DESKTOP}px` }}>
-          {/* Responsive adjustment for mobile */}
-          <style jsx>{`
-            @media (max-width: 768px) {
-              div { min-width: ${staffList.length * STAFF_COLUMN_MIN_WIDTH_MOBILE}px !important; }
-            }
-          `}</style>
+        {/* Container con ancho responsivo */}
+        <div 
+          className="flex h-full transition-all duration-150" 
+          style={{
+            // Default to desktop width, will update on client after hydration
+            minWidth: `${staffList.length * (useMediaQuery("(max-width: 768px)") ? STAFF_COLUMN_MIN_WIDTH_MOBILE : STAFF_COLUMN_MIN_WIDTH_DESKTOP)}px`,
+            // Ensure smooth transition
+            transitionProperty: "min-width",
+            transitionDuration: "150ms",
+            transitionTimingFunction: "ease-out"
+          }}
+        >
           {/* Time Column */}
           <TimeColumn
             startHour={8}
@@ -156,7 +163,10 @@ export function DayView({
                   key={staff.id}
                   variants={staggerPresets.staffColumns.variants}
                   custom={staffIndex}
-                  className="flex-1 min-w-[300px] lg:min-w-[300px] md:min-w-[260px] sm:min-w-[260px]"
+                  className={cn(
+                    "flex-1 transition-all duration-150",
+                    "min-w-[260px] sm:min-w-[260px] md:min-w-[260px] lg:min-w-[300px]"
+                  )}
                 >
                   <StaffColumn
                     staff={staff}

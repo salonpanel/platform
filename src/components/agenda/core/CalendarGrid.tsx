@@ -44,17 +44,15 @@ export function CalendarGrid({ startHour, endHour, onSlotClick, staffId }: Calen
             key={time}
             onClick={(e) => onSlotClick?.(e, staffId, time)}
             className={cn(
-              "absolute inset-x-0 cursor-pointer transition-colors duration-150",
-              !hasBooking && "hover:bg-glass/20"
+              "absolute inset-x-0 cursor-pointer transition-colors duration-150 border-t",
+              !hasBooking && "hover:bg-glass/20",
+              isHour ? "border-border-hover" : "border-border-default border-dashed"
             )}
             style={{
               top: index * SLOT_HEIGHT_PX,
               height: SLOT_HEIGHT_PX,
-              borderTopStyle: borderStyle,
-              borderTopWidth: 1,
-              borderTopColor: borderColor,
               backgroundColor: "transparent",
-              zIndex: 5,
+              zIndex: 1,
             }}
             data-time-slot={time}
           />
