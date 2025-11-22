@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, Suspense } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { endOfDay, startOfDay } from "date-fns";
+import { endOfDay, startOfDay, format, parseISO } from "date-fns";
 import { useSearchParams } from "next/navigation";
 import { getCurrentTenant } from "@/lib/panel-tenant";
 import { Card, StatusBadge, Spinner, EmptyState, Button, DatePicker, Select, FilterPanel, TitleBar, SectionHeading } from "@/components/ui";
@@ -12,33 +12,53 @@ import { Timeline } from "@/components/agenda/Timeline";
 import { MiniBookingCard } from "@/components/agenda/MiniBookingCard";
 import { StaffSelector } from "@/components/agenda/StaffSelector";
 import { DaySwitcher } from "@/components/agenda/DaySwitcher";
-import { motion } from "framer-motion";
-import { Calendar, Clock } from "lucide-react";
+import { AgendaHeader } from "@/components/calendar/AgendaHeader";
+import { WeekView } from "@/components/calendar/WeekView";
+import { MonthView } from "@/components/calendar/MonthView";
+import { ListView } from "@/components/calendar/ListView";
+import { FloatingActionButton } from "@/components/calendar/FloatingActionButton";
+import { BookingDetailPanel } from "@/components/calendar/BookingDetailPanel";
+import { NewBookingModal } from "@/components/calendar/NewBookingModal";
+import type { Booking } from "@/types/agenda";
+import { motion, AnimatePresence } from "framer-motion";
+import { Calendar, Clock, Settings, Bell, Search, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Booking = {
+// Tipo adaptador para MiniBookingCard
+type MiniBookingCardData = {
   id: string;
   starts_at: string;
   ends_at: string;
   status: "hold" | "pending" | "paid" | "completed" | "cancelled" | "no_show";
-  customer_id: string | null;
-  service_id: string | null;
-  staff_id: string | null;
-  tenant_id: string;
   customer?: {
     name: string;
-    email: string;
-    phone: string | null;
+    email?: string;
+    phone?: string | null;
   };
-  service?: {
-    name: string;
-    duration_min: number;
-    price_cents: number;
-  };
-  staff?: {
-    name: string;
-  };
+  service?: { name: string; duration_min: number; price_cents?: number };
+  staff?: { name: string };
 };
+
+// Función para adaptar Booking a MiniBookingCardData
+const adaptBookingToMiniCard = (booking: Booking): MiniBookingCardData => ({
+  id: booking.id,
+  starts_at: booking.starts_at,
+  ends_at: booking.ends_at,
+  status: booking.status,
+  customer: booking.customer ? {
+    name: booking.customer.name,
+    email: booking.customer.email || undefined,
+    phone: booking.customer.phone
+  } : undefined,
+  service: booking.service ? {
+    name: booking.service.name,
+    duration_min: booking.service.duration_min,
+    price_cents: booking.service.price_cents
+  } : undefined,
+  staff: booking.staff ? {
+    name: booking.staff.name
+  } : undefined
+});
 
 type Staff = {
   id: string;
@@ -53,10 +73,16 @@ function AgendaContent() {
   const [tenantTimezone, setTenantTimezone] = useState<string>("Europe/Madrid");
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"day" | "week" | "month" | "list">("day");
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [newBookingOpen, setNewBookingOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   const heightAware = useHeightAware();
   const { density: rawDensity } = heightAware;
@@ -140,7 +166,7 @@ function AgendaContent() {
             *,
             customer:customers(id, name, email, phone),
             service:services(id, name, duration_min, price_cents),
-            staff:staff(id, name)
+            staff:staff(id, id, name)
           `
           )
           .eq("tenant_id", tenantId)
@@ -160,6 +186,20 @@ function AgendaContent() {
 
         if (mounted) {
           setBookings((data as Booking[]) || []);
+          
+          // Debug: mostrar información de reservas cargadas
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Bookings loaded:', {
+              count: (data as Booking[])?.length || 0,
+              bookings: (data as Booking[])?.map(b => ({
+                id: b.id,
+                starts_at: b.starts_at,
+                localHour: new Date(b.starts_at).getHours(),
+                customer: b.customer?.name,
+                service: b.service?.name
+              }))
+            });
+          }
         }
       } catch (err: any) {
         if (mounted) {
@@ -200,6 +240,31 @@ function AgendaContent() {
   const handleResetFilters = () => {
     setSelectedDate(new Date());
     setSelectedStaffId(null);
+    setSearchTerm("");
+  };
+
+  const handleBookingClick = (booking: Booking) => {
+    setSelectedBooking(booking);
+  };
+
+  const handleNewBooking = () => {
+    setNewBookingOpen(true);
+  };
+
+  const handleDateChange = (dateStr: string) => {
+    setSelectedDate(parseISO(dateStr));
+  };
+
+  const handleCalendarClick = () => {
+    // TODO: Implement calendar picker modal
+  };
+
+  const handleSearchClick = () => {
+    setSearchOpen(!searchOpen);
+  };
+
+  const handleNotificationsClick = () => {
+    setNotificationsOpen(!notificationsOpen);
   };
 
   const activeFilters = useMemo(() => {
@@ -233,6 +298,41 @@ function AgendaContent() {
   }
 
   const formattedDate = selectedDate ? dateFormatter.format(selectedDate) : "";
+  const selectedDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
+
+  // Calcular estadísticas rápidas
+  const quickStats = useMemo(() => {
+    if (!bookings.length) return undefined;
+    
+    const totalAmount = bookings.reduce((sum, b) => sum + (b.service?.price_cents || 0), 0);
+    const totalMinutes = bookings.reduce((sum, b) => sum + (b.service?.duration_min || 0), 0);
+    const totalHours = Math.round((totalMinutes / 60) * 10) / 10;
+    
+    return {
+      totalBookings: bookings.length,
+      totalHours,
+      totalAmount,
+      rangeLabel: viewMode === "day" ? formattedDate : undefined
+    };
+  }, [bookings, formattedDate, viewMode]);
+
+  // Calcular utilización por staff
+  const staffUtilization = useMemo(() => {
+    if (!bookings.length || !staffList.length) return [];
+    
+    return staffList.map(staff => {
+      const staffBookings = bookings.filter(b => b.staff_id === staff.id);
+      const staffMinutes = staffBookings.reduce((sum, b) => sum + (b.service?.duration_min || 0), 0);
+      const totalWorkMinutes = 8 * 60; // 8 horas jornada
+      const utilization = Math.round((staffMinutes / totalWorkMinutes) * 100);
+      
+      return {
+        staffId: staff.id,
+        staffName: staff.name,
+        utilization: Math.min(100, utilization)
+      };
+    });
+  }, [bookings, staffList]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -261,93 +361,58 @@ function AgendaContent() {
 
   // Calcular hourHeight dinámicamente según altura disponible
   const availableHeight = heightAware.availableHeight;
-  const hoursToShow = 20 - 8 + 1; // 8:00 a 20:00 = 13 horas
+  const hoursToShow = 24; // 0:00 a 23:00 = 24 horas
   const headerHeight = 200; // Aproximado: filtros + título + staff selector
-  const availableForTimeline = Math.max(400, availableHeight - headerHeight);
+  const availableForTimeline = Math.max(600, availableHeight - headerHeight); // Mínimo 600px
   const calculatedHourHeight = Math.max(
-    40, // Mínimo 40px
+    30, // Mínimo 30px para mostrar todas las horas
     Math.floor(availableForTimeline / hoursToShow)
   );
   const hourHeight = density === "ultra-compact" 
-    ? Math.min(48, calculatedHourHeight)
+    ? Math.min(40, calculatedHourHeight)
     : density === "compact" 
-    ? Math.min(64, calculatedHourHeight)
-    : Math.min(80, calculatedHourHeight);
+    ? Math.min(50, calculatedHourHeight)
+    : Math.min(60, calculatedHourHeight);
 
   return (
-    <div className="h-full flex flex-col min-h-0 overflow-hidden">
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="flex-1 flex flex-col min-h-0 overflow-hidden"
-      >
-        {/* Zona superior fija: Filtros + Título */}
-        <div className="flex-shrink-0 space-y-3 mb-4">
-          {/* Filtros */}
-          <motion.div variants={itemVariants}>
-            <FilterPanel
-              title="Filtros"
-              activeFilters={activeFilters}
-              onClearAll={handleResetFilters}
-            >
-              <div className={cn(
-                "grid gap-3",
-                density === "ultra-compact" ? "grid-cols-1" : density === "compact" ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-              )}>
-                <DatePicker
-                  label="Fecha"
-                  value={selectedDate}
-                  onChange={setSelectedDate}
-                  minDate={new Date(2020, 0, 1)}
-                />
-                <Select
-                  label="Staff"
-                  value={selectedStaffId || ""}
-                  onChange={(e) => setSelectedStaffId(e.target.value || null)}
-                >
-                  <option value="">Todos</option>
-                  {staffList.map((staff) => (
-                    <option key={staff.id} value={staff.id}>
-                      {staff.name}
-                    </option>
-                  ))}
-                </Select>
-                <div className="flex items-end">
-                  <Button
-                    variant="ghost"
-                    size="md"
-                    onClick={handleResetFilters}
-                    icon={<Calendar className="h-4 w-4" />}
-                    density={rawDensity === "normal" ? "default" : rawDensity === "ultra-compact" ? "compact" : rawDensity}
-                  >
-                    Hoy
-                  </Button>
-                </div>
-              </div>
-            </FilterPanel>
-          </motion.div>
-
-          {/* Título y contador con TitleBar */}
-          <motion.div variants={itemVariants}>
-            <TitleBar
-              title={formattedDate}
-              subtitle={`${bookings.length} ${bookings.length === 1 ? "reserva" : "reservas"}`}
-              density={density}
-            >
-              {selectedDate && (
-                <DaySwitcher
-                  selectedDate={selectedDate}
-                  onDateChange={(date) => setSelectedDate(date)}
-                  density={density}
-                />
-              )}
-            </TitleBar>
-          </motion.div>
+    <div className="h-full flex flex-col min-h-0 overflow-hidden bg-gradient-to-br from-[var(--bg-primary)] via-[var(--bg-secondary)] to-[var(--bg-tertiary)]">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key="agenda-main"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="flex-1 flex flex-col min-h-0 overflow-hidden"
+        >
+          {/* Premium Header */}
+          <div className="flex-shrink-0 mb-4">
+            <AgendaHeader
+              selectedDate={selectedDateStr}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              onDateChange={handleDateChange}
+              timeRange="8:00 – 20:00"
+              onNotificationsClick={handleNotificationsClick}
+              onSearchClick={handleSearchClick}
+              onCalendarClick={handleCalendarClick}
+              quickStats={quickStats}
+              searchOpen={searchOpen}
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              onSearchClose={() => setSearchOpen(false)}
+              staffUtilization={staffUtilization}
+              onStaffFilterChange={setSelectedStaffId}
+            />
+          </div>
 
           {/* Staff Selector compacto */}
-          {staffList.length > 0 && (
-            <motion.div variants={itemVariants}>
+          {staffList.length > 0 && viewMode === "day" && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex-shrink-0 mb-4"
+            >
               <StaffSelector
                 staff={staffList}
                 selectedStaffId={selectedStaffId}
@@ -356,92 +421,222 @@ function AgendaContent() {
               />
             </motion.div>
           )}
-        </div>
 
-        {/* Contenido principal: Timeline o Lista según vista */}
-        <motion.div
-          variants={itemVariants}
-          className="flex-1 min-h-0 overflow-hidden"
-        >
-          {loading ? (
-            <Card variant="default" density={density} className="h-full flex items-center justify-center">
-              <div className="text-center">
-                <Spinner size="lg" />
-                <p
-                  className="mt-4"
-                  style={{
-                    fontFamily: "var(--font-body)",
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  Cargando reservas...
-                </p>
-              </div>
-            </Card>
-          ) : bookings.length === 0 ? (
-            <Card variant="default" density={density} className="h-full flex items-center justify-center">
-              <EmptyState
-                title="No hay reservas para esta fecha"
-                description="Prueba a cambiar la fecha o revisa el portal de reservas."
-              />
-            </Card>
-          ) : (
-            <div className="h-full flex flex-col min-h-0 overflow-hidden">
-              {/* Vista Timeline (Desktop/Tablet) - Principal */}
-              <div className="hidden md:flex flex-1 min-h-0 overflow-hidden">
-                <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-                  <Timeline
-                    startHour={8}
-                    endHour={20}
-                    density={density}
-                    hourHeight={hourHeight}
+          {/* Contenido principal según vista */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="flex-1 min-h-0 overflow-hidden"
+          >
+            {loading ? (
+              <Card variant="default" density={density} className="h-full flex items-center justify-center border-[var(--glass-border)] bg-[var(--glass-bg-subtle)]">
+                <div className="text-center">
+                  <Spinner size="lg" className="text-[var(--accent-aqua)]" />
+                  <p
+                    className="mt-4 text-lg font-medium"
+                    style={{
+                      fontFamily: "var(--font-body)",
+                      color: "var(--text-secondary)",
+                    }}
                   >
-                    {(hour) => {
-                      const hourBookings = bookings.filter((booking) => {
-                        const bookingHour = new Date(booking.starts_at).getHours();
-                        return bookingHour === hour;
-                      });
+                    Cargando agenda...
+                  </p>
+                </div>
+              </Card>
+            ) : bookings.length === 0 ? (
+              <Card variant="default" density={density} className="h-full flex items-center justify-center border-[var(--glass-border)] bg-[var(--glass-bg-subtle)]">
+                <div className="text-center max-w-md mx-auto px-6">
+                  <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[var(--accent-blue)] to-[var(--accent-aqua)] p-1">
+                    <div className="w-full h-full rounded-2xl bg-[var(--bg-primary)] flex items-center justify-center">
+                      <Calendar className="w-10 h-10 text-[var(--accent-aqua)]" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2" style={{ fontFamily: "var(--font-heading)" }}>
+                    No hay reservas
+                  </h3>
+                  <p className="text-[var(--text-secondary)] mb-6" style={{ fontFamily: "var(--font-body)" }}>
+                    {viewMode === "day" 
+                      ? "No hay citas para este día. ¿Quieres crear una nueva reserva?"
+                      : "No hay citas en este período."
+                    }
+                  </p>
+                  {viewMode === "day" && (
+                    <Button
+                      onClick={handleNewBooking}
+                      icon={<Plus className="w-4 h-4" />}
+                      className="bg-gradient-to-r from-[var(--accent-blue)] to-[var(--accent-aqua)] text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200"
+                    >
+                      Nueva Reserva
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            ) : (
+              <div className="h-full flex flex-col">
+                {/* Debug Info - Solo en desarrollo */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="p-4 bg-[var(--glass-bg)] border-b border-[var(--glass-border)]">
+                    <div className="text-sm font-mono">
+                      <div>Bookings Count: {bookings.length}</div>
+                      <div>Selected Date: {selectedDate?.toISOString()}</div>
+                      <div>Selected Staff: {selectedStaffId || 'All'}</div>
+                      <div>View Mode: {viewMode}</div>
+                      <div>Hour Height: {hourHeight}px</div>
+                    </div>
+                  </div>
+                )}
+                
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={viewMode}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex-1 min-h-0"
+                  >
+                  {viewMode === "day" && (
+                    <div className="h-full flex flex-col min-h-0 overflow-hidden">
+                      {/* Vista Timeline (Desktop/Tablet) */}
+                      <div className="hidden md:flex flex-1 min-h-0">
+                        <div className="flex-1 min-h-0 overflow-y-auto">
+                          <Timeline
+                            startHour={0}
+                            endHour={23}
+                            density={density}
+                            hourHeight={hourHeight}
+                          >
+                            {(hour) => {
+                              const hourBookings = bookings.filter((booking) => {
+                                const bookingDate = new Date(booking.starts_at);
+                                // Usar la hora local en lugar de UTC para mejor precisión
+                                const bookingHour = bookingDate.getHours();
+                                return bookingHour === hour;
+                              });
 
-                      if (hourBookings.length === 0) return null;
+                              // Debug: mostrar información
+                              if (process.env.NODE_ENV === 'development' && bookings.length > 0) {
+                                console.log(`Hour ${hour}: Found ${hourBookings.length} bookings`, {
+                                  totalBookings: bookings.length,
+                                  hourBookings: hourBookings.map(b => ({
+                                    id: b.id,
+                                    starts_at: b.starts_at,
+                                    hour: new Date(b.starts_at).getHours()
+                                  }))
+                                });
+                              }
 
-                      return (
-                        <div className="space-y-2">
-                          {hourBookings.map((booking) => (
+                              if (hourBookings.length === 0) return null;
+
+                              return (
+                                <div className="space-y-2">
+                                  {hourBookings.map((booking) => (
+                                    <MiniBookingCard
+                                      key={booking.id}
+                                      booking={adaptBookingToMiniCard(booking)}
+                                      density={density}
+                                      onClick={() => handleBookingClick(booking)}
+                                    />
+                                  ))}
+                                </div>
+                              );
+                            }}
+                          </Timeline>
+                        </div>
+                      </div>
+
+                      {/* Vista Lista (Mobile) */}
+                      <div className="md:hidden flex-1 min-h-0 overflow-y-auto">
+                        <div className="space-y-3 p-4">
+                          {bookings.map((booking) => (
                             <MiniBookingCard
                               key={booking.id}
-                              booking={booking}
+                              booking={adaptBookingToMiniCard(booking)}
                               density={density}
-                              onClick={() => {
-                                // TODO: Abrir modal de detalle
-                              }}
+                              onClick={() => handleBookingClick(booking)}
                             />
                           ))}
                         </div>
-                      );
-                    }}
-                  </Timeline>
-                </div>
-              </div>
+                      </div>
+                    </div>
+                  )}
 
-              {/* Vista Lista (Mobile) - Usa MiniBookingCard */}
-              <div className="md:hidden flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-                <div className="space-y-3">
-                  {bookings.map((booking) => (
-                    <MiniBookingCard
-                      key={booking.id}
-                      booking={booking}
-                      density={density}
-                      onClick={() => {
-                        // TODO: Abrir modal de detalle
-                      }}
+                  {viewMode === "week" && (
+                    <WeekView
+                      bookings={bookings}
+                      staffList={staffList}
+                      selectedDate={selectedDateStr}
+                      timezone={tenantTimezone}
+                      onBookingClick={handleBookingClick}
                     />
-                  ))}
-                </div>
+                  )}
+
+                  {viewMode === "month" && (
+                    <MonthView
+                      bookings={bookings}
+                      selectedDate={selectedDateStr}
+                      onDateSelect={handleDateChange}
+                      onBookingClick={handleBookingClick}
+                      timezone={tenantTimezone}
+                    />
+                  )}
+
+                  {viewMode === "list" && (
+                    <ListView
+                      bookings={bookings}
+                      selectedDate={selectedDateStr}
+                      viewMode="list"
+                      timezone={tenantTimezone}
+                      onBookingClick={handleBookingClick}
+                    />
+                  )}
+                </motion.div>
+              </AnimatePresence>
               </div>
-            </div>
+            )}
+          </motion.div>
+
+          {/* Floating Action Button */}
+          {viewMode === "day" && (
+            <FloatingActionButton
+              onClick={handleNewBooking}
+              className="fixed bottom-6 right-6 z-50"
+            />
           )}
         </motion.div>
-      </motion.div>
+      </AnimatePresence>
+
+      {/* Modals */}
+      <AnimatePresence>
+        {selectedBooking && (
+          <BookingDetailPanel
+            booking={selectedBooking}
+            isOpen={!!selectedBooking}
+            onClose={() => setSelectedBooking(null)}
+            timezone={tenantTimezone}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {newBookingOpen && (
+          <NewBookingModal
+            isOpen={newBookingOpen}
+            onClose={() => setNewBookingOpen(false)}
+            onSave={async (bookingData) => {
+              // Aquí iría la lógica para guardar la reserva
+              setNewBookingOpen(false);
+              // Refresh bookings
+            }}
+            services={[]}
+            staff={staffList}
+            customers={[]}
+            selectedDate={selectedDateStr}
+            tenantId={tenantId || ''}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
