@@ -62,7 +62,7 @@ export function FreeSlotOverlay({
             }}
             className={cn(
               "absolute left-3 right-3 rounded-xl border-2 border-dashed cursor-pointer transition-all duration-150 z-0 group",
-              "border-accent-aqua/40 bg-accent-aqua/8 hover:bg-accent-aqua/12 hover:border-accent-aqua/60"
+              "border-[#4FE3C1]/30 bg-[#4FE3C1]/5 hover:bg-[#4FE3C1]/10 hover:border-[#4FE3C1]/50 backdrop-blur-sm"
             )}
             style={{
               top: `${top}px`,
@@ -75,13 +75,13 @@ export function FreeSlotOverlay({
               <div className="text-center">
                 <div className={cn(
                   "text-xs font-semibold mb-0.5",
-                  "text-accent-aqua font-sans"
+                  "text-[#4FE3C1] font-sans"
                 )}>
                   Libre {durationLabel}
                 </div>
                 <div className={cn(
-                  "text-xs font-mono",
-                  "text-accent-aqua/70 font-sans"
+                  "text-[10px] font-mono",
+                  "text-[#4FE3C1]/70 font-mono"
                 )}>
                   {minutesToTime(gap.startMinutes)} - {minutesToTime(gap.endMinutes)}
                 </div>
