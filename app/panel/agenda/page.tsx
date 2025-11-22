@@ -1068,9 +1068,9 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
       )}
 
       {/* Layout principal - Dashboard con 3 áreas claras */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-4 lg:gap-6 overflow-hidden px-4 lg:px-6 pb-4">
+      <div className="flex-1 flex flex-col lg:flex-row gap-4 lg:gap-6 overflow-hidden px-4 lg:px-6 pb-4 min-h-0">
         {/* Contenido principal - Card premium */}
-        <div className="flex-1 min-w-0 flex flex-col overflow-hidden bg-slate-950 rounded-2xl border border-white/5 shadow-[0px_8px_32px_rgba(0,0,0,0.35)]">
+        <div className="flex-1 min-w-0 flex flex-col overflow-hidden bg-slate-950 rounded-2xl border border-white/5 shadow-[0px_8px_32px_rgba(0,0,0,0.35)] h-full">
           {loading ? (
             <div className="flex items-center justify-center flex-1">
               <Spinner size="lg" />
@@ -1095,7 +1095,7 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -12 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                className="h-full overflow-auto scrollbar-hide"
+                className="flex-1 h-full min-h-0 flex flex-col overflow-hidden"
               >
                 <AgendaCalendarView
                   selectedDate={selectedDate}
@@ -1148,7 +1148,7 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -12 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="h-full overflow-auto scrollbar-hide"
+              className="flex-1 h-full min-h-0 flex flex-col overflow-hidden"
             >
               <WeekView
                 selectedDate={selectedDate}
@@ -1171,7 +1171,7 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="h-full overflow-auto scrollbar-hide"
+              className="flex-1 h-full min-h-0 flex flex-col overflow-auto scrollbar-hide"
             >
               <MonthView
                 selectedDate={selectedDate}
@@ -1194,7 +1194,7 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 8 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="h-full overflow-auto scrollbar-hide"
+              className="flex-1 h-full min-h-0 flex flex-col overflow-auto scrollbar-hide"
             >
               <ListView
                 selectedDate={selectedDate}

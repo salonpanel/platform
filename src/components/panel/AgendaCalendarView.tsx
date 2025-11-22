@@ -1229,9 +1229,8 @@ export function AgendaCalendarView({
   }
 
   return (
-    <>
-      <div className="h-full w-full flex-1 min-h-0">
-        <DayView
+    <div className="h-full w-full flex flex-col min-h-0">
+      <DayView
           bookings={displayBookings}
           staffBlockings={displayStaffBlockings}
           staffList={visibleStaff}
@@ -1260,7 +1259,6 @@ export function AgendaCalendarView({
             }
           }}
         />
-      </div>
 
       {/* Popover de acciones para slots vacíos */}
       {popoverState.isOpen && popoverState.slot && (
@@ -1366,6 +1364,6 @@ export function AgendaCalendarView({
           newEndTime={resizeConfirmModal.newEndTime}
         />
       )}
-    </>
+    </div>
   );
 }
