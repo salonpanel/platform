@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format, parseISO, startOfDay, endOfDay, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isSameWeek, isSameMonth } from "date-fns";
 import { useSearchParams } from "next/navigation";
 import { getCurrentTenant } from "@/lib/panel-tenant";
@@ -19,15 +19,15 @@ import { ConflictResolutionModal } from "@/components/calendar/ConflictResolutio
 import { WeekView } from "@/components/calendar/WeekView";
 import { MonthView } from "@/components/calendar/MonthView";
 import { ListView } from "@/components/calendar/ListView";
-import { motion, AnimatePresence } from "framer-motion";
-import { ViewMode, Booking, Staff, StaffBlocking, StaffSchedule, BookingStatus, BOOKING_STATUS_CONFIG, CalendarSlot } from "@/types/agenda";
-import { getSupabaseBrowser } from "@/lib/supabase/browser";
-import { getBookingsNeedingStatusUpdate } from "@/lib/booking-status-transitions";
 import { useToast } from "@/components/ui/Toast";
+import { motion, AnimatePresence } from "framer-motion";
+import { Booking, Staff, StaffBlocking, StaffSchedule, ViewMode, BookingStatus, BOOKING_STATUS_CONFIG, CalendarSlot } from "@/types/agenda";
 import { toTenantLocalDate } from "@/lib/timezone";
+import { useAgendaConflicts } from "@/hooks/useAgendaConflicts";
+import { SearchPanel } from "@/components/calendar/SearchPanel";
+import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { calculateStaffUtilization } from "@/lib/agenda-insights";
-import { useAgendaData } from "@/hooks/useAgendaData";
-import { useAgendaHandlers } from "@/hooks/useAgendaHandlers";
+import { getBookingsNeedingStatusUpdate } from "@/lib/booking-status-transitions";
 
 export default function AgendaPage() {
   const supabase = getSupabaseBrowser();
@@ -35,12 +35,6 @@ export default function AgendaPage() {
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [tenantTimezone, setTenantTimezone] = useState<string>("Europe/Madrid");
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [showCustomerView, setShowCustomerView] = useState(false);
-  const [showFreeSlots, setShowFreeSlots] = useState(false);
-  
   // Cargar preferencias desde localStorage
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     if (typeof window !== "undefined") {
@@ -49,7 +43,6 @@ export default function AgendaPage() {
     }
     return format(new Date(), "yyyy-MM-dd");
   });
-  
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("agenda_viewMode") as ViewMode;
@@ -57,70 +50,30 @@ export default function AgendaPage() {
     }
     return "day";
   });
+  const [staffList, setStaffList] = useState<Staff[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [staffBlockings, setStaffBlockings] = useState<StaffBlocking[]>([]);
+  const [staffSchedules, setStaffSchedules] = useState<StaffSchedule[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [showFreeSlots, setShowFreeSlots] = useState(false);
+  const [showNewBookingModal, setShowNewBookingModal] = useState(false);
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+const [showCustomerView, setShowCustomerView] = useState(false);
+const [showBookingDetail, setShowBookingDetail] = useState(false);
+const [showBlockingModal, setShowBlockingModal] = useState(false);
 
-  // Hooks principales
-  const {
-    loading,
-    error,
-    staffList,
-    bookings,
-    staffBlockings,
-    staffSchedules,
-    services,
-    customers,
-    searchTerm,
-    setSearchTerm,
-    filters,
-    setFilters,
-    activeFiltersCount,
-    filteredBookings,
-    visibleStaff,
-    quickStats,
-    staffUtilization,
-    refreshDaySnapshots,
-  } = useAgendaData({
-    tenantId,
-    supabase,
-    selectedDate,
-    viewMode,
-    timezone: tenantTimezone,
-    userRole,
-  });
-
-  const {
-    showNewBookingModal,
-    showBlockingModal,
-    showBookingDetail,
-    editingBooking,
-    selectedBooking,
-    selectedSlot,
-    setShowNewBookingModal,
-    setShowBlockingModal,
-    setShowBookingDetail,
-    setEditingBooking,
-    setSelectedBooking,
-    setSelectedSlot,
-    onNewBooking,
-    onUnavailability,
-    onAbsence,
-    onSave,
-    onSaveBlocking,
-    onBookingEdit,
-    onBookingCancel,
-    onBookingSendMessage,
-    onBookingStatusChange,
-    onBookingMove,
-    onBookingResize,
-    conflictsHook,
-  } = useAgendaHandlers({
-    tenantId,
-    supabase,
-    bookings,
-    selectedDate,
-    timezone: tenantTimezone,
-    userRole,
-    refreshDaySnapshots,
-  });
+const [selectedSlot, setSelectedSlot] = useState<CalendarSlot | null>(null);
+  const [services, setServices] = useState<Array<{ id: string; name: string; duration_min: number; price_cents: number; buffer_min: number }>>([]);
+  const [customers, setCustomers] = useState<Array<{ id: string; name: string; email: string | null; phone: string | null; notes?: string | null }>>([]);
+  
+  const { showToast, ToastComponent } = useToast();
 
   // Hook para manejo de conflictos
   const conflictsHook = useAgendaConflicts({
