@@ -217,36 +217,27 @@ export const StaffColumn = React.memo(function StaffColumn({
       className="flex-1 min-w-[300px] border-r border-white/5 last:border-r-0 relative bg-transparent"
     >
       {/* Header */}
-      <div className="sticky top-0 z-20 px-5 py-4 flex-shrink-0 bg-white/[0.02] backdrop-blur-md border-b border-white/5" style={{ height: "72px" }}>
-        <div className="flex items-center gap-3 h-full">
-          <motion.div
-            className={cn(
-              "h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold",
-              "bg-gradient-to-br from-[#3A6DFF]/20 to-[#A06BFF]/20",
-              "border-2 border-[#0B0C10] ring-2 ring-white/10",
-              "text-white shadow-lg"
-            )}
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.15 }}
-          >
+      <div className="sticky top-0 z-20 px-3 py-3 flex-shrink-0 bg-[#0B0C10]/95 backdrop-blur border-b border-white/5" style={{ height: "72px" }}>
+        <div className="h-full rounded-xl bg-white/[0.02] border border-white/5 p-2 flex items-center gap-3 shadow-inner">
+          <div className={cn(
+            "h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold shadow-lg",
+            "bg-gradient-to-br from-gray-800 to-black border border-white/10 text-white",
+            "ring-2 ring-[#0B0C10]"
+          )}>
             {staff.name.charAt(0).toUpperCase()}
-          </motion.div>
+          </div>
           <div className="flex-1 min-w-0">
-            <div className={cn(
-              "font-semibold text-sm tracking-wide truncate",
-              "text-white font-sans"
-            )}>
+            <div className="font-semibold text-sm tracking-wide text-white truncate font-sans">
               {staff.name}
             </div>
-            <div className={cn(
-              "text-xs mt-0.5 flex items-center gap-1.5",
-              "text-gray-400 font-sans"
-            )}>
-              <div className="h-1.5 w-1.5 rounded-full bg-[#4FE3C1] shadow-sm shadow-[#4FE3C1]/50" />
-              {(() => {
-                const schedule = staffSchedules.find(s => s.staff_id === staff.id);
-                return schedule ? `${schedule.start_time} - ${schedule.end_time}` : "09:00 - 19:00";
-              })()}
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <div className="h-1.5 w-1.5 rounded-full bg-[#4FE3C1] shadow-[0_0_8px_#4FE3C1]" />
+              <span className="text-[10px] text-gray-500 font-medium">
+                {(() => {
+                  const schedule = staffSchedules.find(s => s.staff_id === staff.id);
+                  return schedule ? `${schedule.start_time} - ${schedule.end_time}` : "Activo";
+                })()}
+              </span>
             </div>
           </div>
         </div>

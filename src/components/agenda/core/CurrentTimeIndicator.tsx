@@ -21,10 +21,21 @@ export function CurrentTimeIndicator({ currentMinutes }: CurrentTimeIndicatorPro
         height: "2px",
       }}
     >
-      <div className="absolute left-0 top-0 w-full h-full bg-gradient-to-r from-[#4FE3C1] via-[#4FE3C1] to-transparent opacity-80" style={{ boxShadow: "0 0 8px rgba(79,227,193,0.4)" }} />
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-[#4FE3C1] rounded-full -translate-x-1.5 border-2 border-[#0B0C10]" style={{ boxShadow: "0 0 12px rgba(79,227,193,0.6)" }} />
-      <div className="absolute left-6 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-[#4FE3C1]/20 backdrop-blur-md rounded-lg text-[10px] font-semibold text-[#4FE3C1] font-sans border border-[#4FE3C1]/30">
-        Ahora
+      {/* Neon Glow Line */}
+      <div 
+        className="absolute left-0 top-0 w-full h-full bg-[#4FE3C1] opacity-80"
+        style={{ boxShadow: "0 0 10px rgba(79,227,193,0.6)" }}
+      />
+      
+      {/* Dot */}
+      <div 
+        className="absolute left-0 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-[#4FE3C1] rounded-full -translate-x-1"
+        style={{ boxShadow: "0 0 10px rgba(79,227,193,0.8)" }}
+      />
+      
+      {/* Label */}
+      <div className="absolute left-4 top-1/2 -translate-y-1/2 px-1.5 py-0.5 bg-[#4FE3C1] rounded-sm text-[9px] font-bold text-black font-mono tracking-tighter shadow-lg">
+        AHORA
       </div>
     </div>
   );

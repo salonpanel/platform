@@ -124,27 +124,21 @@ export function DayView({
   }
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden relative bg-[#0B0C10]">
-      {/* Radial gradient background */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div 
-          className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 rounded-full opacity-10 blur-3xl"
-          style={{
-            background: "radial-gradient(circle, rgba(58,109,255,0.3) 0%, rgba(160,107,255,0.2) 50%, transparent 100%)"
-          }}
-        />
-      </div>
-
+    <div className="w-full h-full flex flex-col overflow-hidden bg-[#0B0C10] relative">
+      {/* Radial Gradient Overlay for Neo-Glass effect */}
+      <div 
+        className="absolute top-0 left-0 w-[500px] h-[500px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none z-0"
+        style={{ transform: 'translate(-20%, -20%)' }}
+      />
+      
       <div
         ref={timelineRef}
         className="relative flex-1 overflow-x-auto overflow-y-hidden scrollbar-hide z-10"
       >
-        {/* Container con ancho responsivo y TimeColumn sticky */}
-        <div 
-          className="flex h-full relative" 
-        >
-          {/* Time Column - Sticky */}
-          <div className="sticky left-0 z-30">
+        {/* Grid Container - Flexible width */}
+        <div className="flex h-full min-w-full">
+          {/* Time Column - Sticky Left */}
+          <div className="sticky left-0 z-30 shadow-xl">
             <TimeColumn
               startHour={8}
               endHour={22}
@@ -152,12 +146,12 @@ export function DayView({
             />
           </div>
 
-          {/* Staff Columns - Scrollable horizontal en mobile */}
+          {/* Staff Columns - Scrollable */}
           <motion.div
             variants={staggerPresets.staffColumns.variants}
             initial="hidden"
             animate="visible"
-            className="flex min-w-0"
+            className="flex min-w-0 flex-1"
           >
             {staffList.map((staff, staffIndex) => {
               const staffBookings = bookingsByStaff.get(staff.id) || [];
@@ -168,11 +162,7 @@ export function DayView({
                   key={staff.id}
                   variants={staggerPresets.staffColumns.variants}
                   custom={staffIndex}
-                  className="flex-1 transition-all duration-150"
-                  style={{
-                    minWidth: isMobile ? STAFF_COLUMN_MIN_WIDTH_MOBILE : STAFF_COLUMN_MIN_WIDTH_DESKTOP,
-                    flexShrink: 0
-                  }}
+                  className="flex-1 min-w-[280px] md:min-w-[300px] lg:min-w-[320px]"
                 >
                   <StaffColumn
                     staff={staff}

@@ -12,9 +12,9 @@ interface BlockingOverlayProps {
 }
 
 const blockingColors = {
-  block: "bg-white/[0.03] border-l-[3px] border-white/10 text-gray-400 backdrop-blur-sm",
-  absence: "bg-[rgba(239,68,68,0.08)] border-l-[3px] border-[#EF4444]/30 text-[#EF4444] backdrop-blur-sm",
-  vacation: "bg-[rgba(58,109,255,0.08)] border-l-[3px] border-[#3A6DFF]/30 text-[#3A6DFF] backdrop-blur-sm",
+  block: "bg-white/[0.03] border-l-[3px] border-white/20 text-gray-400 backdrop-blur-[2px]",
+  absence: "bg-red-500/[0.05] border-l-[3px] border-red-500/40 text-red-400 backdrop-blur-[2px]",
+  vacation: "bg-blue-500/[0.05] border-l-[3px] border-blue-500/40 text-blue-400 backdrop-blur-[2px]",
 };
 
 export function BlockingOverlay({ blockings, timezone }: BlockingOverlayProps) {
