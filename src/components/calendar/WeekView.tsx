@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { format, startOfWeek, addDays, parseISO, isSameDay, startOfToday } from "date-fns";
 import { GlassCard } from "@/components/agenda/primitives/GlassCard";
 import { AppointmentCard } from "@/components/agenda/AppointmentCard";
+import { BookingCard } from "@/components/agenda/BookingCard";
 import { toTenantLocalDate, formatInTenantTz } from "@/lib/timezone";
 import { Booking } from "@/types/agenda";
 import { theme } from "@/theme/ui";
@@ -185,13 +186,11 @@ export function WeekView({
                           minHeight: "50px",
                         }}
                       >
-                        <AppointmentCard
+                        <BookingCard
                           booking={booking}
                           timezone={timezone}
-                          compact={isCompact}
                           variant="timeline"
                           onClick={() => onBookingClick(booking)}
-                          showStatus={!isCompact}
                         />
                       </div>
                     );

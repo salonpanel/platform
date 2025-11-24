@@ -23,41 +23,38 @@ export function HourSlot({ hour, children, density = "default", className, isCur
   const textSize = density === "ultra-compact" ? "text-[10px]" : density === "compact" ? "text-xs" : "text-sm";
   
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.2, delay: hour * 0.01 }}
       className={cn(
-        "flex gap-4 border-b transition-all duration-200",
-        isCurrentHour 
-          ? "border-[var(--accent-aqua)]/30 bg-[var(--accent-aqua)]/5" 
-          : "border-[var(--glass-border-subtle)] hover:border-[var(--glass-border)]/50",
-        paddingClass,
+        "flex gap-4 border-b transition-all duration-200 relative",
+        isCurrentHour
+          ? "border-blue-500/30 bg-blue-500/5"
+          : "border-slate-200/50 dark:border-slate-700/50 hover:border-slate-300/70 dark:hover:border-slate-600/70",
         className
       )}
+      style={{ paddingTop: paddingClass === "py-2" ? "8px" : paddingClass === "py-3" ? "12px" : "16px" }}
     >
-      {/* Etiqueta de hora */}
-      <div className="relative">
+      {/* Hour label */}
+      <div className="relative flex-shrink-0 w-16">
         <div
           className={cn(
-            "font-mono font-semibold flex-shrink-0 text-right w-14 transition-colors duration-200",
-            textSize,
-            isCurrentHour 
-              ? "text-[var(--accent-aqua)]" 
-              : "text-[var(--text-tertiary)]"
+            "font-mono font-semibold text-right transition-colors duration-200",
+            isCurrentHour
+              ? "text-blue-600 dark:text-blue-400"
+              : "text-slate-500 dark:text-slate-400",
+            textSize
           )}
-          style={{
-            fontFamily: "var(--font-mono)",
-          }}
         >
           {hourLabel}
         </div>
-        
-        {/* Indicador de hora actual */}
+
+        {/* Current hour indicator */}
         {isCurrentHour && (
           <motion.div
             layoutId="current-hour-indicator"
-            className="absolute -right-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[var(--accent-aqua)] shadow-lg shadow-[var(--accent-aqua)]/50"
+            className="absolute -right-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-blue-500 shadow-lg shadow-blue-500/50"
             animate={{
               scale: [1, 1.2, 1],
               opacity: [1, 0.8, 1]
@@ -70,44 +67,29 @@ export function HourSlot({ hour, children, density = "default", className, isCur
           />
         )}
       </div>
-      
-      {/* Contenido de la hora */}
+
+      {/* Content area */}
       <div className="flex-1 min-h-0 relative">
-        {/* Línea de tiempo sutil */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--glass-border)] to-transparent" />
-        
-        {/* Contenido dinámico */}
+        {/* Subtle horizontal grid line */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-200/30 dark:via-slate-700/30 to-transparent" />
+
+        {/* Content */}
         <div className="relative z-10">
-          {process.env.NODE_ENV === 'development' && (
-            <div className="absolute -top-2 -right-2 text-xs bg-red-500 text-white px-1 rounded">
-              {hour}h
-            </div>
-          )}
           {children ? (
             <div>
-              {process.env.NODE_ENV === 'development' && (
-                <div className="text-xs bg-green-500 text-white px-1 rounded mb-1">
-                  Has children
-                </div>
-              )}
               {children}
             </div>
           ) : (
             <div className="flex items-center justify-center h-full min-h-[40px]">
-              {process.env.NODE_ENV === 'development' && (
-                <div className="text-xs bg-yellow-500 text-white px-1 rounded">
-                  No children
-                </div>
-              )}
-              <div className="w-full h-px bg-[var(--glass-border-subtle)]/50" />
+              <div className="w-full h-px bg-slate-200/20 dark:bg-slate-700/20" />
             </div>
           )}
         </div>
-        
-        {/* Efecto de brillo sutil */}
+
+        {/* Current hour highlight effect */}
         {isCurrentHour && (
           <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--accent-aqua)]/10 to-transparent pointer-events-none"
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/10 to-transparent pointer-events-none"
             animate={{
               opacity: [0, 0.5, 0],
             }}

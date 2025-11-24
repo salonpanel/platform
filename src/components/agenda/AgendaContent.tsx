@@ -16,7 +16,7 @@ import { PremiumLoader } from "./PremiumLoader";
 import { PremiumSkeleton } from "./PremiumSkeleton";
 import { Card } from "@/components/ui/Card";
 import { Timeline } from "./Timeline";
-import { MiniBookingCard } from "./MiniBookingCard";
+import { BookingCard } from "./BookingCard";
 
 type ViewMode = "day" | "week" | "month" | "list";
 
@@ -134,29 +134,6 @@ export function AgendaContent({
     };
   }, [viewMode, onViewModeChange]); // Remove notificationActions to prevent re-renders
 
-  // Función adaptadora memoizada
-  const adaptBookingToMiniCard = useMemo(() =>
-    (booking: Booking): MiniBookingCardData => ({
-      id: booking.id,
-      starts_at: booking.starts_at,
-      ends_at: booking.ends_at,
-      status: booking.status,
-      customer: booking.customer ? {
-        name: booking.customer.name,
-        email: booking.customer.email || undefined,
-        phone: booking.customer.phone
-      } : undefined,
-      service: booking.service ? {
-        name: booking.service.name,
-        duration_min: booking.service.duration_min,
-        price_cents: booking.service.price_cents
-      } : undefined,
-      staff: booking.staff ? {
-        name: booking.staff.name
-      } : undefined
-    }), []
-  );
-
   // Calcular hourHeight dinámicamente según altura disponible
   const availableHeight = heightAware?.availableHeight || 600; // Fallback for SSR/safety
   const workingHours = 12; // 8:00 a 20:00 = 12 horas laborables
@@ -261,31 +238,29 @@ export function AgendaContent({
                 />
               </div>
             ) : bookings.length === 0 ? (
-              <Card variant="default" density={density} className="h-full flex items-center justify-center border-[var(--glass-border)] bg-[var(--glass-bg-subtle)]">
-                <div className="text-center max-w-md mx-auto px-6">
-                  <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[var(--accent-blue)] to-[var(--accent-aqua)] p-1">
-                    <div className="w-full h-full rounded-2xl bg-[var(--bg-primary)] flex items-center justify-center">
-                      <motion.div
-                        animate={{
-                          rotate: [0, 10, -10, 0],
-                          scale: [1, 1.1, 1]
-                        }}
-                        transition={{
-                          duration: 2,
-                          repeat: Infinity,
-                          ease: "easeInOut"
-                        }}
-                      >
-                        📅
-                      </motion.div>
-                    </div>
+              <div className="h-full flex items-center justify-center p-8">
+                <div className="text-center max-w-md mx-auto">
+                  <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                    <motion.div
+                      animate={{
+                        rotate: [0, 10, -10, 0],
+                        scale: [1, 1.1, 1]
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      📅
+                    </motion.div>
                   </div>
-                  <h3 className="text-xl font-semibold mb-2" style={{ fontFamily: "var(--font-heading)" }}>
+                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">
                     No hay reservas
                   </h3>
-                  <p className="text-[var(--text-secondary)] mb-6" style={{ fontFamily: "var(--font-body)" }}>
+                  <p className="text-slate-600 dark:text-slate-400 mb-6">
                     {viewMode === "day"
-                      ? "No hay citas para este día. ¿Quieres crear una nueva reserva?"
+                      ? "No hay citas programadas para este día."
                       : "No hay citas en este período."
                     }
                   </p>
@@ -294,17 +269,13 @@ export function AgendaContent({
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={onNewBooking}
-                      className={cn(
-                        "px-6 py-3 rounded-[var(--radius-lg)] font-semibold transition-all duration-200",
-                        "bg-gradient-to-r from-[var(--accent-blue)] to-[var(--accent-aqua)] text-white border-0",
-                        "shadow-lg hover:shadow-xl hover:shadow-[var(--accent-aqua)]/25"
-                      )}
+                      className="px-6 py-3 rounded-lg font-semibold transition-all duration-200 bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl"
                     >
                       Nueva Reserva
                     </motion.button>
                   )}
                 </div>
-              </Card>
+              </div>
             ) : (
               <div className="h-full flex flex-col">
                 <AnimatePresence mode="wait">
@@ -375,7 +346,25 @@ export function AgendaContent({
                                       return enableDragDrop ? (
                                         <DraggableBookingCard
                                           key={booking.id}
-                                          booking={adaptBookingToMiniCard(booking)}
+                                          booking={{
+                                            id: booking.id,
+                                            starts_at: booking.starts_at,
+                                            ends_at: booking.ends_at,
+                                            status: booking.status,
+                                            customer: booking.customer ? {
+                                              name: booking.customer.name,
+                                              email: booking.customer.email || undefined,
+                                              phone: booking.customer.phone
+                                            } : undefined,
+                                            service: booking.service ? {
+                                              name: booking.service.name,
+                                              duration_min: booking.service.duration_min,
+                                              price_cents: booking.service.price_cents
+                                            } : undefined,
+                                            staff: booking.staff ? {
+                                              name: booking.staff.name
+                                            } : undefined
+                                          }}
                                           position={position}
                                           density={density}
                                           onDragEnd={handleBookingDrag}
@@ -388,12 +377,26 @@ export function AgendaContent({
                                           snapToGrid={true}
                                         />
                                       ) : (
-                                        <MiniBookingCard
+                                        <div
                                           key={booking.id}
-                                          booking={adaptBookingToMiniCard(booking)}
-                                          density={density}
-                                          onClick={() => onBookingClick(booking)}
-                                        />
+                                          style={{
+                                            position: "absolute",
+                                            left: "8px",
+                                            right: "8px",
+                                            top: position.top,
+                                            height: position.height,
+                                            minHeight: "50px",
+                                          }}
+                                        >
+                                          <BookingCard
+                                            booking={booking}
+                                            timezone={tenantTimezone}
+                                            variant="day"
+                                            onClick={() => onBookingClick(booking)}
+                                            canDrag={enableDragDrop}
+                                            canResize={enableDragDrop}
+                                          />
+                                        </div>
                                       );
                                     })}
                                   </div>
@@ -405,13 +408,16 @@ export function AgendaContent({
 
                         {/* Vista Lista (Mobile) */}
                         <div className="md:hidden flex-1 min-h-0 overflow-y-auto" role="region" aria-label="Lista de reservas del día">
-                          <div className="space-y-2 p-3">
+                          <div className="space-y-3 p-4">
                             {bookings.map((booking) => (
-                              <MiniBookingCard
+                              <BookingCard
                                 key={booking.id}
-                                booking={adaptBookingToMiniCard(booking)}
-                                density={density}
+                                booking={booking}
+                                timezone={tenantTimezone}
+                                variant="list"
                                 onClick={() => onBookingClick(booking)}
+                                canDrag={enableDragDrop}
+                                canResize={enableDragDrop}
                               />
                             ))}
                           </div>
