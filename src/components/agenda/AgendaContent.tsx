@@ -474,5 +474,3 @@ export function AgendaContent({
     </div>
   );
 }
-
-  return (
