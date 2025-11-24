@@ -179,29 +179,75 @@ export function useAgendaData({
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Filtrar bookings por búsqueda
+  // Filtrar bookings por búsqueda y filtros aplicados
   const filteredBookings = useMemo(() => {
-    if (!debouncedSearchTerm.trim()) return bookings;
+    let result = [...bookings];
     
-    const term = debouncedSearchTerm.toLowerCase().trim();
-    return bookings.filter((booking) => {
-      const customerName = booking.customer?.name?.toLowerCase() || "";
-      const customerPhone = booking.customer?.phone?.toLowerCase() || "";
-      const customerEmail = booking.customer?.email?.toLowerCase() || "";
-      const serviceName = booking.service?.name?.toLowerCase() || "";
-      const internalNotes = booking.internal_notes?.toLowerCase() || "";
-      const clientMessage = booking.client_message?.toLowerCase() || "";
-      
-      return (
-        customerName.includes(term) ||
-        customerPhone.includes(term) ||
-        customerEmail.includes(term) ||
-        serviceName.includes(term) ||
-        internalNotes.includes(term) ||
-        clientMessage.includes(term)
-      );
-    });
-  }, [bookings, debouncedSearchTerm]);
+    // Aplicar filtros de estado de pago
+    if (filters.payment.length > 0) {
+      result = result.filter((booking) => {
+        const isPaid = booking.status === "paid";
+        const isUnpaid = booking.status !== "paid";
+        
+        // Show paid bookings if "paid" is selected
+        if (filters.payment.includes("paid") && isPaid) {
+          return true;
+        }
+        // Show unpaid bookings if "unpaid" is selected  
+        if (filters.payment.includes("unpaid") && isUnpaid) {
+          return true;
+        }
+        // If both are selected, show all (handled by above conditions)
+        // If neither condition matches, exclude booking
+        return false;
+      });
+    }
+    
+    // Aplicar filtros de estado de reserva
+    if (filters.status.length > 0) {
+      result = result.filter((booking) => {
+        return filters.status.includes(booking.status);
+      });
+    }
+    
+    // Aplicar filtro de staff
+    if (filters.staff.length > 0 && !filters.staff.includes("all")) {
+      result = result.filter((booking) => {
+        return booking.staff_id && filters.staff.includes(booking.staff_id);
+      });
+    }
+    
+    // Aplicar filtro de destacados
+    if (filters.highlighted !== null) {
+      result = result.filter((booking) => {
+        return booking.is_highlighted === filters.highlighted;
+      });
+    }
+    
+    // Aplicar búsqueda término
+    if (debouncedSearchTerm.trim()) {
+      const term = debouncedSearchTerm.toLowerCase().trim();
+      result = result.filter((booking) => {
+        const customerName = booking.customer?.name?.toLowerCase() || "";
+        const customerPhone = booking.customer?.phone?.toLowerCase() || "";
+        const customerEmail = booking.customer?.email?.toLowerCase() || "";
+        const serviceName = booking.service?.name?.toLowerCase() || "";
+        const internalNotes = booking.internal_notes?.toLowerCase() || "";
+        const clientMessage = booking.client_message?.toLowerCase() || "";
+        
+        return (
+          customerName.includes(term) ||
+          customerPhone.includes(term) ||
+          customerEmail.includes(term) ||
+          serviceName.includes(term) ||
+          internalNotes.includes(term) ||
+          clientMessage.includes(term)
+        );
+      });
+    }
+    
+    return result;
+  }, [bookings, debouncedSearchTerm, filters]);
 
   // Helper para obtener bookings en el rango actual
   const getBookingsInCurrentRange = useMemo(() => {

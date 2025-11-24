@@ -443,7 +443,7 @@ export function AgendaSidebar({
     );
   }
 
-  // Desktop/Tablet sidebar
+  // Desktop/Tablet sidebar - return null wrapper to prevent layout space on mobile
   return (
     <div className={cn(
       "h-full transition-all duration-300",

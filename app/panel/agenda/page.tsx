@@ -1,34 +1,24 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { format, parseISO, startOfDay, endOfDay, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isSameWeek, isSameMonth } from "date-fns";
+import { format, parseISO, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { useSearchParams } from "next/navigation";
 import { getCurrentTenant } from "@/lib/panel-tenant";
-import { Spinner } from "@/components/ui/Spinner";
-import { AgendaEmptyState } from "@/components/calendar/AgendaEmptyState";
-import { AgendaHeader } from "@/components/calendar/AgendaHeader";
-import { AgendaSidebar } from "@/components/calendar/AgendaSidebar";
-import { FloatingActionButton } from "@/components/calendar/FloatingActionButton";
-import { AgendaCalendarView } from "@/components/panel/AgendaCalendarView";
-import { NotificationsPanel } from "@/components/calendar/NotificationsPanel";
+import { useToast } from "@/components/ui/Toast";
+import { motion, AnimatePresence } from "framer-motion";
+import { Booking, Staff, StaffBlocking, StaffSchedule, ViewMode, CalendarSlot } from "@/types/agenda";
+import { toTenantLocalDate } from "@/lib/timezone";
+import { useAgendaConflicts } from "@/hooks/useAgendaConflicts";
+import { getSupabaseBrowser } from "@/lib/supabase/browser";
+import { getBookingsNeedingStatusUpdate } from "@/lib/booking-status-transitions";
+import { useAgendaData } from "@/hooks/useAgendaData";
+import { AgendaContainer } from "@/components/agenda/AgendaContainer";
 import { NewBookingModal } from "@/components/calendar/NewBookingModal";
 import { CustomerQuickView } from "@/components/calendar/CustomerQuickView";
 import { BookingDetailPanel } from "@/components/calendar/BookingDetailPanel";
 import { StaffBlockingModal } from "@/components/calendar/StaffBlockingModal";
 import { ConflictResolutionModal } from "@/components/calendar/ConflictResolutionModal";
-import { WeekView } from "@/components/calendar/WeekView";
-import { MonthView } from "@/components/calendar/MonthView";
-import { ListView } from "@/components/calendar/ListView";
-import { useToast } from "@/components/ui/Toast";
-import { motion, AnimatePresence } from "framer-motion";
-import { Booking, Staff, StaffBlocking, StaffSchedule, ViewMode, BookingStatus, BOOKING_STATUS_CONFIG, CalendarSlot } from "@/types/agenda";
-import { toTenantLocalDate } from "@/lib/timezone";
-import { useAgendaConflicts } from "@/hooks/useAgendaConflicts";
-import { SearchPanel } from "@/components/calendar/SearchPanel";
-import { getSupabaseBrowser } from "@/lib/supabase/browser";
-import { calculateStaffUtilization } from "@/lib/agenda-insights";
-import { getBookingsNeedingStatusUpdate } from "@/lib/booking-status-transitions";
-import { useAgendaData } from "@/hooks/useAgendaData";
+import { NotificationsPanel } from "@/components/calendar/NotificationsPanel";
 
 export default function AgendaPage() {
   const supabase = getSupabaseBrowser();
@@ -36,6 +26,7 @@ export default function AgendaPage() {
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [tenantTimezone, setTenantTimezone] = useState<string>("Europe/Madrid");
   const [userRole, setUserRole] = useState<string | null>(null);
+  
   // Cargar preferencias desde localStorage
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     if (typeof window !== "undefined") {
@@ -44,6 +35,7 @@ export default function AgendaPage() {
     }
     return format(new Date(), "yyyy-MM-dd");
   });
+  
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("agenda_viewMode") as ViewMode;
@@ -52,7 +44,7 @@ export default function AgendaPage() {
     return "day";
   });
 
-  // Estados de UI locales (no manejados por hooks)
+  // Estados de UI locales (modales y paneles)
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -296,6 +288,9 @@ const onSave = async (bookingData: BookingFormPayload) => {
       notifyError(err, "Error al guardar la cita");
     }
   };
+
+  // Alias for NewBookingModal compatibility
+  const onBookingSave = onSave;
 
 type BlockingFormPayload = {
   staff_id: string;
@@ -942,369 +937,99 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
 
   return (
     <>
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
-      className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-slate-950"
-    >
-      {/* Premium Header */}
-      <div className="flex-shrink-0 px-4 lg:px-6 pt-4 pb-3">
-        <AgendaHeader
-          selectedDate={selectedDate}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          onDateChange={setSelectedDate}
-          timeRange={useMemo(() => {
-            if (staffSchedules.length === 0) return "9:00 – 19:00";
-            // Mapear staffSchedules a minutos
-            const allMinutes = staffSchedules.flatMap(s => {
-              const [startH, startM] = s.start_time.split(":").map(Number);
-              const [endH, endM] = s.end_time.split(":").map(Number);
-              return [
-                startH * 60 + startM, // inicio en minutos
-                endH * 60 + endM,    // fin en minutos
-              ];
-            });
-            // Obtener min/max
-            const earliest = Math.min(...allMinutes.filter((_, i) => i % 2 === 0));
-            const latest = Math.max(...allMinutes.filter((_, i) => i % 2 === 1));
-            // Construir string "HH:mm – HH:mm"
-            const startH = Math.floor(earliest / 60);
-            const startM = earliest % 60;
-            const endH = Math.floor(latest / 60);
-            const endM = latest % 60;
-            return `${startH.toString().padStart(2, "0")}:${startM.toString().padStart(2, "0")} – ${endH.toString().padStart(2, "0")}:${endM.toString().padStart(2, "0")}`;
-          }, [staffSchedules])}
-          onNotificationsClick={() => setNotificationsOpen(true)}
-          onSearchClick={() => setSearchOpen(!searchOpen)}
-          searchOpen={searchOpen}
-          searchTerm={searchTerm}
-          onSearchChange={setAgendaSearchTerm}
-          onSearchClose={() => {
-            setSearchOpen(false);
-            setAgendaSearchTerm("");
-          }}
-          quickStats={quickStats}
-          searchResultCount={filteredBookings.length}
-          searchTotalCount={bookings.length}
-          staffUtilization={staffUtilization}
-          onStaffFilterChange={handleStaffFilterChange}
-          onFiltersClick={() => setSidebarOpen(true)}
-          onCalendarClick={() => {
-            console.log("Abrir calendar picker");
-          }}
-          showFiltersButton={true}
-        />
-      </div>
+      <AgendaContainer
+        // Data from useAgendaData hook
+        loading={loading}
+        error={error}
+        staffList={staffList}
+        bookings={bookings}
+        searchTerm={searchTerm}
+        setSearchTerm={setAgendaSearchTerm}
+        filters={filters}
+        setFilters={setFilters}
+        activeFiltersCount={activeFiltersCount}
+        filteredBookings={filteredBookings}
+        visibleStaff={visibleStaff}
+        quickStats={quickStats}
+        staffUtilization={staffUtilization}
+        refreshDaySnapshots={refreshDaySnapshots}
+        
+        // Core state from page.tsx
+        tenantId={tenantId}
+        tenantTimezone={tenantTimezone}
+        selectedDate={selectedDate}
+        selectedStaffId={filters.staff.includes("all") ? null : filters.staff[0] || null}
+        viewMode={viewMode}
+        
+        // Callbacks from page.tsx
+        onDateChange={setSelectedDate}
+        onViewModeChange={setViewMode}
+        onStaffChange={(staffId) => {
+          setFilters(prev => ({
+            ...prev,
+            staff: staffId ? [staffId] : ["all"]
+          }));
+        }}
+        onBookingClick={(booking) => {
+          const fullBooking = bookings.find((b) => b.id === booking.id);
+          if (fullBooking) {
+            setSelectedBooking(fullBooking);
+            setShowBookingDetail(true);
+          }
+        }}
+        onNewBooking={() => setShowNewBookingModal(true)}
+        onBookingDrag={onBookingMove}
+        onBookingResize={onBookingResize}
+        
+        // UI state
+        searchOpen={searchOpen}
+        onSearchToggle={() => setSearchOpen(!searchOpen)}
+        onSearchClose={() => {
+          setSearchOpen(false);
+          setAgendaSearchTerm("");
+        }}
+        selectedBooking={selectedBooking}
+        newBookingOpen={showNewBookingModal}
+        
+        // Options
+        density="default"
+        enableDragDrop={true}
+        showConflicts={true}
+      />
 
-      {/* Chip de filtros activos - Premium */}
-      {activeFiltersCount > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: -8, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -8, scale: 0.96 }}
-          transition={{ duration: 0.15, ease: "easeOut" }}
-          className="flex-shrink-0 px-4 lg:px-6 pb-2"
-        >
-          <div className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-[14px] bg-[rgba(58,109,255,0.12)] border border-[rgba(58,109,255,0.25)] backdrop-blur-md shadow-[0px_4px_20px_rgba(58,109,255,0.15)]">
-            <div className="h-1.5 w-1.5 rounded-full bg-[#3A6DFF] animate-pulse" />
-            <span className="text-sm text-white font-semibold font-['Plus_Jakarta_Sans']">
-              {activeFiltersCount} {activeFiltersCount === 1 ? 'filtro activo' : 'filtros activos'}
-            </span>
-            <button
-              onClick={() => {
-                setFilters({
-                  payment: [],
-                  status: [],
-                  staff: [],
-                  highlighted: null,
-                });
-              }}
-              className="ml-1 px-2.5 py-1 text-xs font-semibold text-[#4FE3C1] hover:text-white hover:bg-[rgba(79,227,193,0.15)] rounded-[8px] transition-all duration-150 font-['Plus_Jakarta_Sans']"
-            >
-              Limpiar
-            </button>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Sidebar - Mobile (Drawer) */}
-      {sidebarOpen && (
-        <AnimatePresence>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="lg:hidden fixed inset-0 z-50"
-          >
-            <div
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-              onClick={() => setSidebarOpen(false)}
-            />
-            <motion.div
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="absolute left-0 top-0 bottom-0 w-[88vw] sm:w-[360px] max-w-[90%] bg-slate-950 border-r border-white/10 backdrop-blur-md shadow-[0px_8px_32px_rgba(0,0,0,0.5)] overflow-hidden"
-            >
-              <div className="h-full overflow-y-auto scrollbar-hide p-5">
-                <AgendaSidebar
-                  selectedDate={selectedDate}
-                  onDateSelect={setSelectedDate}
-                  filters={filters}
-                  onFiltersChange={setFilters}
-                  staffList={staffList}
-                  onClose={() => setSidebarOpen(false)}
-                  showFreeSlots={showFreeSlots}
-                  onShowFreeSlotsChange={setShowFreeSlots}
-                />
-              </div>
-            </motion.div>
-          </motion.div>
-        </AnimatePresence>
-      )}
-
-      {/* Layout principal - Dashboard con 3 áreas claras */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-4 lg:gap-6 overflow-hidden px-4 lg:px-6 pb-4 min-h-0">
-        {/* Contenido principal - Card premium */}
-        <div className="flex-1 min-w-0 flex flex-col overflow-hidden bg-slate-950 rounded-2xl border border-white/5 shadow-[0px_8px_32px_rgba(0,0,0,0.35)] h-full">
-          {loading ? (
-            <div className="flex items-center justify-center flex-1">
-              <Spinner size="lg" />
-            </div>
-          ) : (
-            <AnimatePresence mode="wait">
-              {viewMode === "day" ? (
-            bookings.length === 0 && staffBlockings.length === 0 ? (
-              <AgendaEmptyState
-                selectedDate={selectedDate}
-                onCreateBooking={() => setShowNewBookingModal(true)}
-                bookingLink={
-                  tenantId
-                    ? `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/reservar/${tenantId}`
-                    : undefined
-                }
-              />
-            ) : (
-              <motion.div
-                key={selectedDate}
-                initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -12 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="flex-1 h-full min-h-0 flex flex-col overflow-hidden"
-              >
-                <AgendaCalendarView
-                  selectedDate={selectedDate}
-                  selectedStaffIds={visibleStaff.map((s) => s.id)}
-                  bookings={filteredBookings}
-                  staffBlockings={staffBlockings}
-                  staffList={visibleStaff}
-                  staffSchedules={staffSchedules}
-                  timezone={tenantTimezone}
-                  showFreeSlots={showFreeSlots}
-                  onSlotClick={(slot) => setSelectedSlot(slot)}
-                  onNewBooking={onNewBooking}
-                  onUnavailability={onUnavailability}
-                  onAbsence={onAbsence}
-                  onBookingClick={(booking) => {
-                    const fullBooking = bookings.find((b) => b.id === booking.id);
-                    if (fullBooking) {
-                      setSelectedBooking(fullBooking);
-                      setShowBookingDetail(true);
-                    }
-                  }}
-                  onBookingEdit={(booking) => {
-                    const fullBooking = bookings.find((b) => b.id === booking.id);
-                    if (fullBooking) {
-                      onBookingEdit(fullBooking);
-                    }
-                  }}
-                  onBookingCancel={(bookingId) => {
-                    const canCancel = userRole === "owner" || userRole === "admin";
-                    if (!canCancel) return;
-                    onBookingCancel(bookingId);
-                  }}
-                  onBookingSendMessage={(booking) => {
-                    const fullBooking = bookings.find((b) => b.id === booking.id);
-                    if (fullBooking) {
-                      onBookingSendMessage(fullBooking);
-                    }
-                  }}
-                  onBookingStatusChange={onBookingStatusChange}
-                  onBookingMove={onBookingMove}
-                  onBookingResize={onBookingResize}
-                  canCancel={userRole === "owner" || userRole === "admin"}
-                />
-              </motion.div>
-            )
-          ) : viewMode === "week" ? (
-            <motion.div
-              key={selectedDate}
-              initial={{ opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -12 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="flex-1 h-full min-h-0 flex flex-col overflow-hidden"
-            >
-              <WeekView
-                selectedDate={selectedDate}
-                staffList={visibleStaff}
-                bookings={filteredBookings}
-                timezone={tenantTimezone}
-                onBookingClick={(booking) => {
-                  const fullBooking = bookings.find((b) => b.id === booking.id);
-                  if (fullBooking) {
-                    setSelectedBooking(fullBooking);
-                    setShowBookingDetail(true);
-                  }
-                }}
-              />
-            </motion.div>
-          ) : viewMode === "month" ? (
-            <motion.div
-              key={selectedDate}
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="flex-1 h-full min-h-0 flex flex-col overflow-auto scrollbar-hide"
-            >
-              <MonthView
-                selectedDate={selectedDate}
-                bookings={filteredBookings}
-                timezone={tenantTimezone}
-                onDateSelect={setSelectedDate}
-                onBookingClick={(booking) => {
-                  const fullBooking = bookings.find((b) => b.id === booking.id);
-                  if (fullBooking) {
-                    setSelectedBooking(fullBooking);
-                    setShowBookingDetail(true);
-                  }
-                }}
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              key={selectedDate}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="flex-1 h-full min-h-0 flex flex-col overflow-auto scrollbar-hide"
-            >
-              <ListView
-                selectedDate={selectedDate}
-                viewMode={viewMode}
-                bookings={filteredBookings}
-                timezone={tenantTimezone}
-                searchTerm={searchTerm}
-                onBookingClick={(booking) => {
-                  const fullBooking = bookings.find((b) => b.id === booking.id);
-                  if (fullBooking) {
-                    setSelectedBooking(fullBooking);
-                    setShowBookingDetail(true);
-                  }
-                }}
-              />
-            </motion.div>
-              )}
-            </AnimatePresence>
-          )}
-        </div>
-
-        {/* Sidebar derecha - Desktop only - Glassmorphism premium */}
-        <motion.aside
-          initial={{ opacity: 0, x: 12 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.2, ease: "easeOut" }}
-          className="hidden lg:flex w-[280px] flex-shrink-0"
-        >
-          <div className="w-full h-full bg-[#15171A] rounded-2xl p-5 border border-white/5 backdrop-blur-md shadow-[0px_8px_32px_rgba(0,0,0,0.35)] overflow-y-auto scrollbar-hide">
-            <AgendaSidebar
-              selectedDate={selectedDate}
-              onDateSelect={setSelectedDate}
-              filters={filters}
-              onFiltersChange={setFilters}
-              staffList={staffList}
-            />
-          </div>
-        </motion.aside>
-      </div>
-
-      {/* Modales y paneles */}
-      <FloatingActionButton onClick={() => {
-        setSelectedSlot(null);
-        setShowNewBookingModal(true);
-        setEditingBooking(null);
-      }} />
-
+      {/* Modals and panels - kept in page.tsx for business logic */}
       {showNewBookingModal && (
         <NewBookingModal
           isOpen={showNewBookingModal}
           onClose={() => {
             setShowNewBookingModal(false);
             setEditingBooking(null);
-            setSelectedSlot(null);
           }}
-          onSave={onSave}
+          onSave={onBookingSave}
           services={services}
-          customers={customers}
           staff={staffList}
-          selectedTime={selectedSlot?.time}
-          selectedEndTime={selectedSlot?.endTime}
-          selectedStaffId={selectedSlot?.staffId}
-          selectedDate={selectedSlot?.date || selectedDate}
+          customers={customers}
+          selectedDate={selectedDate}
+          selectedTime={selectedSlot?.start_time}
+          selectedEndTime={selectedSlot?.end_time}
+          selectedStaffId={selectedSlot?.staff_id || (filters.staff.includes("all") ? null : filters.staff[0] || null)}
+          isLoading={loading}
           editingBooking={editingBooking}
           tenantId={tenantId || undefined}
         />
       )}
 
-      {showBlockingModal && selectedSlot && (
-        <StaffBlockingModal
-          isOpen={showBlockingModal}
-          onClose={() => {
-            setShowBlockingModal(false);
-            setSelectedSlot(null);
-          }}
-          onSave={onSaveBlocking}
-          staff={staffList}
-          slot={selectedSlot}
-        />
-      )}
-
-      {conflictsHook.showConflictModal && (
+      {conflictsHook.showConflictModal && conflictsHook.selectedConflict && (
         <ConflictResolutionModal
           isOpen={conflictsHook.showConflictModal}
-          onClose={conflictsHook.clearConflicts}
-          conflicts={conflictsHook.conflicts}
-          newBookingStart={conflictsHook.pendingBooking?.starts_at || conflictsHook.pendingBlocking?.start_at || ""}
-          newBookingEnd={conflictsHook.pendingBooking?.ends_at || conflictsHook.pendingBlocking?.end_at || ""}
-          newBookingStaffId={conflictsHook.pendingBooking?.staff_id || conflictsHook.pendingBlocking?.staff_id || ""}
-          newBookingStaffName={staffList.find(s => s.id === (conflictsHook.pendingBooking?.staff_id || conflictsHook.pendingBlocking?.staff_id))?.name}
-          timezone={tenantTimezone}
-          userRole={(userRole as "owner" | "admin" | "manager" | "staff") || "staff"}
-          onResolve={async (resolution) => {
+          onClose={() => conflictsHook.setShowConflictModal(false)}
+          conflict={conflictsHook.selectedConflict}
+          onResolve={async (resolution, force) => {
             try {
-              if (conflictsHook.pendingBooking) {
-                await conflictsHook.handleResolve(resolution, async (force) => {
-                  await saveBooking(conflictsHook.pendingBooking as any, force);
-                });
-              } else if (conflictsHook.pendingBlocking) {
-                await conflictsHook.handleResolve(resolution, async (force) => {
-                  const blocking = conflictsHook.pendingBlocking!;
-                  await saveBlocking({
-                    ...blocking,
-                    type: blocking.type || "block",
-                    reason: blocking.reason || "",
-                  }, force);
-                });
-              }
+              await conflictsHook.resolveConflict(resolution, force);
+              showToast("Conflicto resuelto correctamente", "success");
             } catch (err) {
-              notifyError(err, "Error al resolver el conflicto");
+              showToast("Error al resolver el conflicto", "error");
             }
           }}
         />
@@ -1342,8 +1067,7 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
           onClose={() => setNotificationsOpen(false)}
         />
       )}
-    </motion.div>
-    {ToastComponent}
+      {ToastComponent}
     </>
   );
 }

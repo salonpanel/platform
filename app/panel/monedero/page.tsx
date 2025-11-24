@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Wallet, RefreshCw, TrendingUp, DollarSign, BarChart3, Clock } from "lucide-react";
+import { Wallet, RefreshCw, TrendingUp, DollarSign, BarChart3, Clock, CheckCircle2, AlertCircle, Info } from "lucide-react";
 import { Card, Button, Spinner, EmptyState, Alert, TitleBar } from "@/components/ui";
 import { BalanceCard, BalanceGrid } from "@/components/ui/BalanceCard";
 import { MetricCard, MetricsGrid } from "@/components/ui/MetricCard";
