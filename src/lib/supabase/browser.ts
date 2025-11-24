@@ -45,45 +45,10 @@ export function getSupabaseBrowser(): SupabaseClient {
     // En producción, configurar custom fetch para usar proxy
     if (!isDevelopment && typeof window !== 'undefined' && window.location.hostname === 'pro.bookfast.es') {
       clientOptions.global = {
-        fetch: (url: string, options?: RequestInit) => {
-          // Redirigir peticiones de auth a través del proxy API
-          if (url.includes('/auth/v1/')) {
-            try {
-              const urlObj = new URL(url);
-              const path = urlObj.pathname.replace('/auth/v1/', '') + urlObj.search;
-              const proxyUrl = `${window.location.origin}/api/auth-proxy?path=${encodeURIComponent(path)}`;
-              return fetch(proxyUrl, options);
-            } catch (error) {
-              console.error('Error parsing auth URL:', error);
-              return fetch(url, options);
-            }
-          }
-          // Redirigir peticiones REST a través del proxy API
-          if (url.includes('/rest/v1/')) {
-            try {
-              const urlObj = new URL(url);
-              const path = urlObj.pathname.replace('/rest/v1/', '') + urlObj.search;
-              const proxyUrl = `${window.location.origin}/api/rest-proxy?path=${encodeURIComponent(path)}`;
-              return fetch(proxyUrl, options);
-            } catch (error) {
-              console.error('Error parsing rest URL:', error);
-              return fetch(url, options);
-            }
-          }
-          // Redirigir peticiones Storage a través del proxy API
-          if (url.includes('/storage/v1/')) {
-            try {
-              const urlObj = new URL(url);
-              const path = urlObj.pathname.replace('/storage/v1/', '') + urlObj.search;
-              const proxyUrl = `${window.location.origin}/api/storage-proxy?path=${encodeURIComponent(path)}`;
-              return fetch(proxyUrl, options);
-            } catch (error) {
-              console.error('Error parsing storage URL:', error);
-              return fetch(url, options);
-            }
-          }
-          return fetch(url, options);
-        }
+        fetch: (url: string, options?: RequestInit) =>
+          fetch(`${window.location.origin}/api/auth-proxy?path=${encodeURIComponent(url)}`, {
+            ...options,
+          }),
       };
     }
     
