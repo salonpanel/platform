@@ -170,7 +170,7 @@ export function SidebarNav({
         className={cn(
           "fixed md:static inset-y-0 left-0 z-50 glass flex flex-col transition-all duration-300 ease-out",
           "bg-[var(--bg-primary)] backdrop-blur-xl border-r border-[rgba(255,255,255,0.1)] sidebar-no-shadow",
-          "md:translate-x-0",
+          "md:translate-x-0 h-screen md:h-full",
           isOpen ? "translate-x-0" : "-translate-x-full",
           "shadow-[0px_0px_40px_rgba(0,0,0,0.3)]"
         )}

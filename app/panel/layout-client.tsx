@@ -314,7 +314,7 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen bg-slate-950">
       {/* Sidebar - Hidden on mobile */}
-      <div className="hidden md:block">
+      <div className="hidden md:block h-full">
         <SidebarNav
           items={navItems}
           tenantName={tenant.name}
