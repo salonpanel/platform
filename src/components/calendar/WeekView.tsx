@@ -3,9 +3,9 @@
 import { useMemo } from "react";
 import { format, startOfWeek, addDays, parseISO, isSameDay, startOfToday } from "date-fns";
 import { GlassCard } from "@/components/agenda/primitives/GlassCard";
-import { StatusBadge } from "@/components/ui/StatusBadge";
+import { AppointmentCard } from "@/components/agenda/AppointmentCard";
 import { toTenantLocalDate, formatInTenantTz } from "@/lib/timezone";
-import { Booking, BOOKING_STATUS_CONFIG } from "@/types/agenda";
+import { Booking } from "@/types/agenda";
 import { theme } from "@/theme/ui";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -72,18 +72,6 @@ export function WeekView({
     const height = (duration / 13) * 100;
 
     return { top: `${top}%`, height: `${height}%` };
-  };
-
-  // Use theme-based status colors
-  const getStatusTokens = (status: string) => {
-    const statusMap: Record<string, any> = {
-      pending: theme.statusTokens?.pending || { bg: "rgba(255,193,7,0.12)", border: "rgba(255,193,7,0.25)", text: "#FFC107" },
-      confirmed: theme.statusTokens?.confirmed || { bg: "rgba(79,227,193,0.12)", border: "rgba(79,227,193,0.25)", text: "#4FE3C1" },
-      cancelled: theme.statusTokens?.cancelled || { bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.25)", text: "#EF4444" },
-      completed: theme.statusTokens?.completed || { bg: "rgba(58,109,255,0.12)", border: "rgba(58,109,255,0.25)", text: "#3A6DFF" },
-      "no-show": theme.statusTokens?.["no-show"] || { bg: "rgba(255,109,163,0.12)", border: "rgba(255,109,163,0.25)", text: "#FF6DA3" },
-    };
-    return statusMap[status] || statusMap.pending;
   };
 
   return (
@@ -179,72 +167,29 @@ export function WeekView({
                   {/* Bookings for this day */}
                   {dayBookings.map((booking) => {
                     const position = getBookingPosition(booking);
-                    const startTime = formatInTenantTz(booking.starts_at, timezone, "HH:mm");
-                    const statusTokens = getStatusTokens(booking.status);
+                    const isCompact = parseFloat(position.height.replace("%", "")) < 15;
 
                     return (
-                      <motion.div
+                      <div
                         key={booking.id}
-                        {...getMotionSafeProps({
-                          initial: { opacity: 0, scale: 0.95 },
-                          animate: { opacity: 1, scale: 1 },
-                          whileHover: interactionPresets.appointmentCard.hover,
-                          whileTap: interactionPresets.appointmentCard.tap,
-                        })}
-                        onClick={() => onBookingClick(booking)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            onBookingClick(booking);
-                          }
-                        }}
-                        tabIndex={0}
-                        role="button"
-                        className={cn(
-                          "absolute left-2 right-2 rounded-[var(--radius-lg)] border-l-4 cursor-pointer",
-                          "focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]/50 focus:ring-offset-2 focus:ring-offset-[var(--bg-primary)]",
-                          "transition-all duration-200 backdrop-blur-md group"
-                        )}
-                        aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime} - ${booking.service?.name || "Sin servicio"}`}
                         style={{
+                          position: "absolute",
+                          left: "8px",
+                          right: "8px",
                           top: position.top,
                           height: position.height,
                           minHeight: "50px",
-                          background: statusTokens.bg,
-                          borderLeftColor: statusTokens.border,
-                          boxShadow: "var(--shadow-premium)",
                         }}
                       >
-                        {/* Time - Priority 1 */}
-                        <div className={cn(
-                          "text-xs font-semibold mb-1 font-[var(--font-mono)]",
-                          "text-[var(--text-secondary)]"
-                        )}>
-                          {startTime}
-                        </div>
-                        {/* Customer - Priority 2 */}
-                        <div className={cn(
-                          "text-sm font-semibold truncate mb-1",
-                          "text-[var(--text-primary)] font-[var(--font-heading)]"
-                        )}>
-                          {booking.customer?.name || "Sin cliente"}
-                        </div>
-                        {/* Service - Priority 3 (if space) */}
-                        {parseFloat(position.height.replace("%", "")) > 15 && (
-                          <div className={cn(
-                            "text-xs truncate mb-1.5",
-                            "text-[var(--text-secondary)] font-[var(--font-body)]"
-                          )}>
-                            {booking.service?.name || "Sin servicio"}
-                          </div>
-                        )}
-                        {/* Status badge if space */}
-                        {parseFloat(position.height.replace("%", "")) > 20 && (
-                          <div>
-                            <StatusBadge status={booking.status} size="xs" />
-                          </div>
-                        )}
-                      </motion.div>
+                        <AppointmentCard
+                          booking={booking}
+                          timezone={timezone}
+                          compact={isCompact}
+                          variant="timeline"
+                          onClick={() => onBookingClick(booking)}
+                          showStatus={!isCompact}
+                        />
+                      </div>
                     );
                   })}
                 </div>

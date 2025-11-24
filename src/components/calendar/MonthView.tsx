@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, startOfToday } from "date-fns";
 import { parseISO } from "date-fns";
 import { GlassCard } from "@/components/agenda/primitives/GlassCard";
+import { AppointmentCard } from "@/components/agenda/AppointmentCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { toTenantLocalDate, formatInTenantTz } from "@/lib/timezone";
@@ -223,71 +224,24 @@ export function MonthView({
                 )}
               </div>
               <div className="px-2 pb-2 space-y-1">
-                {dayBookings.slice(0, 3).map((booking) => {
-                  const startTime = formatInTenantTz(booking.starts_at, timezone, "HH:mm");
-                  const customerName = booking.customer?.name || "Sin cliente";
-                  const customerInitial = getCustomerInitial(customerName);
-                  const statusTokens = getStatusTokens(booking.status);
-
-                  return (
-                    <motion.div
-                      key={booking.id}
-                      {...getMotionSafeProps({
-                        initial: { opacity: 0, x: -4 },
-                        animate: { opacity: 1, x: 0 },
-                        transition: { delay: 0.05, duration: 0.15 },
-                        whileHover: interactionPresets.appointmentCard.hover,
-                        whileTap: interactionPresets.appointmentCard.tap,
-                      })}
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation();
-                        onBookingClick(booking);
-                      }}
-                      onKeyDown={(e) => {
-                        if ((e.key === "Enter" || e.key === " ") && day) {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          onBookingClick(booking);
-                        }
-                      }}
-                      tabIndex={0}
-                      role="button"
-                      aria-label={`Cita de ${customerName} a las ${startTime}`}
-                      className={cn(
-                        "text-xs p-1.5 rounded-[var(--radius-md)] truncate cursor-pointer transition-all duration-200",
-                        "backdrop-blur-sm flex items-center gap-1.5 border-l-2",
-                        "focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]/50 focus:ring-offset-2 focus:ring-offset-[var(--bg-primary)]"
-                      )}
-                      style={{
-                        background: statusTokens.bg,
-                        borderLeftColor: statusTokens.border,
-                      }}
-                    >
-                      {/* Status dot */}
-                      <div
-                        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                        style={{ background: statusTokens.text }}
-                      />
-                      {/* Time */}
-                      <span className={cn(
-                        "font-semibold font-[var(--font-mono)] flex-shrink-0",
-                        "text-[var(--text-secondary)]"
-                      )}>
-                        {startTime}
-                      </span>
-                      {/* Customer initials */}
-                      <span className={cn(
-                        "font-medium truncate",
-                        "text-[var(--text-primary)] font-[var(--font-body)]"
-                      )}>
-                        {customerInitial}
-                      </span>
-                    </motion.div>
-                  );
-                })}
+                {dayBookings.slice(0, 3).map((booking) => (
+                  <div key={booking.id} onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    onBookingClick(booking);
+                  }}>
+                    <AppointmentCard
+                      booking={booking}
+                      timezone={timezone}
+                      compact={true}
+                      variant="grid"
+                      onClick={() => onBookingClick(booking)}
+                      showStatus={false}
+                    />
+                  </div>
+                ))}
                 {dayBookings.length > 3 && (
                   <div className={cn(
-                    "text-xs font-semibold pt-1",
+                    "text-xs text-center py-1",
                     "text-[var(--text-tertiary)] font-[var(--font-body)]"
                   )}>
                     +{dayBookings.length - 3} más

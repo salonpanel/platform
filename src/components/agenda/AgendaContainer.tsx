@@ -219,24 +219,12 @@ export function AgendaContainer({
           <AgendaSidebar
             selectedDate={selectedDate}
             onDateSelect={onDateChange}
-            filters={{
-              payment: [], // TODO: Map from actual filter state
-              status: [], // TODO: Map from actual filter state  
-              staff: selectedStaffId ? [selectedStaffId] : [],
-              highlighted: null, // TODO: Map from actual filter state
-            }}
-            onFiltersChange={(newFilters) => {
-              // TODO: Map sidebar filters to container state
-              if (newFilters.staff.length > 0) {
-                onStaffChange(newFilters.staff[0]);
-              } else {
-                onStaffChange(null);
-              }
-            }}
+            filters={filters}
+            onFiltersChange={setFilters}
             staffList={staffList}
-            showFreeSlots={false} // TODO: Map from actual state
+            showFreeSlots={false} // TODO: Implement free slots filter when needed
             onShowFreeSlotsChange={(show) => {
-              // TODO: Handle free slots toggle
+              // TODO: Implement free slots filter logic
             }}
           />
 

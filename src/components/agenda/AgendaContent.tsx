@@ -191,10 +191,10 @@ export function AgendaContent({
       <AnimatePresence mode="wait">
         <motion.div
           key="agenda-content"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.16, ease: "easeOut" }}
           className="h-full flex flex-col min-h-0 overflow-hidden"
         >
           {/* Header inteligente */}
@@ -283,10 +283,10 @@ export function AgendaContent({
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={viewMode}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
+                    initial={{ opacity: 0, x: 12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -12 }}
+                    transition={{ duration: 0.16, ease: "easeOut" }}
                     className="flex-1 min-h-0"
                   >
                     {viewMode === "day" && (

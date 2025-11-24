@@ -5,7 +5,7 @@ import React from "react";
 import { format, parseISO, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
 import { GlassCard } from "@/components/agenda/primitives/GlassCard";
-import { StatusBadge } from "@/components/ui/StatusBadge";
+import { AppointmentCard } from "@/components/agenda/AppointmentCard";
 import { motion } from "framer-motion";
 import { toTenantLocalDate, formatInTenantTz } from "@/lib/timezone";
 import { Booking, ViewMode } from "@/types/agenda";
@@ -250,7 +250,18 @@ export function ListView({
                             </div>
                           </td>
                           <td className="px-6 py-4" role="cell">
-                            <StatusBadge status={booking.status} />
+                            <div className="w-fit">
+                              <AppointmentCard
+                                booking={booking}
+                                timezone={timezone}
+                                compact={true}
+                                variant="timeline"
+                                onClick={() => onBookingClick(booking)}
+                                showStatus={true}
+                                showPrice={false}
+                                className="scale-90 origin-left"
+                              />
+                            </div>
                           </td>
                           <td className="px-6 py-4" role="cell">
                             <div className={cn(
@@ -293,11 +304,7 @@ export function ListView({
                 </div>
               )}
 
-              {dateBookings.map((booking, index) => {
-                const startTime = formatInTenantTz(booking.starts_at, timezone, "HH:mm");
-                const endTime = formatInTenantTz(booking.ends_at, timezone, "HH:mm");
-
-                return (
+              {dateBookings.map((booking, index) => (
                   <motion.div
                     key={booking.id}
                     {...getMotionSafeProps({
@@ -306,67 +313,17 @@ export function ListView({
                       transition: { delay: index * 0.02, duration: 0.15, ease: "easeOut" },
                     })}
                   >
-                    <div
+                    <AppointmentCard
+                      booking={booking}
+                      timezone={timezone}
+                      compact={false}
+                      variant="list"
                       onClick={() => onBookingClick(booking)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          onBookingClick(booking);
-                        }
-                      }}
-                      tabIndex={0}
-                      role="button"
-                      aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime}`}
-                      className="cursor-pointer"
-                    >
-                      <motion.div
-                        {...getMotionSafeProps({
-                          whileHover: interactionPresets.appointmentCard.hover,
-                          whileTap: interactionPresets.appointmentCard.tap,
-                        })}
-                        className="focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]/50 focus:ring-offset-2 focus:ring-offset-[var(--bg-primary)]"
-                      >
-                        <div className="bg-[var(--glass-bg-default)] border border-[var(--glass-border)] backdrop-blur-md rounded-[var(--radius-xl)] p-4 shadow-[var(--shadow-premium)]">
-                        {/* Fila superior: Hora + Estado */}
-                        <div className="flex items-start justify-between mb-2">
-                          <div className={cn(
-                            "text-sm font-semibold font-[var(--font-mono)]",
-                            "text-[var(--text-primary)]"
-                          )}>
-                            {startTime} - {endTime}
-                          </div>
-                          <StatusBadge status={booking.status} size="xs" />
-                        </div>
-                        {/* Fila media: Cliente + Servicio */}
-                        <div className={cn(
-                          "text-base font-semibold mb-1.5",
-                          "text-[var(--text-primary)] font-[var(--font-heading)]"
-                        )}>
-                          {booking.customer?.name || "Sin cliente"}
-                        </div>
-                        <div className={cn(
-                          "text-sm mb-2",
-                          "text-[var(--text-secondary)] font-[var(--font-body)]"
-                        )}>
-                          {booking.service?.name || "Sin servicio"}
-                          {booking.service && ` • ${booking.service.duration_min} min`}
-                          {booking.staff && ` • ${booking.staff.name}`}
-                        </div>
-                        {/* Fila inferior: Precio */}
-                        {booking.service && (
-                          <div className={cn(
-                            "text-sm font-semibold pt-2 border-t border-[var(--glass-border-subtle)]",
-                            "text-[var(--text-primary)] font-[var(--font-heading)]"
-                          )}>
-                            {(booking.service.price_cents / 100).toFixed(2)} €
-                          </div>
-                        )}
-                      </div>
-                      </motion.div>
-                    </div>
+                      showStatus={true}
+                      showPrice={true}
+                    />
                   </motion.div>
-                );
-              })}
+                ))}
             </div>
           );
         })}
