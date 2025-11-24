@@ -86,7 +86,7 @@ export function AgendaTopBar({
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="sticky top-0 z-40 bg-[var(--bg-primary)]/95 backdrop-blur-xl border-b border-[var(--glass-border)]"
+      className="bg-[rgba(15,23,42,0.85)] backdrop-blur-xl border-b border-white/5"
     >
       <div className="px-4 py-3">
         {/* Top Row: Date Navigation */}
@@ -97,7 +97,7 @@ export function AgendaTopBar({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleNavigate("prev")}
-              className="p-2 rounded-[var(--radius-lg)] bg-[var(--glass-bg)] border border-[var(--glass-border)] hover:bg-[var(--accent-blue-glass)] hover:border-[var(--accent-blue-border)] transition-all duration-200"
+              className="p-2 rounded-[var(--radius-lg)] bg-[rgba(255,255,255,0.03)] border border-white/5 hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200"
               aria-label="Fecha anterior"
             >
               <ChevronLeft className="h-4 w-4 text-[var(--text-secondary)]" />
@@ -114,7 +114,7 @@ export function AgendaTopBar({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleNavigate("next")}
-              className="p-2 rounded-[var(--radius-lg)] bg-[var(--glass-bg)] border border-[var(--glass-border)] hover:bg-[var(--accent-blue-glass)] hover:border-[var(--accent-blue-border)] transition-all duration-200"
+              className="p-2 rounded-[var(--radius-lg)] bg-[rgba(255,255,255,0.03)] border border-white/5 hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200"
               aria-label="Fecha siguiente"
             >
               <ChevronRight className="h-4 w-4 text-[var(--text-secondary)]" />
@@ -137,7 +137,7 @@ export function AgendaTopBar({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onFiltersClick}
-              className="md:hidden p-2 rounded-[var(--radius-lg)] bg-[var(--glass-bg)] border border-[var(--glass-border)] hover:bg-[var(--accent-purple-glass)] hover:border-[var(--accent-purple-border)] transition-all duration-200"
+              className="md:hidden p-2 rounded-[var(--radius-lg)] bg-[rgba(255,255,255,0.03)] border border-white/5 hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200"
               aria-label="Filtros"
             >
               <Filter className="h-4 w-4 text-[var(--text-secondary)]" />
@@ -148,7 +148,7 @@ export function AgendaTopBar({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onSearchClick}
-              className="p-2 rounded-[var(--radius-lg)] bg-[var(--glass-bg)] border border-[var(--glass-border)] hover:bg-[var(--accent-blue-glass)] hover:border-[var(--accent-blue-border)] transition-all duration-200"
+              className="p-2 rounded-[var(--radius-lg)] bg-[rgba(255,255,255,0.03)] border border-white/5 hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200"
               aria-label="Buscar"
             >
               <Search className="h-4 w-4 text-[var(--text-secondary)]" />
@@ -159,7 +159,7 @@ export function AgendaTopBar({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onNotificationsClick}
-              className="p-2 rounded-[var(--radius-lg)] bg-[var(--glass-bg)] border border-[var(--glass-border)] hover:bg-[var(--accent-purple-glass)] hover:border-[var(--accent-purple-border)] transition-all duration-200"
+              className="p-2 rounded-[var(--radius-lg)] bg-[rgba(255,255,255,0.03)] border border-white/5 hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200"
               aria-label="Notificaciones"
             >
               <Bell className="h-4 w-4 text-[var(--text-secondary)]" />
@@ -178,8 +178,8 @@ export function AgendaTopBar({
               className={cn(
                 "px-4 py-2 text-sm font-medium rounded-[var(--radius-lg)] transition-all duration-200 whitespace-nowrap flex-shrink-0",
                 viewMode === mode.key
-                  ? "bg-[var(--accent-blue)] text-white shadow-lg"
-                  : "bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-bg-subtle)] hover:text-[var(--text-primary)]"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "bg-[rgba(255,255,255,0.03)] border border-white/5 text-[var(--text-secondary)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[var(--text-primary)]"
               )}
             >
               {mode.label}

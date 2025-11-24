@@ -218,7 +218,7 @@ export function AgendaContainer({
 
   return (
     <NotificationProvider position="top-right" maxNotifications={3}>
-      <div className="h-full bg-gradient-to-br from-[var(--bg-primary)] via-[var(--bg-secondary)] to-[var(--bg-tertiary)]">
+      <div className="h-full bg-slate-950">
         <div className="h-full flex flex-col min-h-0">
           {/* ZONE 1: TOP APP HEADER (sticky) */}
           <AgendaTopBar
@@ -259,7 +259,7 @@ export function AgendaContainer({
             />
 
             {/* ZONE 3: AGENDA CANVAS (main scrollable area) */}
-            <div className="flex-1 min-h-0 overflow-hidden bg-[var(--bg-primary)]/50 backdrop-blur-[1px]">
+            <div className="flex-1 min-h-0 overflow-hidden">
               <AgendaContent
                 viewMode={viewMode}
                 onViewModeChange={onViewModeChange}

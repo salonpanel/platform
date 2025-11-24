@@ -71,7 +71,7 @@ export function AgendaContextBar({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex-shrink-0 px-4 py-3 bg-[var(--bg-secondary)]/50 border-b border-[var(--glass-border-subtle)]"
+      className="flex-shrink-0 px-4 py-3 bg-[rgba(15,23,42,0.65)] border-b border-white/5"
     >
       <div className="flex gap-4 overflow-x-auto scrollbar-hide">
         {/* Quick Stats */}
@@ -81,7 +81,7 @@ export function AgendaContextBar({
               whileHover={{ scale: 1.02, y: -1 }}
               className="flex-shrink-0"
             >
-              <GlassCard variant="default" padding="sm">
+              <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.65)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3 transition-transform transition-shadow duration-150 ease-out hover:-translate-y-[1px] hover:shadow-[0_22px_55px_rgba(0,0,0,0.6)]">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 rounded-[var(--radius-md)] bg-[var(--accent-blue-glass)]">
                     <Calendar className="h-3 w-3 text-[var(--accent-blue)]" />
@@ -95,14 +95,14 @@ export function AgendaContextBar({
                     </div>
                   </div>
                 </div>
-              </GlassCard>
+              </div>
             </motion.div>
 
             <motion.div
               whileHover={{ scale: 1.02, y: -1 }}
               className="flex-shrink-0"
             >
-              <GlassCard variant="default" padding="sm">
+              <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.65)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3 transition-transform transition-shadow duration-150 ease-out hover:-translate-y-[1px] hover:shadow-[0_22px_55px_rgba(0,0,0,0.6)]">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 rounded-[var(--radius-md)] bg-[var(--accent-aqua-glass)]">
                     <Clock className="h-3 w-3 text-[var(--accent-aqua)]" />
@@ -116,14 +116,14 @@ export function AgendaContextBar({
                     </div>
                   </div>
                 </div>
-              </GlassCard>
+              </div>
             </motion.div>
 
             <motion.div
               whileHover={{ scale: 1.02, y: -1 }}
               className="flex-shrink-0"
             >
-              <GlassCard variant="default" padding="sm">
+              <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.65)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3 transition-transform transition-shadow duration-150 ease-out hover:-translate-y-[1px] hover:shadow-[0_22px_55px_rgba(0,0,0,0.6)]">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 rounded-[var(--radius-md)] bg-[var(--accent-purple-glass)]">
                     <DollarSign className="h-3 w-3 text-[var(--accent-purple)]" />
@@ -137,7 +137,7 @@ export function AgendaContextBar({
                     </div>
                   </div>
                 </div>
-              </GlassCard>
+              </div>
             </motion.div>
 
             {quickStats.totalBookings > 0 && (
@@ -145,7 +145,7 @@ export function AgendaContextBar({
                 whileHover={{ scale: 1.02, y: -1 }}
                 className="flex-shrink-0"
               >
-                <GlassCard variant="default" padding="sm">
+                <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.65)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3 transition-transform transition-shadow duration-150 ease-out hover:-translate-y-[1px] hover:shadow-[0_22px_55px_rgba(0,0,0,0.6)]">
                   <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-[var(--radius-md)] bg-gradient-to-br from-[var(--accent-blue)]/10 to-[var(--accent-aqua)]/10">
                       <TrendingUp className="h-3 w-3 text-[var(--accent-aqua)]" />
@@ -159,7 +159,7 @@ export function AgendaContextBar({
                       </div>
                     </div>
                   </div>
-                </GlassCard>
+                </div>
               </motion.div>
             )}
           </div>
@@ -167,7 +167,7 @@ export function AgendaContextBar({
 
         {/* Staff Utilization Chips */}
         {staffUtilization.length > 0 && (
-          <div className="flex gap-2 flex-shrink-0 pl-4 border-l border-[var(--glass-border-subtle)]">
+          <div className="flex gap-2 flex-shrink-0 pl-4 border-l border-white/5">
             <div className="flex items-center gap-1 flex-shrink-0">
               <Users className="h-3 w-3 text-[var(--text-tertiary)]" />
               <span className="text-xs text-[var(--text-tertiary)] font-medium">Staff</span>
