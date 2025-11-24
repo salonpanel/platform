@@ -48,6 +48,15 @@ async function handleProxy(req: NextRequest) {
     upstreamResponse.headers.get("content-type") || "application/json";
   responseHeaders.set("content-type", contentType);
 
+  // CRÍTICO: Reenviar cookies de sesión de Supabase al cliente
+  const setCookieHeaders = upstreamResponse.headers.getSetCookie();
+  if (setCookieHeaders && setCookieHeaders.length > 0) {
+    // Next.js maneja múltiples Set-Cookie automáticamente
+    setCookieHeaders.forEach(cookie => {
+      responseHeaders.append("set-cookie", cookie);
+    });
+  }
+
   return new NextResponse(text, {
     status: upstreamResponse.status,
     headers: responseHeaders,
