@@ -6,6 +6,7 @@ import { format, parseISO, isSameDay, startOfWeek, endOfWeek, startOfMonth, endO
 import { es } from "date-fns/locale";
 import { GlassCard } from "@/components/agenda/primitives/GlassCard";
 import { AppointmentCard } from "@/components/agenda/AppointmentCard";
+import { BookingCard } from "@/components/agenda/BookingCard";
 import { motion } from "framer-motion";
 import { toTenantLocalDate, formatInTenantTz } from "@/lib/timezone";
 import { Booking, ViewMode } from "@/types/agenda";
@@ -251,15 +252,11 @@ export function ListView({
                           </td>
                           <td className="px-6 py-4" role="cell">
                             <div className="w-fit">
-                              <AppointmentCard
+                              <BookingCard
                                 booking={booking}
                                 timezone={timezone}
-                                compact={true}
                                 variant="timeline"
                                 onClick={() => onBookingClick(booking)}
-                                showStatus={true}
-                                showPrice={false}
-                                className="scale-90 origin-left"
                               />
                             </div>
                           </td>
@@ -313,14 +310,11 @@ export function ListView({
                       transition: { delay: index * 0.02, duration: 0.15, ease: "easeOut" },
                     })}
                   >
-                    <AppointmentCard
+                    <BookingCard
                       booking={booking}
                       timezone={timezone}
-                      compact={false}
                       variant="list"
                       onClick={() => onBookingClick(booking)}
-                      showStatus={true}
-                      showPrice={true}
                     />
                   </motion.div>
                 ))}

@@ -5,6 +5,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameM
 import { parseISO } from "date-fns";
 import { GlassCard } from "@/components/agenda/primitives/GlassCard";
 import { AppointmentCard } from "@/components/agenda/AppointmentCard";
+import { BookingCard } from "@/components/agenda/BookingCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { toTenantLocalDate, formatInTenantTz } from "@/lib/timezone";
@@ -231,13 +232,11 @@ export function MonthView({
                     e.stopPropagation();
                     onBookingClick(booking);
                   }}>
-                    <AppointmentCard
+                    <BookingCard
                       booking={booking}
                       timezone={timezone}
-                      compact={true}
                       variant="grid"
                       onClick={() => onBookingClick(booking)}
-                      showStatus={false}
                     />
                   </div>
                 ))}

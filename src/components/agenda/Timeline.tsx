@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, useMemo } from "react";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { HourSlot } from "./HourSlot";
 import { motion } from "framer-motion";
@@ -40,7 +41,7 @@ export function Timeline({
 
   return (
     <div className={cn("flex flex-col relative", className)}>
-      {/* Línea de tiempo actual */}
+      {/* Current time indicator */}
       <motion.div
         layoutId="current-time-line"
         className="absolute left-0 right-0 z-20 pointer-events-none"
@@ -52,9 +53,11 @@ export function Timeline({
         transition={{ duration: 0.5 }}
       >
         <div className="relative">
-          <div className="absolute left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-[var(--accent-aqua)] to-transparent shadow-lg shadow-[var(--accent-aqua)]/50" />
+          {/* Main time line */}
+          <div className="absolute left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent shadow-lg shadow-blue-500/50" />
+          {/* Time indicator dot */}
           <motion.div
-            className="absolute left-0 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[var(--accent-aqua)] border-2 border-[var(--bg-primary)] shadow-lg shadow-[var(--accent-aqua)]/50"
+            className="absolute left-0 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-blue-500 border-2 border-slate-50 dark:border-slate-950 shadow-lg shadow-blue-500/50"
             animate={{
               scale: [1, 1.2, 1],
               opacity: [1, 0.8, 1]
@@ -65,22 +68,26 @@ export function Timeline({
               ease: "easeInOut"
             }}
           />
+          {/* Current time label */}
+          <div className="absolute left-4 -translate-y-1/2 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-md shadow-lg">
+            {format(new Date(), "HH:mm")}
+          </div>
         </div>
       </motion.div>
-      
-      {/* Horas del timeline */}
-      <div 
+
+      {/* Hours timeline */}
+      <div
         className="relative"
-        style={{ 
-          height: `${hours.length * effectiveHourHeight}px`, // Altura total fija
+        style={{
+          height: `${hours.length * effectiveHourHeight}px`,
           minHeight: `${hours.length * effectiveHourHeight}px`
         }}
       >
         {hours.map((hour, index) => (
           <div
             key={hour}
-            style={{ 
-              height: `${effectiveHourHeight}px`, // Altura fija por hora
+            style={{
+              height: `${effectiveHourHeight}px`,
               position: 'absolute',
               top: `${index * effectiveHourHeight}px`,
               left: 0,
@@ -88,8 +95,8 @@ export function Timeline({
             }}
             className="relative"
           >
-            <HourSlot 
-              hour={hour} 
+            <HourSlot
+              hour={hour}
               density={density}
               isCurrentHour={hour === currentHour}
             >
@@ -98,9 +105,9 @@ export function Timeline({
           </div>
         ))}
       </div>
-      
-      {/* Efecto degradado sutil al final */}
-      <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[var(--bg-primary)] via-[var(--bg-primary)]/50 to-transparent pointer-events-none" />
+
+      {/* Subtle gradient fade at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent pointer-events-none" />
     </div>
   );
 }
