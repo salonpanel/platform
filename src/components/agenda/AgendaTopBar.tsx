@@ -86,26 +86,26 @@ export function AgendaTopBar({
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-[var(--neutral-200)]/50 backdrop-blur-xl border-b border-[var(--glass-border)]"
+      className="bg-[rgba(10,15,20,0.85)] backdrop-blur-xl"
     >
-      <div className="px-4 py-3">
-        {/* Top Row: Date Navigation */}
-        <div className="flex items-center justify-between gap-3 mb-3">
+      <div className="px-4 py-2.5">
+        {/* Top Row: Date Navigation - Espaciado más compacto */}
+        <div className="flex items-center justify-between gap-3 mb-2">
           {/* Date Controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleNavigate("prev")}
-              className="p-2 rounded-[var(--radius-lg)] bg-[var(--glass-bg-subtle)] border border-[var(--glass-border-subtle)] hover:bg-[var(--glass-bg)] transition-all duration-200"
+              className="p-1.5 rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.08)] transition-all duration-200 flex-shrink-0"
               aria-label="Fecha anterior"
             >
-              <ChevronLeft className="h-4 w-4 text-[var(--text-secondary)]" />
+              <ChevronLeft className="h-4 w-4 text-[rgba(255,255,255,0.7)]" />
             </motion.button>
 
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              <Calendar className="h-4 w-4 text-[var(--text-tertiary)] flex-shrink-0" />
-              <span className="text-sm font-semibold text-[var(--text-primary)] truncate">
+              <Calendar className="h-4 w-4 text-[rgba(255,255,255,0.5)] flex-shrink-0" />
+              <span className="text-sm font-semibold text-white truncate">
                 {formatDateDisplay()}
               </span>
             </div>
@@ -114,20 +114,20 @@ export function AgendaTopBar({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleNavigate("next")}
-              className="p-2 rounded-[var(--radius-lg)] bg-[var(--glass-bg-subtle)] border border-[var(--glass-border-subtle)] hover:bg-[var(--glass-bg)] transition-all duration-200"
+              className="p-1.5 rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.08)] transition-all duration-200 flex-shrink-0"
               aria-label="Fecha siguiente"
             >
-              <ChevronRight className="h-4 w-4 text-[var(--text-secondary)]" />
+              <ChevronRight className="h-4 w-4 text-[rgba(255,255,255,0.7)]" />
             </motion.button>
           </div>
 
-          {/* Today Button + Actions */}
-          <div className="flex items-center gap-2">
+          {/* Today Button + Actions - Más compactos */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleToday}
-              className="px-3 py-1.5 text-xs font-medium rounded-[var(--radius-lg)] bg-[var(--accent-aqua-glass)] border border-[var(--accent-aqua-border)] text-[var(--accent-aqua)] hover:bg-[var(--accent-aqua)] hover:text-white transition-all duration-200"
+              className="px-3 py-1.5 text-xs font-medium rounded-[10px] bg-[rgba(79,227,193,0.15)] border border-[rgba(79,227,193,0.3)] text-[#4FE3C1] hover:bg-[rgba(79,227,193,0.25)] transition-all duration-200"
             >
               Hoy
             </motion.button>
@@ -137,10 +137,10 @@ export function AgendaTopBar({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onFiltersClick}
-              className="md:hidden p-2 rounded-[var(--radius-lg)] bg-[var(--glass-bg-subtle)] border border-[var(--glass-border-subtle)] hover:bg-[var(--glass-bg)] transition-all duration-200"
+              className="md:hidden p-1.5 rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.08)] transition-all duration-200"
               aria-label="Filtros"
             >
-              <Filter className="h-4 w-4 text-[var(--text-secondary)]" />
+              <Filter className="h-4 w-4 text-[rgba(255,255,255,0.7)]" />
             </motion.button>
 
             {/* Search Button */}
@@ -148,10 +148,10 @@ export function AgendaTopBar({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onSearchClick}
-              className="p-2 rounded-[var(--radius-lg)] bg-[var(--glass-bg-subtle)] border border-[var(--glass-border-subtle)] hover:bg-[var(--glass-bg)] transition-all duration-200"
+              className="p-1.5 rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.08)] transition-all duration-200"
               aria-label="Buscar"
             >
-              <Search className="h-4 w-4 text-[var(--text-secondary)]" />
+              <Search className="h-4 w-4 text-[rgba(255,255,255,0.7)]" />
             </motion.button>
 
             {/* Notifications Button */}
@@ -159,16 +159,16 @@ export function AgendaTopBar({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onNotificationsClick}
-              className="p-2 rounded-[var(--radius-lg)] bg-[var(--glass-bg-subtle)] border border-[var(--glass-border-subtle)] hover:bg-[var(--glass-bg)] transition-all duration-200"
+              className="p-1.5 rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.08)] transition-all duration-200"
               aria-label="Notificaciones"
             >
-              <Bell className="h-4 w-4 text-[var(--text-secondary)]" />
+              <Bell className="h-4 w-4 text-[rgba(255,255,255,0.7)]" />
             </motion.button>
           </div>
         </div>
 
-        {/* Bottom Row: View Mode Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+        {/* Bottom Row: View Mode Tabs - Más integrados */}
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
           {viewModes.map((mode) => (
             <motion.button
               key={mode.key}
@@ -176,10 +176,10 @@ export function AgendaTopBar({
               whileTap={{ scale: 0.98 }}
               onClick={() => onViewModeChange(mode.key)}
               className={cn(
-                "px-4 py-2 text-sm font-medium rounded-[var(--radius-lg)] transition-all duration-200 whitespace-nowrap flex-shrink-0",
+                "px-3 py-1.5 text-sm font-medium rounded-[8px] transition-all duration-200 whitespace-nowrap flex-shrink-0",
                 viewMode === mode.key
                   ? "bg-white text-slate-900 shadow-sm"
-                  : "bg-[var(--glass-bg-subtle)] border border-[var(--glass-border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--glass-bg)] hover:text-[var(--text-primary)]"
+                  : "bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.8)] hover:bg-[rgba(255,255,255,0.12)] hover:text-white"
               )}
             >
               {mode.label}

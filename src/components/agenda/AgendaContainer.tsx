@@ -77,10 +77,10 @@ interface AgendaContainerProps {
 }
 
 /**
- * AgendaContainer - Premium 3-zone layout
- * ZONE 1: AgendaTopBar (sticky header)
- * ZONE 2: AgendaContextBar (KPIs + filters)
- * ZONE 3: Agenda Canvas (calendar content)
+ * AgendaContainer - Premium 3-zone layout optimizado
+ * ZONE 1: AgendaTopBar (sticky header con glassmorphism)
+ * ZONE 2: AgendaContextBar (KPIs + filtros de staff)
+ * ZONE 3: Agenda Canvas (contenido principal del calendario)
  */
 export function AgendaContainer({
   loading,
@@ -219,14 +219,15 @@ export function AgendaContainer({
 
   return (
     <NotificationProvider position="top-right" maxNotifications={3}>
-      {/* Apple Dark System Background with Layer Depth */}
-      <div className="h-full bg-[var(--neutral-50)] relative">
-        {/* Subtle gradient overlay for depth */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[rgba(58,109,255,0.02)] via-transparent to-[rgba(79,227,193,0.01)] pointer-events-none" />
-
-        <div className="h-full flex flex-col min-h-0 relative">
-          {/* LEVEL 1: GLASS TOPBAR (Most Prominent) */}
-          <div className="sticky top-0 z-50 backdrop-blur-2xl bg-[rgba(6,20,27,0.85)] border-b border-[rgba(255,255,255,0.08)] shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+      {/* Fondo principal con gradiente sutil */}
+      <div className="h-full bg-gradient-to-br from-[#0A0F14] via-[#0E1419] to-[#12181F] relative overflow-hidden">
+        {/* Overlay de profundidad con glassmorphism */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[rgba(58,109,255,0.015)] via-transparent to-[rgba(79,227,193,0.008)] pointer-events-none" />
+        
+        {/* Estructura principal sin solapamientos */}
+        <div className="h-full flex flex-col relative z-10">
+          {/* NIVEL 1: TOPBAR STICKY - Máxima prominencia visual */}
+          <div className="sticky top-0 z-50 backdrop-blur-xl bg-[rgba(10,15,20,0.92)] border-b border-[rgba(255,255,255,0.06)] shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
             <AgendaTopBar
               selectedDate={selectedDate}
               viewMode={viewMode}
@@ -238,8 +239,8 @@ export function AgendaContainer({
             />
           </div>
 
-          {/* LEVEL 2: CONTEXT TOOLBAR (Secondary - KPIs + Staff) */}
-          <div className="bg-[var(--neutral-100)]/30 backdrop-blur-md border-b border-[rgba(255,255,255,0.04)]">
+          {/* NIVEL 2: CONTEXT BAR - KPIs y staff sin interferir */}
+          <div className="flex-shrink-0 bg-[rgba(15,23,42,0.4)] backdrop-blur-md border-b border-[rgba(255,255,255,0.03)]">
             <AgendaContextBar
               quickStats={quickStats}
               staffUtilization={staffUtilization}
@@ -250,29 +251,29 @@ export function AgendaContainer({
             />
           </div>
 
-          {/* Main Content Area with Reduced Sidebar Competition */}
+          {/* ÁREA DE CONTENIDO PRINCIPAL - Sin competencia visual */}
           <div className="flex-1 flex min-h-0 overflow-hidden">
-            {/* LEVEL 3: FILTERS SIDEBAR (Least Prominent - Collapsible) */}
-            <div className="relative">
-              {/* Subtle backdrop when sidebar is open on mobile */}
+            {/* NIVEL 3: SIDEBAR - Mínima interferencia visual */}
+            <div className="relative flex-shrink-0">
+              {/* Backdrop móvil sutil */}
               {sidebarOpen && (
                 <div
-                  className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
+                  className="fixed inset-0 bg-black/25 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
                   onClick={() => setSidebarOpen(false)}
                 />
               )}
 
-              {/* Reduced prominence sidebar */}
+              {/* Sidebar con peso visual reducido */}
               <div className={cn(
-                "transition-all duration-300 ease-out",
+                "transition-all duration-300 ease-out h-full",
                 // Mobile: Drawer overlay
-                "lg:relative lg:translate-x-0",
+                "lg:relative lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 lg:z-auto",
                 sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
-                // Desktop: Compact collapsible
-                "w-80 lg:w-64 xl:w-72",
-                // Reduced visual weight
-                "bg-[var(--neutral-100)]/50 backdrop-blur-md border-r border-[rgba(255,255,255,0.03)]",
-                "shadow-[0_0_16px_rgba(0,0,0,0.1)] lg:shadow-none"
+                // Desktop: Ancho optimizado
+                "w-80 lg:w-72 xl:w-80",
+                // Fondo sutil para no competir
+                "bg-[rgba(15,23,42,0.35)] backdrop-blur-md border-r border-[rgba(255,255,255,0.04)]",
+                "shadow-[0_0_24px_rgba(0,0,0,0.15)] lg:shadow-none"
               )}>
                 <AgendaSidebar
                   selectedDate={selectedDate}
@@ -290,30 +291,35 @@ export function AgendaContainer({
               </div>
             </div>
 
-            {/* LEVEL 2: AGENDA CANVAS (Main Focus - High Contrast) */}
-            <div className="flex-1 min-h-0 overflow-hidden bg-[var(--neutral-50)]">
-              <AgendaContent
-                viewMode={viewMode}
-                onViewModeChange={onViewModeChange}
-                selectedDate={selectedDate}
-                onDateChange={onDateChange}
-                bookings={filteredBookings}
-                staffList={visibleStaff}
-                loading={loading}
-                error={error}
-                tenantTimezone={tenantTimezone}
-                onBookingClick={onBookingClick}
-                onNewBooking={onNewBooking}
-                density={density}
-                timeFormatter={timeFormatter}
-                // Props premium para interactividad
-                onBookingDrag={handleBookingDrag}
-                onBookingResize={handleBookingResize}
-                enableDragDrop={enableDragDrop}
-                showConflicts={showConflicts}
-                // Phase 2: Mobile responsive notification access
-                notificationActions={{ info, warning }}
-              />
+            {/* NIVEL 1: CANVAS PRINCIPAL - Máximo contraste y claridad */}
+            <div className="flex-1 min-h-0 overflow-hidden bg-gradient-to-br from-[#0A0F14] to-[#0E1419] relative">
+              {/* Sutil textura de fondo */}
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(58,109,255,0.02),transparent_50%)] pointer-events-none" />
+              
+              <div className="relative z-10 h-full">
+                <AgendaContent
+                  viewMode={viewMode}
+                  onViewModeChange={onViewModeChange}
+                  selectedDate={selectedDate}
+                  onDateChange={onDateChange}
+                  bookings={filteredBookings}
+                  staffList={visibleStaff}
+                  loading={loading}
+                  error={error}
+                  tenantTimezone={tenantTimezone}
+                  onBookingClick={onBookingClick}
+                  onNewBooking={onNewBooking}
+                  density={density}
+                  timeFormatter={timeFormatter}
+                  // Props premium para interactividad
+                  onBookingDrag={handleBookingDrag}
+                  onBookingResize={handleBookingResize}
+                  enableDragDrop={enableDragDrop}
+                  showConflicts={showConflicts}
+                  // Phase 2: Mobile responsive notification access
+                  notificationActions={{ info, warning }}
+                />
+              </div>
             </div>
           </div>
         </div>

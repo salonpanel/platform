@@ -71,26 +71,26 @@ export function AgendaContextBar({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex-shrink-0 px-4 py-3 bg-[rgba(15,23,42,0.65)] border-b border-white/5"
+      className="flex-shrink-0 px-4 py-2 bg-[rgba(15,23,42,0.4)] border-b border-[rgba(255,255,255,0.03)]"
     >
-      <div className="flex gap-4 overflow-x-auto scrollbar-hide">
-        {/* Quick Stats */}
+      <div className="flex gap-3 overflow-x-auto scrollbar-hide">
+        {/* Quick Stats - Más compactos */}
         {hasStats && (
-          <div className="flex gap-3 flex-shrink-0">
+          <div className="flex gap-2 flex-shrink-0">
             <motion.div
               whileHover={{ scale: 1.02, y: -1 }}
               className="flex-shrink-0"
             >
-              <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.65)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3 transition-transform transition-shadow duration-150 ease-out hover:-translate-y-[1px] hover:shadow-[0_22px_55px_rgba(0,0,0,0.6)]">
+              <div className="relative rounded-xl border border-[rgba(255,255,255,0.06)] bg-[rgba(15,23,42,0.6)] backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.3)] px-3 py-2 transition-all duration-150 ease-out hover:-translate-y-[1px] hover:shadow-[0_16px_40px_rgba(0,0,0,0.4)]">
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-[var(--radius-md)] bg-[var(--accent-blue-glass)]">
-                    <Calendar className="h-3 w-3 text-[var(--accent-blue)]" />
+                  <div className="p-1 rounded-[8px] bg-[rgba(58,109,255,0.15)]">
+                    <Calendar className="h-3 w-3 text-[#3A6DFF]" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-[var(--text-primary)]">
+                    <div className="text-xs font-bold text-white">
                       {quickStats.totalBookings}
                     </div>
-                    <div className="text-[10px] text-[var(--text-tertiary)]">
+                    <div className="text-[9px] text-[rgba(255,255,255,0.6)]">
                       {quickStats.rangeLabel || "citas"}
                     </div>
                   </div>
@@ -102,16 +102,16 @@ export function AgendaContextBar({
               whileHover={{ scale: 1.02, y: -1 }}
               className="flex-shrink-0"
             >
-              <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.65)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3 transition-transform transition-shadow duration-150 ease-out hover:-translate-y-[1px] hover:shadow-[0_22px_55px_rgba(0,0,0,0.6)]">
+              <div className="relative rounded-xl border border-[rgba(255,255,255,0.06)] bg-[rgba(15,23,42,0.6)] backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.3)] px-3 py-2 transition-all duration-150 ease-out hover:-translate-y-[1px] hover:shadow-[0_16px_40px_rgba(0,0,0,0.4)]">
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-[var(--radius-md)] bg-[var(--accent-aqua-glass)]">
-                    <Clock className="h-3 w-3 text-[var(--accent-aqua)]" />
+                  <div className="p-1 rounded-[8px] bg-[rgba(79,227,193,0.15)]">
+                    <Clock className="h-3 w-3 text-[#4FE3C1]" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-[var(--text-primary)]">
+                    <div className="text-xs font-bold text-white">
                       {quickStats.totalHours}h
                     </div>
-                    <div className="text-[10px] text-[var(--text-tertiary)]">
+                    <div className="text-[9px] text-[rgba(255,255,255,0.6)]">
                       tiempo total
                     </div>
                   </div>
@@ -123,16 +123,16 @@ export function AgendaContextBar({
               whileHover={{ scale: 1.02, y: -1 }}
               className="flex-shrink-0"
             >
-              <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.65)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3 transition-transform transition-shadow duration-150 ease-out hover:-translate-y-[1px] hover:shadow-[0_22px_55px_rgba(0,0,0,0.6)]">
+              <div className="relative rounded-xl border border-[rgba(255,255,255,0.06)] bg-[rgba(15,23,42,0.6)] backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.3)] px-3 py-2 transition-all duration-150 ease-out hover:-translate-y-[1px] hover:shadow-[0_16px_40px_rgba(0,0,0,0.4)]">
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-[var(--radius-md)] bg-[var(--accent-purple-glass)]">
-                    <DollarSign className="h-3 w-3 text-[var(--accent-purple)]" />
+                  <div className="p-1 rounded-[8px] bg-[rgba(160,107,255,0.15)]">
+                    <DollarSign className="h-3 w-3 text-[#A06BFF]" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-[var(--text-primary)]">
+                    <div className="text-xs font-bold text-white">
                       {(quickStats.totalAmount / 100).toFixed(0)}€
                     </div>
-                    <div className="text-[10px] text-[var(--text-tertiary)]">
+                    <div className="text-[9px] text-[rgba(255,255,255,0.6)]">
                       ingresos
                     </div>
                   </div>
@@ -145,16 +145,16 @@ export function AgendaContextBar({
                 whileHover={{ scale: 1.02, y: -1 }}
                 className="flex-shrink-0"
               >
-                <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.65)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3 transition-transform transition-shadow duration-150 ease-out hover:-translate-y-[1px] hover:shadow-[0_22px_55px_rgba(0,0,0,0.6)]">
+                <div className="relative rounded-xl border border-[rgba(255,255,255,0.06)] bg-[rgba(15,23,42,0.6)] backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.3)] px-3 py-2 transition-all duration-150 ease-out hover:-translate-y-[1px] hover:shadow-[0_16px_40px_rgba(0,0,0,0.4)]">
                   <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-[var(--radius-md)] bg-gradient-to-br from-[var(--accent-blue)]/10 to-[var(--accent-aqua)]/10">
-                      <TrendingUp className="h-3 w-3 text-[var(--accent-aqua)]" />
+                    <div className="p-1 rounded-[8px] bg-gradient-to-br from-[rgba(58,109,255,0.1)] to-[rgba(79,227,193,0.1)]">
+                      <TrendingUp className="h-3 w-3 text-[#4FE3C1]" />
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-[var(--text-primary)]">
+                      <div className="text-xs font-bold text-white">
                         {Math.round((quickStats.totalAmount / quickStats.totalBookings) / 100)}€
                       </div>
-                      <div className="text-[10px] text-[var(--text-tertiary)]">
+                      <div className="text-[9px] text-[rgba(255,255,255,0.6)]">
                         promedio
                       </div>
                     </div>
@@ -165,12 +165,12 @@ export function AgendaContextBar({
           </div>
         )}
 
-        {/* Staff Utilization Chips */}
+        {/* Staff Utilization Chips - Más integrados */}
         {staffUtilization.length > 0 && (
-          <div className="flex gap-2 flex-shrink-0 pl-4 border-l border-white/5">
+          <div className="flex gap-2 flex-shrink-0 pl-3 border-l border-[rgba(255,255,255,0.06)]">
             <div className="flex items-center gap-1 flex-shrink-0">
-              <Users className="h-3 w-3 text-[var(--text-tertiary)]" />
-              <span className="text-xs text-[var(--text-tertiary)] font-medium">Staff</span>
+              <Users className="h-3 w-3 text-[rgba(255,255,255,0.5)]" />
+              <span className="text-xs text-[rgba(255,255,255,0.6)] font-medium">Staff</span>
             </div>
 
             {staffUtilization.map((staff) => (
@@ -180,13 +180,13 @@ export function AgendaContextBar({
                 whileTap={{ scale: 0.98 }}
                 onClick={() => handleStaffToggle(staff.staffId)}
                 className={cn(
-                  "flex items-center gap-2 px-2 py-1 rounded-[var(--radius-lg)] border transition-all duration-200 flex-shrink-0",
+                  "flex items-center gap-1.5 px-2 py-1 rounded-[8px] border transition-all duration-200 flex-shrink-0",
                   selectedStaffId === staff.staffId
-                    ? "bg-[var(--accent-blue)] text-white border-[var(--accent-blue)] shadow-sm"
+                    ? "bg-[#3A6DFF] text-white border-[#3A6DFF] shadow-sm"
                     : getUtilizationColor(staff.utilization)
                 )}
               >
-                <span className="text-xs font-medium truncate max-w-[60px]">
+                <span className="text-xs font-medium truncate max-w-[50px]">
                   {staff.staffName}
                 </span>
                 <span className="text-xs font-bold">
@@ -194,7 +194,7 @@ export function AgendaContextBar({
                 </span>
                 {selectedStaffId === staff.staffId && (
                   <X
-                    className="h-3 w-3 ml-1"
+                    className="h-3 w-3"
                     onClick={(e) => {
                       e.stopPropagation();
                       clearStaffFilter();
