@@ -40,15 +40,43 @@ export function getSupabaseBrowser(): SupabaseClient {
 
     // CRÍTICO: createBrowserClient de @supabase/ssr establece cookies HTTP automáticamente
     // que el servidor puede leer usando createServerClient
+    const clientOptions: any = {};
+    
+    // En producción, configurar custom fetch para usar proxy
+    if (!isDevelopment && typeof window !== 'undefined' && window.location.hostname === 'pro.bookfast.es') {
+      clientOptions.global = {
+        fetch: (url: string, options?: RequestInit) => {
+          // Redirigir peticiones de auth a través del proxy
+          if (url.includes('/auth/v1/')) {
+            const proxyUrl = url.replace(
+              'https://jsqminbgggwhvkfgeibz.supabase.co/auth/v1/',
+              `${window.location.origin}/auth-proxy/`
+            );
+            return fetch(proxyUrl, options);
+          }
+          // Redirigir peticiones REST a través del proxy
+          if (url.includes('/rest/v1/')) {
+            const proxyUrl = url.replace(
+              'https://jsqminbgggwhvkfgeibz.supabase.co/rest/v1/',
+              `${window.location.origin}/rest-proxy/`
+            );
+            return fetch(proxyUrl, options);
+          }
+          // Redirigir peticiones Storage a través del proxy
+          if (url.includes('/storage/v1/')) {
+            const proxyUrl = url.replace(
+              'https://jsqminbgggwhvkfgeibz.supabase.co/storage/v1/',
+              `${window.location.origin}/storage-proxy/`
+            );
+            return fetch(proxyUrl, options);
+          }
+          return fetch(url, options);
+        }
+      };
+    }
+    
     browserClient = createBrowserClient(url, key, {
-      // Configuración custom para usar proxy en producción
-      auth: {
-        // En producción, usar proxy para endpoints de auth
-        ...(process.env.NODE_ENV === 'production' && typeof window !== 'undefined' && window.location.hostname === 'pro.bookfast.es' && {
-          // Override URLs para que usen el proxy
-          url: `${window.location.origin}/auth-proxy`,
-        }),
-      },
+      ...clientOptions,
       cookies: {
         getAll() {
           if (typeof document === 'undefined') return [];
