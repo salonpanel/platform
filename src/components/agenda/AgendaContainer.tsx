@@ -274,6 +274,8 @@ export function AgendaContainer({
               onBookingResize={handleBookingResize}
               enableDragDrop={enableDragDrop}
               showConflicts={showConflicts}
+              // Phase 2: Mobile responsive notification access
+              notificationActions={{ info, warning }}
             />
           </div>
         </div>

@@ -75,6 +75,10 @@ export function WeekView({
   };
 
   return (
+    // TODO: PHASE 1 AUDIT FINDING - Mobile viewport issue
+    // Current min-w-[800px] forces horizontal scroll on mobile (~375px)
+    // BREAKS: "no horizontal scroll" requirement
+    // SOLUTION NEEDED: Auto-fallback to Day view on mobile, or responsive grid
     <div className="w-full h-full overflow-x-auto scrollbar-hide bg-[var(--bg-primary)]" role="region" aria-label="Vista semanal de reservas">
       <div className="min-w-[800px] h-full">
         {/* Header with days of the week - Premium */}

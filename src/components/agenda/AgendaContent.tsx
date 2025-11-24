@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Booking, Staff } from "@/types/agenda";
@@ -41,6 +41,11 @@ interface AgendaContentProps {
   onBookingResize?: (bookingId: string, newEndTime: string) => void;
   enableDragDrop?: boolean;
   showConflicts?: boolean;
+  // Phase 2: Mobile responsive notification access
+  notificationActions?: {
+    info: (title: string, message?: string) => void;
+    warning: (title: string, message?: string) => void;
+  };
 }
 
 interface MiniBookingCardData {
@@ -76,15 +81,59 @@ export function AgendaContent({
   density,
   timeFormatter,
   heightAware,
-  // Nuevas props para interactividad
+  // Nuevas props para interactividad premium
   onBookingDrag,
   onBookingResize,
   enableDragDrop = true,
   showConflicts = true,
+  // Phase 2: Mobile responsive notification access
+  notificationActions,
 }: AgendaContentProps) {
   // Estados de carga contextuales
   const [dragLoading, setDragLoading] = useState(false);
   const [resizeLoading, setResizeLoading] = useState(false);
+
+  // Phase 2: Mobile-first responsive viewport detection
+  const isMobileRef = useRef(false);
+  const autoSwitchRef = useRef(false);
+
+  // Viewport detection with infinite loop prevention, SSR safety, and performance optimization
+  useEffect(() => {
+    // Phase 3: Defensive check for SSR compatibility
+    if (typeof window === 'undefined') return;
+    
+    let resizeTimeout: number; // Use number for browser setTimeout compatibility
+    
+    const checkViewport = () => {
+      const isMobile = window.innerWidth < 768;
+      const wasMobile = isMobileRef.current;
+      isMobileRef.current = isMobile;
+
+      // Auto-fallback Week view to Day view on mobile (only if not already auto-switched)
+      if (isMobile && !wasMobile && viewMode === 'week' && !autoSwitchRef.current) {
+        autoSwitchRef.current = true;
+        onViewModeChange('day');
+        // Show toast notification for first auto-switch
+        notificationActions?.info(
+          "Switched to Day view", 
+          "Week view is optimized for larger screens"
+        );
+      }
+    };
+
+    // Debounced resize handler to prevent performance issues
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = window.setTimeout(checkViewport, 150) as unknown as number; // Type casting for compatibility
+    };
+
+    checkViewport();
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimeout);
+    };
+  }, [viewMode, onViewModeChange]); // Remove notificationActions to prevent re-renders
 
   // Función adaptadora memoizada
   const adaptBookingToMiniCard = useMemo(() =>
@@ -110,7 +159,7 @@ export function AgendaContent({
   );
 
   // Calcular hourHeight dinámicamente según altura disponible
-  const availableHeight = heightAware.availableHeight;
+  const availableHeight = heightAware?.availableHeight || 600; // Fallback for SSR/safety
   const workingHours = 12; // 8:00 a 20:00 = 12 horas laborables
   const headerHeight = 180; // Optimizado: filtros + título + staff selector
   const availableForTimeline = Math.max(400, availableHeight - headerHeight);

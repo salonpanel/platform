@@ -143,7 +143,9 @@ export function MonthView({
       </div>
 
       {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-2 flex-1" role="grid" aria-label="Calendario mensual">
+      {/* TODO: PHASE 2 MOBILE FIX - Responsive tap targets */}
+      {/* Improved mobile tap targets with responsive gap and min-height */}
+      <div className="grid grid-cols-7 gap-3 md:gap-2 flex-1" role="grid" aria-label="Calendario mensual">
         {/* Days of the week - Premium */}
         {["L", "M", "X", "J", "V", "S", "D"].map((day, index) => (
           <div

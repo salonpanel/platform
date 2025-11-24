@@ -400,7 +400,7 @@ export function AgendaSidebar({
     </div>
   );
 
-  // Mobile drawer using AgendaModal
+  // Mobile drawer using AgendaModal - no wrapper div to prevent flex space
   if (isMobile) {
     return (
       <>
@@ -443,10 +443,10 @@ export function AgendaSidebar({
     );
   }
 
-  // Desktop/Tablet sidebar - return null wrapper to prevent layout space on mobile
+  // Desktop/Tablet sidebar - only render wrapper div on desktop/tablet
   return (
     <div className={cn(
-      "h-full transition-all duration-300",
+      "hidden md:block h-full transition-all duration-300",
       isTablet && isCollapsed ? "w-12" : "w-80"
     )}>
       {/* Tablet collapsed toggle */}
