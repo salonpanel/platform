@@ -357,5 +357,3 @@ export function AgendaContent({
     </div>
   );
 }
-
-export { AgendaContent };

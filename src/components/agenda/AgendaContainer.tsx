@@ -305,5 +305,3 @@ export function AgendaContainer() {
     </HeightAwareContainer>
   );
 }
-
-export { AgendaContainer };

@@ -12,7 +12,8 @@ export interface PageHeaderProps {
   breadcrumbs?: Array<{ label: string; href?: string }>;
   className?: string;
   size?: "sm" | "md" | "lg";
-  variant?: "default" | "elevated" | "glass";
+  variant?: "default" | "elevated" | "glass" | "minimal";
+  isLoading?: boolean;
 }
 
 /**
@@ -27,7 +28,8 @@ const PageHeaderComponent = ({
   breadcrumbs,
   className,
   size = "md",
-  variant = "default"
+  variant = "default",
+  isLoading = false
 }: PageHeaderProps) => {
   const sizeConfig = {
     sm: {
@@ -58,8 +60,25 @@ const PageHeaderComponent = ({
   const variantClasses = {
     default: "",
     elevated: "glass-elevated shadow-neon-glow-blue/10",
-    glass: "glass-subtle"
+    glass: "glass-subtle",
+    minimal: "bg-transparent border-none shadow-none"
   };
+
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.2, 0, 0, 1] }}
+        className={cn(
+          "relative rounded-2xl",
+          variantClasses[variant],
+          config.padding,
+          config.spacing,
+          className
+        )}
+      >
 
   return (
     <motion.div
@@ -77,8 +96,37 @@ const PageHeaderComponent = ({
       <div className="flex flex-col gap-4">
         {/* Header content */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              {/* Title with gradient */}
+          <div className="flex-1 min-w-0">
+            {/* Breadcrumbs */}
+            {breadcrumbs && breadcrumbs.length > 0 && (
+              <motion.nav
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.05, duration: 0.3 }}
+                className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)] mb-2"
+                aria-label="Navegación de migas de pan"
+              >
+                {breadcrumbs.map((crumb, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    {index > 0 && <span className="text-[var(--color-text-disabled)]">/</span>}
+                    {crumb.href ? (
+                      <a
+                        href={crumb.href}
+                        className="hover:text-[var(--color-text-primary)] transition-colors"
+                      >
+                        {crumb.label}
+                      </a>
+                    ) : (
+                      <span className="text-[var(--color-text-primary)] font-medium">
+                        {crumb.label}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </motion.nav>
+            )}
+
+            {/* Title with gradient */}
               <h1
                 className={cn(
                   "font-bold tracking-tight font-satoshi",

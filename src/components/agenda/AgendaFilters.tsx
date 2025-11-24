@@ -202,5 +202,3 @@ export function AgendaFilters({
     </motion.div>
   );
 }
-
-export { AgendaFilters };
