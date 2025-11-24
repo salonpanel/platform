@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { format, parseISO, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
 import { ChevronLeft, ChevronRight, Search, Bell, Filter, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/Button";
+import { UiButton } from "@/components/ui/apple-ui-kit";
 
 type ViewMode = "day" | "week" | "month" | "list";
 
@@ -86,7 +86,7 @@ export function AgendaTopBar({
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-[rgba(15,23,42,0.85)] backdrop-blur-xl border-b border-white/5"
+      className="bg-[var(--neutral-200)]/50 backdrop-blur-xl border-b border-[var(--glass-border)]"
     >
       <div className="px-4 py-3">
         {/* Top Row: Date Navigation */}
@@ -97,7 +97,7 @@ export function AgendaTopBar({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleNavigate("prev")}
-              className="p-2 rounded-[var(--radius-lg)] bg-[rgba(255,255,255,0.03)] border border-white/5 hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200"
+              className="p-2 rounded-[var(--radius-lg)] bg-[var(--glass-bg-subtle)] border border-[var(--glass-border-subtle)] hover:bg-[var(--glass-bg)] transition-all duration-200"
               aria-label="Fecha anterior"
             >
               <ChevronLeft className="h-4 w-4 text-[var(--text-secondary)]" />
@@ -114,7 +114,7 @@ export function AgendaTopBar({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleNavigate("next")}
-              className="p-2 rounded-[var(--radius-lg)] bg-[rgba(255,255,255,0.03)] border border-white/5 hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200"
+              className="p-2 rounded-[var(--radius-lg)] bg-[var(--glass-bg-subtle)] border border-[var(--glass-border-subtle)] hover:bg-[var(--glass-bg)] transition-all duration-200"
               aria-label="Fecha siguiente"
             >
               <ChevronRight className="h-4 w-4 text-[var(--text-secondary)]" />
@@ -137,7 +137,7 @@ export function AgendaTopBar({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onFiltersClick}
-              className="md:hidden p-2 rounded-[var(--radius-lg)] bg-[rgba(255,255,255,0.03)] border border-white/5 hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200"
+              className="md:hidden p-2 rounded-[var(--radius-lg)] bg-[var(--glass-bg-subtle)] border border-[var(--glass-border-subtle)] hover:bg-[var(--glass-bg)] transition-all duration-200"
               aria-label="Filtros"
             >
               <Filter className="h-4 w-4 text-[var(--text-secondary)]" />
@@ -148,7 +148,7 @@ export function AgendaTopBar({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onSearchClick}
-              className="p-2 rounded-[var(--radius-lg)] bg-[rgba(255,255,255,0.03)] border border-white/5 hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200"
+              className="p-2 rounded-[var(--radius-lg)] bg-[var(--glass-bg-subtle)] border border-[var(--glass-border-subtle)] hover:bg-[var(--glass-bg)] transition-all duration-200"
               aria-label="Buscar"
             >
               <Search className="h-4 w-4 text-[var(--text-secondary)]" />
@@ -159,7 +159,7 @@ export function AgendaTopBar({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onNotificationsClick}
-              className="p-2 rounded-[var(--radius-lg)] bg-[rgba(255,255,255,0.03)] border border-white/5 hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200"
+              className="p-2 rounded-[var(--radius-lg)] bg-[var(--glass-bg-subtle)] border border-[var(--glass-border-subtle)] hover:bg-[var(--glass-bg)] transition-all duration-200"
               aria-label="Notificaciones"
             >
               <Bell className="h-4 w-4 text-[var(--text-secondary)]" />
@@ -179,7 +179,7 @@ export function AgendaTopBar({
                 "px-4 py-2 text-sm font-medium rounded-[var(--radius-lg)] transition-all duration-200 whitespace-nowrap flex-shrink-0",
                 viewMode === mode.key
                   ? "bg-white text-slate-900 shadow-sm"
-                  : "bg-[rgba(255,255,255,0.03)] border border-white/5 text-[var(--text-secondary)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[var(--text-primary)]"
+                  : "bg-[var(--glass-bg-subtle)] border border-[var(--glass-border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--glass-bg)] hover:text-[var(--text-primary)]"
               )}
             >
               {mode.label}
