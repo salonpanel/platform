@@ -34,7 +34,9 @@ export async function GET(req: Request) {
             return cookieStore.getAll();
           },
           setAll(cookiesToSet) {
-            // No necesitamos setAll para solo lectura
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
           },
         },
       }

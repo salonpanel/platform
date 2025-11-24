@@ -3,6 +3,7 @@
 import { ReactNode, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { 
   LayoutDashboard, 
   Calendar, 
@@ -186,42 +187,64 @@ export function AppShell({
         {/* Top Bar - Enhanced Premium Header */}
         <header className="h-16 lg:h-18 border-b border-[var(--glass-border)] glass flex items-center justify-between px-4 lg:px-6 shadow-glass bg-[var(--color-bg-primary)] backdrop-blur-xl sticky top-0 z-30 transition-all duration-300">
           <div className="flex items-center gap-4 flex-1 min-w-0">
-            {/* Mobile menu button */}
+            {/* Mobile menu button - Improved spacing */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="md:hidden text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] p-2 -ml-2 rounded-xl hover:glass-subtle transition-smooth"
+              className="md:hidden text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] p-2 ml-0 rounded-xl hover:glass-subtle transition-smooth"
               aria-label="Abrir menú"
             >
               <Menu className="h-6 w-6" />
             </button>
 
-            {/* Breadcrumb title - Enhanced typography */}
+            {/* Premium Title Container with Glass Card Effect */}
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg lg:text-xl font-semibold text-[var(--color-text-primary)] font-satoshi truncate">
-                {pathname === "/panel" || pathname === "/panel/"
-                  ? "Dashboard"
-                  : pathname === "/panel/agenda"
-                  ? "Agenda"
-                  : pathname === "/panel/clientes"
-                  ? "Clientes"
-                  : pathname === "/panel/servicios"
-                  ? "Servicios"
-                  : pathname === "/panel/staff"
-                  ? "Staff"
-                  : pathname === "/panel/chat"
-                  ? "Chats"
-                  : pathname === "/panel/ajustes"
-                  ? "Ajustes"
-                  : "Panel"}
-              </h2>
-              <div className="flex items-center gap-2 text-xs lg:text-sm text-[var(--color-text-secondary)] mt-0.5">
-                <span className="font-medium truncate">{tenantName}</span>
-                {userRole && (
-                  <>
-                    <span className="hidden sm:inline">•</span>
-                    <span className="capitalize font-medium">{userRole}</span>
-                  </>
-                )}
+              <div className="relative">
+                {/* Subtle visual separator */}
+                <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-[var(--glass-border)] to-transparent opacity-50" />
+                
+                {/* Glass container for title */}
+                <div className="pl-4 md:pl-6 lg:pl-8 pr-4 py-2 rounded-r-2xl glass-subtle border border-[var(--glass-border)] border-l-0 bg-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.04)] transition-all duration-300 shadow-neon-glow-blue/5 hover:shadow-neon-glow-blue/10 max-w-md lg:max-w-lg">
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, ease: [0.2, 0, 0, 1] }}
+                  >
+                    <h2 className="text-lg lg:text-xl font-semibold text-[var(--color-text-primary)] font-satoshi truncate tracking-tight">
+                      {pathname === "/panel" || pathname === "/panel/"
+                        ? "Dashboard"
+                        : pathname === "/panel/agenda"
+                        ? "Agenda"
+                        : pathname === "/panel/clientes"
+                        ? "Clientes"
+                        : pathname === "/panel/servicios"
+                        ? "Servicios"
+                        : pathname === "/panel/staff"
+                        ? "Staff"
+                        : pathname === "/panel/chat"
+                        ? "Chats"
+                        : pathname === "/panel/ajustes"
+                        ? "Ajustes"
+                        : "Panel"}
+                    </h2>
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.1, duration: 0.3 }}
+                      className="flex items-center gap-2 text-xs lg:text-sm text-[var(--color-text-secondary)] mt-0.5"
+                    >
+                      <span className="font-medium truncate flex items-center gap-1">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--accent-aqua)] animate-pulse" />
+                        {tenantName}
+                      </span>
+                      {userRole && (
+                        <>
+                          <span className="hidden sm:inline text-[var(--color-text-disabled)]">•</span>
+                          <span className="capitalize font-medium text-[var(--color-text-secondary)]">{userRole}</span>
+                        </>
+                      )}
+                    </motion.div>
+                  </motion.div>
+                </div>
               </div>
             </div>
           </div>

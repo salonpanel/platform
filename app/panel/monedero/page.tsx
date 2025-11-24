@@ -2,39 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Wallet, RefreshCw, TrendingUp, Clock, CheckCircle2, AlertCircle, Info } from "lucide-react";
+import { Wallet, RefreshCw, TrendingUp, DollarSign, BarChart3, Clock } from "lucide-react";
 import { Card, Button, Spinner, EmptyState, Alert, TitleBar } from "@/components/ui";
+import { BalanceCard, BalanceGrid } from "@/components/ui/BalanceCard";
+import { MetricCard, MetricsGrid } from "@/components/ui/MetricCard";
+import { Transaction, Payout, Balance } from '@/types/wallet';
+import { WalletFiltersComponent, useWalletFilters } from "@/components/ui/WalletFilters";
+import { TransactionList } from "@/components/ui/TransactionList";
+import { useFilteredTransactions } from "@/hooks/useFilteredTransactions";
+import { usePersistedFilters, usePersistedTab } from "@/hooks/usePersistedFilters";
 import { cn } from "@/lib/utils";
-
-type Balance = {
-  pending: number;
-  available: number;
-  currency: string;
-};
-
-type Transaction = {
-  id: string;
-  type: string;
-  amount: number;
-  currency: string;
-  fee: number;
-  net: number;
-  status: string;
-  created: string;
-  description: string | null;
-};
-
-type Payout = {
-  id: string;
-  amount: number;
-  currency: string;
-  status: string;
-  arrival_date: string;
-  created: string;
-  description: string | null;
-  method: string;
-  type: string;
-};
 
 export default function MonederoPage() {
   const [loading, setLoading] = useState(true);
@@ -43,7 +20,14 @@ export default function MonederoPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'balance' | 'transactions' | 'payouts'>('balance');
+  // Hook para filtros con persistencia en URL
+  const { filters, setFilters, clearFilters, hasActiveFilters } = usePersistedFilters();
+  
+  // Hook para tab con persistencia en URL
+  const { activeTab, setActiveTab } = usePersistedTab('overview');
+  
+  // Apply filters to transactions
+  const filteredTransactions = useFilteredTransactions(transactions, filters);
 
   useEffect(() => {
     loadData();
@@ -158,27 +142,35 @@ export default function MonederoPage() {
     };
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.05,
-      },
-    },
+  // Calculate KPIs from data
+  const calculateKPIs = () => {
+    if (!balance || transactions.length === 0) return null;
+    
+    const totalTransactions = transactions.length;
+    const successfulTransactions = transactions.filter(tx => tx.status === 'succeeded').length;
+    const totalRevenue = transactions.filter(tx => tx.status === 'succeeded').reduce((sum, tx) => sum + tx.net, 0);
+    const totalFees = transactions.reduce((sum, tx) => sum + tx.fee, 0);
+    const averageTransaction = successfulTransactions > 0 ? totalRevenue / successfulTransactions : 0;
+    
+    // Calculate monthly revenue (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const monthlyRevenue = transactions
+      .filter(tx => new Date(tx.created) >= thirtyDaysAgo && tx.status === 'succeeded')
+      .reduce((sum, tx) => sum + tx.net, 0);
+    
+    return {
+      totalRevenue,
+      monthlyRevenue,
+      averageTransaction,
+      totalFees,
+      successRate: totalTransactions > 0 ? (successfulTransactions / totalTransactions) * 100 : 0,
+      totalTransactions,
+      successfulTransactions
+    };
   };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 8 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.2,
-        ease: "easeOut" as const,
-      },
-    },
-  };
+  
+  const kpis = calculateKPIs();
 
   if (loading) {
     return (
@@ -190,13 +182,17 @@ export default function MonederoPage() {
 
   return (
     <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
       className="space-y-6"
     >
       {/* Header */}
-      <motion.div variants={itemVariants}>
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         <Card variant="glass" padding="md">
           <TitleBar
             title="Monedero"
@@ -217,115 +213,171 @@ export default function MonederoPage() {
 
       {/* Error Alert */}
       {error && (
-        <motion.div variants={itemVariants}>
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
           <Alert type="error" onClose={() => setError(null)}>
             {error}
           </Alert>
         </motion.div>
       )}
 
-      {/* Balance Cards */}
+      {/* Balance Cards with Premium Design */}
       {balance && (
-        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card variant="default" className="relative overflow-hidden">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="rounded-[var(--radius-md)] bg-amber-500/15 border border-amber-500/30 p-2">
-                    <Clock className="h-4 w-4 text-amber-400" />
-                  </div>
-                  <span
-                    className="text-sm font-medium"
-                    style={{
-                      fontFamily: "var(--font-body)",
-                      color: "var(--text-secondary)",
-                    }}
-                  >
-                    Pendiente
-                  </span>
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        >
+          <BalanceGrid>
+            <BalanceCard
+              title="Pendiente"
+              amount={balance.pending}
+              currency={balance.currency}
+              subtitle="Dinero retenido temporalmente"
+              icon={<Clock className="h-5 w-5" />}
+              variant="pending"
+              tooltip={
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Fondos pendientes</p>
+                  <p className="text-xs text-slate-300">
+                    Los pagos se retienen 24-48 horas antes de estar disponibles para payout.
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    Próxima liberación: {new Date(Date.now() + 86400000).toLocaleDateString('es-ES')}
+                  </p>
                 </div>
-                <p
-                  className="text-3xl font-semibold mb-1"
-                  style={{
-                    fontFamily: "var(--font-heading)",
-                    color: "var(--text-primary)",
-                  }}
-                >
-                  {formatCurrency(balance.pending, balance.currency)}
-                </p>
-                <p
-                  className="text-xs"
-                  style={{
-                    fontFamily: "var(--font-body)",
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  Dinero retenido temporalmente (24-48h)
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          <Card variant="default" className="relative overflow-hidden">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="rounded-[var(--radius-md)] bg-emerald-500/15 border border-emerald-500/30 p-2">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                  </div>
-                  <span
-                    className="text-sm font-medium"
-                    style={{
-                      fontFamily: "var(--font-body)",
-                      color: "var(--text-secondary)",
-                    }}
-                  >
-                    Disponible
-                  </span>
+              }
+            />
+            <BalanceCard
+              title="Disponible"
+              amount={balance.available}
+              currency={balance.currency}
+              subtitle="Listo para payout"
+              icon={<DollarSign className="h-5 w-5" />}
+              variant="available"
+              trend={kpis ? {
+                value: Math.round((kpis.monthlyRevenue / Math.max(kpis.totalRevenue, 1)) * 100),
+                isPositive: kpis.monthlyRevenue > 0,
+                label: "vs mes anterior"
+              } : undefined}
+              tooltip={
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Fondos disponibles</p>
+                  <p className="text-xs text-slate-300">
+                    Dinero listo para transferir a tu cuenta bancaria.
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    Mínimo para payout: €10.00
+                  </p>
                 </div>
-                <p
-                  className="text-3xl font-semibold mb-1"
-                  style={{
-                    fontFamily: "var(--font-heading)",
-                    color: "var(--text-primary)",
-                  }}
-                >
-                  {formatCurrency(balance.available, balance.currency)}
-                </p>
-                <p
-                  className="text-xs"
-                  style={{
-                    fontFamily: "var(--font-body)",
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  Listo para payout
-                </p>
-              </div>
-            </div>
-          </Card>
+              }
+            />
+            <BalanceCard
+              title="Total Balance"
+              amount={balance.pending + balance.available}
+              currency={balance.currency}
+              subtitle="Balance total"
+              icon={<Wallet className="h-5 w-5" />}
+              variant="total"
+              tooltip={
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Balance total</p>
+                  <p className="text-xs text-slate-300">
+                    Suma de fondos pendientes y disponibles.
+                  </p>
+                </div>
+              }
+            />
+          </BalanceGrid>
         </motion.div>
       )}
 
-      {/* Tabs */}
-      <motion.div variants={itemVariants}>
+      {/* KPIs Metrics */}
+      {kpis && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-white mb-1">Métricas Clave</h3>
+            <p className="text-sm text-slate-400">Análisis de rendimiento de tu cuenta</p>
+          </div>
+          <MetricsGrid columns={4}>
+            <MetricCard
+              title="Ingresos Totales"
+              value={formatCurrency(kpis.totalRevenue)}
+              subtitle="Todos los tiempos"
+              icon={<TrendingUp className="h-4 w-4" />}
+              variant="success"
+            />
+            <MetricCard
+              title="Ingresos Mensuales"
+              value={formatCurrency(kpis.monthlyRevenue)}
+              subtitle="Últimos 30 días"
+              icon={<BarChart3 className="h-4 w-4" />}
+              variant="info"
+              trend={{
+                value: Math.round((kpis.monthlyRevenue / Math.max(kpis.totalRevenue, 1)) * 100),
+                label: "vs total",
+                direction: kpis.monthlyRevenue > 0 ? 'up' : 'neutral'
+              }}
+            />
+            <MetricCard
+              title="Transacción Promedio"
+              value={formatCurrency(kpis.averageTransaction)}
+              subtitle="Por pago exitoso"
+              icon={<DollarSign className="h-4 w-4" />}
+              variant="default"
+            />
+            <MetricCard
+              title="Tasa de Éxito"
+              value={`${Math.round(kpis.successRate)}%`}
+              subtitle={`${kpis.successfulTransactions}/${kpis.totalTransactions} pagos`}
+              icon={<TrendingUp className="h-4 w-4" />}
+              variant={kpis.successRate >= 95 ? 'success' : kpis.successRate >= 85 ? 'warning' : 'danger'}
+              trend={{
+                value: Math.round(kpis.successRate),
+                label: "de transacciones",
+                direction: kpis.successRate >= 95 ? 'up' : kpis.successRate >= 85 ? 'neutral' : 'down'
+              }}
+            />
+          </MetricsGrid>
+        </motion.div>
+      )}
+
+      {/* Filters and Tabs */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.3 }}
+      >
+        {/* Filters */}
+        <WalletFiltersComponent
+          filters={filters}
+          onFiltersChange={setFilters}
+          compact={activeTab === 'overview'}
+          className="mb-6"
+        />
+
+        {/* Tabs */}
         <Card variant="glass" padding="none">
-          <div className="border-b border-[var(--glass-border)]">
+          <div className="border-b border-slate-700/50">
             <nav className="flex space-x-1 px-4">
               <button
-                onClick={() => setActiveTab('balance')}
+                onClick={() => setActiveTab('overview')}
                 className={cn(
                   "relative px-4 py-3 text-sm font-medium transition-colors",
                   "border-b-2 border-transparent",
-                  activeTab === 'balance'
-                    ? "text-[var(--text-primary)] border-[var(--accent-aqua)]"
-                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  activeTab === 'overview'
+                    ? "text-white border-blue-500"
+                    : "text-slate-400 hover:text-white"
                 )}
-                style={{
-                  fontFamily: "var(--font-heading)",
-                }}
               >
-                Balance
+                Resumen
               </button>
               <button
                 onClick={() => setActiveTab('transactions')}
@@ -333,12 +385,9 @@ export default function MonederoPage() {
                   "relative px-4 py-3 text-sm font-medium transition-colors",
                   "border-b-2 border-transparent",
                   activeTab === 'transactions'
-                    ? "text-[var(--text-primary)] border-[var(--accent-aqua)]"
-                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                    ? "text-white border-blue-500"
+                    : "text-slate-400 hover:text-white"
                 )}
-                style={{
-                  fontFamily: "var(--font-heading)",
-                }}
               >
                 Movimientos {transactions.length > 0 && `(${transactions.length})`}
               </button>
@@ -348,12 +397,9 @@ export default function MonederoPage() {
                   "relative px-4 py-3 text-sm font-medium transition-colors",
                   "border-b-2 border-transparent",
                   activeTab === 'payouts'
-                    ? "text-[var(--text-primary)] border-[var(--accent-aqua)]"
-                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                    ? "text-white border-blue-500"
+                    : "text-slate-400 hover:text-white"
                 )}
-                style={{
-                  fontFamily: "var(--font-heading)",
-                }}
               >
                 Payouts {payouts.length > 0 && `(${payouts.length})`}
               </button>
@@ -362,179 +408,106 @@ export default function MonederoPage() {
 
           {/* Tab Content */}
           <div className="p-6">
-            {activeTab === 'balance' && balance && (
-              <div className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center py-2">
-                    <span
-                      className="text-sm"
-                      style={{
-                        fontFamily: "var(--font-body)",
-                        color: "var(--text-secondary)",
-                      }}
-                    >
-                      Total Pendiente
-                    </span>
-                    <span
-                      className="font-semibold"
-                      style={{
-                        fontFamily: "var(--font-heading)",
-                        color: "var(--text-primary)",
-                      }}
-                    >
-                      {formatCurrency(balance.pending, balance.currency)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-2">
-                    <span
-                      className="text-sm"
-                      style={{
-                        fontFamily: "var(--font-body)",
-                        color: "var(--text-secondary)",
-                      }}
-                    >
-                      Total Disponible
-                    </span>
-                    <span
-                      className="font-semibold"
-                      style={{
-                        fontFamily: "var(--font-heading)",
-                        color: "var(--text-primary)",
-                      }}
-                    >
-                      {formatCurrency(balance.available, balance.currency)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center pt-3 border-t border-[var(--glass-border)]">
-                    <span
-                      className="text-sm font-medium"
-                      style={{
-                        fontFamily: "var(--font-heading)",
-                        color: "var(--text-primary)",
-                      }}
-                    >
-                      Total
-                    </span>
-                    <span
-                      className="text-lg font-semibold"
-                      style={{
-                        fontFamily: "var(--font-heading)",
-                        color: "var(--text-primary)",
-                      }}
-                    >
-                      {formatCurrency(balance.pending + balance.available, balance.currency)}
-                    </span>
+            {activeTab === 'overview' && balance && (
+              <div className="space-y-6">
+                {/* Balance Summary */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-white">Balance Detallado</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-3 border-b border-slate-700/30">
+                      <span className="text-sm text-slate-400">Total Pendiente</span>
+                      <span className="font-semibold text-white">
+                        {formatCurrency(balance.pending, balance.currency)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-3 border-b border-slate-700/30">
+                      <span className="text-sm text-slate-400">Total Disponible</span>
+                      <span className="font-semibold text-emerald-400">
+                        {formatCurrency(balance.available, balance.currency)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center pt-3">
+                      <span className="text-sm font-medium text-white">Total Balance</span>
+                      <span className="text-lg font-semibold text-white">
+                        {formatCurrency(balance.pending + balance.available, balance.currency)}
+                      </span>
+                    </div>
                   </div>
                 </div>
+
+                {/* Quick Stats */}
+                {kpis && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-white">Estadísticas Rápidas</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700/50">
+                        <p className="text-xs text-slate-400 mb-1">Comisiones Totales</p>
+                        <p className="text-lg font-semibold text-red-400">
+                          {formatCurrency(kpis.totalFees)}
+                        </p>
+                      </div>
+                      <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700/50">
+                        <p className="text-xs text-slate-400 mb-1">Total Transacciones</p>
+                        <p className="text-lg font-semibold text-white">
+                          {kpis.totalTransactions}
+                        </p>
+                      </div>
+                      <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700/50">
+                        <p className="text-xs text-slate-400 mb-1">Próximo Payout Estimado</p>
+                        <p className="text-lg font-semibold text-emerald-400">
+                          {balance.available >= 10 ? formatCurrency(balance.available) : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
             {activeTab === 'transactions' && (
-              <>
-                {transactions.length === 0 ? (
-                  <EmptyState
-                    title="No hay transacciones aún"
-                    description="Las transacciones aparecerán aquí cuando recibas pagos"
-                    icon={<Wallet className="h-8 w-8" />}
-                  />
-                ) : (
-                  <div className="space-y-3">
-                    {transactions.map((tx) => {
-                      const statusConfig = getStatusConfig(tx.status);
-                      const StatusIcon = statusConfig.icon;
-                      return (
-                        <Card key={tx.id} variant="default" padding="compact" className="cursor-default">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-2">
-                                <div className={cn(
-                                  "rounded-[var(--radius-md)] p-1.5",
-                                  "bg-[var(--accent-aqua-glass)] border border-[var(--accent-aqua-border)]"
-                                )}>
-                                  <TrendingUp className="h-3.5 w-3.5 text-[var(--accent-aqua)]" />
-                                </div>
-                                <span
-                                  className="font-medium truncate"
-                                  style={{
-                                    fontFamily: "var(--font-heading)",
-                                    color: "var(--text-primary)",
-                                  }}
-                                >
-                                  {getTransactionTypeLabel(tx.type)}
-                                </span>
-                                <span className={cn(
-                                  "inline-flex items-center gap-1 rounded-[var(--radius-pill)] border px-2 py-0.5 text-xs font-semibold",
-                                  statusConfig.className
-                                )}>
-                                  <StatusIcon className="h-3 w-3" />
-                                  {statusConfig.label}
-                                </span>
-                              </div>
-                              {tx.description && (
-                                <p
-                                  className="text-sm mb-1 truncate"
-                                  style={{
-                                    fontFamily: "var(--font-body)",
-                                    color: "var(--text-secondary)",
-                                  }}
-                                >
-                                  {tx.description}
-                                </p>
-                              )}
-                              <p
-                                className="text-xs"
-                                style={{
-                                  fontFamily: "var(--font-body)",
-                                  color: "var(--text-secondary)",
-                                }}
-                              >
-                                {formatDate(tx.created)}
-                              </p>
-                            </div>
-                            <div className="text-right flex-shrink-0">
-                              <p
-                                className={cn(
-                                  "font-semibold mb-1",
-                                  tx.net >= 0 ? "text-emerald-400" : "text-rose-400"
-                                )}
-                                style={{
-                                  fontFamily: "var(--font-heading)",
-                                }}
-                              >
-                                {formatCurrency(tx.net, tx.currency)}
-                              </p>
-                              {tx.fee > 0 && (
-                                <p
-                                  className="text-xs mb-1"
-                                  style={{
-                                    fontFamily: "var(--font-body)",
-                                    color: "var(--text-secondary)",
-                                  }}
-                                >
-                                  Comisión: {formatCurrency(tx.fee, tx.currency)}
-                                </p>
-                              )}
-                              <p
-                                className="text-xs font-mono"
-                                style={{
-                                  fontFamily: "var(--font-body)",
-                                  color: "var(--text-secondary)",
-                                }}
-                              >
-                                {tx.id.substring(0, 12)}...
-                              </p>
-                            </div>
-                          </div>
-                        </Card>
-                      );
-                    })}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-white">Historial de Transacciones</h3>
+                  <div className="flex items-center gap-3">
+                    {hasActiveFilters() && (
+                      <>
+                        <span className="text-sm text-slate-400">
+                          {filteredTransactions.length} de {transactions.length} transacciones encontradas
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={clearFilters}
+                          className="text-xs"
+                        >
+                          Limpiar filtros
+                        </Button>
+                      </>
+                    )}
                   </div>
-                )}
-              </>
+                </div>
+                <TransactionList
+                  transactions={filteredTransactions}
+                  loading={loading}
+                  emptyMessage={hasActiveFilters() 
+                    ? "No hay transacciones que coincidan con los filtros" 
+                    : "No hay transacciones aún"}
+                  showDetails={true}
+                />
+              </div>
             )}
 
             {activeTab === 'payouts' && (
-              <>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-white">Historial de Payouts</h3>
+                  {payouts.length > 0 && (
+                    <span className="text-sm text-slate-400">
+                      {payouts.length} payouts
+                    </span>
+                  )}
+                </div>
+                
                 {payouts.length === 0 ? (
                   <EmptyState
                     title="No hay payouts aún"
@@ -551,23 +524,14 @@ export default function MonederoPage() {
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-2">
-                                <div className={cn(
-                                  "rounded-[var(--radius-md)] p-1.5",
-                                  "bg-[var(--accent-aqua-glass)] border border-[var(--accent-aqua-border)]"
-                                )}>
-                                  <Wallet className="h-3.5 w-3.5 text-[var(--accent-aqua)]" />
+                                <div className="rounded-lg bg-purple-500/15 border border-purple-500/30 p-2">
+                                  <Wallet className="h-4 w-4 text-purple-400" />
                                 </div>
-                                <span
-                                  className="font-medium"
-                                  style={{
-                                    fontFamily: "var(--font-heading)",
-                                    color: "var(--text-primary)",
-                                  }}
-                                >
+                                <span className="font-medium text-white">
                                   Payout
                                 </span>
                                 <span className={cn(
-                                  "inline-flex items-center gap-1 rounded-[var(--radius-pill)] border px-2 py-0.5 text-xs font-semibold",
+                                  "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
                                   statusConfig.className
                                 )}>
                                   <StatusIcon className="h-3 w-3" />
@@ -575,62 +539,27 @@ export default function MonederoPage() {
                                 </span>
                               </div>
                               {payout.description && (
-                                <p
-                                  className="text-sm mb-1 truncate"
-                                  style={{
-                                    fontFamily: "var(--font-body)",
-                                    color: "var(--text-secondary)",
-                                  }}
-                                >
+                                <p className="text-sm text-slate-400 mb-1 truncate">
                                   {payout.description}
                                 </p>
                               )}
                               <div className="space-y-1">
-                                <p
-                                  className="text-xs"
-                                  style={{
-                                    fontFamily: "var(--font-body)",
-                                    color: "var(--text-secondary)",
-                                  }}
-                                >
+                                <p className="text-xs text-slate-400">
                                   Llegada: {formatDate(payout.arrival_date)}
                                 </p>
-                                <p
-                                  className="text-xs"
-                                  style={{
-                                    fontFamily: "var(--font-body)",
-                                    color: "var(--text-secondary)",
-                                  }}
-                                >
+                                <p className="text-xs text-slate-400">
                                   Creado: {formatDate(payout.created)}
                                 </p>
                               </div>
                             </div>
                             <div className="text-right flex-shrink-0">
-                              <p
-                                className="font-semibold mb-1 text-emerald-400"
-                                style={{
-                                  fontFamily: "var(--font-heading)",
-                                }}
-                              >
+                              <p className="font-semibold text-emerald-400 mb-1">
                                 {formatCurrency(payout.amount, payout.currency)}
                               </p>
-                              <p
-                                className="text-xs mb-1"
-                                style={{
-                                  fontFamily: "var(--font-body)",
-                                  color: "var(--text-secondary)",
-                                }}
-                              >
+                              <p className="text-xs text-slate-400 mb-1">
                                 {payout.method} · {payout.type}
                               </p>
-                              <p
-                                className="text-xs font-mono"
-                                style={{
-                                  fontFamily: "var(--font-body)",
-                                  color: "var(--text-secondary)",
-                                }}
-                              >
+                              <p className="text-xs font-mono text-slate-400">
                                 {payout.id.substring(0, 12)}...
                               </p>
                             </div>
@@ -640,14 +569,18 @@ export default function MonederoPage() {
                     })}
                   </div>
                 )}
-              </>
+              </div>
             )}
           </div>
         </Card>
       </motion.div>
 
       {/* Info Box */}
-      <motion.div variants={itemVariants}>
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.4 }}
+      >
         <Card variant="glass" padding="md">
           <div className="flex items-start gap-3">
             <div className="rounded-[var(--radius-md)] bg-blue-500/15 border border-blue-500/30 p-2 flex-shrink-0">

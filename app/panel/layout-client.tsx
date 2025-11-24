@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useMemo, useState, Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SidebarNav } from "@/components/panel/SidebarNav";
+import { MobileBottomNav } from "@/components/panel/MobileBottomNav";
 import { TopBar } from "@/components/panel/TopBar";
 import { ImpersonationBanner } from "@/components/panel/ImpersonationBanner";
 import { PageContainer } from "@/components/panel/PageContainer";
@@ -311,15 +312,17 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-screen bg-slate-950">
-      {/* Sidebar */}
-      <SidebarNav
-        items={navItems}
-        tenantName={tenant.name}
-        isOpen={sidebarOpen}
-        isCollapsed={sidebarCollapsed}
-        onClose={() => setSidebarOpen(false)}
-        onToggleCollapse={handleToggleSidebar}
-      />
+      {/* Sidebar - Hidden on mobile */}
+      <div className="hidden md:block">
+        <SidebarNav
+          items={navItems}
+          tenantName={tenant.name}
+          isOpen={sidebarOpen}
+          isCollapsed={sidebarCollapsed}
+          onClose={() => setSidebarOpen(false)}
+          onToggleCollapse={handleToggleSidebar}
+        />
+      </div>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -341,11 +344,14 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
           sidebarCollapsed={sidebarCollapsed}
         />
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-slate-950">
+        {/* Page Content - Add bottom padding on mobile for bottom nav */}
+        <main className="flex-1 overflow-y-auto bg-slate-950 pb-16 md:pb-0">
           <PageContainer>{children}</PageContainer>
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation - Only visible on mobile */}
+      <MobileBottomNav items={navItems} />
     </div>
   );
 }
