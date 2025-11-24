@@ -49,6 +49,14 @@ interface AgendaModalProps extends Omit<SmartModalProps, 'variant' | 'size' | 'c
   stickyFooter?: boolean;
   preventClose?: boolean;
   
+  // Enhanced header configuration
+  header?: {
+    title?: string;
+    subtitle?: string;
+    showBackButton?: boolean;
+    onBack?: () => void;
+  };
+  
   // Override context with extended types
   context?: {
     type: "booking" | "customer" | "service" | "staff" | "availability" | "conflict";
