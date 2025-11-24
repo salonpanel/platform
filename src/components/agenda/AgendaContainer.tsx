@@ -3,8 +3,8 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { format, parseISO } from "date-fns";
 import { Booking, Staff } from "@/types/agenda";
-import { AgendaFilters } from "@/components/agenda/AgendaFilters";
-import { AgendaStats } from "@/components/agenda/AgendaStats";
+import { AgendaTopBar } from "@/components/agenda/AgendaTopBar";
+import { AgendaContextBar } from "@/components/agenda/AgendaContextBar";
 import { AgendaContent } from "@/components/agenda/AgendaContent";
 import { AgendaSidebar } from "@/components/calendar/AgendaSidebar";
 import { NotificationProvider, useNotificationActions } from "./NotificationSystem";
@@ -45,14 +45,14 @@ interface AgendaContainerProps {
   quickStats: QuickStats | undefined;
   staffUtilization: StaffUtilization[];
   refreshDaySnapshots: () => void;
-  
+
   // Core state from page.tsx
   tenantId: string | null;
   tenantTimezone: string;
   selectedDate: string;
   selectedStaffId: string | null;
   viewMode: "day" | "week" | "month" | "list";
-  
+
   // Callbacks from page.tsx
   onDateChange: (dateStr: string) => void;
   onViewModeChange: (mode: "day" | "week" | "month" | "list") => void;
@@ -61,14 +61,14 @@ interface AgendaContainerProps {
   onNewBooking: () => void;
   onBookingDrag?: (bookingId: string, newTime: string, newStaffId?: string) => Promise<void>;
   onBookingResize?: (bookingId: string, newEndTime: string) => Promise<void>;
-  
+
   // UI state
   searchOpen: boolean;
   onSearchToggle: () => void;
   onSearchClose: () => void;
   selectedBooking: Booking | null;
   newBookingOpen: boolean;
-  
+
   // Options
   density?: "default" | "compact" | "ultra-compact";
   enableDragDrop?: boolean;
@@ -76,8 +76,10 @@ interface AgendaContainerProps {
 }
 
 /**
- * AgendaContainer - Pure presentation component
- * Receives all data from useAgendaData hook and renders the premium UI
+ * AgendaContainer - Premium 3-zone layout
+ * ZONE 1: AgendaTopBar (sticky header)
+ * ZONE 2: AgendaContextBar (KPIs + filters)
+ * ZONE 3: Agenda Canvas (calendar content)
  */
 export function AgendaContainer({
   loading,
@@ -211,72 +213,76 @@ export function AgendaContainer({
     return filters;
   }, [selectedStaffId, staffList, onStaffChange]);
 
+  // UI state for sidebar (mobile drawer behavior)
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <NotificationProvider position="top-right" maxNotifications={3}>
-      <div className="h-full">
-        <div className="h-full flex flex-row min-h-0 overflow-hidden bg-gradient-to-br from-[var(--bg-primary)] via-[var(--bg-secondary)] to-[var(--bg-tertiary)]">
-          {/* Responsive Sidebar - Comprehensive filters */}
-          <AgendaSidebar
+      <div className="h-full bg-gradient-to-br from-[var(--bg-primary)] via-[var(--bg-secondary)] to-[var(--bg-tertiary)]">
+        <div className="h-full flex flex-col min-h-0">
+          {/* ZONE 1: TOP APP HEADER (sticky) */}
+          <AgendaTopBar
             selectedDate={selectedDate}
-            onDateSelect={onDateChange}
-            filters={filters}
-            onFiltersChange={setFilters}
-            staffList={staffList}
-            showFreeSlots={false} // TODO: Implement free slots filter when needed
-            onShowFreeSlotsChange={(show) => {
-              // TODO: Implement free slots filter logic
-            }}
+            viewMode={viewMode}
+            onDateChange={onDateChange}
+            onViewModeChange={onViewModeChange}
+            onSearchClick={onSearchToggle}
+            onNotificationsClick={() => {}} // TODO: Implement notifications
+            onFiltersClick={() => setSidebarOpen(true)} // Mobile filters drawer
           />
 
-          {/* Main Content Area */}
-          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            {/* Filtros inteligentes - Header search and quick staff */}
-            <AgendaFilters
-              staffList={staffList}
-              selectedStaffId={selectedStaffId}
-              onStaffChange={onStaffChange}
-              searchOpen={searchOpen}
-              searchTerm={searchTerm}
-              onSearchToggle={onSearchToggle}
-              onSearchChange={setSearchTerm}
-              onSearchClose={onSearchClose}
-              activeFilters={activeFilters}
-              onResetFilters={handleResetFilters}
-              density={density}
-            />
+          {/* ZONE 2: CONTEXT TOOLBAR (KPIs + filters) */}
+          <AgendaContextBar
+            quickStats={quickStats}
+            staffUtilization={staffUtilization}
+            staffList={staffList}
+            selectedStaffId={selectedStaffId}
+            onStaffChange={onStaffChange}
+            viewMode={viewMode}
+          />
 
-            {/* Estadísticas premium */}
-            {quickStats && (
-              <AgendaStats
-                stats={quickStats}
-                staffUtilization={staffUtilization}
-                density={density}
-              />
-            )}
-
-            {/* Contenido principal */}
-            <AgendaContent
-              viewMode={viewMode}
-              onViewModeChange={onViewModeChange}
+          {/* Main Content Area with Sidebar */}
+          <div className="flex-1 flex min-h-0 overflow-hidden">
+            {/* Responsive Sidebar - Drawer in mobile, collapsible in tablet, fixed in desktop */}
+            <AgendaSidebar
               selectedDate={selectedDate}
-              onDateChange={onDateChange}
-              bookings={filteredBookings}
-              staffList={visibleStaff}
-              loading={loading}
-              error={error}
-              tenantTimezone={tenantTimezone}
-              onBookingClick={onBookingClick}
-              onNewBooking={onNewBooking}
-              density={density}
-              timeFormatter={timeFormatter}
-              // Props premium para interactividad
-              onBookingDrag={handleBookingDrag}
-              onBookingResize={handleBookingResize}
-              enableDragDrop={enableDragDrop}
-              showConflicts={showConflicts}
-              // Phase 2: Mobile responsive notification access
-              notificationActions={{ info, warning }}
+              onDateSelect={onDateChange}
+              filters={filters}
+              onFiltersChange={setFilters}
+              staffList={staffList}
+              showFreeSlots={false}
+              onShowFreeSlotsChange={() => {}}
+              // Mobile drawer control
+              isOpen={sidebarOpen}
+              onOpen={() => setSidebarOpen(true)}
+              onClose={() => setSidebarOpen(false)}
             />
+
+            {/* ZONE 3: AGENDA CANVAS (main scrollable area) */}
+            <div className="flex-1 min-h-0 overflow-hidden bg-[var(--bg-primary)]/50 backdrop-blur-[1px]">
+              <AgendaContent
+                viewMode={viewMode}
+                onViewModeChange={onViewModeChange}
+                selectedDate={selectedDate}
+                onDateChange={onDateChange}
+                bookings={filteredBookings}
+                staffList={visibleStaff}
+                loading={loading}
+                error={error}
+                tenantTimezone={tenantTimezone}
+                onBookingClick={onBookingClick}
+                onNewBooking={onNewBooking}
+                density={density}
+                timeFormatter={timeFormatter}
+                // Props premium para interactividad
+                onBookingDrag={handleBookingDrag}
+                onBookingResize={handleBookingResize}
+                enableDragDrop={enableDragDrop}
+                showConflicts={showConflicts}
+                // Phase 2: Mobile responsive notification access
+                notificationActions={{ info, warning }}
+              />
+            </div>
           </div>
         </div>
       </div>

@@ -4,7 +4,6 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Booking, Staff } from "@/types/agenda";
-import { AgendaHeader } from "@/components/calendar/AgendaHeader";
 import { WeekView } from "@/components/calendar/WeekView";
 import { MonthView } from "@/components/calendar/MonthView";
 import { ListView } from "@/components/calendar/ListView";
@@ -246,27 +245,6 @@ export function AgendaContent({
           transition={{ duration: 0.16, ease: "easeOut" }}
           className="h-full flex flex-col min-h-0 overflow-hidden"
         >
-          {/* Header inteligente */}
-          <div className="flex-shrink-0 mb-4">
-            <AgendaHeader
-              selectedDate={selectedDate}
-              viewMode={viewMode}
-              onViewModeChange={onViewModeChange}
-              onDateChange={onDateChange}
-              timeRange="8:00 – 20:00"
-              onNotificationsClick={() => {}}
-              onSearchClick={() => {}}
-              onCalendarClick={() => {}}
-              quickStats={undefined}
-              searchOpen={false}
-              searchTerm=""
-              onSearchChange={() => {}}
-              onSearchClose={() => {}}
-              staffUtilization={[]}
-              onStaffFilterChange={() => {}}
-            />
-          </div>
-
           {/* Contenido principal según vista */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -346,12 +324,12 @@ export function AgendaContent({
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: "auto" }}
                             exit={{ opacity: 0, height: 0 }}
-                            className="flex-shrink-0 mb-4"
+                            className="flex-shrink-0 mb-2"
                           >
                             <ConflictZone
                               bookings={bookings}
                               tenantTimezone={tenantTimezone}
-                              className="mx-4"
+                              className="mx-3"
                             />
                           </motion.div>
                         )}
@@ -427,7 +405,7 @@ export function AgendaContent({
 
                         {/* Vista Lista (Mobile) */}
                         <div className="md:hidden flex-1 min-h-0 overflow-y-auto" role="region" aria-label="Lista de reservas del día">
-                          <div className="space-y-3 p-4">
+                          <div className="space-y-2 p-3">
                             {bookings.map((booking) => (
                               <MiniBookingCard
                                 key={booking.id}
@@ -480,7 +458,7 @@ export function AgendaContent({
           {viewMode === "day" && (
             <FloatingActionButton
               onClick={onNewBooking}
-              className="fixed bottom-6 right-6 z-50"
+              className="fixed bottom-20 right-4 z-50 md:bottom-6 md:right-6"
               aria-label="Crear nueva reserva"
             />
           )}
