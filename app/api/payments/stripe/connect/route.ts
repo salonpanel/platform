@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { stripe } from "@/lib/stripe";
 
@@ -18,9 +18,23 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   try {
     // 1. Verificar autenticación
-    const supabaseAuth = createRouteHandlerClient({ 
-      cookies 
-    });
+    const cookieStore = await cookies();
+    
+    const supabaseAuth = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            // No necesitamos setAll para este endpoint
+          },
+        },
+      }
+    );
+    
     const {
       data: { session },
     } = await supabaseAuth.auth.getSession();
