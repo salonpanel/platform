@@ -1,0 +1,1 @@
+﻿src/components/calendar/AgendaModal.tsx(79,3): error TS2339: Property 'header' does not exist on type 'AgendaModalProps'.
