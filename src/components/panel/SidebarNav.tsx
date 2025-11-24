@@ -17,8 +17,6 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronLeft,
-  ChevronRight,
   Wallet,
   Target
 } from "lucide-react";
@@ -206,26 +204,6 @@ export function SidebarNav({
             )}
           </AnimatePresence>
 
-          {/* Botón toggle (solo visible en desktop) */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={onToggleCollapse}
-            className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full glass-strong border border-[rgba(255,255,255,0.15)] items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.15)] hover:shadow-[0px_0px_20px_rgba(123,92,255,0.3)] transition-all duration-300 z-10"
-            aria-label={isCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
-            title={isCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
-          >
-            <motion.div
-              animate={{ rotate: isCollapsed ? 0 : 180 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            >
-              {isCollapsed ? (
-                <ChevronRight className="h-4 w-4" />
-              ) : (
-                <ChevronLeft className="h-4 w-4" />
-              )}
-            </motion.div>
-          </motion.button>
 
           {/* Botón cerrar (solo visible en mobile) */}
           <button
