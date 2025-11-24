@@ -46,28 +46,22 @@ export function getSupabaseBrowser(): SupabaseClient {
     if (!isDevelopment && typeof window !== 'undefined' && window.location.hostname === 'pro.bookfast.es') {
       clientOptions.global = {
         fetch: (url: string, options?: RequestInit) => {
-          // Redirigir peticiones de auth a través del proxy
+          // Redirigir peticiones de auth a través del proxy API
           if (url.includes('/auth/v1/')) {
-            const proxyUrl = url.replace(
-              'https://jsqminbgggwhvkfgeibz.supabase.co/auth/v1/',
-              `${window.location.origin}/auth-proxy/`
-            );
+            const path = url.replace('https://jsqminbgggwhvkfgeibz.supabase.co/auth/v1/', '');
+            const proxyUrl = `${window.location.origin}/api/auth-proxy?path=${encodeURIComponent(path)}`;
             return fetch(proxyUrl, options);
           }
-          // Redirigir peticiones REST a través del proxy
+          // Redirigir peticiones REST a través del proxy API
           if (url.includes('/rest/v1/')) {
-            const proxyUrl = url.replace(
-              'https://jsqminbgggwhvkfgeibz.supabase.co/rest/v1/',
-              `${window.location.origin}/rest-proxy/`
-            );
+            const path = url.replace('https://jsqminbgggwhvkfgeibz.supabase.co/rest/v1/', '');
+            const proxyUrl = `${window.location.origin}/api/rest-proxy?path=${encodeURIComponent(path)}`;
             return fetch(proxyUrl, options);
           }
-          // Redirigir peticiones Storage a través del proxy
+          // Redirigir peticiones Storage a través del proxy API
           if (url.includes('/storage/v1/')) {
-            const proxyUrl = url.replace(
-              'https://jsqminbgggwhvkfgeibz.supabase.co/storage/v1/',
-              `${window.location.origin}/storage-proxy/`
-            );
+            const path = url.replace('https://jsqminbgggwhvkfgeibz.supabase.co/storage/v1/', '');
+            const proxyUrl = `${window.location.origin}/api/storage-proxy?path=${encodeURIComponent(path)}`;
             return fetch(proxyUrl, options);
           }
           return fetch(url, options);
