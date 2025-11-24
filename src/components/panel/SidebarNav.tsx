@@ -51,8 +51,8 @@ export function SidebarNav({
   const pathname = usePathname();
   const [isHovered, setIsHovered] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-  const hoverTimeoutRef = useRef<number | null>(null);
-  const leaveTimeoutRef = useRef<number | null>(null);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const leaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const getNavIcon = useCallback((href: string): React.ReactNode => {
     const iconClass = "h-5 w-5";
