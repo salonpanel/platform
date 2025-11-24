@@ -25,6 +25,9 @@ interface AgendaSidebarProps {
   onClose?: () => void;
   showFreeSlots?: boolean;
   onShowFreeSlotsChange?: (show: boolean) => void;
+  // New props for external mobile drawer control
+  isOpen?: boolean;
+  onOpen?: () => void;
 }
 
 export function AgendaSidebar({
@@ -36,11 +39,19 @@ export function AgendaSidebar({
   onClose,
   showFreeSlots = false,
   onShowFreeSlotsChange,
+  // New props for external mobile drawer control
+  isOpen: externalIsOpen,
+  onOpen: externalOnOpen,
 }: AgendaSidebarProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
   const [showMobileDrawer, setShowMobileDrawer] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Use external control if provided, otherwise internal state
+  const isDrawerOpen = externalIsOpen !== undefined ? externalIsOpen : showMobileDrawer;
+  const handleDrawerClose = externalIsOpen !== undefined ? onClose : () => setShowMobileDrawer(false);
+  const handleDrawerOpen = externalOnOpen || (() => setShowMobileDrawer(true));
 
   // Internal responsive detection using CSS media queries
   useEffect(() => {
@@ -405,13 +416,13 @@ export function AgendaSidebar({
     return (
       <>
         {/* Mobile toggle button - shown when drawer is closed */}
-        {!showMobileDrawer && (
+        {!isDrawerOpen && (
           <motion.button
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={handleMobileToggle}
+            onClick={handleDrawerOpen}
             className={cn(
               "fixed bottom-4 right-4 z-40 p-3 rounded-xl shadow-lg",
               "bg-[var(--glass-bg-default)] border border-[var(--glass-border)]",
@@ -425,8 +436,8 @@ export function AgendaSidebar({
         )}
         
         <AgendaModal
-          isOpen={showMobileDrawer}
-          onClose={handleMobileToggle}
+          isOpen={isDrawerOpen}
+          onClose={handleDrawerClose || (() => {})}
           title="Filtros y Navegación"
           variant="drawer"
           showMobileDrawer={true}
