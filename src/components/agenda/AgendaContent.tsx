@@ -143,8 +143,6 @@ export function AgendaContent({
     }
   }, [onBookingResize]);
 
-  return (
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
