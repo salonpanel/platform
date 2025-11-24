@@ -20,7 +20,7 @@ let browserClient: SupabaseClient | null = null;
  */
 export function getSupabaseBrowser(): SupabaseClient {
   if (!browserClient) {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    let url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!url || !key) {
@@ -29,9 +29,26 @@ export function getSupabaseBrowser(): SupabaseClient {
 
     const isDevelopment = process.env.NODE_ENV === 'development';
 
+    // CRÍTICO: En producción, usar proxy para evitar CORS
+    if (!isDevelopment && typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      if (hostname === 'pro.bookfast.es') {
+        // Reemplazar URL de Supabase con proxy local
+        url = window.location.origin;
+      }
+    }
+
     // CRÍTICO: createBrowserClient de @supabase/ssr establece cookies HTTP automáticamente
     // que el servidor puede leer usando createServerClient
     browserClient = createBrowserClient(url, key, {
+      // Configuración custom para usar proxy en producción
+      auth: {
+        // En producción, usar proxy para endpoints de auth
+        ...(process.env.NODE_ENV === 'production' && typeof window !== 'undefined' && window.location.hostname === 'pro.bookfast.es' && {
+          // Override URLs para que usen el proxy
+          url: `${window.location.origin}/auth-proxy`,
+        }),
+      },
       cookies: {
         getAll() {
           if (typeof document === 'undefined') return [];
