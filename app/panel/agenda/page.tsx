@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { getCurrentTenant } from "@/lib/panel-tenant";
 import { useToast } from "@/components/ui/Toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { Booking, Staff, StaffBlocking, StaffSchedule, ViewMode, CalendarSlot } from "@/types/agenda";
+import { Booking, Staff, StaffBlocking, StaffSchedule, ViewMode, CalendarSlot, BookingStatus, BOOKING_STATUS_CONFIG } from "@/types/agenda";
 import { toTenantLocalDate } from "@/lib/timezone";
 import { useAgendaConflicts } from "@/hooks/useAgendaConflicts";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
@@ -501,6 +501,26 @@ const onSaveBlocking = async (blockingData: BlockingFormPayload) => {
     }
   };
 
+  // Wrapper functions to adapt existing handlers to AgendaContainer interface
+  const handleBookingDrag = async (bookingId: string, newTime: string, newStaffId?: string) => {
+    // For drag operations, we need to calculate the end time based on original booking duration
+    const originalBooking = bookings.find(b => b.id === bookingId);
+    if (!originalBooking) return;
+    
+    const originalDuration = new Date(originalBooking.ends_at).getTime() - new Date(originalBooking.starts_at).getTime();
+    const newEndsAt = new Date(new Date(newTime).getTime() + originalDuration).toISOString();
+    
+    await onBookingMove(bookingId, newStaffId || originalBooking.staff_id || '', newTime, newEndsAt);
+  };
+
+  const handleBookingResize = async (bookingId: string, newEndTime: string) => {
+    // For resize operations, we keep the original start time and only change the end time
+    const originalBooking = bookings.find(b => b.id === bookingId);
+    if (!originalBooking) return;
+    
+    await onBookingResize(bookingId, originalBooking.starts_at, newEndTime);
+  };
+
   // Función auxiliar para guardar un booking
   const saveBooking = async (
     bookingData: BookingFormPayload,
@@ -978,8 +998,8 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
           }
         }}
         onNewBooking={() => setShowNewBookingModal(true)}
-        onBookingDrag={onBookingMove}
-        onBookingResize={onBookingResize}
+        onBookingDrag={handleBookingDrag}
+        onBookingResize={handleBookingResize}
         
         // UI state
         searchOpen={searchOpen}
@@ -1010,27 +1030,55 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
           staff={staffList}
           customers={customers}
           selectedDate={selectedDate}
-          selectedTime={selectedSlot?.start_time}
-          selectedEndTime={selectedSlot?.end_time}
-          selectedStaffId={selectedSlot?.staff_id || (filters.staff.includes("all") ? null : filters.staff[0] || null)}
+          selectedTime={selectedSlot?.time}
+          selectedEndTime={selectedSlot?.endTime}
+          selectedStaffId={selectedSlot?.staffId || (filters.staff.includes("all") ? undefined : filters.staff[0] || undefined)}
           isLoading={loading}
           editingBooking={editingBooking}
           tenantId={tenantId || undefined}
         />
       )}
 
-      {conflictsHook.showConflictModal && conflictsHook.selectedConflict && (
+      {conflictsHook.showConflictModal && (
         <ConflictResolutionModal
           isOpen={conflictsHook.showConflictModal}
           onClose={() => conflictsHook.setShowConflictModal(false)}
-          conflict={conflictsHook.selectedConflict}
-          onResolve={async (resolution, force) => {
-            try {
-              await conflictsHook.resolveConflict(resolution, force);
-              showToast("Conflicto resuelto correctamente", "success");
-            } catch (err) {
-              showToast("Error al resolver el conflicto", "error");
-            }
+          conflicts={conflictsHook.conflicts}
+          newBookingStart={conflictsHook.pendingBooking?.starts_at || ""}
+          newBookingEnd={conflictsHook.pendingBooking?.ends_at || ""}
+          newBookingStaffId={conflictsHook.pendingBooking?.staff_id || ""}
+          newBookingStaffName={staffList.find(s => s.id === conflictsHook.pendingBooking?.staff_id)?.name}
+          timezone={tenantTimezone}
+          onResolve={(action: "change_time" | "change_staff" | "force" | "cancel") => {
+            conflictsHook.handleResolve(action, async (force: boolean) => {
+              if (conflictsHook.pendingBooking) {
+                // Convert PendingBookingInput to BookingFormPayload with validation
+                const bookingPayload: BookingFormPayload = {
+                  id: conflictsHook.pendingBooking.id || undefined, // Keep undefined for new bookings
+                  staff_id: conflictsHook.pendingBooking.staff_id || "",
+                  starts_at: conflictsHook.pendingBooking.starts_at,
+                  ends_at: conflictsHook.pendingBooking.ends_at,
+                  customer_id: conflictsHook.pendingBooking.customer_id || null,
+                  service_id: conflictsHook.pendingBooking.service_id || null,
+                  status: (conflictsHook.pendingBooking.status as BookingStatus) || "pending",
+                  internal_notes: conflictsHook.pendingBooking.internal_notes || null,
+                  client_message: conflictsHook.pendingBooking.client_message || null,
+                  is_highlighted: conflictsHook.pendingBooking.is_highlighted || false,
+                };
+                await saveBooking(bookingPayload, force);
+              } else if (conflictsHook.pendingBlocking) {
+                // Convert PendingBlockingInput to BlockingFormPayload with validation
+                const blockingPayload: BlockingFormPayload = {
+                  staff_id: conflictsHook.pendingBlocking.staff_id,
+                  start_at: conflictsHook.pendingBlocking.start_at,
+                  end_at: conflictsHook.pendingBlocking.end_at,
+                  type: conflictsHook.pendingBlocking.type || "block", // Default to "block" if undefined
+                  reason: conflictsHook.pendingBlocking.reason || "",
+                  notes: conflictsHook.pendingBlocking.notes || null,
+                };
+                await saveBlocking(blockingPayload, force);
+              }
+            });
           }}
         />
       )}
