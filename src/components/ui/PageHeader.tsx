@@ -78,7 +78,9 @@ const PageHeaderComponent = ({
           config.spacing,
           className
         )}
-      >
+      />
+    );
+  }
 
   return (
     <motion.div

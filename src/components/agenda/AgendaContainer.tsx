@@ -6,9 +6,9 @@ import { endOfDay, startOfDay, format, parseISO } from "date-fns";
 import { useSearchParams } from "next/navigation";
 import { getCurrentTenant } from "@/lib/panel-tenant";
 import { Booking, Staff } from "@/types/agenda";
-import { AgendaFilters } from "./AgendaFilters";
-import { AgendaStats } from "./AgendaStats";
-import { AgendaContent } from "./AgendaContent";
+import { AgendaFilters } from "@/components/agenda/AgendaFilters";
+import { AgendaStats } from "@/components/agenda/AgendaStats";
+import { AgendaContent } from "@/components/agenda/AgendaContent";
 import { HeightAwareContainer, useHeightAware } from "@/components/panel/HeightAwareContainer";
 
 /**
