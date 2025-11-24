@@ -10,7 +10,7 @@ interface ButtonProps {
   size?: "sm" | "md" | "lg";
   shape?: "default" | "pill"; // Capsule shape option
   density?: "default" | "compact";
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
   disabled?: boolean;
   isLoading?: boolean;
   className?: string;

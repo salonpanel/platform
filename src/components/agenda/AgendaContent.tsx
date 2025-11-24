@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Booking, Staff } from "@/types/agenda";
@@ -15,6 +15,9 @@ import { DraggableBookingCard } from "./DraggableBookingCard";
 import { ConflictZone } from "./ConflictZone";
 import { PremiumLoader } from "./PremiumLoader";
 import { PremiumSkeleton } from "./PremiumSkeleton";
+import { Card } from "@/components/ui/Card";
+import { Timeline } from "./Timeline";
+import { MiniBookingCard } from "./MiniBookingCard";
 
 type ViewMode = "day" | "week" | "month" | "list";
 
@@ -32,7 +35,7 @@ interface AgendaContentProps {
   onNewBooking: () => void;
   density: "default" | "compact" | "ultra-compact";
   timeFormatter: Intl.DateTimeFormat;
-  heightAware: any;
+  heightAware?: any;
   // Nuevas props para interactividad premium
   onBookingDrag?: (bookingId: string, newTime: string, newStaffId?: string) => void;
   onBookingResize?: (bookingId: string, newEndTime: string) => void;
