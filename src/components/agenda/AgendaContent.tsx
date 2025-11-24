@@ -82,6 +82,10 @@ export function AgendaContent({
   // Estados de carga contextuales
   const [dragLoading, setDragLoading] = useState(false);
   const [resizeLoading, setResizeLoading] = useState(false);
+
+  // Función adaptadora memoizada
+  const adaptBookingToMiniCard = useMemo(() =>
+    (booking: Booking): MiniBookingCardData => ({
       id: booking.id,
       starts_at: booking.starts_at,
       ends_at: booking.ends_at,
@@ -116,6 +120,30 @@ export function AgendaContent({
     : density === "compact"
     ? Math.min(70, calculatedHourHeight)
     : Math.min(90, calculatedHourHeight);
+
+  const handleBookingDrag = useCallback(async (bookingId: string, newTime: string, newStaffId?: string) => {
+    if (onBookingDrag) {
+      setDragLoading(true);
+      try {
+        await onBookingDrag(bookingId, newTime, newStaffId);
+      } finally {
+        setDragLoading(false);
+      }
+    }
+  }, [onBookingDrag]);
+
+  const handleBookingResize = useCallback(async (bookingId: string, newEndTime: string) => {
+    if (onBookingResize) {
+      setResizeLoading(true);
+      try {
+        await onBookingResize(bookingId, newEndTime);
+      } finally {
+        setResizeLoading(false);
+      }
+    }
+  }, [onBookingResize]);
+
+  return (
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -447,42 +475,6 @@ export function AgendaContent({
       </AnimatePresence>
     </div>
   );
-
-  // Calcular hourHeight dinámicamente según altura disponible
-  const availableHeight = heightAware.availableHeight;
-  const workingHours = 12; // 8:00 a 20:00 = 12 horas laborables
-  const headerHeight = 180; // Optimizado: filtros + título + staff selector
-  const availableForTimeline = Math.max(400, availableHeight - headerHeight);
-  const calculatedHourHeight = Math.max(
-    60, // Mínimo 60px para buena legibilidad
-    Math.floor(availableForTimeline / workingHours)
-  );
-  const hourHeight = density === "ultra-compact"
-    ? Math.min(50, calculatedHourHeight)
-    : density === "compact"
-    ? Math.min(70, calculatedHourHeight)
-    : Math.min(90, calculatedHourHeight);
-
-  const handleBookingDrag = useCallback(async (bookingId: string, newTime: string, newStaffId?: string) => {
-    if (onBookingDrag) {
-      setDragLoading(true);
-      try {
-        await onBookingDrag(bookingId, newTime, newStaffId);
-      } finally {
-        setDragLoading(false);
-      }
-    }
-  }, [onBookingDrag]);
-
-  const handleBookingResize = useCallback(async (bookingId: string, newEndTime: string) => {
-    if (onBookingResize) {
-      setResizeLoading(true);
-      try {
-        await onBookingResize(bookingId, newEndTime);
-      } finally {
-        setResizeLoading(false);
-      }
-    }
-  }, [onBookingResize]);
+}
 
   return (

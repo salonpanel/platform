@@ -4,6 +4,7 @@ import { useState, useEffect, createContext, useContext, ReactNode } from "react
 import { motion, AnimatePresence } from "framer-motion";
 import { X, CheckCircle, AlertCircle, Info, Bell, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/Button";
 
 type NotificationType = "success" | "error" | "warning" | "info" | "achievement";
 
@@ -77,7 +78,7 @@ export function NotificationProvider({
     });
 
     // Auto-dismiss if duration > 0
-    if (newNotification.duration > 0) {
+    if (newNotification.duration && newNotification.duration > 0) {
       setTimeout(() => {
         dismissNotification(id);
       }, newNotification.duration);
