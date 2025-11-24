@@ -1,43 +1,121 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { endOfDay, startOfDay, format, parseISO } from "date-fns";
-import { useSearchParams } from "next/navigation";
-import { getCurrentTenant } from "@/lib/panel-tenant";
+import { format, parseISO } from "date-fns";
 import { Booking, Staff } from "@/types/agenda";
 import { AgendaFilters } from "@/components/agenda/AgendaFilters";
 import { AgendaStats } from "@/components/agenda/AgendaStats";
 import { AgendaContent } from "@/components/agenda/AgendaContent";
+import { AgendaSidebar } from "@/components/calendar/AgendaSidebar";
 import { NotificationProvider, useNotificationActions } from "./NotificationSystem";
 
+// Types for the data coming from useAgendaData hook
+interface QuickStats {
+  totalBookings: number;
+  totalHours: number;
+  totalAmount: number;
+  rangeLabel?: string;
+}
+
+interface StaffUtilization {
+  staffId: string;
+  staffName: string;
+  utilization: number;
+}
+
+interface ActiveFilter {
+  id: string;
+  label: string;
+  onRemove: () => void;
+}
+
+interface AgendaContainerProps {
+  // Data from useAgendaData hook
+  loading: boolean;
+  error: string | null;
+  staffList: Staff[];
+  bookings: Booking[];
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  filters: any;
+  setFilters: (filters: any) => void;
+  activeFiltersCount: number;
+  filteredBookings: Booking[];
+  visibleStaff: Staff[];
+  quickStats: QuickStats | undefined;
+  staffUtilization: StaffUtilization[];
+  refreshDaySnapshots: () => void;
+  
+  // Core state from page.tsx
+  tenantId: string | null;
+  tenantTimezone: string;
+  selectedDate: string;
+  selectedStaffId: string | null;
+  viewMode: "day" | "week" | "month" | "list";
+  
+  // Callbacks from page.tsx
+  onDateChange: (dateStr: string) => void;
+  onViewModeChange: (mode: "day" | "week" | "month" | "list") => void;
+  onStaffChange: (staffId: string | null) => void;
+  onBookingClick: (booking: Booking) => void;
+  onNewBooking: () => void;
+  onBookingDrag?: (bookingId: string, newTime: string, newStaffId?: string) => Promise<void>;
+  onBookingResize?: (bookingId: string, newEndTime: string) => Promise<void>;
+  
+  // UI state
+  searchOpen: boolean;
+  onSearchToggle: () => void;
+  onSearchClose: () => void;
+  selectedBooking: Booking | null;
+  newBookingOpen: boolean;
+  
+  // Options
+  density?: "default" | "compact" | "ultra-compact";
+  enableDragDrop?: boolean;
+  showConflicts?: boolean;
+}
+
 /**
- * AgendaContainer - Orquestador principal premium
- * Maneja toda la lógica de estado, suscripciones y coordinación de componentes
+ * AgendaContainer - Pure presentation component
+ * Receives all data from useAgendaData hook and renders the premium UI
  */
-export function AgendaContainer() {
-  const supabase = createClientComponentClient();
-  const searchParams = useSearchParams();
+export function AgendaContainer({
+  loading,
+  error,
+  staffList,
+  bookings,
+  searchTerm,
+  setSearchTerm,
+  filters,
+  setFilters,
+  activeFiltersCount,
+  filteredBookings,
+  visibleStaff,
+  quickStats,
+  staffUtilization,
+  refreshDaySnapshots,
+  tenantId,
+  tenantTimezone,
+  selectedDate,
+  selectedStaffId,
+  viewMode,
+  onDateChange,
+  onViewModeChange,
+  onStaffChange,
+  onBookingClick,
+  onNewBooking,
+  onBookingDrag,
+  onBookingResize,
+  searchOpen,
+  onSearchToggle,
+  onSearchClose,
+  selectedBooking,
+  newBookingOpen,
+  density = "default",
+  enableDragDrop = true,
+  showConflicts = true,
+}: AgendaContainerProps) {
   const { success, error: showError, warning, info, achievement } = useNotificationActions();
-
-  // Estados principales
-  const [tenantId, setTenantId] = useState<string | null>(null);
-  const [tenantTimezone, setTenantTimezone] = useState<string>("Europe/Madrid");
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
-  const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"day" | "week" | "month" | "list">("day");
-  const [staffList, setStaffList] = useState<Staff[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Estados de UI
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
-  const [newBookingOpen, setNewBookingOpen] = useState(false);
-
-  const density = "default";
 
   // Formateadores memoizados
   const timeFormatter = useMemo(
@@ -62,317 +140,156 @@ export function AgendaContainer() {
     [tenantTimezone]
   );
 
-  // Cargar tenant y staff inicial
-  useEffect(() => {
-    const loadTenant = async () => {
-      try {
-        const impersonateOrgId = searchParams?.get("impersonate");
-        const { tenant } = await getCurrentTenant(impersonateOrgId);
-
-        if (!tenant) {
-          setError("No tienes acceso a ninguna barbería");
-          setLoading(false);
-          return;
-        }
-
-        setTenantId(tenant.id);
-        setTenantTimezone(tenant.timezone);
-
-        // Cargar staff del tenant
-        const { data: staffData } = await supabase
-          .from("staff")
-          .select("id, name, active")
-          .eq("tenant_id", tenant.id)
-          .eq("active", true)
-          .order("name");
-
-        if (staffData) {
-          setStaffList(staffData as Staff[]);
-        }
-      } catch (err: any) {
-        setError(err?.message || "Error al cargar información");
-        setLoading(false);
-      }
-    };
-
-    loadTenant();
-  }, [supabase, searchParams]);
-
-  // Cargar bookings optimizado con memoización
-  const loadBookings = useCallback(async () => {
-    if (!tenantId || !selectedDate) return;
-
-    try {
-      setLoading(true);
-      const from = startOfDay(selectedDate).toISOString();
-      const to = endOfDay(selectedDate).toISOString();
-
-      let query = supabase
-        .from("bookings")
-        .select(`
-          *,
-          customer:customers(id, name, email, phone),
-          service:services(id, name, duration_min, price_cents),
-          staff:staff(id, name)
-        `)
-        .eq("tenant_id", tenantId)
-        .gte("starts_at", from)
-        .lt("starts_at", to)
-        .order("starts_at", { ascending: true });
-
-      if (selectedStaffId) {
-        query = query.eq("staff_id", selectedStaffId);
-      }
-
-      const { data, error: bookingsError } = await query;
-
-      if (bookingsError) {
-        throw new Error(bookingsError.message);
-      }
-
-      setBookings((data as Booking[]) || []);
-    } catch (err: any) {
-      setError(err?.message || "Error al cargar reservas");
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase, tenantId, selectedDate, selectedStaffId]);
-
-  // Suscripción optimizada
-  useEffect(() => {
-    if (!tenantId || !selectedDate) return;
-
-    loadBookings();
-
-    const channel = supabase
-      .channel("rt-bookings-optimized")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "bookings",
-          filter: `tenant_id=eq.${tenantId}&starts_at=gte.${startOfDay(selectedDate).toISOString()}&starts_at=lt.${endOfDay(selectedDate).toISOString()}`,
-        },
-        () => {
-          loadBookings();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [supabase, tenantId, selectedDate, loadBookings]);
-
-  // Callbacks optimizados
-  const handleDateChange = useCallback((dateStr: string) => {
-    setSelectedDate(parseISO(dateStr));
-  }, []);
-
-  const handleBookingClick = useCallback((booking: Booking) => {
-    setSelectedBooking(booking);
-  }, []);
-
-  const handleNewBooking = useCallback(() => {
-    setNewBookingOpen(true);
-  }, []);
-
+  // Callbacks for UI interactions
   const handleResetFilters = useCallback(() => {
-    setSelectedDate(new Date());
-    setSelectedStaffId(null);
+    onDateChange(format(new Date(), "yyyy-MM-dd"));
+    onStaffChange(null);
     setSearchTerm("");
-  }, []);
+  }, [onDateChange, onStaffChange, setSearchTerm]);
 
-  // Handlers para drag & drop premium
+  // Handlers para drag & drop premium (using props from page.tsx)
   const handleBookingDrag = useCallback(async (bookingId: string, newTime: string, newStaffId?: string) => {
-    try {
-      console.log('🎯 Booking drag operation:', { bookingId, newTime, newStaffId });
-
-      // TODO: Implementar actualización en base de datos
-      // const { error } = await supabase
-      //   .from('bookings')
-      //   .update({ starts_at: newTime, staff_id: newStaffId })
-      //   .eq('id', bookingId);
-
-      // Por ahora, recargar para mostrar cambios
-      await loadBookings();
-
-      // Notificación de éxito
-      success(
-        "Cita movida correctamente",
-        `La cita se ha reprogramado para ${new Date(newTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`,
-        {
-          label: "Ver en calendario",
-          onClick: () => {
-            setViewMode("day");
-            setSelectedDate(new Date(newTime));
+    if (onBookingDrag) {
+      try {
+        await onBookingDrag(bookingId, newTime, newStaffId);
+        success(
+          "Cita movida correctamente",
+          `La cita se ha reprogramado para ${new Date(newTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`,
+          {
+            label: "Ver en calendario",
+            onClick: () => {
+              onViewModeChange("day");
+              onDateChange(new Date(newTime).toISOString().split('T')[0]);
+            }
           }
-        }
-      );
-
-    } catch (error) {
-      console.error('❌ Error updating booking position:', error);
-      showError(
-        "Error al mover la cita",
-        "No se pudo actualizar el horario. Inténtalo de nuevo.",
-        {
-          label: "Reintentar",
-          onClick: () => handleBookingDrag(bookingId, newTime, newStaffId)
-        }
-      );
+        );
+      } catch (error) {
+        console.error('❌ Error updating booking position:', error);
+        showError(
+          "Error al mover la cita",
+          "No se pudo actualizar el horario. Inténtalo de nuevo.",
+          {
+            label: "Reintentar",
+            onClick: () => handleBookingDrag(bookingId, newTime, newStaffId)
+          }
+        );
+      }
     }
-  }, [loadBookings, success, showError]);
+  }, [onBookingDrag, success, showError, onViewModeChange, onDateChange]);
 
   const handleBookingResize = useCallback(async (bookingId: string, newEndTime: string) => {
-    try {
-      console.log('📏 Booking resize operation:', { bookingId, newEndTime });
-
-      // TODO: Implementar lógica de resize
-      // const { error } = await supabase
-      //   .from('bookings')
-      //   .update({ ends_at: newEndTime })
-      //   .eq('id', bookingId);
-
-      await loadBookings();
-
-      success(
-        "Duración actualizada",
-        "La duración de la cita se ha ajustado correctamente"
-      );
-
-    } catch (error) {
-      console.error('❌ Error updating booking duration:', error);
-      showError(
-        "Error al ajustar duración",
-        "No se pudo actualizar la duración. Inténtalo de nuevo."
-      );
+    if (onBookingResize) {
+      try {
+        await onBookingResize(bookingId, newEndTime);
+        success(
+          "Duración actualizada",
+          "La duración de la cita se ha ajustado correctamente"
+        );
+      } catch (error) {
+        console.error('❌ Error updating booking duration:', error);
+        showError(
+          "Error al ajustar duración",
+          "No se pudo actualizar la duración. Inténtalo de nuevo."
+        );
+      }
     }
-  }, [loadBookings, success, showError]);
+  }, [onBookingResize, success, showError]);
 
   // Filtros aplicados actualmente
-  const activeFilters = useMemo(() => {
-    const filters = [];
+  const activeFilters: ActiveFilter[] = useMemo(() => {
+    const filters: ActiveFilter[] = [];
     if (selectedStaffId) {
       const staff = staffList.find((s) => s.id === selectedStaffId);
       if (staff) {
         filters.push({
           id: "staff",
           label: `Staff: ${staff.name}`,
-          onRemove: () => setSelectedStaffId(null),
+          onRemove: () => onStaffChange(null),
         });
       }
     }
     return filters;
-  }, [selectedStaffId, staffList]);
-
-  // Estadísticas rápidas memoizadas
-  const quickStats = useMemo(() => {
-    if (!bookings.length) return undefined;
-
-    const totalAmount = bookings.reduce((sum, b) => sum + (b.service?.price_cents || 0), 0);
-    const totalMinutes = bookings.reduce((sum, b) => sum + (b.service?.duration_min || 0), 0);
-    const totalHours = Math.round((totalMinutes / 60) * 10) / 10;
-
-    return {
-      totalBookings: bookings.length,
-      totalHours,
-      totalAmount,
-      rangeLabel: viewMode === "day" ? dateFormatter.format(selectedDate!) : undefined
-    };
-  }, [bookings, viewMode, dateFormatter, selectedDate]);
-
-  // Utilización de staff memoizada
-  const staffUtilization = useMemo(() => {
-    if (!bookings.length || !staffList.length) return [];
-
-    return staffList.map(staff => {
-      const staffBookings = bookings.filter(b => b.staff_id === staff.id);
-      const staffMinutes = staffBookings.reduce((sum, b) => sum + (b.service?.duration_min || 0), 0);
-      const totalWorkMinutes = 8 * 60; // 8 horas jornada
-      const utilization = Math.round((staffMinutes / totalWorkMinutes) * 100);
-
-      return {
-        staffId: staff.id,
-        staffName: staff.name,
-        utilization: Math.min(100, utilization)
-      };
-    });
-  }, [bookings, staffList]);
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.05,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 8 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.2,
-        ease: "easeOut" as const,
-      },
-    },
-  };
+  }, [selectedStaffId, staffList, onStaffChange]);
 
   return (
     <NotificationProvider position="top-right" maxNotifications={3}>
       <div className="h-full">
-        <div className="h-full flex flex-col min-h-0 overflow-hidden bg-gradient-to-br from-[var(--bg-primary)] via-[var(--bg-secondary)] to-[var(--bg-tertiary)]">
-          {/* Filtros inteligentes */}
-          <AgendaFilters
+        <div className="h-full flex flex-row min-h-0 overflow-hidden bg-gradient-to-br from-[var(--bg-primary)] via-[var(--bg-secondary)] to-[var(--bg-tertiary)]">
+          {/* Responsive Sidebar - Comprehensive filters */}
+          <AgendaSidebar
+            selectedDate={selectedDate}
+            onDateSelect={onDateChange}
+            filters={{
+              payment: [], // TODO: Map from actual filter state
+              status: [], // TODO: Map from actual filter state  
+              staff: selectedStaffId ? [selectedStaffId] : [],
+              highlighted: null, // TODO: Map from actual filter state
+            }}
+            onFiltersChange={(newFilters) => {
+              // TODO: Map sidebar filters to container state
+              if (newFilters.staff.length > 0) {
+                onStaffChange(newFilters.staff[0]);
+              } else {
+                onStaffChange(null);
+              }
+            }}
             staffList={staffList}
-            selectedStaffId={selectedStaffId}
-            onStaffChange={setSelectedStaffId}
-            searchOpen={searchOpen}
-            searchTerm={searchTerm}
-            onSearchToggle={() => setSearchOpen(!searchOpen)}
-            onSearchChange={setSearchTerm}
-            onSearchClose={() => setSearchOpen(false)}
-            activeFilters={activeFilters}
-            onResetFilters={handleResetFilters}
-            density={density}
+            showFreeSlots={false} // TODO: Map from actual state
+            onShowFreeSlotsChange={(show) => {
+              // TODO: Handle free slots toggle
+            }}
           />
 
-          {/* Estadísticas premium */}
-          {quickStats && (
-            <AgendaStats
-              stats={quickStats}
-              staffUtilization={staffUtilization}
+          {/* Main Content Area */}
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            {/* Filtros inteligentes - Header search and quick staff */}
+            <AgendaFilters
+              staffList={staffList}
+              selectedStaffId={selectedStaffId}
+              onStaffChange={onStaffChange}
+              searchOpen={searchOpen}
+              searchTerm={searchTerm}
+              onSearchToggle={onSearchToggle}
+              onSearchChange={setSearchTerm}
+              onSearchClose={onSearchClose}
+              activeFilters={activeFilters}
+              onResetFilters={handleResetFilters}
               density={density}
             />
-          )}
 
-          {/* Contenido principal */}
-        <AgendaContent
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          selectedDate={selectedDate ? format(selectedDate, "yyyy-MM-dd") : ""}
-          onDateChange={handleDateChange}
-          bookings={bookings}
-          staffList={staffList}
-          loading={loading}
-          error={error}
-          tenantTimezone={tenantTimezone}
-          onBookingClick={handleBookingClick}
-          onNewBooking={handleNewBooking}
-          density={density}
-          timeFormatter={timeFormatter}
-            // Props premium para interactividad
-          onBookingDrag={handleBookingDrag}
-          onBookingResize={handleBookingResize}
-          enableDragDrop={true}
-          showConflicts={true}
-        />
+            {/* Estadísticas premium */}
+            {quickStats && (
+              <AgendaStats
+                stats={quickStats}
+                staffUtilization={staffUtilization}
+                density={density}
+              />
+            )}
+
+            {/* Contenido principal */}
+            <AgendaContent
+              viewMode={viewMode}
+              onViewModeChange={onViewModeChange}
+              selectedDate={selectedDate}
+              onDateChange={onDateChange}
+              bookings={filteredBookings}
+              staffList={visibleStaff}
+              loading={loading}
+              error={error}
+              tenantTimezone={tenantTimezone}
+              onBookingClick={onBookingClick}
+              onNewBooking={onNewBooking}
+              density={density}
+              timeFormatter={timeFormatter}
+              // Props premium para interactividad
+              onBookingDrag={handleBookingDrag}
+              onBookingResize={handleBookingResize}
+              enableDragDrop={enableDragDrop}
+              showConflicts={showConflicts}
+            />
+          </div>
+        </div>
       </div>
-    </div>
-  </NotificationProvider>
-);
+    </NotificationProvider>
+  );
 }

@@ -1,12 +1,14 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { format, addWeeks, subWeeks, startOfToday } from "date-fns";
 import { Button } from "@/components/ui/Button";
-import { X } from "lucide-react";
+import { X, Filter, Calendar, CreditCard, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Staff, BookingStatus, BOOKING_STATUS_CONFIG } from "@/types/agenda";
 import { GlassCard } from "@/components/agenda/primitives/GlassCard";
+import { AgendaModal } from "./AgendaModal";
 import { theme } from "@/theme/ui";
 
 interface AgendaSidebarProps {
@@ -35,6 +37,47 @@ export function AgendaSidebar({
   showFreeSlots = false,
   onShowFreeSlotsChange,
 }: AgendaSidebarProps) {
+  const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
+  const [showMobileDrawer, setShowMobileDrawer] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Internal responsive detection using CSS media queries
+  useEffect(() => {
+    const mobileQuery = window.matchMedia('(max-width: 640px)');
+    const tabletQuery = window.matchMedia('(min-width: 641px) and (max-width: 1024px)');
+    
+    const handleMobileChange = (e: MediaQueryListEvent) => {
+      setIsMobile(e.matches);
+      if (e.matches) {
+        setShowMobileDrawer(false); // Reset drawer state when entering mobile
+      }
+    };
+    
+    const handleTabletChange = (e: MediaQueryListEvent) => {
+      setIsTablet(e.matches);
+      if (!e.matches) {
+        setIsCollapsed(false); // Reset collapse when leaving tablet
+      }
+    };
+    
+    // Set initial values
+    setIsMobile(mobileQuery.matches);
+    setIsTablet(tabletQuery.matches);
+    
+    // Listen for changes
+    mobileQuery.addEventListener('change', handleMobileChange);
+    tabletQuery.addEventListener('change', handleTabletChange);
+    
+    return () => {
+      mobileQuery.removeEventListener('change', handleMobileChange);
+      tabletQuery.removeEventListener('change', handleTabletChange);
+    };
+  }, []);
+
+  const handleMobileToggle = () => {
+    setShowMobileDrawer(!showMobileDrawer);
+  };
   const setLocalFilters = (newFilters: any) => {
     onFiltersChange(newFilters);
   };
@@ -83,44 +126,78 @@ export function AgendaSidebar({
     onDateSelect(format(startOfToday(), "yyyy-MM-dd"));
   };
 
-  return (
+  // Main sidebar content component
+  const SidebarContent = () => (
     <div className="h-full overflow-y-auto space-y-6 scrollbar-hide">
-      {onClose && (
+      {/* Header - Only show in mobile drawer */}
+      {isMobile && (
         <GlassCard variant="inset" padding="md" className="flex items-center justify-between">
-          <h3 className={cn(
-            "text-lg font-semibold",
-            "text-primary font-sans"
-          )}>
-            Filtros
-          </h3>
+          <div className="flex items-center gap-2">
+            <Filter className="h-5 w-5 text-[var(--accent-blue)]" />
+            <h3 className={cn(
+              "text-lg font-semibold",
+              "text-[var(--text-primary)] font-[var(--font-heading)]"
+            )}>
+              Filtros y Navegación
+            </h3>
+          </div>
           <button
-            onClick={onClose}
+            onClick={onClose || (() => {})}
             className={cn(
-              "p-1.5 rounded-xl transition-all duration-150",
-              "text-secondary hover:text-primary hover:bg-glass"
+              "p-2 rounded-xl transition-all duration-200",
+              "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
+              "hover:bg-[var(--glass-bg-subtle)] active:scale-95"
             )}
+            aria-label="Cerrar filtros"
           >
             <X className="h-5 w-5" />
           </button>
         </GlassCard>
       )}
 
-      {/* Saltos rápidos - Premium */}
+      {/* Tablet collapse toggle */}
+      {isTablet && !isCollapsed && (
+        <GlassCard variant="inset" padding="md" className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Filter className="h-5 w-5 text-[var(--accent-blue)]" />
+            <h3 className={cn(
+              "text-lg font-semibold",
+              "text-[var(--text-primary)] font-[var(--font-heading)]"
+            )}>
+              Filtros
+            </h3>
+          </div>
+          <button
+            onClick={() => setIsCollapsed(true)}
+            className={cn(
+              "p-2 rounded-xl transition-all duration-200",
+              "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
+              "hover:bg-[var(--glass-bg-subtle)] active:scale-95"
+            )}
+            aria-label="Contraer filtros"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </GlassCard>
+      )}
+
+      {/* Quick Navigation */}
       <GlassCard variant="default" padding="md">
         <div className="space-y-3">
           <h4 className={cn(
             "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
-            "text-tertiary font-sans"
+            "text-[var(--text-tertiary)] font-[var(--font-heading)]"
           )}>
-            <div className="h-1 w-1 rounded-full bg-accent-blue" />
-            Saltos rápidos
+            <Calendar className="h-3 w-3 text-[var(--accent-blue)]" />
+            Navegación Rápida
           </h4>
           <div className="space-y-2">
             <button
               onClick={goToToday}
               className={cn(
-                "w-full px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-150 text-left",
-                "text-primary bg-glass hover:bg-glass border border-border-default font-sans"
+                "w-full px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 text-left",
+                "text-[var(--text-primary)] bg-[var(--glass-bg-default)] hover:bg-[var(--glass-bg-subtle)]",
+                "border border-[var(--glass-border)] font-[var(--font-body)]"
               )}
             >
               Hoy
@@ -129,8 +206,9 @@ export function AgendaSidebar({
               <button
                 onClick={() => navigateWeek("prev")}
                 className={cn(
-                  "flex-1 px-3 py-2 text-xs font-medium rounded-xl transition-all duration-150",
-                  "text-secondary hover:text-primary hover:bg-glass border border-border-default font-sans"
+                  "flex-1 px-3 py-2 text-xs font-medium rounded-xl transition-all duration-200",
+                  "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]",
+                  "border border-[var(--glass-border)] font-[var(--font-body)]"
                 )}
               >
                 -1 semana
@@ -138,8 +216,9 @@ export function AgendaSidebar({
               <button
                 onClick={() => navigateWeek("next")}
                 className={cn(
-                  "flex-1 px-3 py-2 text-xs font-medium rounded-xl transition-all duration-150",
-                  "text-secondary hover:text-primary hover:bg-glass border border-border-default font-sans"
+                  "flex-1 px-3 py-2 text-xs font-medium rounded-xl transition-all duration-200",
+                  "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]",
+                  "border border-[var(--glass-border)] font-[var(--font-body)]"
                 )}
               >
                 +1 semana
@@ -149,14 +228,14 @@ export function AgendaSidebar({
         </div>
       </GlassCard>
 
-      {/* Mini calendario - Premium */}
+      {/* Calendar Picker */}
       <GlassCard variant="default" padding="md">
         <div className="space-y-3">
           <h4 className={cn(
             "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
-            "text-tertiary font-sans"
+            "text-[var(--text-tertiary)] font-[var(--font-heading)]"
           )}>
-            <div className="h-1 w-1 rounded-full bg-accent-aqua" />
+            <Calendar className="h-3 w-3 text-[var(--accent-aqua)]" />
             Calendario
           </h4>
           <input
@@ -164,25 +243,25 @@ export function AgendaSidebar({
             value={selectedDate}
             onChange={(e) => onDateSelect(e.target.value)}
             className={cn(
-              "w-full rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-150",
-              "text-primary bg-glass border border-border-default",
-              "hover:border-accent-blue/30 focus:border-accent-blue focus:outline-none focus:ring-2 focus:ring-accent-blue/30",
-              "font-sans"
+              "w-full rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200",
+              "text-[var(--text-primary)] bg-[var(--glass-bg-default)] border border-[var(--glass-border)]",
+              "hover:border-[var(--accent-blue)/30] focus:border-[var(--accent-blue)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)/30]",
+              "font-[var(--font-body)]"
             )}
           />
         </div>
       </GlassCard>
 
-      {/* Filtros - Premium */}
+      {/* Filter Sections */}
       <div className="space-y-5">
-        {/* Pagos */}
+        {/* Payment Status */}
         <GlassCard variant="default" padding="md">
           <div className="space-y-3">
             <h4 className={cn(
               "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
-              "text-tertiary font-sans"
+              "text-[var(--text-tertiary)] font-[var(--font-heading)]"
             )}>
-              <div className="h-1 w-1 rounded-full bg-accent-purple" />
+              <CreditCard className="h-3 w-3 text-[var(--accent-purple)]" />
               Pagos
             </h4>
             <div className="space-y-2">
@@ -196,13 +275,13 @@ export function AgendaSidebar({
                     checked={filters.payment.includes(option)}
                     onChange={() => handleFilterChange("payment", option)}
                     className={cn(
-                      "w-4 h-4 rounded-lg border bg-glass text-accent-blue",
-                      "border-border-default focus:ring-2 focus:ring-accent-blue/30 transition-all duration-150"
+                      "w-4 h-4 rounded-lg border bg-[var(--glass-bg-default)] text-[var(--accent-blue)]",
+                      "border-[var(--glass-border)] focus:ring-2 focus:ring-[var(--accent-blue)/30] transition-all duration-200"
                     )}
                   />
                   <span className={cn(
-                    "text-sm font-medium capitalize transition-colors duration-150",
-                    "text-secondary group-hover:text-primary font-sans"
+                    "text-sm font-medium capitalize transition-colors duration-200",
+                    "text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] font-[var(--font-body)]"
                   )}>
                     {option === "paid" ? "Pagado" : "Sin pagar"}
                   </span>
@@ -212,14 +291,14 @@ export function AgendaSidebar({
           </div>
         </GlassCard>
 
-        {/* Estado de la cita */}
+        {/* Booking Status */}
         <GlassCard variant="default" padding="md">
           <div className="space-y-3">
             <h4 className={cn(
               "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
-              "text-tertiary font-sans"
+              "text-[var(--text-tertiary)] font-[var(--font-heading)]"
             )}>
-              <div className="h-1 w-1 rounded-full bg-accent-pink" />
+              <CheckCircle className="h-3 w-3 text-[var(--accent-pink)]" />
               Estado de la cita
             </h4>
             <div className="space-y-2">
@@ -240,13 +319,13 @@ export function AgendaSidebar({
                     checked={filters.status.includes(status)}
                     onChange={() => handleFilterChange("status", status)}
                     className={cn(
-                      "w-4 h-4 rounded-lg border bg-glass text-accent-blue",
-                      "border-border-default focus:ring-2 focus:ring-accent-blue/30 transition-all duration-150"
+                      "w-4 h-4 rounded-lg border bg-[var(--glass-bg-default)] text-[var(--accent-blue)]",
+                      "border-[var(--glass-border)] focus:ring-2 focus:ring-[var(--accent-blue)/30] transition-all duration-200"
                     )}
                   />
                   <span className={cn(
-                    "text-sm font-medium transition-colors duration-150",
-                    "text-secondary group-hover:text-primary font-sans"
+                    "text-sm font-medium transition-colors duration-200",
+                    "text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] font-[var(--font-body)]"
                   )}>
                     {BOOKING_STATUS_CONFIG[status].label}
                   </span>
@@ -256,68 +335,17 @@ export function AgendaSidebar({
           </div>
         </GlassCard>
 
-        {/* Empleado */}
-        <GlassCard variant="default" padding="md">
-          <div className="space-y-3">
-            <h4 className={cn(
-              "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
-              "text-tertiary font-sans"
-            )}>
-              <div className="h-1 w-1 rounded-full bg-accent-blue" />
-              Empleado
-            </h4>
-            <div className="space-y-2">
-              <label className="flex items-center gap-2.5 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={filters.staff.includes("all")}
-                  onChange={() => handleFilterChange("staff", "all")}
-                  className={cn(
-                    "w-4 h-4 rounded-lg border bg-glass text-accent-blue",
-                    "border-border-default focus:ring-2 focus:ring-accent-blue/30 transition-all duration-150"
-                  )}
-                />
-                <span className={cn(
-                  "text-sm font-medium transition-colors duration-150",
-                  "text-secondary group-hover:text-primary font-sans"
-                )}>
-                  Todos
-                </span>
-              </label>
-              {staffList.map((staff) => (
-                <label
-                  key={staff.id}
-                  className="flex items-center gap-2.5 cursor-pointer group"
-                >
-                  <input
-                    type="checkbox"
-                    checked={filters.staff.includes(staff.id)}
-                    onChange={() => handleFilterChange("staff", staff.id)}
-                    className={cn(
-                      "w-4 h-4 rounded-lg border bg-glass text-accent-blue",
-                      "border-border-default focus:ring-2 focus:ring-accent-blue/30 transition-all duration-150"
-                    )}
-                  />
-                  <span className={cn(
-                    "text-sm font-medium transition-colors duration-150",
-                    "text-secondary group-hover:text-primary font-sans"
-                  )}>
-                    {staff.name}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-        </GlassCard>
+        {/* Staff Filter - Removed to avoid duplication with AgendaFilters */}
+        {/* Staff selection is handled in AgendaFilters header for better UX */}
 
-        {/* Detalles */}
+        {/* Additional Options */}
         <GlassCard variant="default" padding="md">
           <div className="space-y-3">
             <h4 className={cn(
               "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
-              "text-tertiary font-sans"
+              "text-[var(--text-tertiary)] font-[var(--font-heading)]"
             )}>
-              <div className="h-1 w-1 rounded-full bg-accent-aqua" />
+              <div className="h-1 w-1 rounded-full bg-[var(--accent-aqua)]" />
               Detalles
             </h4>
             <label className="flex items-center gap-2.5 cursor-pointer group">
@@ -326,13 +354,13 @@ export function AgendaSidebar({
                 checked={filters.highlighted === true}
                 onChange={() => handleFilterChange("highlighted", true)}
                 className={cn(
-                  "w-4 h-4 rounded-lg border bg-glass text-accent-blue",
-                  "border-border-default focus:ring-2 focus:ring-accent-blue/30 transition-all duration-150"
+                  "w-4 h-4 rounded-lg border bg-[var(--glass-bg-default)] text-[var(--accent-blue)]",
+                  "border-[var(--glass-border)] focus:ring-2 focus:ring-[var(--accent-blue)/30] transition-all duration-200"
                 )}
               />
               <span className={cn(
-                "text-sm font-medium transition-colors duration-150",
-                "text-secondary group-hover:text-primary font-sans"
+                "text-sm font-medium transition-colors duration-200",
+                "text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] font-[var(--font-body)]"
               )}>
                 Marcadas como destacadas
               </span>
@@ -344,115 +372,114 @@ export function AgendaSidebar({
                   checked={showFreeSlots}
                   onChange={(e) => onShowFreeSlotsChange(e.target.checked)}
                   className={cn(
-                    "w-4 h-4 rounded-lg border bg-glass text-accent-blue",
-                    "border-border-default focus:ring-2 focus:ring-accent-blue/30 transition-all duration-150"
+                    "w-4 h-4 rounded-lg border bg-[var(--glass-bg-default)] text-[var(--accent-blue)]",
+                    "border-[var(--glass-border)] focus:ring-2 focus:ring-[var(--accent-blue)/30] transition-all duration-200"
                   )}
                 />
                 <span className={cn(
-                  "text-sm font-medium transition-colors duration-150",
-                  "text-secondary group-hover:text-primary font-sans"
+                  "text-sm font-medium transition-colors duration-200",
+                  "text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] font-[var(--font-body)]"
                 )}>
-                  Mostrar solo huecos libres
+                  Mostrar huecos libres
                 </span>
               </label>
             )}
           </div>
         </GlassCard>
-      </div>
 
-      {/* Leyenda - Premium */}
-      <GlassCard variant="default" padding="md">
-        <div className="space-y-3">
-          <h4 className={cn(
-            "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
-            "text-tertiary font-sans"
-          )}>
-            <div className="h-1 w-1 rounded-full bg-accent-aqua" />
-            Leyenda de estados
-          </h4>
-          <div className="space-y-2">
-            {([
-              "hold",
-              "pending",
-              "paid",
-              "completed",
-              "cancelled",
-              "no_show",
-            ] as BookingStatus[]).map((status) => {
-              const config = BOOKING_STATUS_CONFIG[status];
-              return (
-                <div key={status} className={cn(
-                  "flex items-center gap-3 p-2 rounded-lg transition-colors duration-150",
-                  "hover:bg-glass"
-                )}>
-                  <div
-                    className="w-4 h-4 rounded border-l-4"
-                    style={{
-                      backgroundColor: config.legendBg,
-                      borderLeftColor: config.legendBorder.includes("/") 
-                        ? config.legendBorder.split("/")[0] 
-                        : config.legendBorder,
-                      boxShadow: `0px 0px 6px ${config.legendColor}30`,
-                    }}
-                  />
-                  <span className={cn(
-                    "text-xs font-semibold",
-                    "text-primary font-sans"
-                  )}>
-                    {config.label}
-                  </span>
-                </div>
-              );
-            })}
-            {/* Bloqueo (no es un estado de booking, pero se muestra en la leyenda) */}
-            <div className={cn(
-              "flex items-center gap-3 p-2 rounded-lg transition-colors duration-150",
-              "hover:bg-glass"
-            )}>
-              <div
-                className="w-4 h-4 rounded border-l-4"
-                style={{
-                  backgroundColor: "rgba(255,255,255,0.03)",
-                  borderLeftColor: "rgba(255,255,255,0.1)",
-                  boxShadow: `0px 0px 6px rgba(156,163,175,0.3)`,
-                }}
-              />
-              <span className={cn(
-                "text-xs font-semibold",
-                "text-primary font-sans"
-              )}>
-                Bloqueo
-              </span>
-            </div>
-          </div>
-        </div>
-      </GlassCard>
-
-      {/* Botones de acción - Premium */}
-      <div className="pt-5 space-y-2">
-        <button
-          onClick={() => {
-            // Los filtros ya se aplican automáticamente al cambiar el estado
-          }}
-          className={cn(
-            "w-full px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-150",
-            "text-primary bg-gradient-to-r from-accent-blue to-accent-aqua shadow-accent-blue/30 hover:shadow-accent-blue/50",
-            "font-sans"
-          )}
-        >
-          Aplicar filtros
-        </button>
-        <button
+        {/* Clear Filters */}
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={clearFilters}
-          className={cn(
-            "w-full px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-150",
-            "text-secondary hover:text-primary hover:bg-glass border border-border-default",
-            "font-sans"
-          )}
+          className="w-full"
         >
-          Limpiar todo
-        </button>
+          Limpiar todos los filtros
+        </Button>
       </div>
+    </div>
+  );
+
+  // Mobile drawer using AgendaModal
+  if (isMobile) {
+    return (
+      <>
+        {/* Mobile toggle button - shown when drawer is closed */}
+        {!showMobileDrawer && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleMobileToggle}
+            className={cn(
+              "fixed bottom-4 right-4 z-40 p-3 rounded-xl shadow-lg",
+              "bg-[var(--glass-bg-default)] border border-[var(--glass-border)]",
+              "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
+              "backdrop-blur-md transition-all duration-200"
+            )}
+            aria-label="Mostrar filtros"
+          >
+            <Filter className="h-5 w-5" />
+          </motion.button>
+        )}
+        
+        <AgendaModal
+          isOpen={showMobileDrawer}
+          onClose={handleMobileToggle}
+          title="Filtros y Navegación"
+          variant="drawer"
+          showMobileDrawer={true}
+          drawerPosition="right"
+          size="lg"
+          context={{
+            type: "service",
+            data: { filters }
+          }}
+        >
+          <SidebarContent />
+        </AgendaModal>
+      </>
+    );
+  }
+
+  // Desktop/Tablet sidebar
+  return (
+    <div className={cn(
+      "h-full transition-all duration-300",
+      isTablet && isCollapsed ? "w-12" : "w-80"
+    )}>
+      {/* Tablet collapsed toggle */}
+      {isTablet && isCollapsed && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="w-12 h-full flex flex-col items-center py-4"
+        >
+          <button
+            onClick={() => setIsCollapsed(false)}
+            className={cn(
+              "p-2 rounded-xl transition-all duration-200",
+              "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
+              "hover:bg-[var(--glass-bg-subtle)] active:scale-95"
+            )}
+            aria-label="Expandir filtros"
+          >
+            <Filter className="h-5 w-5" />
+          </button>
+        </motion.div>
+      )}
+      
+      {/* Full sidebar content */}
+      {(!isTablet || !isCollapsed) && (
+        <motion.div
+          initial={{ opacity: 0, x: isTablet ? -20 : 0 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <SidebarContent />
+        </motion.div>
+      )}
     </div>
   );
 }
