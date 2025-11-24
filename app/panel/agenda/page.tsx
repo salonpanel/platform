@@ -1054,7 +1054,7 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
               if (conflictsHook.pendingBooking) {
                 // Convert PendingBookingInput to BookingFormPayload with validation
                 const bookingPayload: BookingFormPayload = {
-                  id: conflictsHook.pendingBooking.id || undefined, // Keep undefined for new bookings
+                  id: conflictsHook.pendingBooking.id || "", // Use empty string for undefined id
                   staff_id: conflictsHook.pendingBooking.staff_id || "",
                   starts_at: conflictsHook.pendingBooking.starts_at,
                   ends_at: conflictsHook.pendingBooking.ends_at,

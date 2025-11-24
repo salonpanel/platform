@@ -45,11 +45,13 @@ export function AppointmentCard({
       shadow: "0px 2px 8px rgba(255, 193, 7, 0.15)"
     };
 
-  // Base card styling with premium glassmorphism
+  // Base card styling with premium glassmorphism and mobile-first responsive design
   const baseClasses = cn(
     "relative backdrop-blur-md border-l-4 rounded-xl cursor-pointer",
     "transition-all duration-200 group",
     "focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]/50 focus:ring-offset-2 focus:ring-offset-[var(--bg-primary)]",
+    // Phase 3: Mobile-first responsive improvements
+    "min-h-[44px]", // Ensure 44px minimum tap target (padding handled per variant)
     variant === "timeline" ? "absolute left-2 right-2" : "w-full",
     className
   );
@@ -83,43 +85,49 @@ export function AppointmentCard({
         style={cardStyle}
         aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime} - ${booking.service?.name || "Sin servicio"}`}
       >
-        <div className="p-3 space-y-2">
-          {/* Time - Priority 1 */}
+        <div className="p-3 md:p-4 space-y-2 md:space-y-3">
+          {/* Time - Enhanced prominence for better hierarchy */}
           <div className={cn(
-            "text-xs font-semibold font-mono",
-            "text-[var(--text-secondary)]"
+            "text-sm md:text-base font-semibold font-mono",
+            "text-[var(--text-secondary)]",
+            "tracking-tight" // Better readability
           )}>
             {startTime}
           </div>
           
-          {/* Customer - Priority 2 */}
+          {/* Customer - Primary information */}
           <div className={cn(
-            "text-sm font-semibold truncate",
-            "text-[var(--text-primary)] font-[var(--font-heading)]"
+            "text-sm md:text-base font-semibold truncate",
+            "text-[var(--text-primary)] font-[var(--font-heading)]",
+            "leading-tight" // Better line height for mobile
           )}>
             {booking.customer?.name || "Sin cliente"}
           </div>
           
-          {/* Service - Priority 3 (if not compact) */}
+          {/* Service - Enhanced display with better mobile spacing */}
           {!compact && booking.service?.name && (
             <div className={cn(
-              "text-xs truncate",
-              "text-[var(--text-secondary)] font-[var(--font-body)]"
+              "text-xs md:text-sm truncate",
+              "text-[var(--text-secondary)] font-[var(--font-body)]",
+              "leading-relaxed" // Better readability on mobile
             )}>
               {booking.service.name}
             </div>
           )}
           
-          {/* Status badge (if space allows) */}
-          {showStatus && !compact && (
-            <div className="flex items-center gap-1.5">
+          {/* Status indicator - Refined design */}
+          {showStatus && (
+            <div className="flex items-center gap-2">
               <div 
-                className="w-1.5 h-1.5 rounded-full flex-shrink-0" 
-                style={{ backgroundColor: statusTokens.text }}
+                className={cn(
+                  "w-2 h-2 rounded-full",
+                  "bg-[var(--status-dot)]" // Use CSS custom property for consistency
+                )}
+                style={{ backgroundColor: statusTokens.border }}
               />
               <span className={cn(
                 "text-xs font-medium",
-                "text-[var(--text-secondary)] font-[var(--font-body)]"
+                "text-[var(--text-tertiary)]"
               )}>
                 {statusConfig.label}
               </span>
