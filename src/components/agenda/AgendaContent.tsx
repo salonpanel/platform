@@ -96,6 +96,27 @@ export function AgendaContent({
   const isMobileRef = useRef(false);
   const autoSwitchRef = useRef(false);
 
+  // Responsive density system - automatic based on screen size
+  const getResponsiveDensity = useCallback(() => {
+    if (typeof window === 'undefined') return density;
+
+    const isMobile = window.innerWidth < 768;
+    const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
+
+    if (isMobile) {
+      // Mobile: Higher density, tighter spacing
+      return "ultra-compact" as const;
+    } else if (isTablet) {
+      // Tablet: Medium density
+      return "compact" as const;
+    } else {
+      // Desktop: Spacious density
+      return "default" as const;
+    }
+  }, []);
+
+  const [responsiveDensity, setResponsiveDensity] = useState(getResponsiveDensity);
+
   // Viewport detection with infinite loop prevention, SSR safety, and performance optimization
   useEffect(() => {
     // Phase 3: Defensive check for SSR compatibility
@@ -118,6 +139,9 @@ export function AgendaContent({
           "Week view is optimized for larger screens"
         );
       }
+
+      // Update responsive density
+      setResponsiveDensity(getResponsiveDensity());
     };
 
     // Debounced resize handler to prevent performance issues
@@ -281,10 +305,10 @@ export function AgendaContent({
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={viewMode}
-                    initial={{ opacity: 0, x: 12 }}
+                    initial={{ opacity: 0, x: 6 }}
                     animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -12 }}
-                    transition={{ duration: 0.16, ease: "easeOut" }}
+                    exit={{ opacity: 0, x: -6 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
                     className="flex-1 min-h-0"
                   >
                     {viewMode === "day" && (
@@ -311,7 +335,7 @@ export function AgendaContent({
                             <Timeline
                               startHour={8}
                               endHour={20}
-                              density={density}
+                              density={responsiveDensity}
                               hourHeight={hourHeight}
                             >
                               {(hour) => {
