@@ -59,6 +59,8 @@ export { StatCard } from "./StatCard";
 export type { StatCardProps } from "./StatCard";
 export { TitleBar } from "./TitleBar";
 export type { TitleBarProps } from "./TitleBar";
+export { PageHeader, CompactPageHeader } from "./PageHeader";
+export type { PageHeaderProps } from "./PageHeader";
 export { SectionHeading } from "./SectionHeading";
 export type { SectionHeadingProps } from "./SectionHeading";
 export { BentoCard } from "./BentoCard";

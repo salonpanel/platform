@@ -12,6 +12,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Alert } from "@/components/ui/Alert";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
@@ -923,32 +924,30 @@ function ClientesContent() {
 
   return (
     <div className="space-y-6">
-      {/* Header con búsqueda y botón */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] font-satoshi">Clientes</h1>
-            <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] mt-1">
-              {customers.length} {customers.length === 1 ? "cliente" : "clientes"}
-            </p>
-          </div>
+      {/* Premium Header */}
+      <PageHeader
+        title="Clientes"
+        subtitle={`${customers.length} ${customers.length === 1 ? "cliente" : "clientes"}`}
+        description="Gestiona tu base de clientes, filtra y busca fácilmente, y accede a sus historiales de reservas."
+        actions={
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <Button 
-              variant="secondary" 
-              onClick={handleExportCsv} 
+            <Button
+              variant="secondary"
+              onClick={handleExportCsv}
               disabled={loading}
               className="w-full sm:w-auto"
             >
               Exportar CSV
             </Button>
-            <Button 
+            <Button
               onClick={openNewModal}
               className="w-full sm:w-auto"
             >
               + Nuevo Cliente
             </Button>
           </div>
-        </div>
+        }
+      />
         
         {/* Búsqueda */}
         <input
@@ -1439,85 +1438,87 @@ function ClientesContent() {
       )}
 
       {/* Modal de crear/editar */}
-      <Modal
-        isOpen={showModal}
-        onClose={closeModal}
-        title={editingCustomer ? "Editar Cliente" : "Nuevo Cliente"}
-        footer={
-          <>
-            <Button variant="secondary" onClick={closeModal} disabled={saving}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={saving || !form.name.trim()}
-              isLoading={saving}
-            >
-              {editingCustomer ? "Guardar" : "Crear"}
-            </Button>
-          </>
-        }
-      >
-        <CustomerForm
-          form={form}
-          setForm={setForm}
-          emailError={emailError}
-          onEmailValidate={validateEmail}
-          error={error}
-        />
-      </Modal>
-      <Modal
-        isOpen={showTagModal}
-        onClose={closeTagModal}
-        title="Añadir etiqueta"
-        size="sm"
-        footer={
-          <>
-            <Button variant="secondary" onClick={closeTagModal} disabled={bulkActionLoading}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleBulkTagSubmit}
-              disabled={!bulkTagValue.trim()}
-              isLoading={bulkActionLoading}
-            >
-              Aplicar
-            </Button>
-          </>
-        }
-      >
-        <p className="text-sm text-[var(--color-text-secondary)]">
-          Se añadirá a {selectionCount || 0} {selectionCount === 1 ? "cliente" : "clientes"}.
-        </p>
-        <input
-          type="text"
-          value={bulkTagValue}
-          onChange={(e) => setBulkTagValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              handleBulkTagSubmit();
-            }
-          }}
-          className="mt-3 w-full rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(15,23,42,0.65)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
-          placeholder="Ej. VIP, Newsletter..."
-        />
-      </Modal>
-      {/* Modal de historial */}
-      {showHistory && (
+      <>
         <Modal
-          isOpen={!!showHistory}
-          onClose={() => setShowHistory(null)}
-          title="Historial del Cliente"
-          size="lg"
+          isOpen={showModal}
+          onClose={closeModal}
+          title={editingCustomer ? "Editar Cliente" : "Nuevo Cliente"}
+          footer={
+            <>
+              <Button variant="secondary" onClick={closeModal} disabled={saving}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={saving || !form.name.trim()}
+                isLoading={saving}
+              >
+                {editingCustomer ? "Guardar" : "Crear"}
+              </Button>
+            </>
+          }
         >
-          <CustomerHistory
-            customerId={showHistory}
-            tenantId={tenantId}
-            tenantTimezone={tenantTimezone}
+          <CustomerForm
+            form={form}
+            setForm={setForm}
+            emailError={emailError}
+            onEmailValidate={validateEmail}
+            error={error}
           />
         </Modal>
-      )}
+        <Modal
+          isOpen={showTagModal}
+          onClose={closeTagModal}
+          title="Añadir etiqueta"
+          size="sm"
+          footer={
+            <>
+              <Button variant="secondary" onClick={closeTagModal} disabled={bulkActionLoading}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleBulkTagSubmit}
+                disabled={!bulkTagValue.trim()}
+                isLoading={bulkActionLoading}
+              >
+                Aplicar
+              </Button>
+            </>
+          }
+        >
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            Se añadirá a {selectionCount || 0} {selectionCount === 1 ? "cliente" : "clientes"}.
+          </p>
+          <input
+            type="text"
+            value={bulkTagValue}
+            onChange={(e) => setBulkTagValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleBulkTagSubmit();
+              }
+            }}
+            className="mt-3 w-full rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(15,23,42,0.65)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
+            placeholder="Ej. VIP, Newsletter..."
+          />
+        </Modal>
+        {/* Modal de historial */}
+        {showHistory && (
+          <Modal
+            isOpen={!!showHistory}
+            onClose={() => setShowHistory(null)}
+            title="Historial del Cliente"
+            size="lg"
+          >
+            <CustomerHistory
+              customerId={showHistory}
+              tenantId={tenantId!}
+              tenantTimezone={tenantTimezone}
+            />
+          </Modal>
+        )}
+      </>
     </div>
   );
 }

@@ -15,6 +15,7 @@ import { ComponentType } from "react";
 import { Calendar, Users, Scissors, User, ArrowRight, Euro, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 const QUICK_LINKS: {
   href: string;
@@ -517,27 +518,19 @@ function PanelHomeContent() {
           animate="visible"
           variants={sectionVariants}
           transition={{ duration: 0.22, ease: "easeOut", delay: 0 }}
-          className="space-y-3"
         >
-          <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)] font-satoshi">
-            Dashboard ejecutivo
-          </p>
-          <div className="space-y-1">
-            <h1 className="text-xl sm:text-2xl font-semibold font-satoshi text-[var(--text-primary)]">
-              Visión general de hoy
-            </h1>
-            <p className="text-sm text-[var(--text-secondary)]">
-              {(tenantName || "Tu barbería")} · {todayLabel}
+          <PageHeader
+            title="Visión general de hoy"
+            subtitle={`${(tenantName || "Tu barbería")} · ${todayLabel}`}
+            description="Revisa de un vistazo reservas, ingresos y actividad de tu barbería."
+            size="md"
+            className="mb-6"
+          />
+          {shouldShowTimezone && (
+            <p className="text-xs text-[var(--color-text-secondary)] mt-2 mb-4">
+              Zona horaria del negocio: <span className="font-semibold text-[var(--color-text-primary)]">{tenantTimezone}</span>
             </p>
-            {shouldShowTimezone && (
-              <p className="text-xs text-[var(--text-secondary)] mt-1">
-                Zona horaria del negocio: <span className="font-semibold text-[var(--text-primary)]">{tenantTimezone}</span>
-              </p>
-            )}
-          </div>
-          <p className="text-xs sm:text-[13px] text-[var(--text-secondary)] max-w-2xl">
-            Revisa de un vistazo reservas, ingresos y actividad de tu barbería.
-          </p>
+          )}
         </motion.div>
 
         {/* Alertas operativas */}

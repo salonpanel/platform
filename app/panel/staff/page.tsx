@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { getCurrentTenant } from "@/lib/panel-tenant";
-import { Spinner, Card, Button, EmptyState, Alert, SearchInput, useToast, TitleBar } from "@/components/ui";
+import { Spinner, Card, Button, EmptyState, Alert, SearchInput, useToast, TitleBar, PageHeader } from "@/components/ui";
 import { StaffEditModal } from "@/components/panel/StaffEditModal";
 import { motion } from "framer-motion";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
@@ -267,13 +267,13 @@ function StaffContent() {
       animate="visible"
       className="space-y-6"
     >
-      {/* Header con búsqueda y botón de añadir */}
+      {/* Premium Header */}
       <motion.div variants={itemVariants}>
-        <Card variant="glass" padding="md">
-          <TitleBar
-            title="Staff"
-            subtitle={`${staffList.filter((s) => s.active).length} activos de ${staffList.length} total`}
-          >
+        <PageHeader
+          title="Staff"
+          subtitle={`${staffList.filter((s) => s.active).length} activos de ${staffList.length} total`}
+          description="Gestiona los miembros de tu equipo, configura sus horarios y habilidades."
+          actions={
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <SearchInput
                 value={searchTerm}
@@ -294,20 +294,8 @@ function StaffContent() {
                 </Button>
               )}
             </div>
-          </TitleBar>
-
-          {!canManageStaff && (
-            <p
-              className="mt-4 text-sm"
-              style={{
-                fontFamily: "var(--font-body)",
-                color: "var(--text-secondary)",
-              }}
-            >
-              Solo los administradores pueden crear o editar miembros del staff.
-            </p>
-          )}
-        </Card>
+          }
+        />
       </motion.div>
 
       {/* Mensaje de error */}
