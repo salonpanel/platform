@@ -224,5 +224,3 @@ export function AgendaStats({
     </motion.div>
   );
 }
-
-export { AgendaStats };

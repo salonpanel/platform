@@ -51,8 +51,8 @@ export function SidebarNav({
   const pathname = usePathname();
   const [isHovered, setIsHovered] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout>();
-  const leaveTimeoutRef = useRef<NodeJS.Timeout>();
+  const hoverTimeoutRef = useRef<number | null>(null);
+  const leaveTimeoutRef = useRef<number | null>(null);
 
   const getNavIcon = useCallback((href: string): React.ReactNode => {
     const iconClass = "h-5 w-5";
@@ -97,7 +97,7 @@ export function SidebarNav({
     // Limpiar timeout de salida si existe
     if (leaveTimeoutRef.current) {
       clearTimeout(leaveTimeoutRef.current);
-      leaveTimeoutRef.current = undefined;
+      leaveTimeoutRef.current = null;
     }
 
     // Agregar delay pequeño para evitar expansiones accidentales
@@ -112,7 +112,7 @@ export function SidebarNav({
     // Limpiar timeout de entrada si existe
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = undefined;
+      hoverTimeoutRef.current = null;
     }
 
     // Delay mínimo para evitar colapsos accidentales
