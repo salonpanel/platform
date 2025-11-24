@@ -83,11 +83,11 @@ export function WeekView({
     <div className="w-full h-full overflow-x-auto scrollbar-hide bg-[var(--bg-primary)]" role="region" aria-label="Vista semanal de reservas">
       <div className="min-w-[800px] h-full">
         {/* Header with days of the week - Premium */}
-        <div className="bg-[var(--glass-bg-default)] border border-[var(--glass-border)] backdrop-blur-md rounded-[var(--radius-xl)] p-4 mb-4 sticky top-0 z-10 shadow-[var(--shadow-premium)]">
+        <div className="bg-white dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-xl p-4 mb-4 shadow-sm">
           <div className="grid grid-cols-8">
             <div className={cn(
-              "text-sm font-semibold border-r border-[var(--glass-border-subtle)] pr-2",
-              "text-[var(--text-secondary)] font-[var(--font-heading)]"
+              "text-sm font-semibold border-r border-slate-200 dark:border-slate-700/50 pr-2",
+              "text-slate-900 dark:text-slate-100 font-semibold"
             )}>
               Hora
             </div>
@@ -98,33 +98,33 @@ export function WeekView({
                 <div
                   key={idx}
                   className={cn(
-                    "text-center border-r border-[var(--glass-border-subtle)] transition-all duration-200 relative px-2",
+                    "text-center border-r border-slate-200 dark:border-slate-700/50 transition-all duration-200 relative px-2",
                     isSelected
-                      ? "bg-[var(--accent-blue-glass)] border-b-2 border-[var(--accent-blue)] rounded-lg"
+                      ? "bg-blue-50 dark:bg-blue-950/30 rounded-lg"
                       : isTodayDate
-                      ? "bg-[var(--accent-aqua-glass)] border-b-2 border-[var(--accent-aqua)]/40 rounded-lg"
-                      : "hover:bg-[var(--glass-bg-subtle)]"
+                      ? "bg-blue-50/50 dark:bg-blue-950/20 rounded-lg"
+                      : "hover:bg-slate-50 dark:hover:bg-slate-800/30 rounded-lg"
                   )}
                 >
                   <div className={cn(
                     "text-xs font-semibold uppercase tracking-wider mb-1",
-                    "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                    "text-slate-500 dark:text-slate-400 font-medium"
                   )}>
                     {new Intl.DateTimeFormat("es-ES", { weekday: "short" }).format(day)}
                   </div>
                   <div className={cn(
                     "text-lg font-semibold",
                     isSelected
-                      ? "text-[var(--accent-blue)]"
+                      ? "text-blue-600 dark:text-blue-400"
                       : isTodayDate
-                      ? "text-[var(--accent-aqua)]"
-                      : "text-[var(--text-primary)]",
-                    "font-[var(--font-heading)]"
+                      ? "text-blue-500 dark:text-blue-300"
+                      : "text-slate-900 dark:text-slate-100",
+                    "font-semibold"
                   )}>
                     {format(day, "d")}
                   </div>
                   {isTodayDate && !isSelected && (
-                    <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[var(--accent-aqua)]" />
+                    <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-blue-500" />
                   )}
                 </div>
               );
@@ -136,13 +136,13 @@ export function WeekView({
         <div className="relative flex-1 overflow-y-auto scrollbar-hide bg-[var(--bg-primary)]" role="region" aria-label="Timeline semanal">
           <div className="grid grid-cols-8">
             {/* Time Column */}
-            <div className="border-r border-[var(--glass-border-subtle)]" role="columnheader">
+            <div className="border-r border-slate-200 dark:border-slate-700/50" role="columnheader">
               {hours.map((hour) => (
                 <div
                   key={hour}
                   className={cn(
-                    "text-xs font-semibold border-b border-[var(--glass-border-subtle)] min-h-[60px] p-2",
-                    "text-[var(--text-secondary)] font-[var(--font-mono)]"
+                    "text-xs font-semibold border-b border-slate-200 dark:border-slate-700/50 min-h-[60px] p-2",
+                    "text-slate-500 dark:text-slate-400 font-mono"
                   )}
                   role="cell"
                   aria-label={`${hour}:00`}
@@ -157,7 +157,7 @@ export function WeekView({
               return (
                 <div
                   key={dayIdx}
-                  className="relative border-r border-[var(--glass-border-subtle)]"
+                  className="relative border-r border-slate-200 dark:border-slate-700/50"
                   style={{
                     minHeight: `${hours.length * 60}px`,
                   }}
@@ -166,7 +166,7 @@ export function WeekView({
                   {hours.map((hour) => (
                     <div
                       key={hour}
-                      className="border-b border-[var(--glass-border-subtle)] min-h-[60px]"
+                      className="border-b border-slate-200 dark:border-slate-700/50 min-h-[60px]"
                     />
                   ))}
                   {/* Bookings for this day */}

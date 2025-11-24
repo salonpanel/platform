@@ -89,7 +89,7 @@ export function BookingCard({
     "relative group cursor-pointer transition-all duration-200",
     "bg-white dark:bg-slate-900/80 backdrop-blur-sm",
     "border border-slate-200 dark:border-slate-700/50",
-    "rounded-lg shadow-sm",
+    "rounded-xl shadow-sm",
     "focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-1",
     "hover:shadow-md hover:-translate-y-0.5",
     canDrag && "cursor-grab active:cursor-grabbing",
@@ -107,6 +107,16 @@ export function BookingCard({
       e.preventDefault();
       onClick?.();
     }
+    // Allow tab navigation to move focus to next/previous booking
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const bookings = document.querySelectorAll('[role="button"][aria-label*="Cita"]');
+      const currentIndex = Array.from(bookings).findIndex(el => el === e.currentTarget);
+      const nextIndex = e.key === "ArrowDown"
+        ? Math.min(currentIndex + 1, bookings.length - 1)
+        : Math.max(currentIndex - 1, 0);
+      (bookings[nextIndex] as HTMLElement)?.focus();
+    }
   };
 
   // Timeline variant (for Day view timeline positioning)
@@ -116,17 +126,20 @@ export function BookingCard({
         {...getMotionSafeProps({
           initial: { opacity: 0, scale: 0.95 },
           animate: { opacity: 1, scale: 1 },
-          whileHover: canDrag ? { scale: 1.02 } : interactionPresets.appointmentCard.hover,
-          whileTap: interactionPresets.appointmentCard.tap,
+          whileHover: canDrag ? { y: -1, boxShadow: "0 4px 12px -2px rgba(0,0,0,0.1)" } : { y: -1, boxShadow: "0 4px 12px -2px rgba(0,0,0,0.1)" },
+          whileTap: { scale: 0.98 },
         })}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         tabIndex={0}
         role="button"
         className={cn(baseClasses, "absolute left-2 right-2")}
-        aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime} - ${booking.service?.name || "Sin servicio"}`}
+        aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime} - ${booking.service?.name || "Sin servicio"}. Estado: ${statusConfig.label}. ${isDragging ? 'Arrastrando' : canDrag ? 'Arrastrable' : ''}`}
+        aria-describedby={isDragging ? "drag-instructions" : undefined}
         style={{
-          background: isDragging ? "rgba(255,255,255,0.9)" : undefined
+          background: isDragging ? "rgba(255,255,255,0.9)" : undefined,
+          boxShadow: isDragging ? "0 8px 25px -4px rgba(0,0,0,0.15)" : undefined,
+          cursor: isDragging ? "grabbing" : canDrag ? "grab" : "pointer"
         }}
       >
         {/* Left border accent */}
@@ -211,8 +224,8 @@ export function BookingCard({
         {...getMotionSafeProps({
           initial: { opacity: 0, y: 8 },
           animate: { opacity: 1, y: 0 },
-          whileHover: interactionPresets.appointmentCard.hover,
-          whileTap: interactionPresets.appointmentCard.tap,
+          whileHover: { y: -1, boxShadow: "0 4px 12px -2px rgba(0,0,0,0.1)" },
+          whileTap: { scale: 0.98 },
         })}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
@@ -277,8 +290,8 @@ export function BookingCard({
         {...getMotionSafeProps({
           initial: { opacity: 0, x: -4 },
           animate: { opacity: 1, x: 0 },
-          whileHover: interactionPresets.appointmentCard.hover,
-          whileTap: interactionPresets.appointmentCard.tap,
+          whileHover: { y: -1, boxShadow: "0 4px 12px -2px rgba(0,0,0,0.1)" },
+          whileTap: { scale: 0.98 },
         })}
         onClick={handleClick}
         onKeyDown={handleKeyDown}

@@ -54,16 +54,16 @@ export function Timeline({
       >
         <div className="relative">
           {/* Main time line */}
-          <div className="absolute left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent shadow-lg shadow-blue-500/50" />
+          <div className="absolute left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent shadow-lg shadow-blue-500/30" />
           {/* Time indicator dot */}
           <motion.div
-            className="absolute left-0 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-blue-500 border-2 border-slate-50 dark:border-slate-950 shadow-lg shadow-blue-500/50"
+            className="absolute left-0 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-blue-500 border-2 border-slate-50 dark:border-slate-950 shadow-lg shadow-blue-500/30"
             animate={{
-              scale: [1, 1.2, 1],
-              opacity: [1, 0.8, 1]
+              scale: [1, 1.1, 1],
+              opacity: [1, 0.9, 1]
             }}
             transition={{
-              duration: 2,
+              duration: 3,
               repeat: Infinity,
               ease: "easeInOut"
             }}

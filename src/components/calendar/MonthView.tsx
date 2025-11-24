@@ -190,13 +190,15 @@ export function MonthView({
                 transition: { delay: idx * 0.005, duration: 0.15, ease: "easeOut" },
               })}
               className={cn(
-                "rounded-[var(--radius-lg)] min-h-[80px] sm:min-h-[100px] cursor-pointer transition-all duration-200",
-                "bg-[var(--bg-primary)] border backdrop-blur-md",
+                "rounded-xl min-h-[80px] sm:min-h-[100px] cursor-pointer transition-all duration-200",
+                "bg-white dark:bg-slate-900/80 backdrop-blur-sm",
+                "border border-slate-200 dark:border-slate-700/50",
+                "shadow-sm hover:shadow-md",
                 !isCurrentMonth && "opacity-30",
                 isSelected
-                  ? "ring-2 ring-[var(--accent-blue)] bg-[var(--accent-blue-glass)] border-[var(--accent-blue)]"
-                  : "border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] hover:bg-[var(--glass-bg-subtle)]",
-                isTodayDate && !isSelected && "bg-[var(--accent-aqua-glass)] border-[var(--accent-aqua)]/40"
+                  ? "ring-2 ring-blue-500/50 bg-blue-50/50 dark:bg-blue-950/30"
+                  : "hover:border-slate-300 dark:hover:border-slate-600/70 hover:bg-slate-50/50 dark:hover:bg-slate-800/30",
+                isTodayDate && !isSelected && "ring-1 ring-blue-400/30 bg-blue-50/30 dark:bg-blue-950/20"
               )}
               role="gridcell"
               aria-label={day ? `${format(day, "d 'de' MMMM")}${dayBookings.length > 0 ? `, ${dayBookings.length} reserva${dayBookings.length > 1 ? 's' : ''}` : ''}` : 'Día no disponible'}
@@ -227,26 +229,39 @@ export function MonthView({
                 )}
               </div>
               <div className="px-2 pb-2 space-y-1">
-                {dayBookings.slice(0, 3).map((booking) => (
+                {dayBookings.slice(0, 2).map((booking, index) => (
                   <div key={booking.id} onClick={(e: React.MouseEvent) => {
                     e.stopPropagation();
                     onBookingClick(booking);
                   }}>
-                    <BookingCard
+                    <AppointmentCard
                       booking={booking}
                       timezone={timezone}
+                      compact={true}
                       variant="grid"
                       onClick={() => onBookingClick(booking)}
+                      showStatus={false}
                     />
                   </div>
                 ))}
-                {dayBookings.length > 3 && (
-                  <div className={cn(
-                    "text-xs text-center py-1",
-                    "text-[var(--text-tertiary)] font-[var(--font-body)]"
-                  )}>
-                    +{dayBookings.length - 3} más
-                  </div>
+                {dayBookings.length > 2 && (
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // TODO: Implement popover with full booking list
+                      console.log(`Show ${dayBookings.length - 2} more bookings`);
+                    }}
+                    className={cn(
+                      "text-xs text-center py-1 px-2 rounded-md cursor-pointer transition-all duration-200",
+                      "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100",
+                      "bg-slate-100/50 dark:bg-slate-800/50 hover:bg-slate-200/50 dark:hover:bg-slate-700/50",
+                      "border border-slate-200/50 dark:border-slate-700/50 hover:border-slate-300/50 dark:hover:border-slate-600/50"
+                    )}
+                  >
+                    +{dayBookings.length - 2} más
+                  </motion.div>
                 )}
               </div>
             </motion.div>
