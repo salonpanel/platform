@@ -1044,13 +1044,13 @@ function ClientesContent() {
         ))}
       </div>
 
-      {/* KPIs sobre clientes filtrados */}
       {(filteredStats.total !== customerStats.total || 
         searchQuery || 
         visitFilter !== "all" || 
         activityFilter !== "all" || 
         segmentFilter !== "all") && (
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+          {/* KPIs sobre clientes filtrados */}
           {[
             { label: "Visibles", value: filteredStats.total, shortLabel: "Visibles" },
             { label: "VIP", value: filteredStats.vip, shortLabel: "VIP" },
