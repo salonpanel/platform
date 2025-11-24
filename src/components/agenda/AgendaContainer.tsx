@@ -37,9 +37,7 @@ export function AgendaContainer() {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [newBookingOpen, setNewBookingOpen] = useState(false);
 
-  const heightAware = useHeightAware();
-  const { density: rawDensity } = heightAware;
-  const density = rawDensity === "normal" ? "default" : rawDensity;
+  const density = "default";
 
   // Formateadores memoizados
   const timeFormatter = useMemo(
@@ -326,7 +324,7 @@ export function AgendaContainer() {
 
   return (
     <NotificationProvider position="top-right" maxNotifications={3}>
-      <HeightAwareContainer className="h-full">
+      <div className="h-full">
         <div className="h-full flex flex-col min-h-0 overflow-hidden bg-gradient-to-br from-[var(--bg-primary)] via-[var(--bg-secondary)] to-[var(--bg-tertiary)]">
           {/* Filtros inteligentes */}
           <AgendaFilters
@@ -353,29 +351,28 @@ export function AgendaContainer() {
           )}
 
           {/* Contenido principal */}
-          <AgendaContent
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            selectedDate={selectedDate ? format(selectedDate, "yyyy-MM-dd") : ""}
-            onDateChange={handleDateChange}
-            bookings={bookings}
-            staffList={staffList}
-            loading={loading}
-            error={error}
-            tenantTimezone={tenantTimezone}
-            onBookingClick={handleBookingClick}
-            onNewBooking={handleNewBooking}
-            density={density}
-            timeFormatter={timeFormatter}
-            heightAware={heightAware}
+        <AgendaContent
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          selectedDate={selectedDate ? format(selectedDate, "yyyy-MM-dd") : ""}
+          onDateChange={handleDateChange}
+          bookings={bookings}
+          staffList={staffList}
+          loading={loading}
+          error={error}
+          tenantTimezone={tenantTimezone}
+          onBookingClick={handleBookingClick}
+          onNewBooking={handleNewBooking}
+          density={density}
+          timeFormatter={timeFormatter}
             // Props premium para interactividad
-            onBookingDrag={handleBookingDrag}
-            onBookingResize={handleBookingResize}
-            enableDragDrop={true}
-            showConflicts={true}
-          />
-        </div>
-      </HeightAwareContainer>
-    </NotificationProvider>
-  );
+          onBookingDrag={handleBookingDrag}
+          onBookingResize={handleBookingResize}
+          enableDragDrop={true}
+          showConflicts={true}
+        />
+      </div>
+    </div>
+  </NotificationProvider>
+);
 }

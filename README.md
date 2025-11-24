@@ -18,28 +18,12 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## 🛡️ Security
 
-This project uses **OWASP Noir** for automated security analysis and vulnerability detection.
-
-### Quick Security Scan
-
-```bash
-# Install OWASP Noir (first time only)
-npm run security:install
-
-# Run security scan
-npm run security:scan
-
-# Detailed scan with vulnerability detection
-npm run security:scan:verbose
-```
+This project follows security best practices with Row Level Security (RLS), rate limiting, and input validation.
 
 ### Security Documentation
 
-- 📖 [OWASP Noir Documentation](./docs/OWASP_NOIR.md) - Complete guide
-- 🚀 [Quick Start Guide](./docs/NOIR_QUICK_START.md) - Fast reference
 - 📋 [Security Checklist](./docs/SECURITY_CHECKLIST.md) - Best practices
 - 🛡️ [Security Policy](./SECURITY.md) - Reporting vulnerabilities
-- 🎯 [Implementation Summary](./IMPLEMENTACION_OWASP_NOIR.md) - Setup details
 
 ## 📦 Available Scripts
 
@@ -55,12 +39,6 @@ npm run security:scan:verbose
 - `npm run test:coverage` - Generate coverage report
 - `npm run test:rls` - Test Row Level Security
 
-### Security
-- `npm run security:install` - Install OWASP Noir
-- `npm run security:scan` - Run security scan
-- `npm run security:scan:verbose` - Detailed security scan
-- `npm run security:scan:prod` - Scan for production
-
 ## 🏗️ Tech Stack
 
 - **Framework**: Next.js 16 with App Router
@@ -68,7 +46,7 @@ npm run security:scan:verbose
 - **Database**: Supabase (PostgreSQL)
 - **Authentication**: Supabase Auth
 - **Styling**: Tailwind CSS
-- **Security**: OWASP Noir, RLS, Rate Limiting
+- **Security**: RLS, Rate Limiting, Input Validation
 - **Deployment**: Vercel
 
 ## 📚 Learn More
@@ -80,7 +58,6 @@ npm run security:scan:verbose
 
 ### Security Resources
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
-- [OWASP Noir](https://owasp-noir.github.io/noir/)
 - [Supabase Security](https://supabase.com/docs/guides/auth/row-level-security)
 
 ## 🚀 Deploy on Vercel
@@ -92,7 +69,6 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ## 🔒 Security First
 
 This project follows security best practices:
-- ✅ Automated security scanning with OWASP Noir
 - ✅ Row Level Security (RLS) in database
 - ✅ Rate limiting on API endpoints
 - ✅ Input validation with Zod
