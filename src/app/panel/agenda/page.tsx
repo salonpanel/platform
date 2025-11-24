@@ -186,20 +186,6 @@ function AgendaContent() {
 
         if (mounted) {
           setBookings((data as Booking[]) || []);
-          
-          // Debug: mostrar información de reservas cargadas
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Bookings loaded:', {
-              count: (data as Booking[])?.length || 0,
-              bookings: (data as Booking[])?.map(b => ({
-                id: b.id,
-                starts_at: b.starts_at,
-                localHour: new Date(b.starts_at).getHours(),
-                customer: b.customer?.name,
-                service: b.service?.name
-              }))
-            });
-          }
         }
       } catch (err: any) {
         if (mounted) {
@@ -214,7 +200,7 @@ function AgendaContent() {
 
     loadBookings();
 
-    // Suscripción a cambios en tiempo real
+    // Suscripción a cambios en tiempo real solo para bookings del día actual
     const channel = supabase
       .channel("rt-bookings")
       .on(
@@ -223,7 +209,7 @@ function AgendaContent() {
           event: "*",
           schema: "public",
           table: "bookings",
-          filter: `tenant_id=eq.${tenantId}`,
+          filter: `tenant_id=eq.${tenantId}&starts_at=gte.${startOfDay(selectedDate).toISOString()}&starts_at=lt.${endOfDay(selectedDate).toISOString()}`,
         },
         () => {
           loadBookings();
@@ -361,18 +347,18 @@ function AgendaContent() {
 
   // Calcular hourHeight dinámicamente según altura disponible
   const availableHeight = heightAware.availableHeight;
-  const hoursToShow = 24; // 0:00 a 23:00 = 24 horas
-  const headerHeight = 200; // Aproximado: filtros + título + staff selector
-  const availableForTimeline = Math.max(600, availableHeight - headerHeight); // Mínimo 600px
+  const workingHours = 12; // 8:00 a 20:00 = 12 horas laborables
+  const headerHeight = 180; // Optimizado: filtros + título + staff selector
+  const availableForTimeline = Math.max(400, availableHeight - headerHeight); // Mínimo 400px
   const calculatedHourHeight = Math.max(
-    30, // Mínimo 30px para mostrar todas las horas
-    Math.floor(availableForTimeline / hoursToShow)
+    60, // Mínimo 60px para buena legibilidad
+    Math.floor(availableForTimeline / workingHours)
   );
   const hourHeight = density === "ultra-compact" 
-    ? Math.min(40, calculatedHourHeight)
-    : density === "compact" 
     ? Math.min(50, calculatedHourHeight)
-    : Math.min(60, calculatedHourHeight);
+    : density === "compact" 
+    ? Math.min(70, calculatedHourHeight)
+    : Math.min(90, calculatedHourHeight);
 
   return (
     <div className="h-full flex flex-col min-h-0 overflow-hidden bg-gradient-to-br from-[var(--bg-primary)] via-[var(--bg-secondary)] to-[var(--bg-tertiary)]">
@@ -474,18 +460,6 @@ function AgendaContent() {
               </Card>
             ) : (
               <div className="h-full flex flex-col">
-                {/* Debug Info - Solo en desarrollo */}
-                {process.env.NODE_ENV === 'development' && (
-                  <div className="p-4 bg-[var(--glass-bg)] border-b border-[var(--glass-border)]">
-                    <div className="text-sm font-mono">
-                      <div>Bookings Count: {bookings.length}</div>
-                      <div>Selected Date: {selectedDate?.toISOString()}</div>
-                      <div>Selected Staff: {selectedStaffId || 'All'}</div>
-                      <div>View Mode: {viewMode}</div>
-                      <div>Hour Height: {hourHeight}px</div>
-                    </div>
-                  </div>
-                )}
                 
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -500,60 +474,24 @@ function AgendaContent() {
                     <div className="h-full flex flex-col min-h-0 overflow-hidden">
                       {/* Vista Timeline (Desktop/Tablet) */}
                       <div className="hidden md:flex flex-1 min-h-0">
-                        <div 
-                          className="flex-1 min-h-0 overflow-y-auto border border-red-500" // Debug border
-                          style={{ maxHeight: '800px' }} // Debug height limit
-                          ref={(el) => {
-                            if (el && process.env.NODE_ENV === 'development') {
-                              console.log('Timeline container:', {
-                                scrollHeight: el.scrollHeight,
-                                clientHeight: el.clientHeight,
-                                offsetHeight: el.offsetHeight,
-                                hourHeight: hourHeight,
-                                totalHours: 24,
-                                estimatedHeight: hourHeight * 24
-                              });
-                            }
-                          }}
-                        >
+                        <div className="flex-1 min-h-0 overflow-y-auto" role="region" aria-label="Vista diaria de reservas">
                           <Timeline
-                            startHour={0}
-                            endHour={23}
+                            startHour={8}
+                            endHour={20}
                             density={density}
                             hourHeight={hourHeight}
                           >
                             {(hour) => {
                               const hourBookings = bookings.filter((booking) => {
                                 const bookingDate = new Date(booking.starts_at);
-                                // Usar la hora local en lugar de UTC para mejor precisión
                                 const bookingHour = bookingDate.getHours();
                                 return bookingHour === hour;
-                              });
-
-                              // Debug: mostrar información
-                              if (process.env.NODE_ENV === 'development') {
-                                console.log(`Hour ${hour}: Found ${hourBookings.length} bookings`, {
-                                  totalBookings: bookings.length,
-                                  hourBookings: hourBookings.map(b => ({
-                                    id: b.id,
-                                    starts_at: b.starts_at,
-                                    hour: new Date(b.starts_at).getHours(),
-                                    customer: b.customer?.name,
-                                    service: b.service?.name
-                                  }))
-                                });
-                              }
-
-                              // Siempre mostrar información de debug para esta hora
-                              console.log(`Hour ${hour} - Bookings: ${hourBookings.length}`, {
-                                hasBookings: hourBookings.length > 0,
-                                bookingDetails: hourBookings.slice(0, 2)
                               });
 
                               if (hourBookings.length === 0) return null;
 
                               return (
-                                <div className="space-y-2">
+                                <div className="space-y-2" role="group" aria-label={`Reservas de las ${hour}:00`}>
                                   {hourBookings.map((booking) => (
                                     <MiniBookingCard
                                       key={booking.id}
@@ -570,7 +508,7 @@ function AgendaContent() {
                       </div>
 
                       {/* Vista Lista (Mobile) */}
-                      <div className="md:hidden flex-1 min-h-0 overflow-y-auto">
+                      <div className="md:hidden flex-1 min-h-0 overflow-y-auto" role="region" aria-label="Lista de reservas del día">
                         <div className="space-y-3 p-4">
                           {bookings.map((booking) => (
                             <MiniBookingCard
@@ -625,6 +563,7 @@ function AgendaContent() {
             <FloatingActionButton
               onClick={handleNewBooking}
               className="fixed bottom-6 right-6 z-50"
+              aria-label="Crear nueva reserva"
             />
           )}
         </motion.div>

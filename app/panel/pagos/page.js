@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 
-export default function ConnectedPage() {
+export default function PagosPage() {
   // Redirect to payments config page
   redirect('/panel/config/payments')
 }

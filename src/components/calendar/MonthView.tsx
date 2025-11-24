@@ -100,9 +100,9 @@ export function MonthView({
   };
 
   return (
-    <div className="space-y-5 h-full flex flex-col p-4">
+    <div className="space-y-5 h-full flex flex-col p-4" role="region" aria-label="Vista mensual de reservas">
       {/* Month navigation - Premium */}
-      <GlassCard variant="elevated" padding="md">
+      <div className="bg-[var(--glass-bg-default)] border border-[var(--glass-border)] backdrop-blur-md rounded-[var(--radius-xl)] p-4 shadow-[var(--shadow-premium)]">
         <div className="flex items-center justify-between">
           <motion.button
             {...getMotionSafeProps({
@@ -112,15 +112,15 @@ export function MonthView({
             })}
             onClick={() => navigateMonth("prev")}
             className={cn(
-              "p-2 rounded-xl transition-all duration-150",
-              "text-secondary hover:text-primary hover:bg-glass"
+              "p-2 rounded-[var(--radius-lg)] transition-all duration-200",
+              "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]"
             )}
           >
             <ChevronLeft className="h-5 w-5" />
           </motion.button>
           <h3 className={cn(
             "text-lg font-semibold tracking-tight",
-            "text-primary font-sans"
+            "text-[var(--text-primary)] font-[var(--font-heading)]"
           )}>
             {new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric" }).format(currentDate)}
           </h3>
@@ -132,25 +132,27 @@ export function MonthView({
             })}
             onClick={() => navigateMonth("next")}
             className={cn(
-              "p-2 rounded-xl transition-all duration-150",
-              "text-secondary hover:text-primary hover:bg-glass"
+              "p-2 rounded-[var(--radius-lg)] transition-all duration-200",
+              "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]"
             )}
           >
             <ChevronRight className="h-5 w-5" />
           </motion.button>
         </div>
-      </GlassCard>
+      </div>
 
       {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-2 flex-1">
+      <div className="grid grid-cols-7 gap-2 flex-1" role="grid" aria-label="Calendario mensual">
         {/* Days of the week - Premium */}
-        {["L", "M", "X", "J", "V", "S", "D"].map((day) => (
+        {["L", "M", "X", "J", "V", "S", "D"].map((day, index) => (
           <div
             key={day}
             className={cn(
               "text-center text-xs font-semibold uppercase tracking-wider",
-              "text-tertiary font-sans"
+              "text-[var(--text-tertiary)] font-[var(--font-body)]"
             )}
+            role="columnheader"
+            aria-label={day}
           >
             {day}
           </div>
@@ -184,14 +186,18 @@ export function MonthView({
                 transition: { delay: idx * 0.005, duration: 0.15, ease: "easeOut" },
               })}
               className={cn(
-                "rounded-xl min-h-[80px] sm:min-h-[100px] cursor-pointer transition-all",
-                "bg-primary border backdrop-blur-md",
+                "rounded-[var(--radius-lg)] min-h-[80px] sm:min-h-[100px] cursor-pointer transition-all duration-200",
+                "bg-[var(--bg-primary)] border backdrop-blur-md",
                 !isCurrentMonth && "opacity-30",
                 isSelected
-                  ? "ring-2 ring-accent-blue bg-accent-blue/10 border-accent-blue"
-                  : "border-border-default hover:border-border-hover hover:bg-glass",
-                isTodayDate && !isSelected && "bg-accent-aqua/8 border-accent-aqua/40"
+                  ? "ring-2 ring-[var(--accent-blue)] bg-[var(--accent-blue-glass)] border-[var(--accent-blue)]"
+                  : "border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] hover:bg-[var(--glass-bg-subtle)]",
+                isTodayDate && !isSelected && "bg-[var(--accent-aqua-glass)] border-[var(--accent-aqua)]/40"
               )}
+              role="gridcell"
+              aria-label={day ? `${format(day, "d 'de' MMMM")}${dayBookings.length > 0 ? `, ${dayBookings.length} reserva${dayBookings.length > 1 ? 's' : ''}` : ''}` : 'Día no disponible'}
+              aria-selected={isSelected}
+              tabIndex={day ? 0 : -1}
               onClick={() => {
                 if (day) {
                   onDateSelect(format(day, "yyyy-MM-dd"));
@@ -203,17 +209,17 @@ export function MonthView({
                   className={cn(
                     "text-sm sm:text-base font-semibold",
                     isTodayDate
-                      ? "text-accent-aqua"
+                      ? "text-[var(--accent-aqua)]"
                       : isSelected
-                      ? "text-accent-blue"
-                      : "text-primary",
-                    "font-sans"
+                      ? "text-[var(--accent-blue)]"
+                      : "text-[var(--text-primary)]",
+                    "font-[var(--font-heading)]"
                   )}
                 >
                   {day ? format(day, "d") : ""}
                 </div>
                 {isTodayDate && (
-                  <div className="w-1.5 h-1.5 rounded-full bg-accent-aqua" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent-aqua)]" />
                 )}
               </div>
               <div className="px-2 pb-2 space-y-1">
@@ -248,9 +254,9 @@ export function MonthView({
                       role="button"
                       aria-label={`Cita de ${customerName} a las ${startTime}`}
                       className={cn(
-                        "text-xs p-1.5 rounded-lg truncate cursor-pointer transition-all",
+                        "text-xs p-1.5 rounded-[var(--radius-md)] truncate cursor-pointer transition-all duration-200",
                         "backdrop-blur-sm flex items-center gap-1.5 border-l-2",
-                        "focus:outline-none focus:ring-2 focus:ring-accent-blue/50 focus:ring-offset-2 focus:ring-offset-primary"
+                        "focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]/50 focus:ring-offset-2 focus:ring-offset-[var(--bg-primary)]"
                       )}
                       style={{
                         background: statusTokens.bg,
@@ -264,15 +270,15 @@ export function MonthView({
                       />
                       {/* Time */}
                       <span className={cn(
-                        "font-semibold font-mono flex-shrink-0",
-                        "text-secondary font-sans"
+                        "font-semibold font-[var(--font-mono)] flex-shrink-0",
+                        "text-[var(--text-secondary)]"
                       )}>
                         {startTime}
                       </span>
                       {/* Customer initials */}
                       <span className={cn(
                         "font-medium truncate",
-                        "text-primary font-sans"
+                        "text-[var(--text-primary)] font-[var(--font-body)]"
                       )}>
                         {customerInitial}
                       </span>
@@ -282,7 +288,7 @@ export function MonthView({
                 {dayBookings.length > 3 && (
                   <div className={cn(
                     "text-xs font-semibold pt-1",
-                    "text-tertiary font-sans"
+                    "text-[var(--text-tertiary)] font-[var(--font-body)]"
                   )}>
                     +{dayBookings.length - 3} más
                   </div>

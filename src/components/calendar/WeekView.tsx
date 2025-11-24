@@ -87,68 +87,72 @@ export function WeekView({
   };
 
   return (
-    <div className="w-full h-full overflow-x-auto scrollbar-hide bg-primary">
+    <div className="w-full h-full overflow-x-auto scrollbar-hide bg-[var(--bg-primary)]" role="region" aria-label="Vista semanal de reservas">
       <div className="min-w-[800px] h-full">
         {/* Header with days of the week - Premium */}
-        <GlassCard variant="elevated" padding="md" className="grid grid-cols-8 border-b border-border-default sticky top-0 z-10">
-          <div className={cn(
-            "text-sm font-semibold border-r border-border-default",
-            "text-primary font-sans"
-          )}>
-            Hora
+        <div className="bg-[var(--glass-bg-default)] border border-[var(--glass-border)] backdrop-blur-md rounded-[var(--radius-xl)] p-4 mb-4 sticky top-0 z-10 shadow-[var(--shadow-premium)]">
+          <div className="grid grid-cols-8">
+            <div className={cn(
+              "text-sm font-semibold border-r border-[var(--glass-border-subtle)] pr-2",
+              "text-[var(--text-secondary)] font-[var(--font-heading)]"
+            )}>
+              Hora
+            </div>
+            {weekDays.map((day, idx) => {
+              const isSelected = isSameDay(day, parseISO(selectedDate));
+              const isTodayDate = isSameDay(day, today);
+              return (
+                <div
+                  key={idx}
+                  className={cn(
+                    "text-center border-r border-[var(--glass-border-subtle)] transition-all duration-200 relative px-2",
+                    isSelected
+                      ? "bg-[var(--accent-blue-glass)] border-b-2 border-[var(--accent-blue)] rounded-lg"
+                      : isTodayDate
+                      ? "bg-[var(--accent-aqua-glass)] border-b-2 border-[var(--accent-aqua)]/40 rounded-lg"
+                      : "hover:bg-[var(--glass-bg-subtle)]"
+                  )}
+                >
+                  <div className={cn(
+                    "text-xs font-semibold uppercase tracking-wider mb-1",
+                    "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                  )}>
+                    {new Intl.DateTimeFormat("es-ES", { weekday: "short" }).format(day)}
+                  </div>
+                  <div className={cn(
+                    "text-lg font-semibold",
+                    isSelected
+                      ? "text-[var(--accent-blue)]"
+                      : isTodayDate
+                      ? "text-[var(--accent-aqua)]"
+                      : "text-[var(--text-primary)]",
+                    "font-[var(--font-heading)]"
+                  )}>
+                    {format(day, "d")}
+                  </div>
+                  {isTodayDate && !isSelected && (
+                    <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[var(--accent-aqua)]" />
+                  )}
+                </div>
+              );
+            })}
           </div>
-          {weekDays.map((day, idx) => {
-            const isSelected = isSameDay(day, parseISO(selectedDate));
-            const isTodayDate = isSameDay(day, today);
-            return (
-              <div
-                key={idx}
-                className={cn(
-                  "text-center border-r border-border-default transition-colors relative",
-                  isSelected
-                    ? "bg-accent-blue/10 border-b-2 border-accent-blue"
-                    : isTodayDate
-                    ? "bg-accent-aqua/8 border-b-2 border-accent-aqua/40"
-                    : "hover:bg-glass"
-                )}
-              >
-                <div className={cn(
-                  "text-xs font-semibold uppercase tracking-wider mb-1",
-                  "text-tertiary font-sans"
-                )}>
-                  {new Intl.DateTimeFormat("es-ES", { weekday: "short" }).format(day)}
-                </div>
-                <div className={cn(
-                  "text-lg font-semibold",
-                  isSelected
-                    ? "text-accent-blue"
-                    : isTodayDate
-                    ? "text-accent-aqua"
-                    : "text-primary",
-                  "font-sans"
-                )}>
-                  {format(day, "d")}
-                </div>
-                {isTodayDate && !isSelected && (
-                  <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-accent-aqua" />
-                )}
-              </div>
-            );
-          })}
-        </GlassCard>
+        </div>
 
         {/* Timeline */}
-        <div className="relative flex-1 overflow-y-auto scrollbar-hide bg-primary">
+        <div className="relative flex-1 overflow-y-auto scrollbar-hide bg-[var(--bg-primary)]" role="region" aria-label="Timeline semanal">
           <div className="grid grid-cols-8">
             {/* Time Column */}
-            <div className="border-r border-border-default">
+            <div className="border-r border-[var(--glass-border-subtle)]" role="columnheader">
               {hours.map((hour) => (
                 <div
                   key={hour}
                   className={cn(
-                    "text-xs font-semibold border-b border-border-default min-h-[60px]",
-                    "text-secondary font-mono font-sans"
+                    "text-xs font-semibold border-b border-[var(--glass-border-subtle)] min-h-[60px] p-2",
+                    "text-[var(--text-secondary)] font-[var(--font-mono)]"
                   )}
+                  role="cell"
+                  aria-label={`${hour}:00`}
                 >
                   {hour}:00
                 </div>
@@ -160,7 +164,7 @@ export function WeekView({
               return (
                 <div
                   key={dayIdx}
-                  className="relative border-r border-border-default"
+                  className="relative border-r border-[var(--glass-border-subtle)]"
                   style={{
                     minHeight: `${hours.length * 60}px`,
                   }}
@@ -169,7 +173,7 @@ export function WeekView({
                   {hours.map((hour) => (
                     <div
                       key={hour}
-                      className="border-b border-border-default min-h-[60px]"
+                      className="border-b border-[var(--glass-border-subtle)] min-h-[60px]"
                     />
                   ))}
                   {/* Bookings for this day */}
@@ -196,32 +200,32 @@ export function WeekView({
                         }}
                         tabIndex={0}
                         role="button"
-                        aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime}`}
                         className={cn(
-                          "absolute left-2 right-2 rounded-xl border-l-4 cursor-pointer",
-                          "focus:outline-none focus:ring-2 focus:ring-accent-blue/50 focus:ring-offset-2 focus:ring-offset-primary",
-                          "transition-all backdrop-blur-md group"
+                          "absolute left-2 right-2 rounded-[var(--radius-lg)] border-l-4 cursor-pointer",
+                          "focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]/50 focus:ring-offset-2 focus:ring-offset-[var(--bg-primary)]",
+                          "transition-all duration-200 backdrop-blur-md group"
                         )}
+                        aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime} - ${booking.service?.name || "Sin servicio"}`}
                         style={{
                           top: position.top,
                           height: position.height,
                           minHeight: "50px",
                           background: statusTokens.bg,
                           borderLeftColor: statusTokens.border,
-                          boxShadow: statusTokens.shadow,
+                          boxShadow: "var(--shadow-premium)",
                         }}
                       >
                         {/* Time - Priority 1 */}
                         <div className={cn(
-                          "text-xs font-semibold mb-1 font-mono",
-                          "text-secondary font-sans"
+                          "text-xs font-semibold mb-1 font-[var(--font-mono)]",
+                          "text-[var(--text-secondary)]"
                         )}>
                           {startTime}
                         </div>
                         {/* Customer - Priority 2 */}
                         <div className={cn(
                           "text-sm font-semibold truncate mb-1",
-                          "text-primary font-sans"
+                          "text-[var(--text-primary)] font-[var(--font-heading)]"
                         )}>
                           {booking.customer?.name || "Sin cliente"}
                         </div>
@@ -229,7 +233,7 @@ export function WeekView({
                         {parseFloat(position.height.replace("%", "")) > 15 && (
                           <div className={cn(
                             "text-xs truncate mb-1.5",
-                            "text-secondary font-sans"
+                            "text-[var(--text-secondary)] font-[var(--font-body)]"
                           )}>
                             {booking.service?.name || "Sin servicio"}
                           </div>

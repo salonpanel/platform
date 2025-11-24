@@ -132,8 +132,8 @@ export async function POST(req: Request) {
       
       const accountLink = await stripe.accountLinks.create({
         account: stripeAccountId,
-        refresh_url: `${baseUrl}/panel/pagos`,
-        return_url: `${baseUrl}/panel/pagos/conectado`,
+        refresh_url: `${baseUrl}/panel/monedero`,
+        return_url: `${baseUrl}/panel/monedero`,
         type: "account_onboarding",
       });
 

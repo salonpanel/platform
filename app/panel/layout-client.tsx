@@ -269,9 +269,8 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
     { href: "/panel/clientes", label: "Clientes", icon: "Users" },
     { href: "/panel/servicios", label: "Servicios", icon: "Scissors" },
     { href: "/panel/staff", label: "Staff", icon: "User" },
-    { href: "/panel/pagos", label: "Pagos", icon: "CreditCard" },
     { href: "/panel/monedero", label: "Monedero", icon: "Wallet" },
-    { href: "/panel/marketing", label: "Marketing", icon: "Megaphone" },
+    { href: "/panel/marketing", label: "Marketing", icon: "Target" },
     { href: "/panel/chat", label: "Chat", icon: "MessageCircle" },
     { href: "/panel/ajustes", label: "Ajustes", icon: "Settings" },
   ];
@@ -282,7 +281,6 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
     if (pathname === "/panel/clientes") return "Clientes";
     if (pathname === "/panel/servicios") return "Servicios";
     if (pathname === "/panel/staff") return "Staff";
-    if (pathname === "/panel/pagos") return "Pagos";
     if (pathname === "/panel/monedero") return "Monedero";
     if (pathname === "/panel/marketing") return "Marketing";
     if (pathname === "/panel/chat") return "Chat";
