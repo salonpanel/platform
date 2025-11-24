@@ -7,7 +7,6 @@ import { X, Filter, Calendar, CreditCard, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Staff, BookingStatus, BOOKING_STATUS_CONFIG } from "@/types/agenda";
-import { GlassCard } from "@/components/agenda/primitives/GlassCard";
 import { AgendaModal } from "./AgendaModal";
 import { theme } from "@/theme/ui";
 
@@ -142,7 +141,7 @@ export function AgendaSidebar({
     <div className="h-full overflow-y-auto space-y-6 scrollbar-hide">
       {/* Header - Only show in mobile drawer */}
       {isMobile && (
-        <GlassCard variant="inset" padding="md" className="flex items-center justify-between">
+        <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.85)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Filter className="h-5 w-5 text-[var(--accent-blue)]" />
             <h3 className={cn(
@@ -157,18 +156,18 @@ export function AgendaSidebar({
             className={cn(
               "p-2 rounded-xl transition-all duration-200",
               "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
-              "hover:bg-[var(--glass-bg-subtle)] active:scale-95"
+              "hover:bg-[rgba(255,255,255,0.03)] active:scale-95"
             )}
             aria-label="Cerrar filtros"
           >
             <X className="h-5 w-5" />
           </button>
-        </GlassCard>
+        </div>
       )}
 
       {/* Tablet collapse toggle */}
       {isTablet && !isCollapsed && (
-        <GlassCard variant="inset" padding="md" className="flex items-center justify-between">
+        <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.85)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Filter className="h-5 w-5 text-[var(--accent-blue)]" />
             <h3 className={cn(
@@ -183,17 +182,17 @@ export function AgendaSidebar({
             className={cn(
               "p-2 rounded-xl transition-all duration-200",
               "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
-              "hover:bg-[var(--glass-bg-subtle)] active:scale-95"
+              "hover:bg-[rgba(255,255,255,0.03)] active:scale-95"
             )}
             aria-label="Contraer filtros"
           >
             <X className="h-5 w-5" />
           </button>
-        </GlassCard>
+        </div>
       )}
 
       {/* Quick Navigation */}
-      <GlassCard variant="default" padding="md">
+      <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.65)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3">
         <div className="space-y-3">
           <h4 className={cn(
             "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
@@ -207,8 +206,8 @@ export function AgendaSidebar({
               onClick={goToToday}
               className={cn(
                 "w-full px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 text-left",
-                "text-[var(--text-primary)] bg-[var(--glass-bg-default)] hover:bg-[var(--glass-bg-subtle)]",
-                "border border-[var(--glass-border)] font-[var(--font-body)]"
+                "text-[var(--text-primary)] bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.05)]",
+                "border border-white/5 font-[var(--font-body)]"
               )}
             >
               Hoy
@@ -218,8 +217,8 @@ export function AgendaSidebar({
                 onClick={() => navigateWeek("prev")}
                 className={cn(
                   "flex-1 px-3 py-2 text-xs font-medium rounded-xl transition-all duration-200",
-                  "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]",
-                  "border border-[var(--glass-border)] font-[var(--font-body)]"
+                  "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.03)]",
+                  "border border-white/5 font-[var(--font-body)]"
                 )}
               >
                 -1 semana
@@ -228,8 +227,8 @@ export function AgendaSidebar({
                 onClick={() => navigateWeek("next")}
                 className={cn(
                   "flex-1 px-3 py-2 text-xs font-medium rounded-xl transition-all duration-200",
-                  "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]",
-                  "border border-[var(--glass-border)] font-[var(--font-body)]"
+                  "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.03)]",
+                  "border border-white/5 font-[var(--font-body)]"
                 )}
               >
                 +1 semana
@@ -237,10 +236,10 @@ export function AgendaSidebar({
             </div>
           </div>
         </div>
-      </GlassCard>
+      </div>
 
       {/* Calendar Picker */}
-      <GlassCard variant="default" padding="md">
+      <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.65)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3">
         <div className="space-y-3">
           <h4 className={cn(
             "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
@@ -255,18 +254,18 @@ export function AgendaSidebar({
             onChange={(e) => onDateSelect(e.target.value)}
             className={cn(
               "w-full rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200",
-              "text-[var(--text-primary)] bg-[var(--glass-bg-default)] border border-[var(--glass-border)]",
-              "hover:border-[var(--accent-blue)/30] focus:border-[var(--accent-blue)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)/30]",
+              "text-[var(--text-primary)] bg-[rgba(255,255,255,0.03)] border border-white/5",
+              "hover:border-[var(--accent-blue)]/30 focus:border-[var(--accent-blue)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]/30",
               "font-[var(--font-body)]"
             )}
           />
         </div>
-      </GlassCard>
+      </div>
 
       {/* Filter Sections */}
       <div className="space-y-5">
         {/* Payment Status */}
-        <GlassCard variant="default" padding="md">
+        <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.65)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3">
           <div className="space-y-3">
             <h4 className={cn(
               "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
@@ -286,8 +285,8 @@ export function AgendaSidebar({
                     checked={filters.payment.includes(option)}
                     onChange={() => handleFilterChange("payment", option)}
                     className={cn(
-                      "w-4 h-4 rounded-lg border bg-[var(--glass-bg-default)] text-[var(--accent-blue)]",
-                      "border-[var(--glass-border)] focus:ring-2 focus:ring-[var(--accent-blue)/30] transition-all duration-200"
+                      "w-4 h-4 rounded-lg border bg-[rgba(255,255,255,0.03)] text-[var(--accent-blue)]",
+                      "border-white/5 focus:ring-2 focus:ring-[var(--accent-blue)/30] transition-all duration-200"
                     )}
                   />
                   <span className={cn(
@@ -300,10 +299,10 @@ export function AgendaSidebar({
               ))}
             </div>
           </div>
-        </GlassCard>
+        </div>
 
         {/* Booking Status */}
-        <GlassCard variant="default" padding="md">
+        <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.65)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3">
           <div className="space-y-3">
             <h4 className={cn(
               "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
@@ -330,8 +329,8 @@ export function AgendaSidebar({
                     checked={filters.status.includes(status)}
                     onChange={() => handleFilterChange("status", status)}
                     className={cn(
-                      "w-4 h-4 rounded-lg border bg-[var(--glass-bg-default)] text-[var(--accent-blue)]",
-                      "border-[var(--glass-border)] focus:ring-2 focus:ring-[var(--accent-blue)/30] transition-all duration-200"
+                      "w-4 h-4 rounded-lg border bg-[rgba(255,255,255,0.03)] text-[var(--accent-blue)]",
+                      "border-white/5 focus:ring-2 focus:ring-[var(--accent-blue)/30] transition-all duration-200"
                     )}
                   />
                   <span className={cn(
@@ -344,13 +343,13 @@ export function AgendaSidebar({
               ))}
             </div>
           </div>
-        </GlassCard>
+        </div>
 
         {/* Staff Filter - Removed to avoid duplication with AgendaFilters */}
         {/* Staff selection is handled in AgendaFilters header for better UX */}
 
         {/* Additional Options */}
-        <GlassCard variant="default" padding="md">
+        <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.65)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3">
           <div className="space-y-3">
             <h4 className={cn(
               "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
@@ -365,8 +364,8 @@ export function AgendaSidebar({
                 checked={filters.highlighted === true}
                 onChange={() => handleFilterChange("highlighted", true)}
                 className={cn(
-                  "w-4 h-4 rounded-lg border bg-[var(--glass-bg-default)] text-[var(--accent-blue)]",
-                  "border-[var(--glass-border)] focus:ring-2 focus:ring-[var(--accent-blue)/30] transition-all duration-200"
+                  "w-4 h-4 rounded-lg border bg-[rgba(255,255,255,0.03)] text-[var(--accent-blue)]",
+                  "border-white/5 focus:ring-2 focus:ring-[var(--accent-blue)/30] transition-all duration-200"
                 )}
               />
               <span className={cn(
@@ -383,8 +382,8 @@ export function AgendaSidebar({
                   checked={showFreeSlots}
                   onChange={(e) => onShowFreeSlotsChange(e.target.checked)}
                   className={cn(
-                    "w-4 h-4 rounded-lg border bg-[var(--glass-bg-default)] text-[var(--accent-blue)]",
-                    "border-[var(--glass-border)] focus:ring-2 focus:ring-[var(--accent-blue)/30] transition-all duration-200"
+                    "w-4 h-4 rounded-lg border bg-[rgba(255,255,255,0.03)] text-[var(--accent-blue)]",
+                    "border-white/5 focus:ring-2 focus:ring-[var(--accent-blue)/30] transition-all duration-200"
                   )}
                 />
                 <span className={cn(
@@ -396,7 +395,7 @@ export function AgendaSidebar({
               </label>
             )}
           </div>
-        </GlassCard>
+        </div>
 
         {/* Clear Filters */}
         <Button
@@ -425,9 +424,9 @@ export function AgendaSidebar({
             onClick={handleDrawerOpen}
             className={cn(
               "fixed bottom-4 right-4 z-40 p-3 rounded-xl shadow-lg",
-              "bg-[var(--glass-bg-default)] border border-[var(--glass-border)]",
+              "bg-[rgba(15,23,42,0.85)] border border-white/5",
               "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
-              "backdrop-blur-md transition-all duration-200"
+              "backdrop-blur-xl transition-all duration-200"
             )}
             aria-label="Mostrar filtros"
           >
@@ -472,7 +471,7 @@ export function AgendaSidebar({
             className={cn(
               "p-2 rounded-xl transition-all duration-200",
               "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
-              "hover:bg-[var(--glass-bg-subtle)] active:scale-95"
+              "hover:bg-[rgba(255,255,255,0.03)] active:scale-95"
             )}
             aria-label="Expandir filtros"
           >
