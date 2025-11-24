@@ -103,7 +103,7 @@ export function SidebarNav({
     // Agregar delay pequeño para evitar expansiones accidentales
     hoverTimeoutRef.current = setTimeout(() => {
       setIsHovered(true);
-    }, 100);
+    }, 100) as any;
   }, [isCollapsed]);
 
   const handleMouseLeave = useCallback(() => {
@@ -118,7 +118,7 @@ export function SidebarNav({
     // Delay mínimo para evitar colapsos accidentales
     leaveTimeoutRef.current = setTimeout(() => {
       setIsHovered(false);
-    }, 200);
+    }, 200) as any;
   }, [isCollapsed]);
 
   // Limpiar timeouts al desmontar

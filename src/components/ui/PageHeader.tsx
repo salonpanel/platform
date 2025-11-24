@@ -78,7 +78,45 @@ const PageHeaderComponent = ({
           config.spacing,
           className
         )}
-      />
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              {/* Breadcrumb skeleton */}
+              {breadcrumbs && (
+                <div className="flex items-center gap-2 text-xs mb-2">
+                  {breadcrumbs.map((_, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      {index > 0 && <span className="text-[var(--color-text-disabled)]">/</span>}
+                      <div className="h-3 w-12 bg-white/10 rounded animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Title skeleton */}
+              <div className={cn("h-6 bg-white/10 rounded animate-pulse mb-2", config.titleSize)} />
+
+              {/* Subtitle skeleton */}
+              {subtitle && (
+                <div className={cn("h-4 bg-white/5 rounded animate-pulse mb-1", config.subtitleSize)} />
+              )}
+
+              {/* Description skeleton */}
+              {description && (
+                <div className={cn("h-3 bg-white/5 rounded animate-pulse", config.descriptionSize)} />
+              )}
+            </div>
+
+            {/* Actions skeleton */}
+            {actions && (
+              <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0">
+                <div className="h-8 w-20 bg-white/10 rounded animate-pulse" />
+              </div>
+            )}
+          </div>
+        </div>
+      </motion.div>
     );
   }
 
@@ -129,73 +167,72 @@ const PageHeaderComponent = ({
             )}
 
             {/* Title with gradient */}
-              <h1
+            <h1
+              className={cn(
+                "font-bold tracking-tight font-satoshi",
+                config.titleSize,
+                "bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent"
+              )}
+              style={{
+                backgroundImage: "linear-gradient(135deg, var(--color-text-primary) 0%, var(--color-text-secondary) 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text"
+              }}
+              role="heading"
+              aria-level={1}
+            >
+              {title}
+            </h1>
+
+            {/* Subtitle */}
+            {subtitle && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.1, duration: 0.3 }}
                 className={cn(
-                  "font-bold tracking-tight font-satoshi",
-                  config.titleSize,
-                  "bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent"
+                  "mt-1.5 font-medium",
+                  config.subtitleSize,
+                  "text-[var(--color-text-secondary)] font-inter"
                 )}
-                style={{
-                  backgroundImage: "linear-gradient(135deg, var(--color-text-primary) 0%, var(--color-text-secondary) 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text"
-                }}
-                role="heading"
-                aria-level={1}
+                aria-label={`Subtítulo: ${subtitle}`}
               >
-                {title}
-              </h1>
+                {subtitle}
+              </motion.p>
+            )}
 
-              {/* Subtitle */}
-              {subtitle && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.1, duration: 0.3 }}
-                  className={cn(
-                    "mt-1.5 font-medium",
-                    config.subtitleSize,
-                    "text-[var(--color-text-secondary)] font-inter"
-                  )}
-                  aria-label={`Subtítulo: ${subtitle}`}
-                >
-                  {subtitle}
-                </motion.p>
-              )}
-
-              {/* Description */}
-              {description && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2, duration: 0.3 }}
-                  className={cn(
-                    "mt-2 max-w-2xl",
-                    config.descriptionSize,
-                    "text-[var(--color-text-secondary)] font-inter leading-relaxed"
-                  )}
-                  aria-label={`Descripción: ${description}`}
-                >
-                  {description}
-                </motion.p>
-              )}
-            </div>
-
-            {/* Actions */}
-            {actions && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.15, duration: 0.3 }}
-                className="flex flex-col sm:flex-row gap-3 flex-shrink-0"
-                role="toolbar"
-                aria-label="Acciones del encabezado"
+            {/* Description */}
+            {description && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.3 }}
+                className={cn(
+                  "mt-2 max-w-2xl",
+                  config.descriptionSize,
+                  "text-[var(--color-text-secondary)] font-inter leading-relaxed"
+                )}
+                aria-label={`Descripción: ${description}`}
               >
-                {actions}
-              </motion.div>
+                {description}
+              </motion.p>
             )}
           </div>
+
+          {/* Actions */}
+          {actions && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.15, duration: 0.3 }}
+              className="flex flex-col sm:flex-row gap-3 flex-shrink-0"
+              role="toolbar"
+              aria-label="Acciones del encabezado"
+            >
+              {actions}
+            </motion.div>
+          )}
         </div>
       </div>
     </motion.div>

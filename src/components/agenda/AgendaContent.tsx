@@ -11,8 +11,8 @@ import { ListView } from "@/components/calendar/ListView";
 import { FloatingActionButton } from "@/components/calendar/FloatingActionButton";
 import { BookingDetailPanel } from "@/components/calendar/BookingDetailPanel";
 import { NewBookingModal } from "@/components/calendar/NewBookingModal";
-import { Timeline } from "./Timeline";
-import { MiniBookingCard } from "./MiniBookingCard";
+import { DraggableBookingCard } from "./DraggableBookingCard";
+import { ConflictZone } from "./ConflictZone";
 import { Card, Spinner, EmptyState } from "@/components/ui";
 
 type ViewMode = "day" | "week" | "month" | "list";
@@ -32,6 +32,11 @@ interface AgendaContentProps {
   density: "default" | "compact" | "ultra-compact";
   timeFormatter: Intl.DateTimeFormat;
   heightAware: any;
+  // Nuevas props para interactividad premium
+  onBookingDrag?: (bookingId: string, newTime: string, newStaffId?: string) => void;
+  onBookingResize?: (bookingId: string, newEndTime: string) => void;
+  enableDragDrop?: boolean;
+  showConflicts?: boolean;
 }
 
 interface MiniBookingCardData {
@@ -67,6 +72,11 @@ export function AgendaContent({
   density,
   timeFormatter,
   heightAware,
+  // Nuevas props para interactividad
+  onBookingDrag,
+  onBookingResize,
+  enableDragDrop = true,
+  showConflicts = true,
 }: AgendaContentProps) {
   // Función adaptadora memoizada
   const adaptBookingToMiniCard = useMemo(() =>
@@ -258,6 +268,22 @@ export function AgendaContent({
                   >
                     {viewMode === "day" && (
                       <div className="h-full flex flex-col min-h-0 overflow-hidden">
+                        {/* Zona de conflictos premium */}
+                        {showConflicts && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="flex-shrink-0 mb-4"
+                          >
+                            <ConflictZone
+                              bookings={bookings}
+                              tenantTimezone={tenantTimezone}
+                              className="mx-4"
+                            />
+                          </motion.div>
+                        )}
+
                         {/* Vista Timeline (Desktop/Tablet) */}
                         <div className="hidden md:flex flex-1 min-h-0">
                           <div className="flex-1 min-h-0 overflow-y-auto" role="region" aria-label="Vista diaria de reservas">
@@ -278,14 +304,48 @@ export function AgendaContent({
 
                                 return (
                                   <div className="space-y-2" role="group" aria-label={`Reservas de las ${hour}:00`}>
-                                    {hourBookings.map((booking) => (
-                                      <MiniBookingCard
-                                        key={booking.id}
-                                        booking={adaptBookingToMiniCard(booking)}
-                                        density={density}
-                                        onClick={() => onBookingClick(booking)}
-                                      />
-                                    ))}
+                                    {hourBookings.map((booking) => {
+                                      // Calcular posición del booking
+                                      const getBookingPosition = (booking: Booking) => {
+                                        const start = new Date(booking.starts_at);
+                                        const end = new Date(booking.ends_at);
+
+                                        // Calcular minutos desde las 8:00
+                                        const startMinutes = (start.getHours() - 8) * 60 + start.getMinutes();
+                                        const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
+
+                                        const top = `${(startMinutes / 60) * hourHeight}px`;
+                                        const height = `${Math.max(50, (durationMinutes / 60) * hourHeight)}px`;
+
+                                        return { top, height };
+                                      };
+
+                                      const position = getBookingPosition(booking);
+
+                                      return enableDragDrop ? (
+                                        <DraggableBookingCard
+                                          key={booking.id}
+                                          booking={adaptBookingToMiniCard(booking)}
+                                          position={position}
+                                          density={density}
+                                          onDragEnd={onBookingDrag}
+                                          onResizeEnd={onBookingResize}
+                                          onClick={() => onBookingClick(booking)}
+                                          dragConstraints={{
+                                            top: 0,
+                                            bottom: 12 * hourHeight, // 12 horas máximo
+                                          }}
+                                          snapToGrid={true}
+                                        />
+                                      ) : (
+                                        <MiniBookingCard
+                                          key={booking.id}
+                                          booking={adaptBookingToMiniCard(booking)}
+                                          density={density}
+                                          onClick={() => onBookingClick(booking)}
+                                        />
+                                      );
+                                    })}
                                   </div>
                                 );
                               }}

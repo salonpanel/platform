@@ -185,6 +185,50 @@ export function AgendaContainer() {
     setSearchTerm("");
   }, []);
 
+  // Handlers para drag & drop premium
+  const handleBookingDrag = useCallback(async (bookingId: string, newTime: string, newStaffId?: string) => {
+    try {
+      console.log('🎯 Booking drag operation:', { bookingId, newTime, newStaffId });
+
+      // TODO: Implementar actualización en base de datos
+      // const { error } = await supabase
+      //   .from('bookings')
+      //   .update({ starts_at: newTime, staff_id: newStaffId })
+      //   .eq('id', bookingId);
+
+      // Por ahora, recargar para mostrar cambios
+      await loadBookings();
+
+      // TODO: Mostrar toast de éxito
+      // showToast('Cita movida correctamente', 'success');
+
+    } catch (error) {
+      console.error('❌ Error updating booking position:', error);
+      // TODO: Mostrar toast de error
+      // showToast('Error al mover la cita', 'error');
+    }
+  }, [loadBookings]);
+
+  const handleBookingResize = useCallback(async (bookingId: string, newEndTime: string) => {
+    try {
+      console.log('📏 Booking resize operation:', { bookingId, newEndTime });
+
+      // TODO: Implementar lógica de resize
+      // const { error } = await supabase
+      //   .from('bookings')
+      //   .update({ ends_at: newEndTime })
+      //   .eq('id', bookingId);
+
+      await loadBookings();
+
+      // TODO: Mostrar toast de éxito
+
+    } catch (error) {
+      console.error('❌ Error updating booking duration:', error);
+      // TODO: Mostrar toast de error
+    }
+  }, [loadBookings]);
+
   // Filtros aplicados actualmente
   const activeFilters = useMemo(() => {
     const filters = [];
@@ -300,6 +344,11 @@ export function AgendaContainer() {
           density={density}
           timeFormatter={timeFormatter}
           heightAware={heightAware}
+          // Props premium para interactividad
+          onBookingDrag={handleBookingDrag}
+          onBookingResize={handleBookingResize}
+          enableDragDrop={true}
+          showConflicts={true}
         />
       </div>
     </HeightAwareContainer>
