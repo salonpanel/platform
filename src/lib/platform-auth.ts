@@ -1,4 +1,4 @@
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { supabaseServer } from "./supabase";
 
@@ -8,7 +8,21 @@ import { supabaseServer } from "./supabase";
  */
 export async function isPlatformAdmin(userId?: string): Promise<boolean> {
   if (!userId) {
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            // No necesitamos setAll para solo lectura
+          },
+        },
+      }
+    );
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -36,7 +50,21 @@ export async function isPlatformAdmin(userId?: string): Promise<boolean> {
  */
 export async function canModifyPlatform(userId?: string): Promise<boolean> {
   if (!userId) {
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            // No necesitamos setAll para solo lectura
+          },
+        },
+      }
+    );
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -66,7 +94,21 @@ export async function canModifyPlatform(userId?: string): Promise<boolean> {
  * Obtiene el usuario platform admin actual
  */
 export async function getPlatformAdmin() {
-  const supabase = createRouteHandlerClient({ cookies });
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          // No necesitamos setAll para solo lectura
+        },
+      },
+    }
+  );
   const {
     data: { user },
   } = await supabase.auth.getUser();
