@@ -9,7 +9,7 @@ import { Booking, Staff } from "@/types/agenda";
 import { AgendaFilters } from "@/components/agenda/AgendaFilters";
 import { AgendaStats } from "@/components/agenda/AgendaStats";
 import { AgendaContent } from "@/components/agenda/AgendaContent";
-import { HeightAwareContainer, useHeightAware } from "@/components/panel/HeightAwareContainer";
+import { NotificationProvider, useNotificationActions } from "./NotificationSystem";
 
 /**
  * AgendaContainer - Orquestador principal premium
@@ -18,6 +18,7 @@ import { HeightAwareContainer, useHeightAware } from "@/components/panel/HeightA
 export function AgendaContainer() {
   const supabase = createClientComponentClient();
   const searchParams = useSearchParams();
+  const { success, error: showError, warning, info, achievement } = useNotificationActions();
 
   // Estados principales
   const [tenantId, setTenantId] = useState<string | null>(null);
@@ -199,15 +200,31 @@ export function AgendaContainer() {
       // Por ahora, recargar para mostrar cambios
       await loadBookings();
 
-      // TODO: Mostrar toast de éxito
-      // showToast('Cita movida correctamente', 'success');
+      // Notificación de éxito
+      success(
+        "Cita movida correctamente",
+        `La cita se ha reprogramado para ${new Date(newTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`,
+        {
+          label: "Ver en calendario",
+          onClick: () => {
+            setViewMode("day");
+            setSelectedDate(new Date(newTime));
+          }
+        }
+      );
 
     } catch (error) {
       console.error('❌ Error updating booking position:', error);
-      // TODO: Mostrar toast de error
-      // showToast('Error al mover la cita', 'error');
+      showError(
+        "Error al mover la cita",
+        "No se pudo actualizar el horario. Inténtalo de nuevo.",
+        {
+          label: "Reintentar",
+          onClick: () => handleBookingDrag(bookingId, newTime, newStaffId)
+        }
+      );
     }
-  }, [loadBookings]);
+  }, [loadBookings, success, showError]);
 
   const handleBookingResize = useCallback(async (bookingId: string, newEndTime: string) => {
     try {
@@ -221,13 +238,19 @@ export function AgendaContainer() {
 
       await loadBookings();
 
-      // TODO: Mostrar toast de éxito
+      success(
+        "Duración actualizada",
+        "La duración de la cita se ha ajustado correctamente"
+      );
 
     } catch (error) {
       console.error('❌ Error updating booking duration:', error);
-      // TODO: Mostrar toast de error
+      showError(
+        "Error al ajustar duración",
+        "No se pudo actualizar la duración. Inténtalo de nuevo."
+      );
     }
-  }, [loadBookings]);
+  }, [loadBookings, success, showError]);
 
   // Filtros aplicados actualmente
   const activeFilters = useMemo(() => {
@@ -302,55 +325,57 @@ export function AgendaContainer() {
   };
 
   return (
-    <HeightAwareContainer className="h-full">
-      <div className="h-full flex flex-col min-h-0 overflow-hidden bg-gradient-to-br from-[var(--bg-primary)] via-[var(--bg-secondary)] to-[var(--bg-tertiary)]">
-        {/* Filtros inteligentes */}
-        <AgendaFilters
-          staffList={staffList}
-          selectedStaffId={selectedStaffId}
-          onStaffChange={setSelectedStaffId}
-          searchOpen={searchOpen}
-          searchTerm={searchTerm}
-          onSearchToggle={() => setSearchOpen(!searchOpen)}
-          onSearchChange={setSearchTerm}
-          onSearchClose={() => setSearchOpen(false)}
-          activeFilters={activeFilters}
-          onResetFilters={handleResetFilters}
-          density={density}
-        />
-
-        {/* Estadísticas premium */}
-        {quickStats && (
-          <AgendaStats
-            stats={quickStats}
-            staffUtilization={staffUtilization}
+    <NotificationProvider position="top-right" maxNotifications={3}>
+      <HeightAwareContainer className="h-full">
+        <div className="h-full flex flex-col min-h-0 overflow-hidden bg-gradient-to-br from-[var(--bg-primary)] via-[var(--bg-secondary)] to-[var(--bg-tertiary)]">
+          {/* Filtros inteligentes */}
+          <AgendaFilters
+            staffList={staffList}
+            selectedStaffId={selectedStaffId}
+            onStaffChange={setSelectedStaffId}
+            searchOpen={searchOpen}
+            searchTerm={searchTerm}
+            onSearchToggle={() => setSearchOpen(!searchOpen)}
+            onSearchChange={setSearchTerm}
+            onSearchClose={() => setSearchOpen(false)}
+            activeFilters={activeFilters}
+            onResetFilters={handleResetFilters}
             density={density}
           />
-        )}
 
-        {/* Contenido principal */}
-        <AgendaContent
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          selectedDate={selectedDate ? format(selectedDate, "yyyy-MM-dd") : ""}
-          onDateChange={handleDateChange}
-          bookings={bookings}
-          staffList={staffList}
-          loading={loading}
-          error={error}
-          tenantTimezone={tenantTimezone}
-          onBookingClick={handleBookingClick}
-          onNewBooking={handleNewBooking}
-          density={density}
-          timeFormatter={timeFormatter}
-          heightAware={heightAware}
-          // Props premium para interactividad
-          onBookingDrag={handleBookingDrag}
-          onBookingResize={handleBookingResize}
-          enableDragDrop={true}
-          showConflicts={true}
-        />
-      </div>
-    </HeightAwareContainer>
+          {/* Estadísticas premium */}
+          {quickStats && (
+            <AgendaStats
+              stats={quickStats}
+              staffUtilization={staffUtilization}
+              density={density}
+            />
+          )}
+
+          {/* Contenido principal */}
+          <AgendaContent
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            selectedDate={selectedDate ? format(selectedDate, "yyyy-MM-dd") : ""}
+            onDateChange={handleDateChange}
+            bookings={bookings}
+            staffList={staffList}
+            loading={loading}
+            error={error}
+            tenantTimezone={tenantTimezone}
+            onBookingClick={handleBookingClick}
+            onNewBooking={handleNewBooking}
+            density={density}
+            timeFormatter={timeFormatter}
+            heightAware={heightAware}
+            // Props premium para interactividad
+            onBookingDrag={handleBookingDrag}
+            onBookingResize={handleBookingResize}
+            enableDragDrop={true}
+            showConflicts={true}
+          />
+        </div>
+      </HeightAwareContainer>
+    </NotificationProvider>
   );
 }
