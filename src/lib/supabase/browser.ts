@@ -45,10 +45,14 @@ export function getSupabaseBrowser(): SupabaseClient {
     // En producción, configurar custom fetch para usar proxy
     if (!isDevelopment && typeof window !== 'undefined' && window.location.hostname === 'pro.bookfast.es') {
       clientOptions.global = {
-        fetch: (url: string, options?: RequestInit) =>
-          fetch(`${window.location.origin}/api/auth-proxy?path=${encodeURIComponent(url)}`, {
+        fetch: (url: string, options?: RequestInit) => {
+          // Extraer el path relativo de la URL de Supabase
+          const urlObj = new URL(url);
+          const pathWithQuery = `${urlObj.pathname}${urlObj.search}`;
+          return fetch(`${window.location.origin}/api/auth-proxy?path=${encodeURIComponent(pathWithQuery)}`, {
             ...options,
-          }),
+          });
+        },
       };
     }
     
