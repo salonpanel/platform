@@ -53,6 +53,14 @@ export function getSupabaseBrowser(): SupabaseClient {
             ...options,
           });
         },
+        // Configurar Realtime para usar la URL correcta de Supabase
+        realtime: {
+          params: {
+            eventsPerSecond: 10,
+          },
+          // Forzar la URL de Realtime a Supabase en lugar del dominio personalizado
+          url: 'wss://jsqminbgggwhvkfgeibz.supabase.co/realtime/v1',
+        },
       };
     }
     

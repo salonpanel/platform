@@ -12,6 +12,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { ToastProvider } from "@/components/ui";
 import { getCurrentTenant } from "@/lib/panel-tenant";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
+import { NotificationProvider } from "@/components/agenda/NotificationSystem";
 
 type TenantInfo = {
   id: string;
@@ -359,18 +360,20 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
 export default function PanelLayoutClient({ children }: { children: ReactNode }) {
   return (
     <ToastProvider>
-      <Suspense
-        fallback={
-          <div className="flex min-h-screen items-center justify-center bg-slate-950">
-            <div className="text-center">
-              <Spinner size="lg" />
-              <p className="mt-4 text-slate-400">Cargando panel...</p>
+      <NotificationProvider>
+        <Suspense
+          fallback={
+            <div className="flex min-h-screen items-center justify-center bg-slate-950">
+              <div className="text-center">
+                <Spinner size="lg" />
+                <p className="mt-4 text-slate-400">Cargando panel...</p>
+              </div>
             </div>
-          </div>
-        }
-      >
-        <PanelLayoutContent>{children}</PanelLayoutContent>
-      </Suspense>
+          }
+        >
+          <PanelLayoutContent>{children}</PanelLayoutContent>
+        </Suspense>
+      </NotificationProvider>
     </ToastProvider>
   );
 }
