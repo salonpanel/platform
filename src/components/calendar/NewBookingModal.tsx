@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { format, addMinutes } from "date-fns";
 import { Plus, Trash2, X, Search } from "lucide-react";
-import { UiModal, UiButton, UiInput, UiField, UiBadge } from "@/components/ui/apple-ui-kit";
+import { UiModal, UiButton, UiInput, UiField, UiBadge, UiPillTabs } from "@/components/ui/apple-ui-kit";
 import { CustomerQuickView } from "./CustomerQuickView";
 import { Booking, Staff } from "@/types/agenda";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
@@ -568,7 +568,7 @@ export function NewBookingModal({
   return (
     <>
       <UiModal
-        isOpen={isOpen}
+        open={isOpen}
         onClose={onClose}
         title={editingBooking ? "Editar cita" : "Nueva cita"}
         size="lg"
@@ -620,8 +620,8 @@ export function NewBookingModal({
               ]}
             />
 
-        <TabsContent value="booking">
-          <div className="space-y-6">
+            {activeTab === "booking" && (
+              <div className="space-y-6">
             {/* Cliente */}
             <div className="space-y-4">
               <div ref={customerInputRef} className="relative">
@@ -870,100 +870,99 @@ export function NewBookingModal({
 
             </div>
 
-          </div>
-        </TabsContent>
-
-        <TabsContent value="notes">
-          <div className="space-y-5">
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
-                Observaciones de la cita
-              </label>
-              <textarea
-                value={internalNotes}
-                onChange={(e) => setInternalNotes(e.target.value)}
-                rows={4}
-                className="w-full rounded-[10px] border border-white/5 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-[#9ca3af] focus:border-[#3A6DFF] focus:outline-none focus:ring-2 focus:ring-[#3A6DFF]/30 transition-all duration-150 resize-none font-['Plus_Jakarta_Sans']"
-                placeholder="Observaciones internas sobre esta cita (solo visible para el personal)..."
-              />
-              <p className="mt-1 text-xs text-[#9ca3af] font-['Plus_Jakarta_Sans']">
-                Estas observaciones solo son visibles para el personal
-              </p>
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
-                Observaciones del cliente (públicas)
-              </label>
-              <textarea
-                value={customerNotes}
-                onChange={(e) => setCustomerNotes(e.target.value)}
-                rows={3}
-                className="w-full rounded-[10px] border border-white/5 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-[#9ca3af] focus:border-[#3A6DFF] focus:outline-none focus:ring-2 focus:ring-[#3A6DFF]/30 transition-all duration-150 resize-none font-['Plus_Jakarta_Sans']"
-                placeholder="Observaciones generales sobre el cliente..."
-              />
-              <p className="mt-1 text-xs text-[#9ca3af] font-['Plus_Jakarta_Sans']">
-                Estas observaciones se guardarán en la ficha del cliente
-              </p>
-            </div>
+            )}
 
-            <div>
-              <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-amber-300 font-['Plus_Jakarta_Sans']">
-                <span>🤖</span>
-                Notas internas para IA y staff
-              </label>
-              <textarea
-                value={customerInternalNotes}
-                onChange={(e) => setCustomerInternalNotes(e.target.value)}
-                rows={4}
-                className="w-full rounded-[10px] border border-amber-500/20 bg-amber-500/5 px-4 py-2.5 text-sm text-white placeholder:text-[#9ca3af] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all duration-150 resize-none font-['Plus_Jakarta_Sans']"
-                placeholder="Ej: Prefiere mañanas, alérgico a tintes, corte cada 3 semanas, usa barbero Juan..."
-              />
-              <p className="mt-1 text-xs text-amber-300/70 font-['Plus_Jakarta_Sans']">
-                💡 La IA de voz usará estas notas para personalizar las llamadas y sugerir horarios óptimos
-              </p>
-            </div>
+            {activeTab === "notes" && (
+              <div className="space-y-5">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
+                    Observaciones de la cita
+                  </label>
+                  <textarea
+                    value={internalNotes}
+                    onChange={(e) => setInternalNotes(e.target.value)}
+                    rows={4}
+                    className="w-full rounded-[10px] border border-white/5 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-[#9ca3af] focus:border-[#3A6DFF] focus:outline-none focus:ring-2 focus:ring-[#3A6DFF]/30 transition-all duration-150 resize-none font-['Plus_Jakarta_Sans']"
+                    placeholder="Observaciones internas sobre esta cita (solo visible para el personal)..."
+                  />
+                  <p className="mt-1 text-xs text-[#9ca3af] font-['Plus_Jakarta_Sans']">
+                    Estas observaciones solo son visibles para el personal
+                  </p>
+                </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
-                Mensaje al cliente
-              </label>
-              <textarea
-                value={clientMessage}
-                onChange={(e) => setClientMessage(e.target.value)}
-                rows={3}
-                className="w-full rounded-[10px] border border-white/5 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-[#9ca3af] focus:border-[#3A6DFF] focus:outline-none focus:ring-2 focus:ring-[#3A6DFF]/30 transition-all duration-150 resize-none font-['Plus_Jakarta_Sans']"
-                placeholder="Mensaje personalizado para el cliente (se incluirá en el SMS/email de confirmación)..."
-              />
-              <p className="mt-1 text-xs text-[#9ca3af] font-['Plus_Jakarta_Sans']">
-                Este mensaje se añadirá al SMS/email de confirmación
-              </p>
-            </div>
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
+                    Observaciones del cliente (públicas)
+                  </label>
+                  <textarea
+                    value={customerNotes}
+                    onChange={(e) => setCustomerNotes(e.target.value)}
+                    rows={3}
+                    className="w-full rounded-[10px] border border-white/5 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-[#9ca3af] focus:border-[#3A6DFF] focus:outline-none focus:ring-2 focus:ring-[#3A6DFF]/30 transition-all duration-150 resize-none font-['Plus_Jakarta_Sans']"
+                    placeholder="Observaciones generales sobre el cliente..."
+                  />
+                  <p className="mt-1 text-xs text-[#9ca3af] font-['Plus_Jakarta_Sans']">
+                    Estas observaciones se guardarán en la ficha del cliente
+                  </p>
+                </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
-                Plantillas de mensaje
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  "Recuerda llegar 5 min antes",
-                  "Trae el pelo limpio",
-                  "Confirmación de cita",
-                ].map((template) => (
-                  <button
-                    key={template}
-                    onClick={() => setClientMessage(template)}
-                    className="px-3 py-1.5 text-xs rounded-[8px] border border-white/5 bg-white/5 text-[#d1d4dc] hover:text-white hover:bg-white/8 transition-all duration-150 font-['Plus_Jakarta_Sans']"
-                  >
-                    {template}
-                  </button>
-                ))}
+                <div>
+                  <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-amber-300 font-['Plus_Jakarta_Sans']">
+                    <span>🤖</span>
+                    Notas internas para IA y staff
+                  </label>
+                  <textarea
+                    value={customerInternalNotes}
+                    onChange={(e) => setCustomerInternalNotes(e.target.value)}
+                    rows={4}
+                    className="w-full rounded-[10px] border border-amber-500/20 bg-amber-500/5 px-4 py-2.5 text-sm text-white placeholder:text-[#9ca3af] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all duration-150 resize-none font-['Plus_Jakarta_Sans']"
+                    placeholder="Ej: Prefiere mañanas, alérgico a tintes, corte cada 3 semanas, usa barbero Juan..."
+                  />
+                  <p className="mt-1 text-xs text-amber-300/70 font-['Plus_Jakarta_Sans']">
+                    💡 La IA de voz usará estas notas para personalizar las llamadas y sugerir horarios óptimos
+                  </p>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
+                    Mensaje al cliente
+                  </label>
+                  <textarea
+                    value={clientMessage}
+                    onChange={(e) => setClientMessage(e.target.value)}
+                    rows={3}
+                    className="w-full rounded-[10px] border border-white/5 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-[#9ca3af] focus:border-[#3A6DFF] focus:outline-none focus:ring-2 focus:ring-[#3A6DFF]/30 transition-all duration-150 resize-none font-['Plus_Jakarta_Sans']"
+                    placeholder="Mensaje personalizado para el cliente (se incluirá en el SMS/email de confirmación)..."
+                  />
+                  <p className="mt-1 text-xs text-[#9ca3af] font-['Plus_Jakarta_Sans']">
+                    Este mensaje se añadirá al SMS/email de confirmación
+                  </p>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
+                    Plantillas de mensaje
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      "Recuerda llegar 5 min antes",
+                      "Trae el pelo limpio",
+                      "Confirmación de cita",
+                    ].map((template) => (
+                      <button
+                        key={template}
+                        onClick={() => setClientMessage(template)}
+                        className="px-3 py-1.5 text-xs rounded-[8px] border border-white/5 bg-white/5 text-[#d1d4dc] hover:text-white hover:bg-white/8 transition-all duration-150 font-['Plus_Jakarta_Sans']"
+                      >
+                        {template}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
-
-          </div>
-        </TabsContent>
-            </Tabs>
+            )}
           </div>
 
           <div className="space-y-4">

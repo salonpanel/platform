@@ -537,6 +537,7 @@ export default function ClientesPage() {
             onClose={() => setShowToast(false)}
           />
         )}
+      </div>
 
       {selectionActive && (
         <div className="rounded-[var(--radius-lg)] border border-[var(--glass-border)] bg-[rgba(15,23,42,0.65)] p-3 sm:p-4">
