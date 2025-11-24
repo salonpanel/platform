@@ -183,21 +183,21 @@ export function AppShell({
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top Bar */}
-        <header className="h-16 border-b border-[var(--glass-border)] glass flex items-center justify-between px-4 md:px-6 shadow-glass bg-[var(--color-bg-primary)] backdrop-blur-xl sticky top-0 z-30">
-          <div className="flex items-center gap-4 flex-1">
+        {/* Top Bar - Enhanced Premium Header */}
+        <header className="h-16 lg:h-18 border-b border-[var(--glass-border)] glass flex items-center justify-between px-4 lg:px-6 shadow-glass bg-[var(--color-bg-primary)] backdrop-blur-xl sticky top-0 z-30 transition-all duration-300">
+          <div className="flex items-center gap-4 flex-1 min-w-0">
             {/* Mobile menu button */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="md:hidden text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] p-2 -ml-2 rounded-lg transition-colors"
+              className="md:hidden text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] p-2 -ml-2 rounded-xl hover:glass-subtle transition-smooth"
               aria-label="Abrir menú"
             >
               <Menu className="h-6 w-6" />
             </button>
 
-            {/* Breadcrumb title */}
-            <div className="flex-1">
-              <h2 className="text-lg font-semibold text-[var(--color-text-primary)] font-satoshi">
+            {/* Breadcrumb title - Enhanced typography */}
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg lg:text-xl font-semibold text-[var(--color-text-primary)] font-satoshi truncate">
                 {pathname === "/panel" || pathname === "/panel/"
                   ? "Dashboard"
                   : pathname === "/panel/agenda"
@@ -214,20 +214,20 @@ export function AppShell({
                   ? "Ajustes"
                   : "Panel"}
               </h2>
-              <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)] mt-0.5">
-                <span className="font-medium">{tenantName}</span>
+              <div className="flex items-center gap-2 text-xs lg:text-sm text-[var(--color-text-secondary)] mt-0.5">
+                <span className="font-medium truncate">{tenantName}</span>
                 {userRole && (
                   <>
-                    <span>•</span>
-                    <span className="capitalize">{userRole}</span>
+                    <span className="hidden sm:inline">•</span>
+                    <span className="capitalize font-medium">{userRole}</span>
                   </>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-3">
+          {/* Actions - Improved responsive layout */}
+          <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
             {/* Search */}
             <div className="relative hidden md:block">
               {searchOpen ? (
@@ -237,7 +237,7 @@ export function AppShell({
                     value={searchQuery}
                     onChange={(e) => handleSearch(e.target.value)}
                     placeholder="Buscar..."
-                    className="w-64 px-4 py-2 text-sm rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
+                    className="w-64 px-4 py-2 text-sm rounded-xl glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth shadow-neon-glow-blue/20"
                     autoFocus
                     onBlur={() => !searchQuery && setSearchOpen(false)}
                   />
@@ -246,7 +246,7 @@ export function AppShell({
                       setSearchOpen(false);
                       setSearchQuery("");
                     }}
-                    className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] p-1 rounded transition-colors"
+                    className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] p-2 rounded-xl hover:glass-subtle transition-smooth"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -254,7 +254,7 @@ export function AppShell({
               ) : (
                 <button
                   onClick={() => setSearchOpen(true)}
-                  className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:glass-subtle rounded-lg transition-smooth"
+                  className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:glass-subtle rounded-xl transition-smooth"
                   aria-label="Buscar"
                 >
                   <Search className="h-5 w-5" />
@@ -262,39 +262,41 @@ export function AppShell({
               )}
             </div>
 
-            {/* Timezone indicator (desktop) */}
-            <div className="hidden lg:flex items-center gap-2 text-xs text-[var(--color-text-secondary)] px-3 py-1.5 rounded-lg glass-subtle">
+            {/* Timezone indicator - Enhanced styling */}
+            <div className="hidden lg:flex items-center gap-2 text-xs text-[var(--color-text-secondary)] px-3 py-1.5 rounded-xl glass-subtle border border-[var(--glass-border)]">
               <span className="font-medium">TZ:</span>
-              <span className="font-mono">{timezone}</span>
+              <span className="font-mono font-semibold">{timezone}</span>
             </div>
 
-            {/* Notifications */}
+            {/* Notifications - Enhanced with premium styling */}
             <button
               onClick={onNotificationsClick}
-              className="relative p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:glass-subtle rounded-lg transition-smooth"
+              className="relative p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:glass-subtle rounded-xl transition-smooth group"
               aria-label="Notificaciones"
             >
               <Bell className="h-5 w-5" />
-              {/* Notification badge */}
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-[var(--color-bg-primary)]" />
+              {/* Notification badge - Premium glow */}
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-[var(--color-bg-primary)] shadow-neon-glow-red animate-pulse" />
+              {/* Hover effect */}
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-red-500/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
             </button>
 
-            {/* Settings */}
+            {/* Settings - Premium styling */}
             <button
               onClick={onSettingsClick}
-              className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:glass-subtle rounded-lg transition-smooth"
+              className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:glass-subtle rounded-xl transition-smooth"
               aria-label="Configuración"
             >
               <Settings className="h-5 w-5" />
             </button>
 
-            {/* User Avatar */}
+            {/* User Avatar - Enhanced with glow */}
             <div className="flex items-center gap-2 pl-2 border-l border-[var(--glass-border)]">
               <Avatar
                 src={userAvatar || undefined}
                 name={userEmail || undefined}
                 size="sm"
-                className="cursor-pointer hover:ring-2 hover:ring-[var(--gradient-primary-start)]/30 transition-smooth"
+                className="cursor-pointer hover:ring-2 hover:ring-[var(--gradient-primary-start)]/30 transition-smooth shadow-neon-glow-blue/30"
               />
             </div>
           </div>

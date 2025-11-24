@@ -7,6 +7,7 @@ import { getCurrentTenant } from "@/lib/panel-tenant";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { motion } from "framer-motion";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 
@@ -180,10 +181,10 @@ function AjustesContent() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-[var(--color-text-primary)] font-satoshi">Ajustes</h1>
-        <p className="text-sm text-[var(--color-text-secondary)]">Configuración general de tu barbería</p>
-      </div>
+      <PageHeader
+        title="Ajustes"
+        description="Configuración general de tu barbería"
+      />
 
       {/* Mensajes */}
       {error && (

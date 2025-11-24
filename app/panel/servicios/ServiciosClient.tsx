@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Alert } from "@/components/ui/Alert";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Modal } from "@/components/ui/Modal";
 import { ServiceCard } from "./components/ServiceCard";
 import { ServiceForm } from "./components/ServiceForm";
@@ -642,126 +643,30 @@ export function ServiciosClient({
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-[14px] border border-white/10 bg-white/5 p-6 shadow-glass">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-white">Servicios</h1>
-            <p className="text-sm text-white/70">
-              {stats.total} {stats.total === 1 ? "servicio" : "servicios"} ·{" "}
-              {stats.activeCount} activos · {stats.inactiveCount} inactivos ·{" "}
-              {stats.pendingCount} pendientes de Stripe · precio medio{" "}
-              {formatEuros(stats.priceAvg)} · duración media{" "}
-              {Math.round(stats.durationAvg)} min · total medio{" "}
-              {Math.round(stats.totalDurationAvg)} min
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              {[
-                { label: "Activos", value: stats.activeCount },
-                { label: "Inactivos", value: stats.inactiveCount },
-                { label: "Stripe OK", value: stats.syncedCount },
-                { label: "Stripe pendiente", value: stats.pendingCount },
-              ].map((kpi) => (
-                <span
-                  key={kpi.label}
-                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white"
-                >
-                  {kpi.label}: {kpi.value}
-                </span>
-              ))}
-            </div>
-            {quickAlerts.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {quickAlerts.map((alert) => (
-                  <button
-                    key={alert.id}
-                    onClick={() => handleQuickFilter(alert.id)}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                      alert.active
-                        ? "bg-white text-black"
-                        : "border border-white/15 bg-transparent text-white hover:bg-white/10"
-                    }`}
-                  >
-                    {alert.label}
-                  </button>
-                ))}
-              </div>
-            )}
+      <PageHeader
+        title="Servicios"
+        subtitle={`${stats.total} ${stats.total === 1 ? "servicio" : "servicios"} · ${stats.activeCount} activos · ${stats.pendingCount} pendientes de Stripe`}
+        description="Gestiona los servicios de tu barbería, configura precios, duraciones y sincroniza con Stripe para procesar pagos."
+        actions={
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button
+              variant="secondary"
+              onClick={handleSyncStripe}
+              disabled={!tenantId || syncingStripe}
+              isLoading={syncingStripe}
+              className="w-full sm:w-auto"
+            >
+              Sincronizar con Stripe
+            </Button>
+            <Button
+              onClick={() => openNewModal()}
+              className="w-full sm:w-auto"
+            >
+              + Nuevo servicio
+            </Button>
           </div>
-          <div className="flex flex-col gap-3 w-full lg:w-auto">
-            <div className="flex flex-col gap-3 md:flex-row">
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
-                placeholder="Buscar servicio..."
-                className="w-full rounded-[10px] border border-white/15 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/40 focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
-              />
-              <select
-                value={filterStatus}
-                onChange={(event) =>
-                  setFilterStatus(event.target.value as ServiceFilters["status"])
-                }
-                className="rounded-[10px] border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
-              >
-                {STATUS_OPTIONS.map((option) => (
-                  <option value={option.value} key={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={filterStripe}
-                onChange={(event) =>
-                  setFilterStripe(event.target.value as ServiceFilters["stripe"])
-                }
-                className="rounded-[10px] border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
-              >
-                {STRIPE_OPTIONS.map((option) => (
-                  <option value={option.value} key={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={sortBy}
-                onChange={(event) => setSortBy(event.target.value as SortOption)}
-                className="rounded-[10px] border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
-              >
-                {SORT_OPTIONS.map((option) => (
-                  <option value={option.value} key={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              <select
-                value={pageSize}
-                onChange={(event) => {
-                  setPageSize(Number(event.target.value));
-                  goToPage(1);
-                }}
-                className="rounded-[10px] border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
-              >
-                {PAGE_SIZE_OPTIONS.map((size) => (
-                  <option value={size} key={size}>
-                    Mostrar {size}
-                  </option>
-                ))}
-              </select>
-              <Button
-                variant="secondary"
-                onClick={handleSyncStripe}
-                disabled={!tenantId || syncingStripe}
-                isLoading={syncingStripe}
-              >
-                Sincronizar con Stripe
-              </Button>
-              <Button onClick={() => openNewModal()}>+ Nuevo servicio</Button>
-            </div>
-          </div>
-        </div>
-      </Card>
+        }
+      />
 
       <Card className="rounded-[14px] border border-white/10 bg-white/5 p-4 shadow-glass">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">

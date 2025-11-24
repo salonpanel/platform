@@ -28,6 +28,7 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [panelError, setPanelError] = useState<{ title: string; description?: string } | null>(null);
   const [noMembership, setNoMembership] = useState(false);
   const [authStatus, setAuthStatus] = useState<"UNKNOWN" | "AUTHENTICATED" | "UNAUTHENTICATED">("UNKNOWN");
@@ -38,6 +39,16 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
   const impersonateOrgId = useMemo(() => {
     return searchParams?.get("impersonate") || null;
   }, [searchParams?.toString()]);
+
+  // Cargar estado del sidebar desde localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("sidebarCollapsed");
+      if (saved !== null) {
+        setSidebarCollapsed(saved === "true");
+      }
+    }
+  }, []);
 
   // Verificar sesión inicial antes de cargar el tenant
   useEffect(() => {
@@ -208,6 +219,16 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
     }
   };
 
+  const handleToggleSidebar = () => {
+    setSidebarCollapsed(prev => {
+      const newState = !prev;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("sidebarCollapsed", newState.toString());
+      }
+      return newState;
+    });
+  };
+
   // Mostrar loading mientras se verifica la sesión o se carga el tenant
   if (sessionLoading || loading || authStatus === "UNKNOWN") {
     return (
@@ -264,15 +285,15 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
   }
 
   const navItems = [
-    { href: "/panel", label: "Dashboard", icon: "Home" },
-    { href: "/panel/agenda", label: "Agenda", icon: "Calendar" },
-    { href: "/panel/clientes", label: "Clientes", icon: "Users" },
-    { href: "/panel/servicios", label: "Servicios", icon: "Scissors" },
-    { href: "/panel/staff", label: "Staff", icon: "User" },
-    { href: "/panel/monedero", label: "Monedero", icon: "Wallet" },
-    { href: "/panel/marketing", label: "Marketing", icon: "Target" },
-    { href: "/panel/chat", label: "Chat", icon: "MessageCircle" },
-    { href: "/panel/ajustes", label: "Ajustes", icon: "Settings" },
+    { href: "/panel", label: "Dashboard" },
+    { href: "/panel/agenda", label: "Agenda" },
+    { href: "/panel/clientes", label: "Clientes" },
+    { href: "/panel/servicios", label: "Servicios" },
+    { href: "/panel/staff", label: "Staff" },
+    { href: "/panel/monedero", label: "Monedero" },
+    { href: "/panel/marketing", label: "Marketing" },
+    { href: "/panel/chat", label: "Chat" },
+    { href: "/panel/ajustes", label: "Ajustes" },
   ];
 
   const getPageTitle = () => {
@@ -295,7 +316,9 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
         items={navItems}
         tenantName={tenant.name}
         isOpen={sidebarOpen}
+        isCollapsed={sidebarCollapsed}
         onClose={() => setSidebarOpen(false)}
+        onToggleCollapse={handleToggleSidebar}
       />
 
       {/* Main Content */}
@@ -315,6 +338,7 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
           userRole={userRole}
           timezone={tenant.timezone}
           onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+          sidebarCollapsed={sidebarCollapsed}
         />
 
         {/* Page Content */}
