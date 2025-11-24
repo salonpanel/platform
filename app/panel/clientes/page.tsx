@@ -1025,8 +1025,8 @@ function ClientesContent() {
         </div>
       </div>
 
-      <!-- KPIs globales -->
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        {/* KPIs globales */}
         {[
           { label: "Total", value: customerStats.total, shortLabel: "Total" },
           { label: "Con reservas", value: customerStats.withBookings, shortLabel: "Reservas" },
