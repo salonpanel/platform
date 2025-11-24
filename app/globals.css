@@ -179,35 +179,41 @@
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 
   /* ----------------------------------------------------------------------------
-     SISTEMA DE TIPOGRAFÍA
-     ---------------------------------------------------------------------------- */
-  --font-heading: 'Plus Jakarta Sans', 'Satoshi', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  --font-kpi: 'Inter', system-ui, sans-serif;
+     SISTEMA DE TIPOGRAFÍA - Apple-like Scale
+     ----------------------------------------------------------------------------
+     H1: 28px semibold (Hero titles, main headings)
+     H2: 22px semibold (Section headers, important labels)
+     H3: 18px medium (Card titles, component headers)
+     H4: 18px (Subtitles, secondary info)
+     Body Large: 16px regular (Primary content)
+     Body Medium: 15px regular (Secondary content)
+     Body Small: 13px regular (Tertiary content, captions)
+     Label: 13px medium (Form labels, buttons)
+     Caption: 11px (Metadata, status text)
+     ------------------------------------------------------------------------- */
 
-  /* Headings */
-  --text-h1-size: 32px;
+  /* Headings - Apple Scale */
+  --text-h1-size: 28px;
   --text-h1-line: 1.2;
-  --text-h1-weight: 700;
-  --text-h1-letter: -0.03em;
+  --text-h1-weight: 600;
+  --text-h1-letter: -0.02em;
 
-  --text-h2-size: 24px;
+  --text-h2-size: 22px;
   --text-h2-line: 1.3;
   --text-h2-weight: 600;
   --text-h2-letter: -0.02em;
 
-  --text-h3-size: 20px;
+  --text-h3-size: 18px;
   --text-h3-line: 1.4;
-  --text-h3-weight: 600;
-  --text-h3-letter: -0.02em;
+  --text-h3-weight: 500;
+  --text-h3-letter: -0.01em;
 
-  --text-h4-size: 18px;
+  --text-h4-size: 16px;
   --text-h4-line: 1.4;
-  --text-h4-weight: 600;
+  --text-h4-weight: 500;
   --text-h4-letter: -0.01em;
 
-  /* Body */
+  /* Body Text - Apple Scale */
   --text-body-lg-size: 16px;
   --text-body-lg-line: 1.5;
   --text-body-lg-weight: 400;
@@ -220,11 +226,14 @@
   --text-body-sm-line: 1.5;
   --text-body-sm-weight: 400;
 
-  /* KPIs / Numeric */
-  --text-kpi-size: 28px;
-  --text-kpi-line: 1.2;
-  --text-kpi-weight: 600;
-  --text-kpi-letter: -0.01em;
+  /* Labels & Interactive */
+  --text-label-size: 13px;
+  --text-label-line: 1.4;
+  --text-label-weight: 500;
+
+  --text-caption-size: 11px;
+  --text-caption-line: 1.4;
+  --text-caption-weight: 400;
 
   /* ----------------------------------------------------------------------------
      SISTEMA DE FORMAS - Border Radius (Capsule System)
@@ -333,58 +342,75 @@ label, .label {
   letter-spacing: -0.01em;
 }
 
-/* Heading system elegante */
+/* Heading system elegante - Apple Scale */
 h1 {
-  @apply text-[var(--color-text-primary)] tracking-tight;
+  @apply text-[var(--text-primary)] tracking-tight;
   font-family: 'Satoshi', 'Inter', sans-serif;
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 1.2;
+  font-size: var(--text-h1-size);
+  font-weight: var(--text-h1-weight);
+  line-height: var(--text-h1-line);
+  letter-spacing: var(--text-h1-letter);
 }
 
 h2 {
-  @apply text-[var(--color-text-primary)] tracking-tight;
+  @apply text-[var(--text-primary)] tracking-tight;
   font-family: 'Satoshi', 'Inter', sans-serif;
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.3;
+  font-size: var(--text-h2-size);
+  font-weight: var(--text-h2-weight);
+  line-height: var(--text-h2-line);
+  letter-spacing: var(--text-h2-letter);
 }
 
 h3 {
-  @apply text-[var(--color-text-primary)] tracking-tight;
+  @apply text-[var(--text-primary)] tracking-tight;
   font-family: 'Satoshi', 'Inter', sans-serif;
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 1.4;
+  font-size: var(--text-h3-size);
+  font-weight: var(--text-h3-weight);
+  line-height: var(--text-h3-line);
+  letter-spacing: var(--text-h3-letter);
 }
 
 h4 {
-  @apply text-lg font-medium text-[var(--color-text-primary)];
+  @apply text-[var(--text-secondary)];
   font-family: 'Satoshi', 'Inter', sans-serif;
-  font-size: 18px;
-  line-height: 24px;
+  font-size: var(--text-h4-size);
+  font-weight: var(--text-h4-weight);
+  line-height: var(--text-h4-line);
+  letter-spacing: var(--text-h4-letter);
 }
 
-/* Body text system */
+/* Body text system - Apple Scale */
 .body-lg {
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: var(--text-body-lg-size);
+  line-height: var(--text-body-lg-line);
   font-family: 'Inter', sans-serif;
-  font-weight: 400;
+  font-weight: var(--text-body-lg-weight);
 }
 
 .body-md {
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: var(--text-body-md-size);
+  line-height: var(--text-body-md-line);
   font-family: 'Inter', sans-serif;
-  font-weight: 400;
+  font-weight: var(--text-body-md-weight);
 }
 
 .body-sm {
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: var(--text-body-sm-size);
+  line-height: var(--text-body-sm-line);
   font-family: 'Inter', sans-serif;
-  font-weight: 400;
+  font-weight: var(--text-body-sm-weight);
+}
+
+.label {
+  font-size: var(--text-label-size);
+  line-height: var(--text-label-line);
+  font-weight: var(--text-label-weight);
+}
+
+.caption {
+  font-size: var(--text-caption-size);
+  line-height: var(--text-caption-line);
+  font-weight: var(--text-caption-weight);
 }
 
 /* ============================================================================

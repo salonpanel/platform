@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { format, parseISO } from "date-fns";
+import { cn } from "@/lib/utils";
 import { Booking, Staff } from "@/types/agenda";
 import { AgendaTopBar } from "@/components/agenda/AgendaTopBar";
 import { AgendaContextBar } from "@/components/agenda/AgendaContextBar";
@@ -218,48 +219,79 @@ export function AgendaContainer({
 
   return (
     <NotificationProvider position="top-right" maxNotifications={3}>
-      <div className="h-full bg-slate-950">
-        <div className="h-full flex flex-col min-h-0">
-          {/* ZONE 1: TOP APP HEADER (sticky) */}
-          <AgendaTopBar
-            selectedDate={selectedDate}
-            viewMode={viewMode}
-            onDateChange={onDateChange}
-            onViewModeChange={onViewModeChange}
-            onSearchClick={onSearchToggle}
-            onNotificationsClick={() => {}} // TODO: Implement notifications
-            onFiltersClick={() => setSidebarOpen(true)} // Mobile filters drawer
-          />
+      {/* Apple Dark System Background with Layer Depth */}
+      <div className="h-full bg-[var(--neutral-50)] relative">
+        {/* Subtle gradient overlay for depth */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[rgba(58,109,255,0.02)] via-transparent to-[rgba(79,227,193,0.01)] pointer-events-none" />
 
-          {/* ZONE 2: CONTEXT TOOLBAR (KPIs + filters) */}
-          <AgendaContextBar
-            quickStats={quickStats}
-            staffUtilization={staffUtilization}
-            staffList={staffList}
-            selectedStaffId={selectedStaffId}
-            onStaffChange={onStaffChange}
-            viewMode={viewMode}
-          />
-
-          {/* Main Content Area with Sidebar */}
-          <div className="flex-1 flex min-h-0 overflow-hidden">
-            {/* Responsive Sidebar - Drawer in mobile, collapsible in tablet, fixed in desktop */}
-            <AgendaSidebar
+        <div className="h-full flex flex-col min-h-0 relative">
+          {/* LEVEL 1: GLASS TOPBAR (Most Prominent) */}
+          <div className="sticky top-0 z-50 backdrop-blur-2xl bg-[rgba(6,20,27,0.85)] border-b border-[rgba(255,255,255,0.08)] shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+            <AgendaTopBar
               selectedDate={selectedDate}
-              onDateSelect={onDateChange}
-              filters={filters}
-              onFiltersChange={setFilters}
-              staffList={staffList}
-              showFreeSlots={false}
-              onShowFreeSlotsChange={() => {}}
-              // Mobile drawer control
-              isOpen={sidebarOpen}
-              onOpen={() => setSidebarOpen(true)}
-              onClose={() => setSidebarOpen(false)}
+              viewMode={viewMode}
+              onDateChange={onDateChange}
+              onViewModeChange={onViewModeChange}
+              onSearchClick={onSearchToggle}
+              onNotificationsClick={() => {}} // TODO: Implement notifications
+              onFiltersClick={() => setSidebarOpen(true)} // Mobile filters drawer
             />
+          </div>
 
-            {/* ZONE 3: AGENDA CANVAS (main scrollable area) */}
-            <div className="flex-1 min-h-0 overflow-hidden">
+          {/* LEVEL 2: CONTEXT TOOLBAR (Secondary - KPIs + Staff) */}
+          <div className="bg-[var(--neutral-100)]/30 backdrop-blur-md border-b border-[rgba(255,255,255,0.04)]">
+            <AgendaContextBar
+              quickStats={quickStats}
+              staffUtilization={staffUtilization}
+              staffList={staffList}
+              selectedStaffId={selectedStaffId}
+              onStaffChange={onStaffChange}
+              viewMode={viewMode}
+            />
+          </div>
+
+          {/* Main Content Area with Reduced Sidebar Competition */}
+          <div className="flex-1 flex min-h-0 overflow-hidden">
+            {/* LEVEL 3: FILTERS SIDEBAR (Least Prominent - Collapsible) */}
+            <div className="relative">
+              {/* Subtle backdrop when sidebar is open on mobile */}
+              {sidebarOpen && (
+                <div
+                  className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
+                  onClick={() => setSidebarOpen(false)}
+                />
+              )}
+
+              {/* Reduced prominence sidebar */}
+              <div className={cn(
+                "transition-all duration-300 ease-out",
+                // Mobile: Drawer overlay
+                "lg:relative lg:translate-x-0",
+                sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+                // Desktop: Compact collapsible
+                "w-80 lg:w-64 xl:w-72",
+                // Reduced visual weight
+                "bg-[var(--neutral-100)]/50 backdrop-blur-md border-r border-[rgba(255,255,255,0.03)]",
+                "shadow-[0_0_16px_rgba(0,0,0,0.1)] lg:shadow-none"
+              )}>
+                <AgendaSidebar
+                  selectedDate={selectedDate}
+                  onDateSelect={onDateChange}
+                  filters={filters}
+                  onFiltersChange={setFilters}
+                  staffList={staffList}
+                  showFreeSlots={false}
+                  onShowFreeSlotsChange={() => {}}
+                  // Mobile drawer control
+                  isOpen={sidebarOpen}
+                  onOpen={() => setSidebarOpen(true)}
+                  onClose={() => setSidebarOpen(false)}
+                />
+              </div>
+            </div>
+
+            {/* LEVEL 2: AGENDA CANVAS (Main Focus - High Contrast) */}
+            <div className="flex-1 min-h-0 overflow-hidden bg-[var(--neutral-50)]">
               <AgendaContent
                 viewMode={viewMode}
                 onViewModeChange={onViewModeChange}

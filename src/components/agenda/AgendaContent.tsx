@@ -7,16 +7,17 @@ import { Booking, Staff } from "@/types/agenda";
 import { WeekView } from "@/components/calendar/WeekView";
 import { MonthView } from "@/components/calendar/MonthView";
 import { ListView } from "@/components/calendar/ListView";
-import { FloatingActionButton } from "@/components/calendar/FloatingActionButton";
+import { UiFab } from "@/components/ui/apple-ui-kit";
 import { BookingDetailPanel } from "@/components/calendar/BookingDetailPanel";
 import { NewBookingModal } from "@/components/calendar/NewBookingModal";
 import { DraggableBookingCard } from "./DraggableBookingCard";
 import { ConflictZone } from "./ConflictZone";
 import { PremiumLoader } from "./PremiumLoader";
 import { PremiumSkeleton } from "./PremiumSkeleton";
-import { Card } from "@/components/ui/Card";
+import { UiPillTabs } from "@/components/ui/apple-ui-kit";
 import { Timeline } from "./Timeline";
 import { BookingCard } from "./BookingCard";
+import { Card } from "@/components/ui/Card";
 
 type ViewMode = "day" | "week" | "month" | "list";
 
@@ -195,27 +196,63 @@ export function AgendaContent({
     }
   }, [onBookingResize]);
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.05,
-      },
-    },
+  // Track previous view mode for transitions
+  const [previousViewMode, setPreviousViewMode] = useState<ViewMode>(viewMode);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Update previous view mode when view mode changes
+  useEffect(() => {
+    if (viewMode !== previousViewMode) {
+      setPreviousViewMode(viewMode);
+      setIsTransitioning(true);
+      // Reset transition flag after animation
+      const timer = setTimeout(() => setIsTransitioning(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [viewMode, previousViewMode]);
+
+  // Apple-style view transitions based on view type combinations
+  const getViewTransition = (fromView: ViewMode, toView: ViewMode) => {
+    // Day ↔ Week: slide horizontal (200ms)
+    if ((fromView === 'day' && toView === 'week') || (fromView === 'week' && toView === 'day')) {
+      return {
+        initial: { opacity: 0, x: fromView === 'day' ? -20 : 20 },
+        animate: { opacity: 1, x: 0 },
+        exit: { opacity: 0, x: fromView === 'day' ? 20 : -20 },
+        transition: { duration: 0.2, ease: [0.22, 0.61, 0.36, 1] as any }
+      };
+    }
+
+    // Week ↔ Month: fade + scale smooth
+    if ((fromView === 'week' && toView === 'month') || (fromView === 'month' && toView === 'week')) {
+      return {
+        initial: { opacity: 0, scale: 0.95 },
+        animate: { opacity: 1, scale: 1 },
+        exit: { opacity: 0, scale: 1.05 },
+        transition: { duration: 0.25, ease: [0.22, 0.61, 0.36, 1] as any }
+      };
+    }
+
+    // Month ↔ List: dissolve smooth
+    if ((fromView === 'month' && toView === 'list') || (fromView === 'list' && toView === 'month')) {
+      return {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0 },
+        transition: { duration: 0.2, ease: "easeInOut" as any }
+      };
+    }
+
+    // Default transition for other combinations
+    return {
+      initial: { opacity: 0, x: 10 },
+      animate: { opacity: 1, x: 0 },
+      exit: { opacity: 0, x: -10 },
+      transition: { duration: 0.15, ease: "easeOut" as any }
+    };
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 8 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.2,
-        ease: "easeOut" as const,
-      },
-    },
-  };
+  const viewTransition = getViewTransition(previousViewMode, viewMode);
 
   // Layout según densidad
   const sectionPadding = density === "ultra-compact" ? "compact" : density === "compact" ? "sm" : "md";
@@ -305,10 +342,7 @@ export function AgendaContent({
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={viewMode}
-                    initial={{ opacity: 0, x: 6 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -6 }}
-                    transition={{ duration: 0.15, ease: "easeOut" }}
+                    {...viewTransition}
                     className="flex-1 min-h-0"
                   >
                     {viewMode === "day" && (
@@ -484,12 +518,12 @@ export function AgendaContent({
             )}
           </motion.div>
 
-          {/* Floating Action Button */}
+          {/* Apple-style FAB */}
           {viewMode === "day" && (
-            <FloatingActionButton
+            <UiFab
               onClick={onNewBooking}
-              className="fixed bottom-20 right-4 z-50 md:bottom-6 md:right-6"
-              aria-label="Crear nueva reserva"
+              label="Nueva cita"
+              icon={<span className="text-lg font-semibold">+</span>}
             />
           )}
         </motion.div>
