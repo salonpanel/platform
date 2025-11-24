@@ -68,19 +68,19 @@ export function ListView({
         })}
         className="flex items-center justify-center h-full p-6"
       >
-        <GlassCard variant="elevated" padding="xl" className="text-center">
+        <div className="bg-[var(--glass-bg-default)] border border-[var(--glass-border)] backdrop-blur-md rounded-[var(--radius-xl)] p-6 text-center shadow-[var(--shadow-premium)]">
           {isEmptySearch ? (
             <>
               <div className="text-4xl mb-4">🔍</div>
               <h3 className={cn(
                 "text-lg font-semibold mb-2",
-                "text-primary font-sans"
+                "text-[var(--text-primary)] font-[var(--font-heading)]"
               )}>
                 No hay coincidencias
               </h3>
               <p className={cn(
                 "text-sm",
-                "text-secondary font-sans"
+                "text-[var(--text-secondary)] font-[var(--font-body)]"
               )}>
                 No se encontraron reservas que coincidan con "{searchTerm}"
               </p>
@@ -90,70 +90,70 @@ export function ListView({
               <div className="text-4xl mb-4">📅</div>
               <h3 className={cn(
                 "text-lg font-semibold mb-2",
-                "text-primary font-sans"
+                "text-[var(--text-primary)] font-[var(--font-heading)]"
               )}>
                 No hay reservas
               </h3>
               <p className={cn(
                 "text-sm",
-                "text-secondary font-sans"
+                "text-[var(--text-secondary)] font-[var(--font-body)]"
               )}>
                 No hay reservas para el rango seleccionado.
               </p>
             </>
           )}
-        </GlassCard>
+        </div>
       </motion.div>
     );
   }
 
   return (
-    <div className="space-y-3 h-full overflow-y-auto scrollbar-hide p-4">
+    <div className="space-y-3 h-full overflow-y-auto scrollbar-hide p-4" role="region" aria-label="Lista de reservas">
       {/* Vista Desktop: Tabla */}
       <div className="hidden md:block overflow-x-auto">
-        <GlassCard variant="elevated" padding="none" className="overflow-hidden">
-          <table className="w-full">
-            <thead className="border-b border-border-default">
-              <tr>
+        <div className="bg-[var(--glass-bg-default)] border border-[var(--glass-border)] backdrop-blur-md rounded-[var(--radius-xl)] overflow-hidden shadow-[var(--shadow-premium)]">
+          <table className="w-full" role="table" aria-label="Tabla de reservas">
+            <thead className="border-b border-[var(--glass-border-subtle)]" role="rowgroup">
+              <tr role="row">
                 <th className={cn(
                   "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider",
-                  "text-tertiary font-sans"
-                )}>
+                  "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                )} scope="col" role="columnheader">
                   Hora
                 </th>
                 <th className={cn(
                   "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider",
-                  "text-tertiary font-sans"
-                )}>
+                  "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                )} scope="col" role="columnheader">
                   Cliente
                 </th>
                 <th className={cn(
                   "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider",
-                  "text-tertiary font-sans"
-                )}>
+                  "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                )} scope="col" role="columnheader">
                   Servicio
                 </th>
                 <th className={cn(
                   "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider",
-                  "text-tertiary font-sans"
-                )}>
+                  "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                )} scope="col" role="columnheader">
                   Barbero
                 </th>
                 <th className={cn(
                   "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider",
-                  "text-tertiary font-sans"
-                )}>
+                  "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                )} scope="col" role="columnheader">
                   Estado
                 </th>
                 <th className={cn(
                   "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider",
-                  "text-tertiary font-sans"
-                )}>
+                  "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                )} scope="col" role="columnheader">
                   Precio
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border-default">
+            <tbody className="divide-y divide-[var(--glass-border-subtle)]" role="rowgroup">
               {bookingsByDate.map(([dateKey, dateBookings]) => {
                 const dateObj = parseISO(dateKey);
                 const showDateSeparator = bookingsByDate.length > 1;
@@ -162,11 +162,11 @@ export function ListView({
                   <React.Fragment key={dateKey}>
                     {/* Separador de fecha cuando hay múltiples días */}
                     {showDateSeparator && (
-                      <tr className="bg-glass sticky top-0 z-10">
-                        <td colSpan={6} className="px-6 py-3 border-b border-border-hover">
+                      <tr className="bg-[var(--glass-bg-subtle)] sticky top-0 z-10">
+                        <td colSpan={6} className="px-6 py-3 border-b border-[var(--glass-border-hover)]">
                           <div className={cn(
                             "text-xs font-semibold uppercase tracking-wider",
-                            "text-tertiary font-sans"
+                            "text-[var(--text-tertiary)] font-[var(--font-body)]"
                           )}>
                             {format(dateObj, "EEEE, d 'de' MMMM", { locale: es })}
                           </div>
@@ -194,83 +194,83 @@ export function ListView({
                             }
                           }}
                           tabIndex={0}
-                          role="button"
-                          aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime}`}
                           className={cn(
-                            "hover:bg-glass focus:bg-glass focus:outline-none focus:ring-2 focus:ring-accent-blue/50 focus:ring-offset-2 focus:ring-offset-primary transition-colors cursor-pointer",
-                            "text-primary"
+                            "hover:bg-[var(--glass-bg-subtle)] focus:bg-[var(--glass-bg-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]/50 focus:ring-offset-2 focus:ring-offset-[var(--bg-primary)] transition-colors duration-200 cursor-pointer",
+                            "text-[var(--text-primary)]"
                           )}
+                          role="row"
+                          aria-label={`Reserva de ${booking.customer?.name || "cliente"} a las ${startTime} - ${endTime}`}
                         >
-                    <td className="px-6 py-4">
-                      <div className={cn(
-                        "text-sm font-semibold font-mono",
-                        "text-primary font-sans"
-                      )}>
-                        {startTime} - {endTime}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className={cn(
-                        "text-sm font-semibold",
-                        "text-primary font-sans"
-                      )}>
-                        {booking.customer?.name || "Sin cliente"}
-                      </div>
-                      {booking.customer?.phone && (
-                        <div className={cn(
-                          "text-xs mt-1",
-                          "text-tertiary font-sans"
-                        )}>
-                          {booking.customer.phone}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className={cn(
-                        "text-sm font-semibold",
-                        "text-primary font-sans"
-                      )}>
-                        {booking.service?.name || "Sin servicio"}
-                      </div>
-                      {booking.service && (
-                        <div className={cn(
-                          "text-xs mt-1",
-                          "text-tertiary font-sans"
-                        )}>
-                          {booking.service.duration_min} min
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className={cn(
-                        "text-sm font-semibold",
-                        "text-primary font-sans"
-                      )}>
-                        {booking.staff?.name || "Sin asignar"}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <StatusBadge status={booking.status} />
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className={cn(
-                        "text-sm font-semibold",
-                        "text-primary font-sans"
-                      )}>
-                        {booking.service
-                          ? `${(booking.service.price_cents / 100).toFixed(2)} €`
-                          : "-"}
-                      </div>
-                    </td>
-                      </motion.tr>
-                    );
-                  })}
+                          <td className="px-6 py-4" role="cell">
+                            <div className={cn(
+                              "text-sm font-semibold font-[var(--font-mono)]",
+                              "text-[var(--text-primary)]"
+                            )}>
+                              {startTime} - {endTime}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4" role="cell">
+                            <div className={cn(
+                              "text-sm font-semibold",
+                              "text-[var(--text-primary)] font-[var(--font-heading)]"
+                            )}>
+                              {booking.customer?.name || "Sin cliente"}
+                            </div>
+                            {booking.customer?.phone && (
+                              <div className={cn(
+                                "text-xs mt-1",
+                                "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                              )}>
+                                {booking.customer.phone}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4" role="cell">
+                            <div className={cn(
+                              "text-sm font-semibold",
+                              "text-[var(--text-primary)] font-[var(--font-heading)]"
+                            )}>
+                              {booking.service?.name || "Sin servicio"}
+                            </div>
+                            {booking.service && (
+                              <div className={cn(
+                                "text-xs mt-1",
+                                "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                              )}>
+                                {booking.service.duration_min} min
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4" role="cell">
+                            <div className={cn(
+                              "text-sm font-semibold",
+                              "text-[var(--text-primary)] font-[var(--font-heading)]"
+                            )}>
+                              {booking.staff?.name || "Sin asignar"}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4" role="cell">
+                            <StatusBadge status={booking.status} />
+                          </td>
+                          <td className="px-6 py-4" role="cell">
+                            <div className={cn(
+                              "text-sm font-semibold",
+                              "text-[var(--text-primary)] font-[var(--font-heading)]"
+                            )}>
+                              {booking.service
+                                ? `${(booking.service.price_cents / 100).toFixed(2)} €`
+                                : "-"}
+                            </div>
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
                   </React.Fragment>
                 );
               })}
             </tbody>
           </table>
-        </GlassCard>
+        </div>
       </div>
 
       {/* Vista Mobile: Cards */}
@@ -283,10 +283,10 @@ export function ListView({
             <div key={dateKey} className="space-y-3">
               {/* Separador de fecha cuando hay múltiples días */}
               {showDateSeparator && (
-                <div className="sticky top-0 z-10 py-2 bg-primary border-b border-border-default mb-2">
+                <div className="sticky top-0 z-10 py-2 bg-[var(--bg-primary)] border-b border-[var(--glass-border-subtle)] mb-2">
                   <div className={cn(
                     "text-xs font-semibold uppercase tracking-wider",
-                    "text-tertiary font-sans"
+                    "text-[var(--text-tertiary)] font-[var(--font-body)]"
                   )}>
                     {format(dateObj, "EEEE, d 'de' MMMM", { locale: es })}
                   </div>
@@ -324,17 +324,14 @@ export function ListView({
                           whileHover: interactionPresets.appointmentCard.hover,
                           whileTap: interactionPresets.appointmentCard.tap,
                         })}
-                        className="focus:outline-none focus:ring-2 focus:ring-accent-blue/50 focus:ring-offset-2 focus:ring-offset-primary"
+                        className="focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]/50 focus:ring-offset-2 focus:ring-offset-[var(--bg-primary)]"
                       >
-                        <GlassCard
-                          variant="elevated"
-                          padding="md"
-                        >
+                        <div className="bg-[var(--glass-bg-default)] border border-[var(--glass-border)] backdrop-blur-md rounded-[var(--radius-xl)] p-4 shadow-[var(--shadow-premium)]">
                         {/* Fila superior: Hora + Estado */}
                         <div className="flex items-start justify-between mb-2">
                           <div className={cn(
-                            "text-sm font-semibold font-mono",
-                            "text-primary font-sans"
+                            "text-sm font-semibold font-[var(--font-mono)]",
+                            "text-[var(--text-primary)]"
                           )}>
                             {startTime} - {endTime}
                           </div>
@@ -343,13 +340,13 @@ export function ListView({
                         {/* Fila media: Cliente + Servicio */}
                         <div className={cn(
                           "text-base font-semibold mb-1.5",
-                          "text-primary font-sans"
+                          "text-[var(--text-primary)] font-[var(--font-heading)]"
                         )}>
                           {booking.customer?.name || "Sin cliente"}
                         </div>
                         <div className={cn(
                           "text-sm mb-2",
-                          "text-secondary font-sans"
+                          "text-[var(--text-secondary)] font-[var(--font-body)]"
                         )}>
                           {booking.service?.name || "Sin servicio"}
                           {booking.service && ` • ${booking.service.duration_min} min`}
@@ -358,13 +355,13 @@ export function ListView({
                         {/* Fila inferior: Precio */}
                         {booking.service && (
                           <div className={cn(
-                            "text-sm font-semibold pt-2 border-t border-border-default",
-                            "text-primary font-sans"
+                            "text-sm font-semibold pt-2 border-t border-[var(--glass-border-subtle)]",
+                            "text-[var(--text-primary)] font-[var(--font-heading)]"
                           )}>
                             {(booking.service.price_cents / 100).toFixed(2)} €
                           </div>
                         )}
-                      </GlassCard>
+                      </div>
                       </motion.div>
                     </div>
                   </motion.div>
