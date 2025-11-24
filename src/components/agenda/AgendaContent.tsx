@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Booking, Staff } from "@/types/agenda";
@@ -13,7 +13,8 @@ import { BookingDetailPanel } from "@/components/calendar/BookingDetailPanel";
 import { NewBookingModal } from "@/components/calendar/NewBookingModal";
 import { DraggableBookingCard } from "./DraggableBookingCard";
 import { ConflictZone } from "./ConflictZone";
-import { Card, Spinner, EmptyState } from "@/components/ui";
+import { PremiumLoader } from "./PremiumLoader";
+import { PremiumSkeleton } from "./PremiumSkeleton";
 
 type ViewMode = "day" | "week" | "month" | "list";
 
@@ -78,9 +79,9 @@ export function AgendaContent({
   enableDragDrop = true,
   showConflicts = true,
 }: AgendaContentProps) {
-  // Función adaptadora memoizada
-  const adaptBookingToMiniCard = useMemo(() =>
-    (booking: Booking): MiniBookingCardData => ({
+  // Estados de carga contextuales
+  const [dragLoading, setDragLoading] = useState(false);
+  const [resizeLoading, setResizeLoading] = useState(false);
       id: booking.id,
       starts_at: booking.starts_at,
       ends_at: booking.ends_at,
@@ -196,20 +197,13 @@ export function AgendaContent({
             className="flex-1 min-h-0 overflow-hidden"
           >
             {loading ? (
-              <Card variant="default" density={density} className="h-full flex items-center justify-center border-[var(--glass-border)] bg-[var(--glass-bg-subtle)]">
-                <div className="text-center">
-                  <Spinner size="lg" className="text-[var(--accent-aqua)]" />
-                  <p
-                    className="mt-4 text-lg font-medium"
-                    style={{
-                      fontFamily: "var(--font-body)",
-                      color: "var(--text-secondary)",
-                    }}
-                  >
-                    Cargando agenda...
-                  </p>
-                </div>
-              </Card>
+              <div className="flex items-center justify-center min-h-[400px]">
+                <PremiumSkeleton
+                  type="agenda-grid"
+                  density={density}
+                  className="w-full max-w-4xl"
+                />
+              </div>
             ) : bookings.length === 0 ? (
               <Card variant="default" density={density} className="h-full flex items-center justify-center border-[var(--glass-border)] bg-[var(--glass-bg-subtle)]">
                 <div className="text-center max-w-md mx-auto px-6">
@@ -328,8 +322,8 @@ export function AgendaContent({
                                           booking={adaptBookingToMiniCard(booking)}
                                           position={position}
                                           density={density}
-                                          onDragEnd={onBookingDrag}
-                                          onResizeEnd={onBookingResize}
+                                          onDragEnd={handleBookingDrag}
+                                          onResizeEnd={handleBookingResize}
                                           onClick={() => onBookingClick(booking)}
                                           dragConstraints={{
                                             top: 0,
@@ -414,6 +408,81 @@ export function AgendaContent({
           )}
         </motion.div>
       </AnimatePresence>
+
+      {/* Overlays de carga premium */}
+      <AnimatePresence>
+        {dragLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm flex items-center justify-center"
+          >
+            <PremiumLoader
+              type="saving"
+              message="Actualizando horario..."
+              variant="spinner"
+              className="shadow-2xl"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {resizeLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm flex items-center justify-center"
+          >
+            <PremiumLoader
+              type="optimizing"
+              message="Ajustando duración..."
+              variant="progress"
+              className="shadow-2xl"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
-}
+
+  // Calcular hourHeight dinámicamente según altura disponible
+  const availableHeight = heightAware.availableHeight;
+  const workingHours = 12; // 8:00 a 20:00 = 12 horas laborables
+  const headerHeight = 180; // Optimizado: filtros + título + staff selector
+  const availableForTimeline = Math.max(400, availableHeight - headerHeight);
+  const calculatedHourHeight = Math.max(
+    60, // Mínimo 60px para buena legibilidad
+    Math.floor(availableForTimeline / workingHours)
+  );
+  const hourHeight = density === "ultra-compact"
+    ? Math.min(50, calculatedHourHeight)
+    : density === "compact"
+    ? Math.min(70, calculatedHourHeight)
+    : Math.min(90, calculatedHourHeight);
+
+  const handleBookingDrag = useCallback(async (bookingId: string, newTime: string, newStaffId?: string) => {
+    if (onBookingDrag) {
+      setDragLoading(true);
+      try {
+        await onBookingDrag(bookingId, newTime, newStaffId);
+      } finally {
+        setDragLoading(false);
+      }
+    }
+  }, [onBookingDrag]);
+
+  const handleBookingResize = useCallback(async (bookingId: string, newEndTime: string) => {
+    if (onBookingResize) {
+      setResizeLoading(true);
+      try {
+        await onBookingResize(bookingId, newEndTime);
+      } finally {
+        setResizeLoading(false);
+      }
+    }
+  }, [onBookingResize]);
+
+  return (
