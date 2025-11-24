@@ -275,7 +275,7 @@ function NotificationToast({ notification, onDismiss, index }: NotificationToast
           <div className="mt-3 pt-3 border-t border-[var(--glass-border-subtle)]">
             <Button
               size="sm"
-              variant={notification.action.variant === "destructive" ? "destructive" : "default"}
+              variant={notification.action.variant === "destructive" ? "destructive" : "primary"}
               onClick={notification.action.onClick}
               className="w-full"
             >
