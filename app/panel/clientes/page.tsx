@@ -4,10 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Alert } from "@/components/ui/Alert";
-import { Modal } from "@/components/ui/Modal";
+import { UiButton, UiCard, UiModal, UiInput, UiField, UiBadge, UiToast } from "@/components/ui/apple-ui-kit";
 import { PageHeader } from "@/components/ui/PageHeader";
 // import { CustomerHistory } from "@/components/customers/CustomerHistory";
 import { 
@@ -40,8 +37,13 @@ export default function ClientesPage() {
   // Estados principales
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Toast state
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<"success" | "error">("success");
+  const [showToast, setShowToast] = useState(false);
   
   // Estados de filtrado y búsqueda
   const [searchTerm, setSearchTerm] = useState("");
@@ -274,7 +276,9 @@ export default function ClientesPage() {
       if (error) throw error;
       
       setCustomers(prev => [data, ...prev]);
-      setSuccessMessage("Cliente creado exitosamente");
+      setToastMessage("Cliente creado exitosamente");
+      setToastType("success");
+      setShowToast(true);
       setShowNewModal(false);
       setNewCustomer({
         name: "",
@@ -307,7 +311,9 @@ export default function ClientesPage() {
       if (error) throw error;
       
       setCustomers(prev => prev.filter(c => c.id !== customerId));
-      setSuccessMessage("Cliente eliminado exitosamente");
+      setToastMessage("Cliente eliminado exitosamente");
+      setToastType("success");
+      setShowToast(true);
     } catch (err) {
       console.error("Error deleting customer:", err);
       setError("Error al eliminar el cliente");
@@ -338,9 +344,12 @@ export default function ClientesPage() {
 
   if ((tenantError && !tenantId) || (error && !tenantId)) {
     return (
-      <Alert type="error" title="Error">
-        {tenantError || error}
-      </Alert>
+      <div className="p-6">
+        <UiToast
+          message={tenantError || error || "Error desconocido"}
+          tone="danger"
+        />
+      </div>
     );
   }
 
@@ -352,75 +361,65 @@ export default function ClientesPage() {
         description="Gestiona tu base de clientes, filtra y busca fácilmente, y accede a sus historiales de reservas."
         actions={
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <Button
+            <UiButton
               variant="secondary"
               onClick={handleExportCsv}
               disabled={loading}
               className="w-full sm:w-auto"
             >
               Exportar CSV
-            </Button>
-            <Button
+            </UiButton>
+            <UiButton
+              variant="primary"
               onClick={openNewModal}
               className="w-full sm:w-auto"
             >
               + Nuevo Cliente
-            </Button>
+            </UiButton>
           </div>
         }
       />
       
       <div className="space-y-4">
-        <input
+        <UiInput
           type="text"
           placeholder="Buscar por nombre, email o teléfono..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-4 py-2.5 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
-          style={{ borderRadius: "var(--radius-md)" }}
         />
         
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] sm:text-xs font-medium text-[var(--color-text-secondary)]">
-              Visitas
-            </label>
+          <UiField label="Visitas">
             <select
               value={visitFilter}
               onChange={(e) => setVisitFilter(e.target.value as typeof visitFilter)}
-              className="w-full rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(15,23,42,0.65)] px-2.5 sm:px-3 py-2 text-xs sm:text-sm text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
+              className="w-full rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-2.5 sm:px-3 py-2 text-xs sm:text-sm text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
               style={{ borderRadius: "var(--radius-md)" }}
             >
               <option value="all">Todas</option>
               <option value="with">Con reservas</option>
               <option value="without">Sin reservas</option>
             </select>
-          </div>
+          </UiField>
           
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] sm:text-xs font-medium text-[var(--color-text-secondary)]">
-              Actividad
-            </label>
+          <UiField label="Actividad">
             <select
               value={activityFilter}
               onChange={(e) => setActivityFilter(e.target.value as typeof activityFilter)}
-              className="w-full rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(15,23,42,0.65)] px-2.5 sm:px-3 py-2 text-xs sm:text-sm text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
+              className="w-full rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-2.5 sm:px-3 py-2 text-xs sm:text-sm text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
               style={{ borderRadius: "var(--radius-md)" }}
             >
               <option value="all">Todas</option>
               <option value="active90">Activas 90d</option>
               <option value="inactive90">Inactivas +90d</option>
             </select>
-          </div>
+          </UiField>
           
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] sm:text-xs font-medium text-[var(--color-text-secondary)]">
-              Segmento
-            </label>
+          <UiField label="Segmento">
             <select
               value={segmentFilter}
               onChange={(e) => setSegmentFilter(e.target.value as typeof segmentFilter)}
-              className="w-full rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(15,23,42,0.65)] px-2.5 sm:px-3 py-2 text-xs sm:text-sm text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
+              className="w-full rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-2.5 sm:px-3 py-2 text-xs sm:text-sm text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
               style={{ borderRadius: "var(--radius-md)" }}
             >
               <option value="all">Todos</option>
@@ -429,22 +428,19 @@ export default function ClientesPage() {
               <option value="marketing">Marketing</option>
               <option value="no_contact">Sin contacto</option>
             </select>
-          </div>
+          </UiField>
           
-          <div className="flex flex-col gap-1 col-span-2 lg:col-span-1">
-            <label className="text-[10px] sm:text-xs font-medium text-[var(--color-text-secondary)]">
-              Ordenar
-            </label>
+          <UiField label="Ordenar">
             <select
               value={sortOption}
               onChange={(e) => setSortOption(e.target.value as typeof sortOption)}
-              className="w-full rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(15,23,42,0.65)] px-2.5 sm:px-3 py-2 text-xs sm:text-sm text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
+              className="w-full rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-2.5 sm:px-3 py-2 text-xs sm:text-sm text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
               style={{ borderRadius: "var(--radius-md)" }}
             >
               <option value="recent">Recientes</option>
               <option value="value">Mayor gasto</option>
             </select>
-          </div>
+          </UiField>
         </div>
       </div>
 
@@ -533,18 +529,14 @@ export default function ClientesPage() {
           </div>
         )}
 
-        {successMessage && (
-          <Alert type="success" onClose={() => setSuccessMessage(null)}>
-            {successMessage}
-          </Alert>
+        {/* Toast Notifications */}
+        {showToast && toastMessage && (
+          <UiToast
+            message={toastMessage}
+            tone={toastType === "error" ? "danger" : toastType}
+            onClose={() => setShowToast(false)}
+          />
         )}
-        
-        {error && (
-          <Alert type="error" onClose={() => setError(null)}>
-            {error}
-          </Alert>
-        )}
-      </div>
 
       {selectionActive && (
         <div className="rounded-[var(--radius-lg)] border border-[var(--glass-border)] bg-[rgba(15,23,42,0.65)] p-3 sm:p-4">
@@ -553,36 +545,36 @@ export default function ClientesPage() {
               {selectionCount} {selectionCount === 1 ? "cliente seleccionado" : "clientes seleccionados"}
             </p>
             <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
-              <Button
+              <UiButton
                 variant="secondary"
                 onClick={handleBulkExport}
                 disabled={bulkActionLoading}
                 className="w-full sm:w-auto"
               >
                 {bulkActionLoading ? "Exportando..." : "Exportar seleccionados"}
-              </Button>
-              <Button
-                variant="destructive"
+              </UiButton>
+              <UiButton
+                variant="danger"
                 onClick={handleBulkDelete}
                 disabled={bulkActionLoading}
                 className="w-full sm:w-auto"
               >
                 {bulkActionLoading ? "Eliminando..." : "Eliminar seleccionados"}
-              </Button>
-              <Button
-                variant="outline"
+              </UiButton>
+              <UiButton
+                variant="secondary"
                 onClick={clearSelection}
                 disabled={bulkActionLoading}
                 className="w-full sm:w-auto"
               >
                 Cancelar selección
-              </Button>
+              </UiButton>
             </div>
           </div>
         </div>
       )}
 
-      <Card variant="default" className="border-[var(--glass-border)] bg-[rgba(15,23,42,0.65)]">
+      <UiCard className="border-[var(--glass-border)] bg-[rgba(15,23,42,0.65)]">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -674,47 +666,44 @@ export default function ClientesPage() {
                     </p>
                   </td>
                   <td className="p-3 sm:p-4">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      customer.segment === "vip" 
-                        ? "bg-[rgba(160,107,255,0.1)] text-[var(--color-purple)]"
-                        : customer.segment === "banned"
-                        ? "bg-[rgba(255,109,163,0.1)] text-[var(--color-pink)]"
-                        : customer.segment === "marketing"
-                        ? "bg-[rgba(79,227,193,0.1)] text-[var(--color-aqua)]"
-                        : "bg-[rgba(15,23,42,0.5)] text-[var(--color-text-secondary)]"
-                    }`}>
+                    <UiBadge 
+                      tone={
+                        customer.segment === "vip" ? "highlight" :
+                        customer.segment === "banned" ? "danger" :
+                        customer.segment === "marketing" ? "info" :
+                        "neutral"
+                      }
+                      soft
+                    >
                       {customer.segment === "vip" ? "VIP" :
                        customer.segment === "banned" ? "Baneado" :
                        customer.segment === "marketing" ? "Marketing" :
                        customer.segment === "no_contact" ? "Sin contacto" : "Normal"}
-                    </span>
+                    </UiBadge>
                   </td>
                   <td className="p-3 sm:p-4">
                     <div className="flex items-center gap-2">
-                      <Button
+                      <UiButton
                         variant="ghost"
                         size="sm"
                         onClick={() => handleViewHistory(customer.id)}
-                        className="text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]"
                       >
                         <Calendar className="w-4 h-4" />
-                      </Button>
-                      <Button
+                      </UiButton>
+                      <UiButton
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEditCustomer(customer)}
-                        className="text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]"
                       >
                         <Edit2 className="w-4 h-4" />
-                      </Button>
-                      <Button
+                      </UiButton>
+                      <UiButton
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteCustomer(customer.id)}
-                        className="text-[var(--color-danger)] hover:text-[var(--color-danger-hover)]"
                       >
                         <Trash2 className="w-4 h-4" />
-                      </Button>
+                      </UiButton>
                     </div>
                   </td>
                 </tr>
@@ -722,7 +711,7 @@ export default function ClientesPage() {
             </tbody>
           </table>
         </div>
-      </Card>
+      </UiCard>
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
@@ -730,73 +719,83 @@ export default function ClientesPage() {
             Mostrando {paginatedCustomers.length} de {customerStats.total} clientes
           </p>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
+            <UiButton
+              variant="secondary"
               size="sm"
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
             >
               <ChevronLeft className="w-4 h-4" />
-            </Button>
+            </UiButton>
             <span className="text-sm text-[var(--color-text-primary)]">
               Página {currentPage} de {totalPages}
             </span>
-            <Button
-              variant="outline"
+            <UiButton
+              variant="secondary"
               size="sm"
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
             >
               <ChevronRight className="w-4 h-4" />
-            </Button>
+            </UiButton>
           </div>
         </div>
       )}
 
       {showNewModal && (
-        <Modal isOpen={showNewModal} onClose={closeNewModal} title="Nuevo Cliente">
-          <form onSubmit={handleNewCustomer} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
-                Nombre completo
-              </label>
-              <input
+        <UiModal
+          open={showNewModal}
+          onClose={closeNewModal}
+          title={editingCustomer ? "Editar cliente" : "Nuevo cliente"}
+          footer={
+            <div className="flex items-center justify-end gap-3">
+              <UiButton
+                variant="secondary"
+                onClick={closeNewModal}
+              >
+                Cancelar
+              </UiButton>
+              <UiButton
+                variant="primary"
+                type="submit"
+                form="customer-form"
+                disabled={loading}
+              >
+                {loading ? "Guardando..." : editingCustomer ? "Actualizar" : "Crear cliente"}
+              </UiButton>
+            </div>
+          }
+        >
+          <form id="customer-form" onSubmit={handleNewCustomer} className="space-y-6">
+            <UiField label="Nombre completo" required>
+              <UiInput
                 type="text"
-                required
                 value={newCustomer.name}
                 onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value})}
-                className="w-full rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
                 placeholder="Juan Pérez"
+                required
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
-                Email
-              </label>
-              <input
+            </UiField>
+
+            <UiField label="Email">
+              <UiInput
                 type="email"
                 value={newCustomer.email}
                 onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})}
-                className="w-full rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
                 placeholder="juan@ejemplo.com"
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
-                Teléfono
-              </label>
-              <input
+            </UiField>
+
+            <UiField label="Teléfono">
+              <UiInput
                 type="tel"
                 value={newCustomer.phone}
                 onChange={(e) => setNewCustomer({...newCustomer, phone: e.target.value})}
-                className="w-full rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
                 placeholder="+34 600 000 000"
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
-                Segmento
-              </label>
+            </UiField>
+
+            <UiField label="Segmento">
               <select
                 value={newCustomer.segment}
                 onChange={(e) => setNewCustomer({...newCustomer, segment: e.target.value as any})}
@@ -807,40 +806,22 @@ export default function ClientesPage() {
                 <option value="marketing">Marketing</option>
                 <option value="no_contact">Sin contacto</option>
               </select>
-            </div>
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                variant="outline"
-                onClick={closeNewModal}
-              >
-                Cancelar
-              </Button>
-              <Button
-                disabled={loading}
-              >
-                {loading ? "Creando..." : "Crear cliente"}
-              </Button>
-            </div>
+            </UiField>
           </form>
-        </Modal>
+        </UiModal>
       )}
 
       {showHistory && (
-        <Modal 
-          isOpen={!!showHistory} 
-          onClose={() => setShowHistory(null)} 
+        <UiModal
+          open={!!showHistory}
+          onClose={() => setShowHistory(null)}
           title="Historial de reservas"
           size="lg"
         >
-          {/* <CustomerHistory 
-            customerId={showHistory}
-            tenantId={tenantId!}
-            tenantTimezone={tenantTimezone}
-          /> */}
-          <div className="p-4 text-center text-gray-500">
+          <div className="p-4 text-center text-slate-400">
             Historial de reservas (Componente en desarrollo)
           </div>
-        </Modal>
+        </UiModal>
       )}
     </div>
   );
