@@ -1,10 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { Clock, User, Scissors, Euro } from "lucide-react";
 import { Booking, BOOKING_STATUS_CONFIG } from "@/types/agenda";
 import { formatInTenantTz } from "@/lib/timezone";
 import { getMotionSafeProps, interactionPresets } from "./motion/presets";
+import { cn } from "@/lib/utils";
 
 interface BookingCardProps {
   booking: Booking;
@@ -137,26 +138,28 @@ export function BookingCard({
         aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime} - ${booking.service?.name || "Sin servicio"}. Estado: ${statusConfig.label}. ${isDragging ? 'Arrastrando' : canDrag ? 'Arrastrable' : ''}`}
         aria-describedby={isDragging ? "drag-instructions" : undefined}
         style={{
-          background: isDragging ? "rgba(255,255,255,0.9)" : undefined,
-          boxShadow: isDragging ? "0 8px 25px -4px rgba(0,0,0,0.15)" : undefined,
+          background: isDragging ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.08)",
+          backdropFilter: "blur(12px)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          boxShadow: isDragging ? "0 8px 25px -4px rgba(0,0,0,0.15)" : "0 2px 8px rgba(0,0,0,0.08)",
           cursor: isDragging ? "grabbing" : canDrag ? "grab" : "pointer"
         }}
       >
-        {/* Left border accent */}
-        <div className={cn("absolute left-0 top-0 bottom-0 w-1 rounded-l-lg", statusColors.accent)} />
+        {/* Left colored border (3px wide) */}
+        <div className={cn("absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl", statusColors.accent)} />
 
-        {/* Resize handles (top/bottom) */}
+        {/* Resize handles */}
         {canResize && (
           <>
             <div
-              className="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-2 bg-slate-400/50 rounded-t cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-2 bg-white/20 rounded-t cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
               onMouseDown={(e) => {
                 e.stopPropagation();
                 onResizeStart?.();
               }}
             />
             <div
-              className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-2 bg-slate-400/50 rounded-b cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-2 bg-white/20 rounded-b cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
               onMouseDown={(e) => {
                 e.stopPropagation();
                 onResizeStart?.();
@@ -165,53 +168,68 @@ export function BookingCard({
           </>
         )}
 
-        <div className="p-3 space-y-2">
-          {/* Header: Time + Status */}
-          <div className="flex items-center justify-between">
-            <div className="text-sm font-semibold font-mono text-slate-900 dark:text-slate-100">
+        <div className="pl-4 pr-3 py-3 space-y-3">
+          {/* Header: Customer name (large) + Time (top right) */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <User className="w-4 h-4 text-slate-500 dark:text-slate-400 flex-shrink-0" />
+              <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate">
+                {booking.customer?.name || "Sin cliente"}
+              </h3>
+            </div>
+            <div className="flex items-center gap-1 text-sm font-mono font-medium text-slate-700 dark:text-slate-300 flex-shrink-0">
+              <Clock className="w-3 h-3" />
               {startTime} - {endTime}
             </div>
-            <div className={cn(
-              "px-2 py-1 rounded-full text-xs font-medium",
-              statusColors.bg,
-              statusColors.text
-            )}>
-              {statusConfig.label}
-            </div>
           </div>
 
-          {/* Main content */}
-          <div className="space-y-1">
-            {/* Customer name - Primary */}
-            <div className="font-semibold text-slate-900 dark:text-slate-100 truncate">
-              {booking.customer?.name || "Sin cliente"}
-            </div>
-
-            {/* Service - Secondary */}
-            <div className="text-sm text-slate-600 dark:text-slate-400 truncate">
+          {/* Service details */}
+          <div className="flex items-center gap-2">
+            <Scissors className="w-4 h-4 text-slate-500 dark:text-slate-400 flex-shrink-0" />
+            <div className="text-sm text-slate-700 dark:text-slate-300">
               {booking.service?.name || "Sin servicio"}
-              {booking.service?.duration_min && ` • ${booking.service.duration_min}min`}
+              {booking.service?.duration_min && (
+                <span className="text-slate-500 dark:text-slate-400 ml-2">
+                  • {booking.service.duration_min}min
+                </span>
+              )}
             </div>
-
-            {/* Staff - Tertiary */}
-            {booking.staff && (
-              <div className="text-xs text-slate-500 dark:text-slate-500 flex items-center gap-1">
-                <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center">
-                  <span className="text-[8px] font-bold text-slate-700 dark:text-slate-300">
-                    {booking.staff.name.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                {booking.staff.name}
-              </div>
-            )}
           </div>
 
-          {/* Price indicator */}
-          {booking.service?.price_cents && (
-            <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              {(booking.service.price_cents / 100).toFixed(2)}€
+          {/* Staff + Price row */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {booking.staff && (
+                <>
+                  <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">
+                      {booking.staff.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <span className="text-xs text-slate-600 dark:text-slate-400">
+                    {booking.staff.name}
+                  </span>
+                </>
+              )}
             </div>
-          )}
+
+            {/* Price + Status */}
+            <div className="flex items-center gap-2">
+              {booking.service?.price_cents && (
+                <div className="flex items-center gap-1 text-sm font-semibold text-slate-800 dark:text-slate-200">
+                  <Euro className="w-3 h-3" />
+                  {(booking.service.price_cents / 100).toFixed(0)}€
+                </div>
+              )}
+              <div className={cn(
+                "px-2 py-1 rounded-full text-xs font-medium",
+                statusColors.bg,
+                statusColors.text
+              )}>
+                {statusConfig.label}
+              </div>
+            </div>
+          </div>
         </div>
       </motion.div>
     );
@@ -231,52 +249,88 @@ export function BookingCard({
         onKeyDown={handleKeyDown}
         tabIndex={0}
         role="button"
-        className={cn(baseClasses, "w-full p-4")}
+        className={cn(baseClasses, "w-full")}
         aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime} - ${endTime}`}
+        style={{
+          background: "rgba(255,255,255,0.06)",
+          backdropFilter: "blur(12px)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.06)"
+        }}
       >
-        <div className="flex items-start justify-between gap-4">
-          {/* Main content */}
-          <div className="flex-1 min-w-0 space-y-2">
-            {/* Header: Customer + Time */}
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">
-                {booking.customer?.name || "Sin cliente"}
-              </h3>
-              <div className="text-sm font-mono text-slate-600 dark:text-slate-400 flex-shrink-0 ml-2">
-                {startTime} - {endTime}
+        {/* Left colored border */}
+        <div className={cn("absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl", statusColors.accent)} />
+
+        <div className="pl-5 pr-4 py-4 space-y-3">
+          <div className="flex items-start justify-between gap-4">
+            {/* Main content */}
+            <div className="flex-1 min-w-0 space-y-2">
+              {/* Header: Customer + Time */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <User className="w-4 h-4 text-slate-500 dark:text-slate-400 flex-shrink-0" />
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate">
+                    {booking.customer?.name || "Sin cliente"}
+                  </h3>
+                </div>
+                <div className="flex items-center gap-1 text-sm font-mono font-medium text-slate-700 dark:text-slate-300 flex-shrink-0">
+                  <Clock className="w-3 h-3" />
+                  {startTime} - {endTime}
+                </div>
               </div>
+
+              {/* Service details */}
+              <div className="flex items-center gap-2">
+                <Scissors className="w-4 h-4 text-slate-500 dark:text-slate-400 flex-shrink-0" />
+                <div className="text-sm text-slate-700 dark:text-slate-300">
+                  {booking.service?.name || "Sin servicio"}
+                  {booking.service?.duration_min && (
+                    <span className="text-slate-500 dark:text-slate-400 ml-2">
+                      • {booking.service.duration_min}min
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Staff */}
+              {booking.staff && (
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">
+                      {booking.staff.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <span className="text-xs text-slate-600 dark:text-slate-400">
+                    {booking.staff.name}
+                  </span>
+                </div>
+              )}
+
+              {/* Contact info */}
+              {booking.customer?.phone && (
+                <div className="text-xs text-slate-500 dark:text-slate-500 flex items-center gap-1">
+                  <span className="text-slate-600 dark:text-slate-400">📞</span>
+                  {booking.customer.phone}
+                </div>
+              )}
             </div>
 
-            {/* Service details */}
-            <div className="text-sm text-slate-600 dark:text-slate-400">
-              {booking.service?.name || "Sin servicio"}
-              {booking.service?.duration_min && ` • ${booking.service.duration_min} min`}
-              {booking.staff && ` • ${booking.staff.name}`}
-            </div>
-
-            {/* Contact info */}
-            {booking.customer?.phone && (
-              <div className="text-xs text-slate-500 dark:text-slate-500">
-                📞 {booking.customer.phone}
+            {/* Price + Status */}
+            <div className="flex flex-col items-end gap-2 flex-shrink-0">
+              {booking.service?.price_cents && (
+                <div className="flex items-center gap-1 text-sm font-semibold text-slate-800 dark:text-slate-200">
+                  <Euro className="w-3 h-3" />
+                  {(booking.service.price_cents / 100).toFixed(0)}€
+                </div>
+              )}
+              <div className={cn(
+                "px-2 py-1 rounded-full text-xs font-medium",
+                statusColors.bg,
+                statusColors.text
+              )}>
+                {statusConfig.label}
               </div>
-            )}
-          </div>
-
-          {/* Status + Actions */}
-          <div className="flex flex-col items-end gap-2 flex-shrink-0">
-            <div className={cn(
-              "px-2 py-1 rounded-full text-xs font-medium",
-              statusColors.bg,
-              statusColors.text
-            )}>
-              {statusConfig.label}
             </div>
-
-            {booking.service?.price_cents && (
-              <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                {(booking.service.price_cents / 100).toFixed(2)}€
-              </div>
-            )}
           </div>
         </div>
       </motion.div>
