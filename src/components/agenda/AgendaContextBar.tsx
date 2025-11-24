@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Calendar, Clock, DollarSign, TrendingUp, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Staff } from "@/types/agenda";
-import { GlassCard } from "@/components/agenda/primitives/GlassCard";
+import { UiCard } from "@/components/ui/apple-ui-kit";
 
 interface QuickStats {
   totalBookings: number;

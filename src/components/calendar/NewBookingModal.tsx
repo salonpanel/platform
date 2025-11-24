@@ -3,11 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { format, addMinutes } from "date-fns";
 import { Plus, Trash2, X, Search } from "lucide-react";
-import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Card } from "@/components/ui/Card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
+import { UiModal, UiButton, UiInput, UiField, UiBadge } from "@/components/ui/apple-ui-kit";
 import { CustomerQuickView } from "./CustomerQuickView";
 import { Booking, Staff } from "@/types/agenda";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
@@ -571,14 +567,14 @@ export function NewBookingModal({
 
   return (
     <>
-      <Modal
+      <UiModal
         isOpen={isOpen}
         onClose={onClose}
         title={editingBooking ? "Editar cita" : "Nueva cita"}
-        size="xl"
+        size="lg"
         footer={
           <div className="flex items-center justify-between w-full">
-            <div className="text-sm text-[#9ca3af] font-['Plus_Jakarta_Sans']">
+            <div className="text-sm text-slate-400">
               {bookingServices.length > 0 && (
                 <>
                   <div>Total: {(totals.total / 100).toFixed(2)} €</div>
@@ -593,58 +589,70 @@ export function NewBookingModal({
                 </>
               )}
             </div>
-            <div className="flex gap-2">
-              <Button variant="secondary" onClick={onClose} disabled={isLoading}>
+            <div className="flex gap-3">
+              <UiButton
+                variant="secondary"
+                onClick={onClose}
+                disabled={isLoading}
+              >
                 Descartar
-              </Button>
-              <Button onClick={handleSave} disabled={isLoading || bookingServices.length === 0} isLoading={isLoading}>
+              </UiButton>
+              <UiButton
+                variant="primary"
+                onClick={handleSave}
+                disabled={isLoading || bookingServices.length === 0}
+                loading={isLoading}
+              >
                 {editingBooking ? "Actualizar" : "Guardar"}
-              </Button>
+              </UiButton>
             </div>
           </div>
         }
       >
         <div className="grid gap-6 lg:grid-cols-[1.7fr_1fr]">
           <div>
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-        <TabsList>
-          <TabsTrigger value="booking">Cita</TabsTrigger>
-          <TabsTrigger value="notes">Notas y datos</TabsTrigger>
-        </TabsList>
+            <UiPillTabs
+              value={activeTab}
+              onChange={(value) => setActiveTab(value as any)}
+              tabs={[
+                { value: "booking", label: "Cita" },
+                { value: "notes", label: "Notas y datos" }
+              ]}
+            />
 
         <TabsContent value="booking">
           <div className="space-y-6">
             {/* Cliente */}
             <div className="space-y-4">
               <div ref={customerInputRef} className="relative">
-                <label className="mb-2 block text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
-                  Cliente <span className="text-[#EF4444]">*</span>
-                </label>
-                <div className="relative">
-                  <Input
-                    type="text"
-                    value={customerName}
-                    onChange={(e) => {
-                      setCustomerName(e.target.value);
-                      setCustomerId(""); // Limpiar ID si se escribe manualmente
-                      // Mostrar sugerencias solo si hay texto y no hay cliente seleccionado
-                      if (e.target.value.trim().length > 0 && !customerId) {
-                        // El useEffect se encargará de mostrar las sugerencias
-                      } else {
-                        setShowSuggestions(false);
-                      }
-                    }}
-                    onFocus={() => {
-                      // Mostrar sugerencias al enfocar si hay texto y sugerencias disponibles
-                      if (customerName.trim().length > 0 && customerSuggestions.length > 0 && !customerId) {
-                        setShowSuggestions(true);
-                      }
-                    }}
-                    placeholder="Escribe el nombre del cliente o selecciona uno existente..."
-                    className="w-full pr-10"
-                  />
-                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9ca3af]" />
-                </div>
+                <UiField
+                  label="Cliente"
+                  required
+                >
+                  <div className="relative">
+                    <UiInput
+                      value={customerName}
+                      onChange={(e) => {
+                        setCustomerName(e.target.value);
+                        setCustomerId(""); // Limpiar ID si se escribe manualmente
+                        // Mostrar sugerencias solo si hay texto y no hay cliente seleccionado
+                        if (e.target.value.trim().length > 0 && !customerId) {
+                          // El useEffect se encargará de mostrar las sugerencias
+                        } else {
+                          setShowSuggestions(false);
+                        }
+                      }}
+                      onFocus={() => {
+                        // Mostrar sugerencias al enfocar si hay texto y sugerencias disponibles
+                        if (customerName.trim().length > 0 && customerSuggestions.length > 0 && !customerId) {
+                          setShowSuggestions(true);
+                        }
+                      }}
+                      placeholder="Escribe el nombre del cliente o selecciona uno existente..."
+                      rightIcon={<Search className="h-4 w-4 text-slate-400" />}
+                    />
+                  </div>
+                </UiField>
                 {showSuggestions && customerSuggestions.length > 0 && (
                   <div className="absolute z-50 w-full mt-1 bg-[#15171A] border border-white/10 rounded-[14px] shadow-[0px_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-md overflow-hidden">
                     {customerSuggestions.map((customer) => (
@@ -671,36 +679,30 @@ export function NewBookingModal({
 
               {/* Teléfono y Email */}
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
-                    Teléfono <span className="text-[#EF4444]">*</span>
-                  </label>
-                  <Input
+                <UiField
+                  label="Teléfono"
+                  required
+                  hint="Necesario para enviar notificaciones SMS"
+                >
+                  <UiInput
                     type="tel"
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
                     placeholder="Ej: 612345678"
-                    className="w-full"
                   />
-                  <p className="mt-1 text-xs text-[#9ca3af] font-['Plus_Jakarta_Sans']">
-                    Necesario para enviar notificaciones SMS
-                  </p>
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
-                    Email <span className="text-[#EF4444]">*</span>
-                  </label>
-                  <Input
+                </UiField>
+                <UiField
+                  label="Email"
+                  required
+                  hint="Necesario para enviar confirmaciones por email"
+                >
+                  <UiInput
                     type="email"
                     value={customerEmail}
                     onChange={(e) => setCustomerEmail(e.target.value)}
                     placeholder="cliente@ejemplo.com"
-                    className="w-full"
                   />
-                  <p className="mt-1 text-xs text-[#9ca3af] font-['Plus_Jakarta_Sans']">
-                    Necesario para enviar confirmaciones por email
-                  </p>
-                </div>
+                </UiField>
               </div>
 
             </div>
@@ -1079,7 +1081,7 @@ export function NewBookingModal({
           </div>
         </div>
         {ToastComponent}
-      </Modal>
+      </UiModal>
 
       {/* Ficha rápida de cliente */}
       {showCustomerView && selectedCustomer && (

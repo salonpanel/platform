@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { format, addWeeks, subWeeks, startOfToday } from "date-fns";
-import { Button } from "@/components/ui/Button";
+import { UiButton } from "@/components/ui/apple-ui-kit";
 import { X, Filter, Calendar, CreditCard, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -202,37 +202,31 @@ export function AgendaSidebar({
             Navegación Rápida
           </h4>
           <div className="space-y-2">
-            <button
+            <UiButton
+              variant="secondary"
+              size="sm"
               onClick={goToToday}
-              className={cn(
-                "w-full px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 text-left",
-                "text-[var(--text-primary)] bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.05)]",
-                "border border-white/5 font-[var(--font-body)]"
-              )}
+              className="w-full justify-start"
             >
               Hoy
-            </button>
+            </UiButton>
             <div className="flex gap-2">
-              <button
+              <UiButton
+                variant="ghost"
+                size="sm"
                 onClick={() => navigateWeek("prev")}
-                className={cn(
-                  "flex-1 px-3 py-2 text-xs font-medium rounded-xl transition-all duration-200",
-                  "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.03)]",
-                  "border border-white/5 font-[var(--font-body)]"
-                )}
+                className="flex-1"
               >
                 -1 semana
-              </button>
-              <button
+              </UiButton>
+              <UiButton
+                variant="ghost"
+                size="sm"
                 onClick={() => navigateWeek("next")}
-                className={cn(
-                  "flex-1 px-3 py-2 text-xs font-medium rounded-xl transition-all duration-200",
-                  "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.03)]",
-                  "border border-white/5 font-[var(--font-body)]"
-                )}
+                className="flex-1"
               >
                 +1 semana
-              </button>
+              </UiButton>
             </div>
           </div>
         </div>
@@ -398,14 +392,14 @@ export function AgendaSidebar({
         </div>
 
         {/* Clear Filters */}
-        <Button
-          variant="ghost"
+        <UiButton
+          variant="secondary"
           size="sm"
           onClick={clearFilters}
           className="w-full"
         >
           Limpiar todos los filtros
-        </Button>
+        </UiButton>
       </div>
     </div>
   );

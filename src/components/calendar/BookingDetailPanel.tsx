@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { Edit, Trash2, Phone, Mail, Calendar, User, Tag } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { Modal } from "@/components/ui/Modal";
+import { UiModal, UiButton, UiBadge } from "@/components/ui/apple-ui-kit";
 import { AgendaModal } from "./AgendaModal";
 import { formatInTenantTz } from "@/lib/timezone";
 import { Booking } from "@/types/agenda";
@@ -71,7 +69,9 @@ export function BookingDetailPanel({
               {booking.customer?.name || "Sin cliente"}
             </p>
           </div>
-          <StatusBadge status={booking.status} />
+          <UiBadge tone="info" soft>
+            {booking.status}
+          </UiBadge>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pt-3 border-t border-[var(--glass-border-subtle)]">
           <div>
@@ -267,34 +267,33 @@ export function BookingDetailPanel({
     <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-2">
         {onEdit && (
-          <Button
+          <UiButton
             variant="ghost"
             size="sm"
             onClick={() => onEdit(booking)}
-            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           >
             <Edit className="h-4 w-4 mr-2" />
             Editar
-          </Button>
+          </UiButton>
         )}
         {onDelete && (
-          <Button
+          <UiButton
             variant="danger"
             size="sm"
             onClick={() => setShowDeleteConfirm(true)}
           >
             <Trash2 className="h-4 w-4 mr-2" />
             Eliminar
-          </Button>
+          </UiButton>
         )}
       </div>
-      <Button
+      <UiButton
         variant="ghost"
         size="sm"
         onClick={onClose}
       >
         Cerrar
-      </Button>
+      </UiButton>
     </div>
   );
 
@@ -320,25 +319,25 @@ export function BookingDetailPanel({
 
       {/* Delete Confirmation Modal - Keep separate */}
       {showDeleteConfirm && (
-        <Modal
-          isOpen={showDeleteConfirm}
+        <UiModal
+          open={showDeleteConfirm}
           onClose={() => setShowDeleteConfirm(false)}
           title="Confirmar eliminación"
           size="sm"
           footer={
             <div className="flex items-center justify-end gap-3">
-              <Button
-                variant="ghost"
+              <UiButton
+                variant="secondary"
                 onClick={() => setShowDeleteConfirm(false)}
               >
                 Cancelar
-              </Button>
-              <Button
+              </UiButton>
+              <UiButton
                 variant="danger"
                 onClick={handleDelete}
               >
                 Eliminar cita
-              </Button>
+              </UiButton>
             </div>
           }
         >
@@ -346,7 +345,7 @@ export function BookingDetailPanel({
             ¿Estás seguro de que deseas eliminar esta cita con {booking.customer?.name || "el cliente"}?
             Esta acción no se puede deshacer.
           </p>
-        </Modal>
+        </UiModal>
       )}
 
       {ToastComponent}
