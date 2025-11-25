@@ -204,9 +204,9 @@ export function AgendaContainer({
   return (
     <NotificationProvider position="top-right" maxNotifications={3}>
       <div className="min-h-screen bg-[#0E0F11] text-white relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(58,109,255,0.08),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(79,227,193,0.08),transparent_30%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_18%,rgba(58,109,255,0.08),transparent_38%),radial-gradient(circle_at_82%_0%,rgba(79,227,193,0.08),transparent_32%)]" />
 
-        <main className="relative z-10 max-w-7xl mx-auto px-4 lg:px-10 py-8 space-y-6">
+        <main className="relative z-10 max-w-7xl mx-auto px-4 lg:px-10 py-6 lg:py-8 flex flex-col gap-6 h-screen overflow-hidden">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -225,13 +225,13 @@ export function AgendaContainer({
             />
           </motion.div>
 
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_340px] gap-6 items-start">
-            <div className="space-y-4">
+          <div className="grid lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start flex-1 min-h-0">
+            <div className="space-y-4 flex flex-col min-h-0">
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.18, delay: 0.05 }}
-                className="rounded-2xl border border-white/8 bg-[#15171A]/80 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.35)]"
+                className="rounded-2xl border border-white/8 bg-[#15171A]/80 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.35)] flex-shrink-0"
               >
                 <AgendaContextBar
                   quickStats={quickStats}
@@ -249,7 +249,7 @@ export function AgendaContainer({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2, delay: 0.08 }}
-                className="rounded-2xl border border-white/8 bg-[#15171A]/90 backdrop-blur-xl shadow-[0_20px_70px_rgba(0,0,0,0.45)] h-[calc(100vh-260px)] flex flex-col overflow-hidden"
+                className="rounded-2xl border border-white/8 bg-[#15171A]/90 backdrop-blur-xl shadow-[0_20px_70px_rgba(0,0,0,0.45)] flex-1 min-h-0 flex flex-col overflow-hidden"
               >
                 <AgendaContent
                   viewMode={viewMode}
@@ -278,7 +278,7 @@ export function AgendaContainer({
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2, delay: 0.12 }}
-              className="space-y-4 lg:sticky lg:top-8"
+              className="space-y-4 lg:sticky lg:top-6"
             >
               <AgendaSidebar
                 selectedDate={selectedDate}

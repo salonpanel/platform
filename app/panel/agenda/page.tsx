@@ -92,7 +92,6 @@ export default function AgendaPage() {
     filteredBookings,
     visibleStaff,
     quickStats,
-    staffUtilization,
     refreshDaySnapshots,
   } = agendaData;
 
@@ -976,7 +975,6 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
         filteredBookings={filteredBookings}
         visibleStaff={visibleStaff}
         quickStats={quickStats}
-        staffUtilization={staffUtilization}
         refreshDaySnapshots={refreshDaySnapshots}
         
         // Core state from page.tsx

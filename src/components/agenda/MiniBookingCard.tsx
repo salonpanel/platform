@@ -72,156 +72,69 @@ export function MiniBookingCard({
       whileTap={onClick ? { scale: 0.98 } : undefined}
       onClick={onClick}
       className={cn(
-        "group relative rounded-[var(--radius-lg) border backdrop-blur-sm transition-all duration-200",
-        "hover:shadow-lg hover:shadow-[var(--accent-aqua)]/10",
+        "group relative rounded-2xl border backdrop-blur-md transition-all duration-200",
+        "hover:shadow-lg hover:shadow-[var(--accent-aqua)]/12",
         paddingClass,
         getStatusBorder(),
         onClick && "cursor-pointer",
         className
       )}
       style={{
-        background: "linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)",
+        background: "linear-gradient(145deg, rgba(21,23,26,0.9) 0%, rgba(21,23,26,0.75) 100%)",
         borderWidth: "1px",
       }}
     >
-      {/* Indicador de estado sutil */}
-      <div className={cn(
-        "absolute top-0 left-0 w-1 h-full rounded-l-[var(--radius-lg)]",
-        booking.status === "paid" && "bg-[var(--status-paid)]",
-        booking.status === "pending" && "bg-[var(--status-pending)]",
-        booking.status === "completed" && "bg-[var(--status-completed)]",
-        booking.status === "cancelled" && "bg-[var(--status-cancelled)]",
-        booking.status === "no_show" && "bg-[var(--status-noshow)]"
-      )} />
-      
-      <div className="flex items-start justify-between gap-3">
-        {/* Información principal */}
-        <div className="flex-1 min-w-0">
-          {/* Nombre del cliente */}
-          <div className="flex items-center gap-2 mb-1">
-            <User className={cn(iconSize, "text-[var(--text-secondary)] flex-shrink-0")} />
-            <div
-              className={cn(
-                "font-semibold truncate",
-                nameSize
-              )}
-              style={{
-                fontFamily: "var(--font-heading)",
-                color: "var(--text-primary)",
-              }}
-            >
+      <div className="absolute top-0 left-0 w-1 h-full rounded-l-2xl bg-white/10" />
+
+      <div className="space-y-2">
+        <div className="flex items-start gap-2">
+          <div className="flex items-center justify-center h-8 w-8 rounded-full bg-white/8 border border-white/15 text-[11px] font-semibold text-white/90">
+            {(booking.customer?.name || "").charAt(0) || "C"}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className={cn("font-semibold leading-tight truncate", nameSize)} style={{ fontFamily: "var(--font-heading)", color: "var(--text-primary)" }}>
               {booking.customer?.name || "Sin cliente"}
             </div>
+            <div className={cn("text-white/60 truncate", textSize)}>{booking.service?.name || "Sin servicio"}</div>
           </div>
-          
-          {/* Servicio */}
-          {booking.service && (
-            <div className="flex items-center gap-2 mb-2">
-              <Scissors className={cn(iconSize, "text-[var(--text-tertiary)] flex-shrink-0")} />
-              <div
-                className={cn(
-                  "truncate font-medium",
-                  textSize
-                )}
-                style={{
-                  fontFamily: "var(--font-body)",
-                  color: "var(--text-secondary)",
-                }}
-              >
-                {booking.service.name}
-              </div>
-              {duration > 0 && (
-                <span className={cn(
-                  "px-1.5 py-0.5 rounded-md font-mono text-xs",
-                  "bg-[var(--glass-bg)] border border-[var(--glass-border-subtle)]"
-                )}>
-                  {duration}min
-                </span>
-              )}
+          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+            <div className="px-2 py-1 rounded-full bg-white/10 text-[11px] font-mono text-white/80 border border-white/10 leading-none">
+              {startTime} - {endTime}
             </div>
+            <StatusBadge status={booking.status} density={density} size="xs" />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 text-[11px] text-white/70">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Scissors className={cn(iconSize, "text-white/50 flex-shrink-0")} />
+            <span className="truncate">{booking.service?.name || "Servicio"}</span>
+          </div>
+          {duration > 0 && (
+            <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/10 font-mono text-[10px]">
+              {duration}min
+            </span>
           )}
-          
-          {/* Hora y precio */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              <Clock className={cn(iconSize, "text-[var(--text-tertiary)] flex-shrink-0")} />
-              <div
-                className={cn(
-                  "font-mono font-medium",
-                  textSize
-                )}
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  color: "var(--text-tertiary)",
-                }}
-              >
-                {startTime} - {endTime}
+        </div>
+
+        <div className="flex items-center justify-between gap-2 text-[11px] text-white/70">
+          {booking.staff ? (
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-5 h-5 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-[9px] font-semibold text-white/80">
+                {booking.staff.name.charAt(0).toUpperCase()}
               </div>
+              <span className="truncate">{booking.staff.name}</span>
             </div>
-            
-            {price && (
-              <div className={cn(
-                "px-2 py-0.5 rounded-md font-semibold text-xs",
-                "bg-gradient-to-r from-[var(--accent-blue)]/10 to-[var(--accent-aqua)]/10",
-                "border border-[var(--accent-aqua)]/20 text-[var(--accent-aqua)]"
-              )}>
-                {price}€
-              </div>
-            )}
-          </div>
-          
-          {/* Staff */}
-          {booking.staff && density !== "ultra-compact" && (
-            <div className="flex items-center gap-1.5 mt-1.5">
-              <div className="w-4 h-4 rounded-full bg-[var(--accent-purple)]/20 border border-[var(--accent-purple)]/30 flex items-center justify-center">
-                <span className="text-[8px] font-bold" style={{ color: "var(--accent-purple)" }}>
-                  {booking.staff.name.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <span
-                className={cn(
-                  "truncate font-medium",
-                  textSize
-                )}
-                style={{
-                  fontFamily: "var(--font-body)",
-                  color: "var(--text-tertiary)",
-                }}
-              >
-                {booking.staff.name}
-              </span>
+          ) : (
+            <span className="text-white/50">Sin asignar</span>
+          )}
+
+          {price && (
+            <div className="px-2 py-0.5 rounded-full bg-gradient-to-r from-[var(--accent-blue)]/10 to-[var(--accent-aqua)]/10 border border-[var(--accent-aqua)]/30 text-[var(--accent-aqua)] font-semibold text-xs">
+              {price}€
             </div>
           )}
         </div>
-        
-        {/* Badge de estado y acciones */}
-        <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <StatusBadge status={booking.status} density={density} size="xs" />
-          
-          {showActions && onClick && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={(e) => {
-                e.stopPropagation();
-                onClick();
-              }}
-              className={cn(
-                "p-1.5 rounded-md border transition-all duration-200",
-                "bg-[var(--glass-bg-subtle)] border-[var(--glass-border)]",
-                "hover:bg-[var(--accent-aqua-glass)] hover:border-[var(--accent-aqua-border)]",
-                "opacity-0 group-hover:opacity-100"
-              )}
-            >
-              <div className="w-3 h-3 rounded-full bg-[var(--accent-aqua)]" />
-            </motion.button>
-          )}
-        </div>
-      </div>
-      
-      {/* Efecto de brillo sutil en hover */}
-      <div className="absolute inset-0 rounded-[var(--radius-lg)] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
       </div>
     </motion.div>
   );

@@ -138,7 +138,7 @@ export function AgendaSidebar({
 
   // Main sidebar content component
   const SidebarContent = () => (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header - Only show in mobile drawer */}
       {isMobile && (
         <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.85)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3 flex items-center justify-between">
@@ -191,9 +191,9 @@ export function AgendaSidebar({
         </div>
       )}
 
-      {/* Quick Navigation */}
-      <div className="relative rounded-2xl border border-white/8 bg-white/5 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-4 py-3">
-        <div className="space-y-3">
+      <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-[0_16px_40px_rgba(0,0,0,0.4)] p-4 space-y-5 divide-y divide-white/10">
+        {/* Quick Navigation */}
+        <div className="space-y-3 pb-4">
           <h4 className={cn(
             "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
             "text-[var(--text-tertiary)] font-[var(--font-heading)]"
@@ -230,11 +230,9 @@ export function AgendaSidebar({
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Calendar Picker */}
-      <div className="relative rounded-2xl border border-white/8 bg-white/5 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-4 py-3">
-        <div className="space-y-3">
+        {/* Calendar Picker */}
+        <div className="space-y-3 pt-4">
           <h4 className={cn(
             "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
             "text-[var(--text-tertiary)] font-[var(--font-heading)]"
@@ -254,10 +252,9 @@ export function AgendaSidebar({
             )}
           />
         </div>
-      </div>
 
-      {/* Filter Sections */}
-      <div className="space-y-5">
+        {/* Filter Sections */}
+        <div className="space-y-5 pt-4">
         {/* Payment Status */}
         <div className="relative rounded-2xl border border-white/8 bg-white/5 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-4 py-3">
           <div className="space-y-3">
@@ -296,85 +293,31 @@ export function AgendaSidebar({
         </div>
 
         {/* Booking Status */}
-        <div className="relative rounded-2xl border border-white/8 bg-white/5 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-4 py-3">
-          <div className="space-y-3">
-            <h4 className={cn(
-              "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
-              "text-[var(--text-tertiary)] font-[var(--font-heading)]"
-            )}>
-              <CheckCircle className="h-3 w-3 text-[var(--accent-pink)]" />
-              Estado de la cita
-            </h4>
-            <div className="space-y-2">
-              {([
-                "pending",
-                "paid",
-                "completed",
-                "cancelled",
-                "no_show",
-                "hold",
-              ] as BookingStatus[]).map((status) => (
-                <label
-                  key={status}
-                  className="flex items-center gap-2.5 cursor-pointer group"
-                >
-                  <input
-                    type="checkbox"
-                    checked={filters.status.includes(status)}
-                    onChange={() => handleFilterChange("status", status)}
-                    className={cn(
-                      "w-4 h-4 rounded-lg border bg-[rgba(255,255,255,0.03)] text-[var(--accent-blue)]",
-                      "border-white/5 focus:ring-2 focus:ring-[var(--accent-blue)/30] transition-all duration-200"
-                    )}
-                  />
-                  <span className={cn(
-                    "text-sm font-medium transition-colors duration-200",
-                    "text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] font-[var(--font-body)]"
-                  )}>
-                    {BOOKING_STATUS_CONFIG[status].label}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Staff Filter - Removed to avoid duplication with AgendaFilters */}
-        {/* Staff selection is handled in AgendaFilters header for better UX */}
-
-        {/* Additional Options */}
-        <div className="relative rounded-2xl border border-white/8 bg-white/5 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-4 py-3">
-          <div className="space-y-3">
-            <h4 className={cn(
-              "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
-              "text-[var(--text-tertiary)] font-[var(--font-heading)]"
-            )}>
-              <div className="h-1 w-1 rounded-full bg-[var(--accent-aqua)]" />
-              Detalles
-            </h4>
-            <label className="flex items-center gap-2.5 cursor-pointer group">
-              <input
-                type="checkbox"
-                checked={filters.highlighted === true}
-                onChange={() => handleFilterChange("highlighted", true)}
-                className={cn(
-                  "w-4 h-4 rounded-lg border bg-[rgba(255,255,255,0.03)] text-[var(--accent-blue)]",
-                  "border-white/5 focus:ring-2 focus:ring-[var(--accent-blue)/30] transition-all duration-200"
-                )}
-              />
-              <span className={cn(
-                "text-sm font-medium transition-colors duration-200",
-                "text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] font-[var(--font-body)]"
-              )}>
-                Marcadas como destacadas
-              </span>
-            </label>
-            {onShowFreeSlotsChange && (
-              <label className="flex items-center gap-2.5 cursor-pointer group">
+        <div className="space-y-3 pt-4">
+          <h4 className={cn(
+            "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
+            "text-[var(--text-tertiary)] font-[var(--font-heading)]"
+          )}>
+            <CheckCircle className="h-3 w-3 text-[var(--accent-pink)]" />
+            Estado de la cita
+          </h4>
+          <div className="space-y-2">
+            {([
+              "pending",
+              "paid",
+              "completed",
+              "cancelled",
+              "no_show",
+              "hold",
+            ] as BookingStatus[]).map((status) => (
+              <label
+                key={status}
+                className="flex items-center gap-2.5 cursor-pointer group"
+              >
                 <input
                   type="checkbox"
-                  checked={showFreeSlots}
-                  onChange={(e) => onShowFreeSlotsChange(e.target.checked)}
+                  checked={filters.status.includes(status)}
+                  onChange={() => handleFilterChange("status", status)}
                   className={cn(
                     "w-4 h-4 rounded-lg border bg-[rgba(255,255,255,0.03)] text-[var(--accent-blue)]",
                     "border-white/5 focus:ring-2 focus:ring-[var(--accent-blue)/30] transition-all duration-200"
@@ -384,11 +327,61 @@ export function AgendaSidebar({
                   "text-sm font-medium transition-colors duration-200",
                   "text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] font-[var(--font-body)]"
                 )}>
-                  Mostrar huecos libres
+                  {BOOKING_STATUS_CONFIG[status].label}
                 </span>
               </label>
-            )}
+            ))}
           </div>
+        </div>
+
+        {/* Staff Filter - Removed to avoid duplication with AgendaFilters */}
+        {/* Staff selection is handled in AgendaFilters header for better UX */}
+
+        {/* Additional Options */}
+        <div className="space-y-3 pt-4">
+          <h4 className={cn(
+            "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
+            "text-[var(--text-tertiary)] font-[var(--font-heading)]"
+          )}>
+            <div className="h-1 w-1 rounded-full bg-[var(--accent-aqua)]" />
+            Detalles
+          </h4>
+          <label className="flex items-center gap-2.5 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={filters.highlighted === true}
+              onChange={() => handleFilterChange("highlighted", true)}
+              className={cn(
+                "w-4 h-4 rounded-lg border bg-[rgba(255,255,255,0.03)] text-[var(--accent-blue)]",
+                "border-white/5 focus:ring-2 focus:ring-[var(--accent-blue)/30] transition-all duration-200"
+              )}
+            />
+            <span className={cn(
+              "text-sm font-medium transition-colors duration-200",
+              "text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] font-[var(--font-body)]"
+            )}>
+              Marcadas como destacadas
+            </span>
+          </label>
+          {onShowFreeSlotsChange && (
+            <label className="flex items-center gap-2.5 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={showFreeSlots}
+                onChange={(e) => onShowFreeSlotsChange(e.target.checked)}
+                className={cn(
+                  "w-4 h-4 rounded-lg border bg-[rgba(255,255,255,0.03)] text-[var(--accent-blue)]",
+                  "border-white/5 focus:ring-2 focus:ring-[var(--accent-blue)/30] transition-all duration-200"
+                )}
+              />
+              <span className={cn(
+                "text-sm font-medium transition-colors duration-200",
+                "text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] font-[var(--font-body)]"
+              )}>
+                Mostrar huecos libres
+              </span>
+            </label>
+          )}
         </div>
 
         {/* Clear Filters */}

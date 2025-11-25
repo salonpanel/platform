@@ -43,12 +43,6 @@ export function AgendaContextBar({
   onSearchChange,
   onSearchClose,
 }: AgendaContextBarProps) {
-  const getUtilizationColor = (utilization: number) => {
-    if (utilization < 40) return "text-[var(--accent-blue)] bg-[var(--accent-blue)]/10 border-[var(--accent-blue)]/20";
-    if (utilization < 80) return "text-[var(--accent-aqua)] bg-[var(--accent-aqua)]/10 border-[var(--accent-aqua)]/20";
-    return "text-[var(--accent-purple)] bg-[var(--accent-purple)]/10 border-[var(--accent-purple)]/20";
-  };
-
   const handleStaffToggle = (staffId: string) => {
     if (selectedStaffId === staffId) {
       // Deselect if already selected
@@ -69,45 +63,79 @@ export function AgendaContextBar({
       animate={{ opacity: 1, y: 0 }}
       className="flex-shrink-0 px-5 py-4 bg-white/5 backdrop-blur-xl border border-white/8 rounded-2xl"
     >
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex flex-wrap items-center gap-3 flex-1 min-w-[260px]">
-          <div className="flex items-center gap-2 text-[var(--text-tertiary)] text-xs uppercase tracking-[0.12em] font-semibold">
-            <Calendar className="h-3.5 w-3.5 text-[var(--accent-blue)]" />
-            <span>Resumen diario</span>
+      <div className="flex flex-wrap items-center gap-4 justify-between">
+        <div className="flex items-center gap-3 min-w-[240px]">
+          <div className="h-10 w-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center shadow-inner">
+            <Calendar className="h-4 w-4 text-white" />
           </div>
-
-          {quickStats && (
-            <div className="flex items-center gap-3 text-sm text-white/90">
-              <div className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 border border-white/10 shadow-inner">
-                <Clock className="h-4 w-4 text-[#4FE3C1]" />
-                <div className="leading-tight">
-                  <p className="text-xs text-white/60">Tiempo</p>
-                  <p className="text-sm font-semibold">{quickStats.totalHours}h</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 border border-white/10 shadow-inner">
-                <DollarSign className="h-4 w-4 text-[#A06BFF]" />
-                <div className="leading-tight">
-                  <p className="text-xs text-white/60">Ingresos</p>
-                  <p className="text-sm font-semibold">{(quickStats.totalAmount / 100).toFixed(0)}€</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 border border-white/10 shadow-inner">
-                <TrendingUp className="h-4 w-4 text-[#4FE3C1]" />
-                <div className="leading-tight">
-                  <p className="text-xs text-white/60">Promedio</p>
-                  <p className="text-sm font-semibold">
-                    {quickStats.totalBookings > 0
-                      ? `${Math.round((quickStats.totalAmount / quickStats.totalBookings) / 100)}€`
-                      : "-"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.12em] text-white/60 font-semibold">Resumen diario</p>
+            <p className="text-sm text-white/80">Salas, ingresos y rendimiento a la vista</p>
+          </div>
         </div>
 
-        <div className="hidden lg:flex items-center gap-2 flex-1 justify-end min-w-[280px]">
+        <AnimatePresence>
+          {searchOpen && (
+            <motion.div
+              key="search"
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              className="w-full lg:w-[360px]"
+            >
+              <div className="relative">
+                <input
+                  value={searchTerm}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  placeholder="Buscar cliente, servicio o nota"
+                  className="w-full bg-white/5 border border-white/12 rounded-xl py-3 pl-10 pr-11 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#3A6DFF]/40"
+                />
+                <Search className="h-4 w-4 text-white/60 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <button
+                  onClick={onSearchClose}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10"
+                  aria-label="Cerrar búsqueda"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        {quickStats && (
+          <div className="flex items-center gap-2 text-sm text-white/90 flex-wrap">
+            <div className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 border border-white/10 shadow-inner">
+              <Clock className="h-4 w-4 text-[#4FE3C1]" />
+              <div className="leading-tight">
+                <p className="text-[11px] text-white/60">Tiempo</p>
+                <p className="text-sm font-semibold">{quickStats.totalHours}h</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 border border-white/10 shadow-inner">
+              <DollarSign className="h-4 w-4 text-[#A06BFF]" />
+              <div className="leading-tight">
+                <p className="text-[11px] text-white/60">Ingresos</p>
+                <p className="text-sm font-semibold">{(quickStats.totalAmount / 100).toFixed(0)}€</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 border border-white/10 shadow-inner">
+              <TrendingUp className="h-4 w-4 text-[#4FE3C1]" />
+              <div className="leading-tight">
+                <p className="text-[11px] text-white/60">Promedio</p>
+                <p className="text-sm font-semibold">
+                  {quickStats.totalBookings > 0
+                    ? `${Math.round((quickStats.totalAmount / quickStats.totalBookings) / 100)}€`
+                    : "-"}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 ml-auto flex-wrap">
           <div className="flex items-center gap-2 text-white/60 text-xs font-medium">
             <Users className="h-4 w-4" />
             <span>Staff</span>
@@ -143,36 +171,6 @@ export function AgendaContextBar({
               </motion.button>
             ))}
           </div>
-        </div>
-
-        <div className="w-full lg:w-auto lg:flex-1">
-          <AnimatePresence>
-            {searchOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                className="w-full"
-              >
-                <div className="relative">
-                  <input
-                    value={searchTerm}
-                    onChange={(e) => onSearchChange(e.target.value)}
-                    placeholder="Buscar cliente, servicio o nota"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-10 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#3A6DFF]/40"
-                  />
-                  <Search className="h-4 w-4 text-white/60 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <button
-                    onClick={onSearchClose}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10"
-                    aria-label="Cerrar búsqueda"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
       </div>
     </motion.div>
