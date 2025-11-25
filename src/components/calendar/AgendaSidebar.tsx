@@ -138,7 +138,7 @@ export function AgendaSidebar({
 
   // Main sidebar content component
   const SidebarContent = () => (
-    <div className="h-full overflow-y-auto space-y-6 scrollbar-hide">
+    <div className="space-y-6">
       {/* Header - Only show in mobile drawer */}
       {isMobile && (
         <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.85)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3 flex items-center justify-between">
