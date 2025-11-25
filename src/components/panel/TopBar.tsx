@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, ChevronDown, Settings, LogOut, Clock } from "lucide-react";
+import { ChevronDown, Settings, LogOut, Building2 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 
@@ -20,7 +20,10 @@ export function TopBar({
   title,
   tenantName,
   userRole,
+  // timezone and onMenuClick kept for backwards compatibility but not used
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   timezone,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onMenuClick,
   sidebarCollapsed = false,
 }: TopBarProps) {
@@ -60,131 +63,161 @@ export function TopBar({
   }, [dropdownOpen]);
 
   return (
-    <div className="relative mb-8 pb-6 pt-8 md:pt-12">
-      {/* Línea sutil de separación en lugar de borde marcado */}
+    <div className={cn(
+      "relative pb-8 pt-6 md:pt-8",
+      sidebarCollapsed ? "px-6 md:px-8" : "px-6 md:px-10"
+    )}>
+      {/* Elegant divider line */}
       <div 
-        className="absolute bottom-0 left-0 right-0 h-px"
+        className="absolute bottom-0 left-6 right-6"
         style={{
-          background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 10%, rgba(255,255,255,0.1) 90%, transparent 100%)",
+          height: "1px",
+          background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 20%, rgba(255,255,255,0.08) 80%, transparent 100%)",
         }}
       />
       
-      {/* Contenido integrado sin cajas */}
+      {/* Clean single-line header */}
       <div className="flex items-center justify-between w-full">
-        <div className="flex items-center gap-6 flex-1 min-w-0">
-          {/* Title integrado */}
-          <div className="flex-1 min-w-0">
-            <motion.h1 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-3xl font-bold text-[var(--text-primary)] font-satoshi tracking-tight mb-2"
-              style={{
-                background: "linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              {title}
-            </motion.h1>
-            <motion.div 
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.15 }}
-              className="flex items-center gap-3 text-sm text-[var(--text-secondary)] font-medium"
-            >
-              <span className="truncate">{tenantName}</span>
-              {userRole && (
-                <>
-                  <span className="opacity-40">•</span>
-                  <span className="px-2 py-0.5 rounded-[var(--radius-sm)] bg-[rgba(77,226,195,0.1)] text-[var(--accent-2)] text-xs font-semibold">
-                    {userRole}
-                  </span>
-                </>
-              )}
-            </motion.div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 flex-shrink-0">
-          {/* Timezone indicator integrado (desktop) */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="hidden lg:flex items-center gap-2 px-3 py-1.5 text-xs text-[var(--text-secondary)] font-medium"
+        {/* Page Title - Simple and elegant */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="flex-1 min-w-0"
+        >
+          <h1 
+            className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight font-satoshi"
+            style={{
+              background: "linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.7) 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
           >
-            <Clock className="h-3.5 w-3.5" />
-            <span className="font-mono">{timezone}</span>
-          </motion.div>
+            {title}
+          </h1>
+        </motion.div>
 
-          {/* User dropdown integrado */}
+        {/* User menu - Minimal and elegant */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+          className="flex items-center gap-3 flex-shrink-0"
+        >
           <div className="relative" ref={dropdownRef}>
-            <motion.button
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.25 }}
+            <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-[var(--radius-md)] hover:bg-[rgba(255,255,255,0.04)] transition-all duration-200 group"
+              className={cn(
+                "flex items-center gap-3 px-3 py-2 rounded-xl",
+                "bg-white/[0.03] hover:bg-white/[0.06]",
+                "border border-white/[0.06] hover:border-white/[0.12]",
+                "transition-all duration-300",
+                "group"
+              )}
             >
               <Avatar
                 src={userAvatar || undefined}
                 name={userEmail || undefined}
                 size="sm"
-                className="ring-2 ring-[rgba(123,92,255,0.2)] group-hover:ring-[rgba(123,92,255,0.4)] transition-all duration-200"
+                className={cn(
+                  "ring-2 ring-white/10",
+                  "group-hover:ring-white/20",
+                  "transition-all duration-300"
+                )}
               />
               <ChevronDown 
                 className={cn(
-                  "h-4 w-4 text-[var(--text-secondary)] transition-all duration-200",
-                  dropdownOpen && "rotate-180"
+                  "h-4 w-4 text-white/40",
+                  "transition-all duration-300",
+                  "group-hover:text-white/60",
+                  dropdownOpen && "rotate-180 text-white/60"
                 )} 
               />
-            </motion.button>
+            </button>
 
-            {/* Dropdown menu */}
+            {/* Elegant dropdown menu */}
             <AnimatePresence>
               {dropdownOpen && (
                 <motion.div
-                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  initial={{ opacity: 0, y: 8, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute right-0 mt-2 w-56 rounded-[var(--radius-lg)] glass border border-[rgba(255,255,255,0.1)] shadow-[0px_8px_32px_rgba(0,0,0,0.3)] overflow-hidden z-50"
-                  style={{
-                    borderRadius: "var(--radius-lg)",
-                    boxShadow: "0px 8px 32px rgba(0,0,0,0.3), inset 0px 1px 0px rgba(255,255,255,0.1)",
-                  }}
+                  exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  className={cn(
+                    "absolute right-0 mt-2 w-64",
+                    "rounded-2xl overflow-hidden",
+                    "bg-[rgba(15,23,42,0.95)] backdrop-blur-xl",
+                    "border border-white/[0.08]",
+                    "shadow-[0_20px_60px_rgba(0,0,0,0.5)]",
+                    "z-50"
+                  )}
                 >
-                  {/* User info */}
-                  <div className="px-4 py-3 border-b border-[rgba(255,255,255,0.1)]">
-                    <p className="text-sm font-semibold text-[var(--text-primary)] font-satoshi truncate">
-                      {userEmail?.split("@")[0] || "Usuario"}
-                    </p>
-                    <p className="text-xs text-[var(--text-secondary)] truncate mt-0.5">
-                      {userEmail || ""}
-                    </p>
-                    {userRole && (
-                      <span className="inline-block mt-2 px-2 py-0.5 text-xs font-medium text-[var(--accent-2)] bg-[rgba(77,226,195,0.1)] rounded-[var(--radius-sm)]">
-                        {userRole}
+                  {/* User info section */}
+                  <div className="px-4 py-4 border-b border-white/[0.06]">
+                    <div className="flex items-start gap-3">
+                      <Avatar
+                        src={userAvatar || undefined}
+                        name={userEmail || undefined}
+                        size="md"
+                        className="ring-2 ring-white/10 flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-white/95 font-satoshi truncate">
+                          {userEmail?.split("@")[0] || "Usuario"}
+                        </p>
+                        <p className="text-xs text-white/50 truncate mt-0.5 font-inter">
+                          {userEmail || ""}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Tenant info */}
+                    <div className={cn(
+                      "mt-3 pt-3 border-t border-white/[0.06]",
+                      "flex items-center gap-2"
+                    )}>
+                      <Building2 className="h-3.5 w-3.5 text-white/40 flex-shrink-0" />
+                      <span className="text-xs text-white/60 truncate font-inter">
+                        {tenantName}
                       </span>
-                    )}
+                      {userRole && (
+                        <>
+                          <span className="text-white/30">•</span>
+                          <span className={cn(
+                            "px-2 py-0.5 rounded-md text-xs font-medium",
+                            "bg-emerald-500/10 text-emerald-400",
+                            "border border-emerald-500/20"
+                          )}>
+                            {userRole}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   {/* Menu items */}
-                  <div className="p-1.5">
+                  <div className="p-2">
                     <a
                       href="/panel/ajustes"
-                      className="flex items-center gap-3 px-3 py-2 rounded-[var(--radius-md)] text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.06)] transition-all duration-200 font-medium"
-                      style={{ borderRadius: "var(--radius-md)" }}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-xl",
+                        "text-sm font-medium text-white/70",
+                        "hover:text-white/95 hover:bg-white/[0.06]",
+                        "transition-all duration-200"
+                      )}
                     >
                       <Settings className="h-4 w-4" />
                       <span>Configuración</span>
                     </a>
                     <a
                       href="/logout"
-                      className="flex items-center gap-3 px-3 py-2 rounded-[var(--radius-md)] text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-200 font-medium mt-1"
-                      style={{ borderRadius: "var(--radius-md)" }}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-xl",
+                        "text-sm font-medium text-red-400/90",
+                        "hover:text-red-400 hover:bg-red-500/10",
+                        "transition-all duration-200 mt-1"
+                      )}
                     >
                       <LogOut className="h-4 w-4" />
                       <span>Cerrar sesión</span>
@@ -194,7 +227,7 @@ export function TopBar({
               )}
             </AnimatePresence>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
