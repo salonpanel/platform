@@ -17,6 +17,7 @@ import { PremiumSkeleton } from "./PremiumSkeleton";
 import { UiPillTabs } from "@/components/ui/apple-ui-kit";
 import { Timeline } from "./Timeline";
 import { BookingCard } from "./BookingCard";
+import { Card } from "@/components/ui/Card";
 
 type ViewMode = "day" | "week" | "month" | "list";
 
