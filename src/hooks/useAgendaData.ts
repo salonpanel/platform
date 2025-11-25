@@ -63,53 +63,43 @@ export function useAgendaData({
     };
   });
 
-  // Cargar datos iniciales
+  // OPTIMIZACIÓN: Cargar datos críticos primero (staff) para mostrar UI rápidamente
   useEffect(() => {
-    const loadInitialData = async () => {
+    const loadCriticalData = async () => {
       if (!tenantId) return;
       
       try {
-        const [staffResult, servicesResult, customersResult] = await Promise.all([
-          supabase
-            .from("staff")
-            .select("id, name, active")
-            .eq("tenant_id", tenantId)
-            .eq("active", true)
-            .order("name"),
-          supabase
-            .from("services")
-            .select("id, name, duration_min, price_cents, buffer_min")
-            .eq("tenant_id", tenantId)
-            .eq("active", true)
-            .order("name"),
-          supabase
-            .from("customers")
-            .select(`
-              id, 
-              name, 
-              email, 
-              phone, 
-              notes, 
-              internal_notes,
-              preferred_staff_id,
-              preferred_time_of_day,
-              preferred_days,
-              last_call_status,
-              last_call_date,
-              next_due_date,
-              call_attempts,
-              prefers_whatsapp
-            `)
-            .eq("tenant_id", tenantId)
-            .order("name")
-            .limit(100),
-        ]);
+        // Paso 1: Cargar SOLO staff (datos mínimos para mostrar UI)
+        const staffResult = await supabase
+          .from("staff")
+          .select("id, name, active")
+          .eq("tenant_id", tenantId)
+          .eq("active", true)
+          .order("name");
 
-        if (staffResult.data) setStaffList(staffResult.data);
-        if (servicesResult.data) setServices(servicesResult.data.map(s => ({ ...s, buffer_min: s.buffer_min ?? 0 })));
-        if (customersResult.data) setCustomers(customersResult.data);
+        if (staffResult.data) {
+          setStaffList(staffResult.data);
+          // Marcar como "parcialmente cargado" - podemos mostrar UI
+          setLoading(false);
+        }
 
-        setLoading(false);
+        // Paso 2: Cargar servicios en segundo plano (no bloquea UI)
+        supabase
+          .from("services")
+          .select("id, name, duration_min, price_cents, buffer_min")
+          .eq("tenant_id", tenantId)
+          .eq("active", true)
+          .order("name")
+          .then((servicesResult) => {
+            if (servicesResult.data) {
+              setServices(servicesResult.data.map(s => ({ ...s, buffer_min: s.buffer_min ?? 0 })));
+            }
+          });
+
+        // Paso 3: NO cargar todos los customers inicialmente
+        // Solo se cargarán cuando se necesiten (en modales)
+        setCustomers([]);
+
       } catch (err) {
         console.error("Error al cargar datos iniciales:", err);
         setError("Error al cargar los datos");
@@ -117,31 +107,38 @@ export function useAgendaData({
       }
     };
 
-    loadInitialData();
+    loadCriticalData();
   }, [tenantId, supabase]);
 
-  // Cargar bookings y bloqueos
+  // OPTIMIZACIÓN: Cargar bookings de forma progresiva
   useEffect(() => {
     const loadBookingsAndBlockings = async () => {
-      if (!tenantId) return;
+      if (!tenantId || !staffList.length) return; // Esperar a tener staff
 
       try {
         const start = startOfDay(parseISO(selectedDate));
         const end = endOfDay(parseISO(selectedDate));
 
-        const [bookingsResult, blockingsResult, schedulesResult] = await Promise.all([
-          supabase
-            .from("bookings")
-            .select(`
-              *,
-              customer:customers(id, name, email, phone),
-              service:services(id, name, duration_min, price_cents),
-              staff:staff(id, name)
-            `)
-            .eq("tenant_id", tenantId)
-            .gte("starts_at", start.toISOString())
-            .lte("starts_at", end.toISOString())
-            .order("starts_at"),
+        // Paso 1: Cargar SOLO bookings primero (lo más importante)
+        const bookingsResult = await supabase
+          .from("bookings")
+          .select(`
+            *,
+            customer:customers(id, name, email, phone),
+            service:services(id, name, duration_min, price_cents),
+            staff:staff(id, name)
+          `)
+          .eq("tenant_id", tenantId)
+          .gte("starts_at", start.toISOString())
+          .lte("starts_at", end.toISOString())
+          .order("starts_at");
+
+        if (bookingsResult.data) {
+          setBookings(bookingsResult.data);
+        }
+
+        // Paso 2: Cargar blockings y schedules en paralelo (menos crítico)
+        Promise.all([
           supabase
             .from("staff_blockings")
             .select("*")
@@ -154,22 +151,19 @@ export function useAgendaData({
             .select("staff_id, start_time, end_time")
             .eq("tenant_id", tenantId)
             .eq("is_active", true),
-        ]);
+        ]).then(([blockingsResult, schedulesResult]) => {
+          if (blockingsResult.data) setStaffBlockings(blockingsResult.data);
+          if (schedulesResult.data) setStaffSchedules(schedulesResult.data);
+        });
 
-        if (bookingsResult.data) setBookings(bookingsResult.data);
-        if (blockingsResult.data) setStaffBlockings(blockingsResult.data);
-        if (schedulesResult.data) setStaffSchedules(schedulesResult.data);
-
-        setLoading(false);
       } catch (err) {
         console.error("Error al cargar bookings:", err);
         setError("Error al cargar las reservas");
-        setLoading(false);
       }
     };
 
     loadBookingsAndBlockings();
-  }, [tenantId, selectedDate, supabase]);
+  }, [tenantId, selectedDate, supabase, staffList.length]);
 
   // Debounce del término de búsqueda
   useEffect(() => {

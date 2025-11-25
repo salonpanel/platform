@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { format, parseISO, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { useSearchParams } from "next/navigation";
 import { getCurrentTenant } from "@/lib/panel-tenant";
 import { useToast } from "@/components/ui/Toast";
-import { motion, AnimatePresence } from "framer-motion";
 import { Booking, Staff, StaffBlocking, StaffSchedule, ViewMode, CalendarSlot, BookingStatus, BOOKING_STATUS_CONFIG } from "@/types/agenda";
 import { toTenantLocalDate } from "@/lib/timezone";
 import { useAgendaConflicts } from "@/hooks/useAgendaConflicts";
@@ -13,12 +12,15 @@ import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { getBookingsNeedingStatusUpdate } from "@/lib/booking-status-transitions";
 import { useAgendaData } from "@/hooks/useAgendaData";
 import { AgendaContainer } from "@/components/agenda/AgendaContainer";
-import { NewBookingModal } from "@/components/calendar/NewBookingModal";
-import { CustomerQuickView } from "@/components/calendar/CustomerQuickView";
-import { BookingDetailPanel } from "@/components/calendar/BookingDetailPanel";
-import { StaffBlockingModal } from "@/components/calendar/StaffBlockingModal";
-import { ConflictResolutionModal } from "@/components/calendar/ConflictResolutionModal";
-import { NotificationsPanel } from "@/components/calendar/NotificationsPanel";
+import { AgendaSkeleton } from "@/components/agenda/AgendaSkeleton";
+
+// OPTIMIZACIÓN: Lazy load modales que no se usan en carga inicial
+const NewBookingModal = lazy(() => import("@/components/calendar/NewBookingModal").then(m => ({ default: m.NewBookingModal })));
+const CustomerQuickView = lazy(() => import("@/components/calendar/CustomerQuickView").then(m => ({ default: m.CustomerQuickView })));
+const BookingDetailPanel = lazy(() => import("@/components/calendar/BookingDetailPanel").then(m => ({ default: m.BookingDetailPanel })));
+const StaffBlockingModal = lazy(() => import("@/components/calendar/StaffBlockingModal").then(m => ({ default: m.StaffBlockingModal })));
+const ConflictResolutionModal = lazy(() => import("@/components/calendar/ConflictResolutionModal").then(m => ({ default: m.ConflictResolutionModal })));
+const NotificationsPanel = lazy(() => import("@/components/calendar/NotificationsPanel").then(m => ({ default: m.NotificationsPanel })));
 
 type AgendaNotification = {
   id: string;
@@ -799,6 +801,26 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
     conflictsHook.clearConflicts();
   };
 
+  // OPTIMIZACIÓN: Mostrar skeleton inmediatamente si no hay tenant
+  if (!tenantId) {
+    return (
+      <>
+        <AgendaSkeleton />
+        {ToastComponent}
+      </>
+    );
+  }
+
+  // Mostrar skeleton mientras carga por primera vez
+  if (loading && !staffList.length) {
+    return (
+      <>
+        <AgendaSkeleton />
+        {ToastComponent}
+      </>
+    );
+  }
+
   if (error && !tenantId) {
     return (
       <>
@@ -1067,104 +1089,112 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
         />
       </div>
 
-      {/* Modals and panels - kept in page.tsx for business logic */}
+      {/* Modals and panels - Lazy loaded con Suspense */}
       {showNewBookingModal && (
-        <NewBookingModal
-          isOpen={showNewBookingModal}
-          onClose={() => {
-            setShowNewBookingModal(false);
-            setEditingBooking(null);
-          }}
-          onSave={onBookingSave}
-          services={services}
-          staff={staffList}
-          customers={customers}
-          selectedDate={selectedDate}
-          selectedTime={selectedSlot?.time}
-          selectedEndTime={selectedSlot?.endTime}
-          selectedStaffId={selectedSlot?.staffId || (filters.staff.includes("all") ? undefined : filters.staff[0] || undefined)}
-          isLoading={loading}
-          editingBooking={editingBooking}
-          tenantId={tenantId || undefined}
-        />
+        <Suspense fallback={<div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" />}>
+          <NewBookingModal
+            isOpen={showNewBookingModal}
+            onClose={() => {
+              setShowNewBookingModal(false);
+              setEditingBooking(null);
+            }}
+            onSave={onBookingSave}
+            services={services}
+            staff={staffList}
+            customers={customers}
+            selectedDate={selectedDate}
+            selectedTime={selectedSlot?.time}
+            selectedEndTime={selectedSlot?.endTime}
+            selectedStaffId={selectedSlot?.staffId || (filters.staff.includes("all") ? undefined : filters.staff[0] || undefined)}
+            isLoading={loading}
+            editingBooking={editingBooking}
+            tenantId={tenantId || undefined}
+          />
+        </Suspense>
       )}
 
       {conflictsHook.showConflictModal && (
-        <ConflictResolutionModal
-          isOpen={conflictsHook.showConflictModal}
-          onClose={() => conflictsHook.setShowConflictModal(false)}
-          conflicts={conflictsHook.conflicts}
-          newBookingStart={conflictsHook.pendingBooking?.starts_at || ""}
-          newBookingEnd={conflictsHook.pendingBooking?.ends_at || ""}
-          newBookingStaffId={conflictsHook.pendingBooking?.staff_id || ""}
-          newBookingStaffName={staffList.find(s => s.id === conflictsHook.pendingBooking?.staff_id)?.name}
-          timezone={tenantTimezone}
-          onResolve={(action: "change_time" | "change_staff" | "force" | "cancel") => {
-            conflictsHook.handleResolve(action, async (force: boolean) => {
-              if (conflictsHook.pendingBooking) {
-                // Convert PendingBookingInput to BookingFormPayload with validation
-                const bookingPayload: BookingFormPayload = {
-                  id: conflictsHook.pendingBooking.id || "", // Use empty string for undefined id
-                  staff_id: conflictsHook.pendingBooking.staff_id || "",
-                  starts_at: conflictsHook.pendingBooking.starts_at,
-                  ends_at: conflictsHook.pendingBooking.ends_at,
-                  customer_id: conflictsHook.pendingBooking.customer_id || null,
-                  service_id: conflictsHook.pendingBooking.service_id || null,
-                  status: (conflictsHook.pendingBooking.status as BookingStatus) || "pending",
-                  internal_notes: conflictsHook.pendingBooking.internal_notes || null,
-                  client_message: conflictsHook.pendingBooking.client_message || null,
-                  is_highlighted: conflictsHook.pendingBooking.is_highlighted || false,
-                };
-                await saveBooking(bookingPayload, force);
-              } else if (conflictsHook.pendingBlocking) {
-                // Convert PendingBlockingInput to BlockingFormPayload with validation
-                const blockingPayload: BlockingFormPayload = {
-                  staff_id: conflictsHook.pendingBlocking.staff_id,
-                  start_at: conflictsHook.pendingBlocking.start_at,
-                  end_at: conflictsHook.pendingBlocking.end_at,
-                  type: conflictsHook.pendingBlocking.type || "block", // Default to "block" if undefined
-                  reason: conflictsHook.pendingBlocking.reason || "",
-                  notes: conflictsHook.pendingBlocking.notes || null,
-                };
-                await saveBlocking(blockingPayload, force);
-              }
-            });
-          }}
-        />
+        <Suspense fallback={<div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" />}>
+          <ConflictResolutionModal
+            isOpen={conflictsHook.showConflictModal}
+            onClose={() => conflictsHook.setShowConflictModal(false)}
+            conflicts={conflictsHook.conflicts}
+            newBookingStart={conflictsHook.pendingBooking?.starts_at || ""}
+            newBookingEnd={conflictsHook.pendingBooking?.ends_at || ""}
+            newBookingStaffId={conflictsHook.pendingBooking?.staff_id || ""}
+            newBookingStaffName={staffList.find(s => s.id === conflictsHook.pendingBooking?.staff_id)?.name}
+            timezone={tenantTimezone}
+            onResolve={(action: "change_time" | "change_staff" | "force" | "cancel") => {
+              conflictsHook.handleResolve(action, async (force: boolean) => {
+                if (conflictsHook.pendingBooking) {
+                  const bookingPayload: BookingFormPayload = {
+                    id: conflictsHook.pendingBooking.id || "",
+                    staff_id: conflictsHook.pendingBooking.staff_id || "",
+                    starts_at: conflictsHook.pendingBooking.starts_at,
+                    ends_at: conflictsHook.pendingBooking.ends_at,
+                    customer_id: conflictsHook.pendingBooking.customer_id || null,
+                    service_id: conflictsHook.pendingBooking.service_id || null,
+                    status: (conflictsHook.pendingBooking.status as BookingStatus) || "pending",
+                    internal_notes: conflictsHook.pendingBooking.internal_notes || null,
+                    client_message: conflictsHook.pendingBooking.client_message || null,
+                    is_highlighted: conflictsHook.pendingBooking.is_highlighted || false,
+                  };
+                  await saveBooking(bookingPayload, force);
+                } else if (conflictsHook.pendingBlocking) {
+                  const blockingPayload: BlockingFormPayload = {
+                    staff_id: conflictsHook.pendingBlocking.staff_id,
+                    start_at: conflictsHook.pendingBlocking.start_at,
+                    end_at: conflictsHook.pendingBlocking.end_at,
+                    type: conflictsHook.pendingBlocking.type || "block",
+                    reason: conflictsHook.pendingBlocking.reason || "",
+                    notes: conflictsHook.pendingBlocking.notes || null,
+                  };
+                  await saveBlocking(blockingPayload, force);
+                }
+              });
+            }}
+          />
+        </Suspense>
       )}
 
       {showBookingDetail && selectedBooking && (
-        <BookingDetailPanel
-          booking={selectedBooking}
-          isOpen={showBookingDetail}
-          onClose={() => {
-            setShowBookingDetail(false);
-            setSelectedBooking(null);
-          }}
-          onEdit={() => onBookingEdit(selectedBooking)}
-          onDelete={onBookingCancel}
-          timezone={tenantTimezone}
-        />
+        <Suspense fallback={<div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" />}>
+          <BookingDetailPanel
+            booking={selectedBooking}
+            isOpen={showBookingDetail}
+            onClose={() => {
+              setShowBookingDetail(false);
+              setSelectedBooking(null);
+            }}
+            onEdit={() => onBookingEdit(selectedBooking)}
+            onDelete={onBookingCancel}
+            timezone={tenantTimezone}
+          />
+        </Suspense>
       )}
 
       {showCustomerView && selectedBooking && selectedBooking.customer && (
-        <CustomerQuickView
-          customer={{
-            id: selectedBooking.customer_id!,
-            name: selectedBooking.customer.name,
-            email: selectedBooking.customer.email,
-            phone: selectedBooking.customer.phone,
-          }}
-          onClose={() => setShowCustomerView(false)}
-        />
+        <Suspense fallback={<div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" />}>
+          <CustomerQuickView
+            customer={{
+              id: selectedBooking.customer_id!,
+              name: selectedBooking.customer.name,
+              email: selectedBooking.customer.email,
+              phone: selectedBooking.customer.phone,
+            }}
+            onClose={() => setShowCustomerView(false)}
+          />
+        </Suspense>
       )}
 
       {notificationsOpen && (
-        <NotificationsPanel
-          isOpen={notificationsOpen}
-          onClose={() => setNotificationsOpen(false)}
-          notifications={notifications}
-        />
+        <Suspense fallback={<div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" />}>
+          <NotificationsPanel
+            isOpen={notificationsOpen}
+            onClose={() => setNotificationsOpen(false)}
+            notifications={notifications}
+          />
+        </Suspense>
       )}
       {ToastComponent}
     </>

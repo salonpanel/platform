@@ -124,6 +124,14 @@ export function AgendaContainer({
   showConflicts = true,
 }: AgendaContainerProps) {
   const { success, error: showError, warning, info, achievement } = useNotificationActions();
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // Marcar que ya no es carga inicial después de primer render
+  useEffect(() => {
+    if (!loading && staffList.length > 0) {
+      setIsInitialLoad(false);
+    }
+  }, [loading, staffList.length]);
 
   // Formateadores memoizados
   const timeFormatter = useMemo(
@@ -209,56 +217,39 @@ export function AgendaContainer({
   return (
     <NotificationProvider position="top-right" maxNotifications={3}>
       <div className="h-full flex flex-col">
-        {/* Fixed Header Section */}
+        {/* Fixed Header Section - SIN animación en carga inicial */}
         <div className="flex-shrink-0 space-y-4">
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.18 }}
-          >
-            <AgendaTopBar
-              selectedDate={selectedDate}
-              viewMode={viewMode}
-              onDateChange={onDateChange}
-              onViewModeChange={onViewModeChange}
-              onSearchClick={onSearchToggle}
-              onNotificationsClick={onNotificationsToggle}
-              unreadNotifications={unreadNotifications}
-              onFiltersClick={() => setSidebarOpen(true)}
-            />
-          </motion.div>
+          <AgendaTopBar
+            selectedDate={selectedDate}
+            viewMode={viewMode}
+            onDateChange={onDateChange}
+            onViewModeChange={onViewModeChange}
+            onSearchClick={onSearchToggle}
+            onNotificationsClick={onNotificationsToggle}
+            unreadNotifications={unreadNotifications}
+            onFiltersClick={() => setSidebarOpen(true)}
+          />
 
-          <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.16, delay: 0.04 }}
-          >
-            <AgendaFilters
-              staffList={staffList}
-              selectedStaffId={selectedStaffId}
-              onStaffChange={onStaffChange}
-              searchOpen={searchOpen}
-              searchTerm={searchTerm}
-              onSearchToggle={onSearchToggle}
-              onSearchChange={setSearchTerm}
-              onSearchClose={onSearchClose}
-              activeFilters={activeFilters}
-              onResetFilters={handleResetFilters}
-            />
-          </motion.div>
+          <AgendaFilters
+            staffList={staffList}
+            selectedStaffId={selectedStaffId}
+            onStaffChange={onStaffChange}
+            searchOpen={searchOpen}
+            searchTerm={searchTerm}
+            onSearchToggle={onSearchToggle}
+            onSearchChange={setSearchTerm}
+            onSearchClose={onSearchClose}
+            activeFilters={activeFilters}
+            onResetFilters={handleResetFilters}
+          />
         </div>
 
         {/* Scrollable Content Section */}
         <div className="flex-1 min-h-0 mt-4">
           <div className="grid lg:grid-cols-[minmax(0,1fr)_300px] gap-6 h-full">
-            {/* Main calendar area - fills available height */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, delay: 0.05 }}
-              className="flex flex-col h-full overflow-hidden"
-            >
-              {/* Day summary stats - compact bar above calendar */}
+            {/* Main calendar area */}
+            <div className="flex flex-col h-full overflow-hidden">
+              {/* Day summary stats */}
               <div className="flex-shrink-0">
                 <AgendaContextBar quickStats={quickStats} />
               </div>
@@ -286,15 +277,10 @@ export function AgendaContainer({
                   notificationActions={{ info, warning }}
                 />
               </div>
-            </motion.div>
+            </div>
 
-            {/* Sidebar - fills available height */}
-            <motion.aside
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, delay: 0.1 }}
-              className="hidden lg:flex flex-col h-full overflow-hidden"
-            >
+            {/* Sidebar */}
+            <aside className="hidden lg:flex flex-col h-full overflow-hidden">
               <div className="flex-1 min-h-0 overflow-y-auto">
                 <AgendaSidebar
                   selectedDate={selectedDate}
@@ -306,7 +292,7 @@ export function AgendaContainer({
                   onClose={() => setSidebarOpen(false)}
                 />
               </div>
-            </motion.aside>
+            </aside>
           </div>
         </div>
       </div>
