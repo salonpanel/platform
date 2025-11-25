@@ -14,6 +14,7 @@ type Staff = {
   skills: string[] | null;
   profile_photo_url?: string | null;
   weekly_hours?: number | null;
+  user_id?: string | null;
 };
 
 type DaySchedule = {
@@ -38,6 +39,10 @@ interface StaffEditModalProps {
       end_time: string;
       is_active: boolean;
     }>;
+    // Nuevos campos para crear usuario
+    createUser?: boolean;
+    email?: string;
+    userRole?: string;
   }) => Promise<void>;
   staff: Staff | null;
   tenantId: string;
@@ -67,6 +72,9 @@ export function StaffEditModal({
     skills: "",
     profile_photo_url: "",
     weekly_hours: 40,
+    email: "",
+    userRole: "staff",
+    createUser: false,
   });
   const [schedules, setSchedules] = useState<DaySchedule[]>([]);
   const [loading, setLoading] = useState(false);
@@ -125,6 +133,9 @@ export function StaffEditModal({
         skills: "",
         profile_photo_url: "",
         weekly_hours: 40,
+        email: "",
+        userRole: "staff",
+        createUser: false,
       });
       setSchedules(DAYS_OF_WEEK.map((day) => ({
         day: day.day,
@@ -142,6 +153,9 @@ export function StaffEditModal({
         skills: staff.skills?.join(", ") || "",
         profile_photo_url: staff.profile_photo_url || "",
         weekly_hours: staff.weekly_hours || 40,
+        email: "",
+        userRole: "staff",
+        createUser: false,
       });
 
       // Cargar horarios
@@ -187,6 +201,9 @@ export function StaffEditModal({
         profile_photo_url: form.profile_photo_url.trim() || undefined,
         weekly_hours: form.weekly_hours || undefined,
         schedules: schedulesData,
+        createUser: form.createUser,
+        email: form.createUser ? form.email.trim() : undefined,
+        userRole: form.createUser ? form.userRole : undefined,
       });
     } catch (err: any) {
       console.error("Error al guardar:", err);
@@ -228,6 +245,62 @@ export function StaffEditModal({
             required
             placeholder="Nombre del barbero"
           />
+
+          {/* Sección de creación de usuario - Solo para nuevo staff */}
+          {!staff && (
+            <div className="space-y-4 p-4 rounded-[var(--radius-md)] glass border border-[var(--glass-border)]">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="createUser"
+                  checked={form.createUser}
+                  onChange={(e) => setForm({ ...form, createUser: e.target.checked })}
+                  className="rounded border-[var(--glass-border)]"
+                />
+                <label
+                  htmlFor="createUser"
+                  className="text-sm font-medium text-[var(--color-text-primary)] cursor-pointer"
+                  style={{ fontFamily: "var(--font-heading)" }}
+                >
+                  Crear cuenta de usuario para este barbero
+                </label>
+              </div>
+
+              {form.createUser && (
+                <div className="space-y-4 mt-4 pl-6 border-l-2 border-[var(--accent-aqua)]/30">
+                  <Input
+                    label="Email"
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    required
+                    placeholder="barbero@ejemplo.com"
+                    helperText="Se enviará un email de bienvenida con instrucciones de acceso"
+                  />
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-[var(--color-text-primary)]" style={{ fontFamily: "var(--font-heading)" }}>
+                      Rol del usuario
+                    </label>
+                    <select
+                      value={form.userRole}
+                      onChange={(e) => setForm({ ...form, userRole: e.target.value })}
+                      className="w-full rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
+                    >
+                      <option value="staff">Staff - Solo puede ver su agenda</option>
+                      <option value="admin">Admin - Puede gestionar todo excepto configuración</option>
+                      <option value="owner">Owner - Acceso completo</option>
+                    </select>
+                    <p className="text-xs text-[var(--color-text-secondary)]" style={{ fontFamily: "var(--font-body)" }}>
+                      {form.userRole === "staff" && "Podrá ver y gestionar su propia agenda de citas"}
+                      {form.userRole === "admin" && "Podrá gestionar staff, servicios y ver todas las citas"}
+                      {form.userRole === "owner" && "Tendrá acceso completo a todas las funcionalidades"}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <Input
             label="Foto de perfil (URL)"
