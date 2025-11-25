@@ -131,42 +131,164 @@ function StaffContent() {
     setShowEditModal(true);
   };
 
-  const handleSaveStaff = async (staffData: Partial<Staff>) => {
-    if (!tenantId || !editingStaff) return;
+  const handleSaveStaff = async (staffData: Partial<Staff> & { createUser?: boolean; email?: string; userRole?: string }) => {
+    if (!tenantId) return;
 
     setSaving(true);
     setError(null);
 
     try {
-      const { data, error: updateError } = await supabase
-        .from("staff")
-        .update({
-          name: staffData.name,
-          display_name: staffData.display_name,
-          skills: staffData.skills,
-        })
-        .eq("id", editingStaff.id)
-        .select()
-        .single();
+      let userId = editingStaff?.user_id || null;
 
-      if (updateError) {
-        throw new Error(updateError.message);
+      // Si se solicita crear usuario, llamar al endpoint
+      if (staffData.createUser && staffData.email && staffData.userRole && !editingStaff) {
+        try {
+          const response = await fetch("/api/staff/create-user", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: staffData.email,
+              full_name: staffData.name,
+              role: staffData.userRole,
+              tenant_id: tenantId,
+            }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Error al crear usuario");
+          }
+
+          const userData = await response.json();
+          userId = userData.user_id;
+
+          toast.showToast({
+            type: "success",
+            title: "Usuario creado",
+            message: `Se ha enviado un email de acceso a ${staffData.email}`,
+          });
+        } catch (userError: any) {
+          toast.showToast({
+            type: "error",
+            title: "Error al crear usuario",
+            message: userError.message,
+          });
+          throw userError;
+        }
       }
 
-      setStaffList((prev) =>
-        prev.map((s) =>
-          s.id === editingStaff.id
-            ? { ...data, display_name: data.display_name || data.name, bookings_count: s.bookings_count }
-            : s
-        )
-      );
+      // Si estamos editando, actualizar
+      if (editingStaff) {
+        const { data, error: updateError } = await supabase
+          .from("staff")
+          .update({
+            name: staffData.name,
+            display_name: staffData.display_name,
+            skills: staffData.skills,
+          })
+          .eq("id", editingStaff.id)
+          .select()
+          .single();
+
+        if (updateError) {
+          throw new Error(updateError.message);
+        }
+
+        // Si hay horarios, actualizarlos
+        if (staffData.schedules && staffData.schedules.length > 0) {
+          // Primero eliminar horarios existentes
+          await supabase
+            .from("staff_schedules")
+            .delete()
+            .eq("tenant_id", tenantId)
+            .eq("staff_id", editingStaff.id);
+
+          // Luego insertar los nuevos
+          const schedulesToInsert = staffData.schedules.map((s) => ({
+            tenant_id: tenantId,
+            staff_id: editingStaff.id,
+            day_of_week: s.day_of_week,
+            start_time: s.start_time,
+            end_time: s.end_time,
+            is_active: s.is_active,
+          }));
+
+          const { error: scheduleError } = await supabase
+            .from("staff_schedules")
+            .insert(schedulesToInsert);
+
+          if (scheduleError) {
+            console.error("Error al guardar horarios:", scheduleError);
+          }
+        }
+
+        setStaffList((prev) =>
+          prev.map((s) =>
+            s.id === editingStaff.id
+              ? { ...data, display_name: data.display_name || data.name, bookings_count: s.bookings_count }
+              : s
+          )
+        );
+
+        toast.showToast({
+          type: "success",
+          title: "Staff actualizado",
+          message: "El miembro del staff se ha actualizado correctamente",
+        });
+      } else {
+        // Crear nuevo staff
+        const { data, error: insertError } = await supabase
+          .from("staff")
+          .insert({
+            tenant_id: tenantId,
+            name: staffData.name,
+            display_name: staffData.display_name || staffData.name,
+            skills: staffData.skills,
+            active: true,
+            profile_photo_url: staffData.profile_photo_url,
+            weekly_hours: staffData.weekly_hours,
+            user_id: userId,
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          throw new Error(insertError.message);
+        }
+
+        // Si hay horarios, insertarlos
+        if (staffData.schedules && staffData.schedules.length > 0) {
+          const schedulesToInsert = staffData.schedules.map((s) => ({
+            tenant_id: tenantId,
+            staff_id: data.id,
+            day_of_week: s.day_of_week,
+            start_time: s.start_time,
+            end_time: s.end_time,
+            is_active: s.is_active,
+          }));
+
+          const { error: scheduleError } = await supabase
+            .from("staff_schedules")
+            .insert(schedulesToInsert);
+
+          if (scheduleError) {
+            console.error("Error al guardar horarios:", scheduleError);
+          }
+        }
+
+        setStaffList((prev) => [...prev, { ...data, display_name: data.display_name || data.name, bookings_count: 0 }]);
+
+        toast.showToast({
+          type: "success",
+          title: "Staff creado",
+          message: `${data.display_name || data.name} se ha añadido al equipo${userId ? " con cuenta de usuario" : ""}`,
+        });
+      }
+
       setShowEditModal(false);
       setEditingStaff(null);
-      toast.showToast({
-        type: "success",
-        title: "Staff actualizado",
-        message: "El miembro del staff se ha actualizado correctamente",
-      });
     } catch (err: any) {
       setError(err?.message || "Error al guardar staff");
       toast.showToast({
