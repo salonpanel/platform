@@ -1003,67 +1003,69 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
 
   return (
     <>
-      <AgendaContainer
-        // Data from useAgendaData hook
-        loading={loading}
-        error={error}
-        staffList={staffList}
-        bookings={bookings}
-        searchTerm={searchTerm}
-        setSearchTerm={setAgendaSearchTerm}
-        filters={filters}
-        setFilters={setFilters}
-        activeFiltersCount={activeFiltersCount}
-        filteredBookings={filteredBookings}
-        visibleStaff={visibleStaff}
-        quickStats={quickStats}
-        staffUtilization={staffUtilization}
-        refreshDaySnapshots={refreshDaySnapshots}
-        
-        // Core state from page.tsx
-        tenantId={tenantId}
-        tenantTimezone={tenantTimezone}
-        selectedDate={selectedDate}
-        selectedStaffId={filters.staff.includes("all") ? null : filters.staff[0] || null}
-        viewMode={viewMode}
-        
-        // Callbacks from page.tsx
-        onDateChange={setSelectedDate}
-        onViewModeChange={setViewMode}
-        onStaffChange={(staffId) => {
-          setFilters(prev => ({
-            ...prev,
-            staff: staffId ? [staffId] : ["all"]
-          }));
-        }}
-        onBookingClick={(booking) => {
-          const fullBooking = bookings.find((b) => b.id === booking.id);
-          if (fullBooking) {
-            setSelectedBooking(fullBooking);
-            setShowBookingDetail(true);
-          }
-        }}
-        onNewBooking={() => setShowNewBookingModal(true)}
-        onBookingDrag={handleBookingDrag}
-        onBookingResize={handleBookingResize}
-        onNotificationsToggle={() => setNotificationsOpen((prev) => !prev)}
+      <div className="h-full flex flex-col">
+        <AgendaContainer
+          // Data from useAgendaData hook
+          loading={loading}
+          error={error}
+          staffList={staffList}
+          bookings={bookings}
+          searchTerm={searchTerm}
+          setSearchTerm={setAgendaSearchTerm}
+          filters={filters}
+          setFilters={setFilters}
+          activeFiltersCount={activeFiltersCount}
+          filteredBookings={filteredBookings}
+          visibleStaff={visibleStaff}
+          quickStats={quickStats}
+          staffUtilization={staffUtilization}
+          refreshDaySnapshots={refreshDaySnapshots}
+          
+          // Core state from page.tsx
+          tenantId={tenantId}
+          tenantTimezone={tenantTimezone}
+          selectedDate={selectedDate}
+          selectedStaffId={filters.staff.includes("all") ? null : filters.staff[0] || null}
+          viewMode={viewMode}
+          
+          // Callbacks from page.tsx
+          onDateChange={setSelectedDate}
+          onViewModeChange={setViewMode}
+          onStaffChange={(staffId) => {
+            setFilters(prev => ({
+              ...prev,
+              staff: staffId ? [staffId] : ["all"]
+            }));
+          }}
+          onBookingClick={(booking) => {
+            const fullBooking = bookings.find((b) => b.id === booking.id);
+            if (fullBooking) {
+              setSelectedBooking(fullBooking);
+              setShowBookingDetail(true);
+            }
+          }}
+          onNewBooking={() => setShowNewBookingModal(true)}
+          onBookingDrag={handleBookingDrag}
+          onBookingResize={handleBookingResize}
+          onNotificationsToggle={() => setNotificationsOpen((prev) => !prev)}
 
-        // UI state
-        searchOpen={searchOpen}
-        onSearchToggle={() => setSearchOpen(!searchOpen)}
-        onSearchClose={() => {
-          setSearchOpen(false);
-          setAgendaSearchTerm("");
-        }}
-        selectedBooking={selectedBooking}
-        newBookingOpen={showNewBookingModal}
-        unreadNotifications={unreadNotifications}
+          // UI state
+          searchOpen={searchOpen}
+          onSearchToggle={() => setSearchOpen(!searchOpen)}
+          onSearchClose={() => {
+            setSearchOpen(false);
+            setAgendaSearchTerm("");
+          }}
+          selectedBooking={selectedBooking}
+          newBookingOpen={showNewBookingModal}
+          unreadNotifications={unreadNotifications}
 
-        // Options
-        density="default"
-        enableDragDrop={true}
-        showConflicts={true}
-      />
+          // Options
+          density="default"
+          enableDragDrop={true}
+          showConflicts={true}
+        />
+      </div>
 
       {/* Modals and panels - kept in page.tsx for business logic */}
       {showNewBookingModal && (
