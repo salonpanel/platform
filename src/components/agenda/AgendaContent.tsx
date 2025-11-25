@@ -273,7 +273,7 @@ export function AgendaContent({
   }
 
   return (
-    <div className="flex-1 min-h-0 overflow-hidden">
+    <div className="flex-1 min-h-0">
       <AnimatePresence mode="wait">
         <motion.div
           key="agenda-content"
@@ -281,7 +281,7 @@ export function AgendaContent({
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.16, ease: "easeOut" }}
-          className="h-full flex flex-col min-h-0 overflow-hidden"
+          className="h-full flex flex-col min-h-0"
         >
           {/* Contenido principal según vista */}
           <motion.div
@@ -346,7 +346,7 @@ export function AgendaContent({
                     className="flex-1 min-h-0"
                   >
                     {viewMode === "day" && (
-                      <div className="h-full flex flex-col min-h-0 overflow-hidden">
+                      <div className="h-full flex flex-col min-h-0">
                         {/* Zona de conflictos premium */}
                         {showConflicts && (
                           <motion.div
@@ -365,7 +365,7 @@ export function AgendaContent({
 
                         {/* Vista Timeline (Desktop/Tablet) */}
                         <div className="hidden md:flex flex-1 min-h-0">
-                          <div className="flex-1 min-h-0 overflow-y-auto" role="region" aria-label="Vista diaria de reservas">
+                          <div className="flex-1 min-h-0" role="region" aria-label="Vista diaria de reservas">
                             <Timeline
                               startHour={8}
                               endHour={20}
@@ -465,7 +465,7 @@ export function AgendaContent({
                         </div>
 
                         {/* Vista Lista (Mobile) */}
-                        <div className="md:hidden flex-1 min-h-0 overflow-y-auto" role="region" aria-label="Lista de reservas del día">
+                        <div className="md:hidden flex-1 min-h-0" role="region" aria-label="Lista de reservas del día">
                           <div className="space-y-3 p-4">
                             {bookings.map((booking) => (
                               <BookingCard
