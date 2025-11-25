@@ -163,11 +163,7 @@ export function AgendaContainer({
         console.error('❌ Error updating booking position:', error);
         showError(
           "Error al mover la cita",
-          "No se pudo actualizar el horario. Inténtalo de nuevo.",
-          {
-            label: "Reintentar",
-            onClick: () => handleBookingDrag(bookingId, newTime, newStaffId)
-          }
+          "No se pudo actualizar el horario. Inténtalo de nuevo."
         );
       }
     }
@@ -256,30 +252,20 @@ export function AgendaContainer({
             </div>
           </motion.div>
 
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_340px] gap-6 items-start">
-            <div className="space-y-4">
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.18, delay: 0.05 }}
-                className="rounded-2xl border border-white/8 bg-[#15171A]/80 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.35)]"
-              >
-                <AgendaContextBar
-                  quickStats={quickStats}
-                  staffUtilization={staffUtilization}
-                  staffList={staffList}
-                  selectedStaffId={selectedStaffId}
-                  onStaffChange={onStaffChange}
-                  viewMode={viewMode}
-                />
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: 0.08 }}
-                className="rounded-2xl border border-white/8 bg-[#15171A]/90 backdrop-blur-xl shadow-[0_20px_70px_rgba(0,0,0,0.45)]"
-              >
+          <div className="grid lg:grid-cols-[minmax(0,1fr)_300px] gap-6 items-start">
+            {/* Main calendar area with fixed header and scrollable content */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: 0.05 }}
+              className="rounded-2xl border border-white/8 bg-[#15171A]/90 overflow-hidden flex flex-col"
+              style={{ maxHeight: 'calc(100vh - 260px)' }}
+            >
+              {/* Day summary stats - compact bar above calendar */}
+              <AgendaContextBar quickStats={quickStats} />
+              
+              {/* Scrollable calendar content */}
+              <div className="flex-1 overflow-y-auto">
                 <AgendaContent
                   viewMode={viewMode}
                   onViewModeChange={onViewModeChange}
@@ -300,24 +286,24 @@ export function AgendaContainer({
                   showConflicts={showConflicts}
                   notificationActions={{ info, warning }}
                 />
-              </motion.div>
-            </div>
+              </div>
+            </motion.div>
 
+            {/* Sidebar - simplified */}
             <motion.aside
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, delay: 0.12 }}
-              className="space-y-4 lg:sticky lg:top-8"
+              transition={{ duration: 0.2, delay: 0.1 }}
+              className="lg:sticky lg:top-8"
             >
-              <div className="rounded-2xl border border-white/8 bg-[#15171A]/85 backdrop-blur-xl shadow-[0_12px_50px_rgba(0,0,0,0.4)]">
+              <div className="rounded-2xl border border-white/8 bg-[#15171A]/85 overflow-hidden">
                 <AgendaSidebar
                   selectedDate={selectedDate}
                   onDateSelect={onDateChange}
                   filters={filters}
                   onFiltersChange={setFilters}
-                  staffList={staffList}
+                  staffList={[]}
                   showFreeSlots={false}
-                  onShowFreeSlotsChange={() => {}}
                   isOpen={sidebarOpen}
                   onOpen={() => setSidebarOpen(true)}
                   onClose={() => setSidebarOpen(false)}

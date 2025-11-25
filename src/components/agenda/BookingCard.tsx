@@ -98,16 +98,16 @@ export function BookingCard({
 
   const statusColors = getStatusColors();
 
-  // Base card styles with consistent design tokens
+  // Base card styles with rounded design
   const baseClasses = cn(
     "relative group cursor-pointer transition-all duration-200",
-    "bg-slate-900/70 text-slate-100",
-    "border border-white/10 shadow-[0_10px_40px_-20px_rgba(0,0,0,0.45)] backdrop-blur-xl",
-    "rounded-[12px]",
-    "focus:outline-none focus:ring-2 focus:ring-cyan-400/60 focus:ring-offset-0",
-    "hover:shadow-[0_18px_45px_-20px_rgba(0,0,0,0.65)] hover:-translate-y-0.5",
+    "bg-[#1a1d24]/90 text-white",
+    "border border-white/10 shadow-lg backdrop-blur-md",
+    "rounded-2xl",
+    "focus:outline-none focus:ring-2 focus:ring-[#4FE3C1]/50 focus:ring-offset-0",
+    "hover:shadow-xl hover:-translate-y-0.5",
     canDrag && "cursor-grab active:cursor-grabbing",
-    isDragging && "opacity-50 shadow-lg scale-105 z-50",
+    isDragging && "opacity-60 shadow-2xl scale-[1.02] z-50",
     className
   );
 
@@ -138,12 +138,10 @@ export function BookingCard({
     return (
       <motion.div
         {...getMotionSafeProps({
-          initial: { opacity: 0, y: 6, scale: 0.98 },
+          initial: { opacity: 0, y: 4, scale: 0.98 },
           animate: { opacity: 1, y: 0, scale: 1 },
-          whileHover: canDrag
-            ? { y: -1, scale: 1.01, boxShadow: "0 10px 28px -18px rgba(0,0,0,0.8)" }
-            : { y: -1, scale: 1.01, boxShadow: "0 10px 28px -18px rgba(0,0,0,0.8)" },
-          whileTap: { scale: 0.985 },
+          whileHover: { y: -1, scale: 1.005 },
+          whileTap: { scale: 0.99 },
         })}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
@@ -153,32 +151,30 @@ export function BookingCard({
         aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime} - ${booking.service?.name || "Sin servicio"}. Estado: ${statusConfig.label}. ${isDragging ? 'Arrastrando' : canDrag ? 'Arrastrable' : ''}`}
         aria-describedby={isDragging ? "drag-instructions" : undefined}
         style={{
-          background: isDragging
-            ? "linear-gradient(135deg, rgba(32,38,46,0.92), rgba(20,26,34,0.9))"
-            : "linear-gradient(135deg, rgba(30,38,48,0.75), rgba(14,18,26,0.82))",
-          backdropFilter: "blur(16px)",
-          border: "1px solid rgba(255,255,255,0.08)",
-          boxShadow: isDragging
-            ? "0 16px 40px -18px rgba(0,0,0,0.8)"
-            : "0 12px 30px -20px rgba(0,0,0,0.75)",
+          background: "linear-gradient(135deg, rgba(26,29,36,0.95), rgba(18,21,28,0.98))",
+          backdropFilter: "blur(12px)",
+          borderRadius: "16px",
           cursor: isDragging ? "grabbing" : canDrag ? "grab" : "pointer"
         }}
       >
-        {/* Left colored border (3px wide) */}
-        <div className={cn("absolute left-0 top-0 bottom-0 w-[4px] rounded-l-[12px]", statusColors.accent)} />
+        {/* Left colored accent bar */}
+        <div 
+          className={cn("absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl", statusColors.accent)} 
+          style={{ borderRadius: "16px 0 0 16px" }}
+        />
 
         {/* Resize handles */}
         {canResize && (
           <>
             <div
-              className="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-2 bg-white/70 text-white rounded-t cursor-ns-resize opacity-80 group-hover:opacity-100 transition-opacity backdrop-blur-md shadow-sm"
+              className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-10 h-1.5 bg-white/50 rounded-full cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
               onMouseDown={(e) => {
                 e.stopPropagation();
                 onResizeStart?.();
               }}
             />
             <div
-              className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-2 bg-white/70 text-white rounded-b cursor-ns-resize opacity-80 group-hover:opacity-100 transition-opacity backdrop-blur-md shadow-sm"
+              className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-10 h-1.5 bg-white/50 rounded-full cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
               onMouseDown={(e) => {
                 e.stopPropagation();
                 onResizeStart?.();
@@ -187,57 +183,51 @@ export function BookingCard({
           </>
         )}
 
-        <div className="flex flex-col gap-2 leading-tight min-h-0">
+        {/* Card content - contained with overflow hidden */}
+        <div className="flex flex-col gap-1.5 pl-3 min-h-0 overflow-hidden">
+          {/* Top row: Customer + Time + Status */}
           <div className="flex items-center gap-2 min-w-0">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <User className="w-4 h-4 text-white/70 flex-shrink-0" />
-              <h3 className="text-sm font-semibold text-white truncate" title={booking.customer?.name}>
+            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+              <User className="w-3.5 h-3.5 text-white/60 flex-shrink-0" />
+              <h3 className="text-sm font-medium text-white truncate" title={booking.customer?.name}>
                 {booking.customer?.name || "Sin cliente"}
               </h3>
             </div>
-            <div className="flex items-center gap-1 text-[11px] font-semibold text-white/90 whitespace-nowrap">
-              <Clock className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1 text-[10px] font-medium text-white/70 whitespace-nowrap flex-shrink-0">
+              <Clock className="w-3 h-3" />
               {startTime} - {endTime}
             </div>
             <div
               className={cn(
-                "px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap border",
+                "px-1.5 py-0.5 rounded-lg text-[10px] font-medium whitespace-nowrap flex-shrink-0",
                 statusColors.bg,
-                statusColors.text,
-                statusColors.border
+                statusColors.text
               )}
             >
               {statusConfig.label}
             </div>
           </div>
 
-          <div className="flex items-center gap-3 text-xs text-white/80 flex-wrap min-w-0">
-            <div className="flex items-center gap-1.5 min-w-0 flex-shrink truncate">
-              <Scissors className="w-4 h-4 text-white/60 flex-shrink-0" />
+          {/* Bottom row: Service + Staff + Price */}
+          <div className="flex items-center gap-2 text-xs text-white/60 min-w-0 overflow-hidden">
+            <div className="flex items-center gap-1 min-w-0 truncate flex-shrink">
+              <Scissors className="w-3 h-3 flex-shrink-0" />
               <span className="truncate" title={booking.service?.name || "Sin servicio"}>
                 {booking.service?.name || "Sin servicio"}
               </span>
-              {booking.service?.duration_min && (
-                <span className="text-white/60 whitespace-nowrap">
-                  • {booking.service.duration_min}min
-                </span>
-              )}
             </div>
 
             {booking.staff && (
-              <div className="flex items-center gap-1.5 min-w-0 flex-shrink truncate">
-                <div className="w-5 h-5 rounded-full bg-white/10 text-white/90 flex items-center justify-center text-[10px] font-semibold ring-1 ring-white/15">
+              <div className="flex items-center gap-1 min-w-0 flex-shrink-0">
+                <div className="w-4 h-4 rounded-full bg-white/10 text-white/80 flex items-center justify-center text-[9px] font-medium">
                   {booking.staff.name.charAt(0).toUpperCase()}
                 </div>
-                <span className="truncate" title={booking.staff.name}>
-                  {booking.staff.name}
-                </span>
               </div>
             )}
 
             {booking.service?.price_cents && (
-              <div className="flex items-center gap-1 text-[11px] font-semibold text-white/90 whitespace-nowrap">
-                <Euro className="w-3 h-3" />
+              <div className="flex items-center gap-0.5 text-[10px] font-medium text-white/70 whitespace-nowrap flex-shrink-0 ml-auto">
+                <Euro className="w-2.5 h-2.5" />
                 {(booking.service.price_cents / 100).toFixed(0)}€
               </div>
             )}
@@ -252,94 +242,82 @@ export function BookingCard({
     return (
       <motion.div
         {...getMotionSafeProps({
-          initial: { opacity: 0, y: 8 },
+          initial: { opacity: 0, y: 6 },
           animate: { opacity: 1, y: 0 },
-          whileHover: { y: -1, scale: 1.01, boxShadow: "0 12px 32px -18px rgba(0,0,0,0.7)" },
-          whileTap: { scale: 0.98 },
+          whileHover: { y: -1, scale: 1.005 },
+          whileTap: { scale: 0.99 },
         })}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         tabIndex={0}
         role="button"
-        className={cn(baseClasses, "w-full", paddingClass)}
+        className={cn(baseClasses, "w-full overflow-hidden", paddingClass)}
         aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime} - ${endTime}`}
         style={{
-          background: "linear-gradient(140deg, rgba(30,36,46,0.78), rgba(16,20,28,0.92))",
-          backdropFilter: "blur(14px)",
-          border: "1px solid rgba(255,255,255,0.08)",
-          boxShadow: "0 12px 30px -18px rgba(0,0,0,0.7)"
+          background: "linear-gradient(135deg, rgba(26,29,36,0.95), rgba(18,21,28,0.98))",
+          backdropFilter: "blur(12px)",
+          borderRadius: "16px"
         }}
       >
-        {/* Left colored border */}
-        <div className={cn("absolute left-0 top-0 bottom-0 w-[4px] rounded-l-[12px]", statusColors.accent)} />
+        {/* Left colored accent */}
+        <div 
+          className={cn("absolute left-0 top-0 bottom-0 w-1", statusColors.accent)} 
+          style={{ borderRadius: "16px 0 0 16px" }}
+        />
 
-        <div className="pl-5 pr-4 space-y-3">
-          <div className="flex items-start justify-between gap-4">
+        <div className="pl-4 pr-3 space-y-2">
+          <div className="flex items-start justify-between gap-3">
             {/* Main content */}
-            <div className="flex-1 min-w-0 space-y-2">
-              {/* Header: Customer + Time */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <User className="w-4 h-4 text-white/60 flex-shrink-0" />
-                  <h3 className="text-base font-semibold text-white truncate">
+            <div className="flex-1 min-w-0 space-y-1.5">
+              {/* Customer + Time */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                  <User className="w-3.5 h-3.5 text-white/50 flex-shrink-0" />
+                  <h3 className="text-sm font-medium text-white truncate">
                     {booking.customer?.name || "Sin cliente"}
                   </h3>
                 </div>
-                <div className="flex items-center gap-1 text-sm font-mono font-medium text-white/90 flex-shrink-0">
+                <div className="flex items-center gap-1 text-xs text-white/70 flex-shrink-0">
                   <Clock className="w-3 h-3" />
                   {startTime} - {endTime}
                 </div>
               </div>
 
-              {/* Service details */}
-              <div className="flex items-center gap-2">
-                <Scissors className="w-4 h-4 text-white/60 flex-shrink-0" />
-                <div className="text-sm text-white/80">
+              {/* Service */}
+              <div className="flex items-center gap-1.5">
+                <Scissors className="w-3.5 h-3.5 text-white/50 flex-shrink-0" />
+                <span className="text-xs text-white/70 truncate">
                   {booking.service?.name || "Sin servicio"}
-                  {booking.service?.duration_min && (
-                    <span className="text-white/60 ml-2">
-                      • {booking.service.duration_min}min
-                    </span>
-                  )}
-                </div>
+                </span>
               </div>
 
               {/* Staff */}
               {booking.staff && (
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 ring-1 ring-white/15">
-                    <span className="text-[10px] font-semibold text-white">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[9px] font-medium text-white/80">
                       {booking.staff.name.charAt(0).toUpperCase()}
                     </span>
                   </div>
-                  <span className="text-xs text-white/80">
+                  <span className="text-xs text-white/60 truncate">
                     {booking.staff.name}
                   </span>
-                </div>
-              )}
-
-              {/* Contact info */}
-              {booking.customer?.phone && (
-                <div className="text-xs text-white/60 flex items-center gap-1">
-                  <span className="text-white/70">📞</span>
-                  {booking.customer.phone}
                 </div>
               )}
             </div>
 
             {/* Price + Status */}
-            <div className="flex flex-col items-end gap-2 flex-shrink-0">
+            <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
               {booking.service?.price_cents && (
-                <div className="flex items-center gap-1 text-sm font-semibold text-white/90">
+                <div className="flex items-center gap-0.5 text-sm font-medium text-white/80">
                   <Euro className="w-3 h-3" />
                   {(booking.service.price_cents / 100).toFixed(0)}€
                 </div>
               )}
               <div className={cn(
-                "px-2 py-1 rounded-full text-xs font-medium",
+                "px-2 py-0.5 rounded-lg text-[10px] font-medium",
                 statusColors.bg,
-                statusColors.text,
-                statusColors.border
+                statusColors.text
               )}>
                 {statusConfig.label}
               </div>
@@ -357,15 +335,16 @@ export function BookingCard({
         {...getMotionSafeProps({
           initial: { opacity: 0, x: -4 },
           animate: { opacity: 1, x: 0 },
-          whileHover: { y: -1, scale: 1.02, boxShadow: "0 10px 26px -18px rgba(0,0,0,0.65)" },
+          whileHover: { y: -1, scale: 1.02 },
           whileTap: { scale: 0.98 },
         })}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         tabIndex={0}
         role="button"
-        className={cn(baseClasses, "text-xs", paddingClass)}
+        className={cn(baseClasses, "text-xs overflow-hidden", paddingClass)}
         aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime}`}
+        style={{ borderRadius: "12px" }}
       >
         <div className="space-y-1">
           {/* Time */}
