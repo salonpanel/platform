@@ -20,6 +20,15 @@ import { StaffBlockingModal } from "@/components/calendar/StaffBlockingModal";
 import { ConflictResolutionModal } from "@/components/calendar/ConflictResolutionModal";
 import { NotificationsPanel } from "@/components/calendar/NotificationsPanel";
 
+type AgendaNotification = {
+  id: string;
+  type: "success" | "error" | "warning" | "info";
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+};
+
 export default function AgendaPage() {
   const supabase = getSupabaseBrowser();
   const searchParams = useSearchParams();
@@ -56,6 +65,32 @@ export default function AgendaPage() {
   const [showBookingDetail, setShowBookingDetail] = useState(false);
   const [showBlockingModal, setShowBlockingModal] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<CalendarSlot | null>(null);
+  const [notifications, setNotifications] = useState<AgendaNotification[]>([
+    {
+      id: "1",
+      type: "success",
+      title: "Nueva reserva online",
+      message: "Juan Pérez ha realizado una reserva para mañana a las 10:00",
+      timestamp: "Hace 5 minutos",
+      read: false,
+    },
+    {
+      id: "2",
+      type: "warning",
+      title: "Cita cancelada",
+      message: "María García ha cancelado su cita del 15 de noviembre",
+      timestamp: "Hace 1 hora",
+      read: false,
+    },
+    {
+      id: "3",
+      type: "error",
+      title: "Error al procesar pago",
+      message: "No se pudo procesar el pago de la cita #1234",
+      timestamp: "Hace 2 horas",
+      read: true,
+    },
+  ]);
   
   const { showToast, ToastComponent } = useToast();
 
@@ -955,6 +990,17 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
     searchOpen,
   ]);
 
+  useEffect(() => {
+    if (notificationsOpen) {
+      setNotifications((prev) => prev.map((notification) => ({ ...notification, read: true })));
+    }
+  }, [notificationsOpen]);
+
+  const unreadNotifications = useMemo(
+    () => notifications.filter((notification) => !notification.read).length,
+    [notifications]
+  );
+
   return (
     <>
       <AgendaContainer
@@ -1000,7 +1046,8 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
         onNewBooking={() => setShowNewBookingModal(true)}
         onBookingDrag={handleBookingDrag}
         onBookingResize={handleBookingResize}
-        
+        onNotificationsToggle={() => setNotificationsOpen((prev) => !prev)}
+
         // UI state
         searchOpen={searchOpen}
         onSearchToggle={() => setSearchOpen(!searchOpen)}
@@ -1010,7 +1057,8 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
         }}
         selectedBooking={selectedBooking}
         newBookingOpen={showNewBookingModal}
-        
+        unreadNotifications={unreadNotifications}
+
         // Options
         density="default"
         enableDragDrop={true}
@@ -1113,6 +1161,7 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
         <NotificationsPanel
           isOpen={notificationsOpen}
           onClose={() => setNotificationsOpen(false)}
+          notifications={notifications}
         />
       )}
       {ToastComponent}
