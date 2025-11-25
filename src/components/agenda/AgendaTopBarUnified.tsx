@@ -383,16 +383,16 @@ function FilterDropdown({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!isOpen) return;
+    
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         onToggle();
       }
     };
 
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
-    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen, onToggle]);
 
   return (
