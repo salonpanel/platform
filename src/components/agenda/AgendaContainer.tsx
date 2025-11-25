@@ -2,14 +2,11 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { format, parseISO } from "date-fns";
-import { motion } from "framer-motion";
 import { Booking, Staff } from "@/types/agenda";
-import { AgendaTopBar } from "@/components/agenda/AgendaTopBar";
+import { AgendaTopBarUnified } from "@/components/agenda/AgendaTopBarUnified";
 import { AgendaContextBar } from "@/components/agenda/AgendaContextBar";
 import { AgendaContent } from "@/components/agenda/AgendaContent";
-import { AgendaSidebar } from "@/components/calendar/AgendaSidebar";
 import { NotificationProvider, useNotificationActions } from "./NotificationSystem";
-import { AgendaFilters } from "./AgendaFilters";
 
 // Types for the data coming from useAgendaData hook
 interface QuickStats {
@@ -47,6 +44,7 @@ interface AgendaContainerProps {
   quickStats: QuickStats | undefined;
   staffUtilization: StaffUtilization[];
   refreshDaySnapshots: () => void;
+  services: Array<{ id: string; name: string }>; // NUEVO
 
   // Core state from page.tsx
   tenantId: string | null;
@@ -66,10 +64,7 @@ interface AgendaContainerProps {
   onNotificationsToggle: () => void;
   unreadNotifications?: number;
 
-  // UI state
-  searchOpen: boolean;
-  onSearchToggle: () => void;
-  onSearchClose: () => void;
+  // UI state - SIMPLIFICADO
   selectedBooking: Booking | null;
   newBookingOpen: boolean;
 
@@ -100,6 +95,7 @@ export function AgendaContainer({
   quickStats,
   staffUtilization,
   refreshDaySnapshots,
+  services,
   tenantId,
   tenantTimezone,
   selectedDate,
@@ -114,9 +110,6 @@ export function AgendaContainer({
   onBookingResize,
   onNotificationsToggle,
   unreadNotifications = 0,
-  searchOpen,
-  onSearchToggle,
-  onSearchClose,
   selectedBooking,
   newBookingOpen,
   density = "default",
@@ -144,14 +137,19 @@ export function AgendaContainer({
     [tenantTimezone]
   );
 
-  // Callbacks for UI interactions
+  // Callbacks for UI interactions - SIMPLIFICADO
   const handleResetFilters = useCallback(() => {
     onDateChange(format(new Date(), "yyyy-MM-dd"));
     onStaffChange(null);
     setSearchTerm("");
-  }, [onDateChange, onStaffChange, setSearchTerm]);
-
-  // Handlers para drag & drop premium (using props from page.tsx)
+    setFilters({
+      payment: [],
+      status: [],
+      staff: [],
+      services: [],
+      highlighted: null,
+    });
+  }, [onDateChange, onStaffChange, setSearchTerm, setFilters]);
   const handleBookingDrag = useCallback(async (bookingId: string, newTime: string, newStaffId?: string) => {
     if (onBookingDrag) {
       try {
@@ -195,104 +193,66 @@ export function AgendaContainer({
     }
   }, [onBookingResize, success, showError]);
 
-  // Filtros aplicados actualmente
-  const activeFilters: ActiveFilter[] = useMemo(() => {
-    const filters: ActiveFilter[] = [];
-    if (selectedStaffId) {
-      const staff = staffList.find((s) => s.id === selectedStaffId);
-      if (staff) {
-        filters.push({
-          id: "staff",
-          label: `Staff: ${staff.name}`,
-          onRemove: () => onStaffChange(null),
-        });
-      }
-    }
-    return filters;
-  }, [selectedStaffId, staffList, onStaffChange]);
-
-  // UI state for sidebar (mobile drawer behavior)
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Handlers para drag & drop premium (using props from page.tsx)
 
   return (
     <NotificationProvider position="top-right" maxNotifications={3}>
       <div className="h-full flex flex-col">
-        {/* Fixed Header Section - SIN animación en carga inicial */}
-        <div className="flex-shrink-0 space-y-4">
-          <AgendaTopBar
+        {/* TopBar Unificado - Todo en uno */}
+        <div className="flex-shrink-0 mb-4">
+          <AgendaTopBarUnified
             selectedDate={selectedDate}
             viewMode={viewMode}
             onDateChange={onDateChange}
             onViewModeChange={onViewModeChange}
-            onSearchClick={onSearchToggle}
             onNotificationsClick={onNotificationsToggle}
             unreadNotifications={unreadNotifications}
-            onFiltersClick={() => setSidebarOpen(true)}
-          />
-
-          <AgendaFilters
             staffList={staffList}
             selectedStaffId={selectedStaffId}
             onStaffChange={onStaffChange}
-            searchOpen={searchOpen}
             searchTerm={searchTerm}
-            onSearchToggle={onSearchToggle}
             onSearchChange={setSearchTerm}
-            onSearchClose={onSearchClose}
-            activeFilters={activeFilters}
-            onResetFilters={handleResetFilters}
+            selectedStatuses={filters.status || []}
+            onStatusesChange={(statuses) => setFilters({ ...filters, status: statuses })}
+            selectedPaymentStates={filters.payment || []}
+            onPaymentStatesChange={(states) => setFilters({ ...filters, payment: states })}
+            services={services}
+            selectedServiceIds={filters.services || []}
+            onServiceIdsChange={(ids) => setFilters({ ...filters, services: ids })}
           />
         </div>
 
-        {/* Scrollable Content Section */}
-        <div className="flex-1 min-h-0 mt-4">
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_300px] gap-6 h-full">
-            {/* Main calendar area */}
-            <div className="flex flex-col h-full overflow-hidden">
-              {/* Day summary stats */}
-              <div className="flex-shrink-0">
-                <AgendaContextBar quickStats={quickStats} />
-              </div>
-              
-              {/* Scrollable calendar content */}
-              <div className="flex-1 min-h-0 overflow-y-auto">
-                <AgendaContent
-                  viewMode={viewMode}
-                  onViewModeChange={onViewModeChange}
-                  selectedDate={selectedDate}
-                  onDateChange={onDateChange}
-                  bookings={filteredBookings}
-                  staffList={visibleStaff}
-                  loading={loading}
-                  error={error}
-                  tenantTimezone={tenantTimezone}
-                  onBookingClick={onBookingClick}
-                  onNewBooking={onNewBooking}
-                  density={density}
-                  timeFormatter={timeFormatter}
-                  onBookingDrag={handleBookingDrag}
-                  onBookingResize={handleBookingResize}
-                  enableDragDrop={enableDragDrop}
-                  showConflicts={showConflicts}
-                  notificationActions={{ info, warning }}
-                />
-              </div>
+        {/* Content - Full width sin sidebar */}
+        <div className="flex-1 min-h-0">
+          <div className="flex flex-col h-full">
+            {/* Day summary stats */}
+            <div className="flex-shrink-0 mb-4">
+              <AgendaContextBar quickStats={quickStats} />
             </div>
-
-            {/* Sidebar */}
-            <aside className="hidden lg:flex flex-col h-full overflow-hidden">
-              <div className="flex-1 min-h-0 overflow-y-auto">
-                <AgendaSidebar
-                  selectedDate={selectedDate}
-                  onDateSelect={onDateChange}
-                  filters={filters}
-                  onFiltersChange={setFilters}
-                  isOpen={sidebarOpen}
-                  onOpen={() => setSidebarOpen(true)}
-                  onClose={() => setSidebarOpen(false)}
-                />
-              </div>
-            </aside>
+            
+            {/* Scrollable calendar content */}
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <AgendaContent
+                viewMode={viewMode}
+                onViewModeChange={onViewModeChange}
+                selectedDate={selectedDate}
+                onDateChange={onDateChange}
+                bookings={filteredBookings}
+                staffList={visibleStaff}
+                loading={loading}
+                error={error}
+                tenantTimezone={tenantTimezone}
+                onBookingClick={onBookingClick}
+                onNewBooking={onNewBooking}
+                density={density}
+                timeFormatter={timeFormatter}
+                onBookingDrag={handleBookingDrag}
+                onBookingResize={handleBookingResize}
+                enableDragDrop={enableDragDrop}
+                showConflicts={showConflicts}
+                notificationActions={{ info, warning }}
+              />
+            </div>
           </div>
         </div>
       </div>

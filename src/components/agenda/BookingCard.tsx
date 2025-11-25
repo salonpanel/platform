@@ -147,14 +147,18 @@ export function BookingCard({
         onKeyDown={handleKeyDown}
         tabIndex={0}
         role="button"
-        className={cn(baseClasses, "absolute left-2 right-2 overflow-hidden", paddingClass)}
+        className={cn(baseClasses, "absolute left-2 right-2 overflow-hidden")}
         aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime} - ${booking.service?.name || "Sin servicio"}. Estado: ${statusConfig.label}. ${isDragging ? 'Arrastrando' : canDrag ? 'Arrastrable' : ''}`}
         aria-describedby={isDragging ? "drag-instructions" : undefined}
         style={{
           background: "linear-gradient(135deg, rgba(26,29,36,0.95), rgba(18,21,28,0.98))",
           backdropFilter: "blur(12px)",
-          borderRadius: "16px",
-          cursor: isDragging ? "grabbing" : canDrag ? "grab" : "pointer"
+          borderRadius: "16px", // Más redondeado
+          cursor: isDragging ? "grabbing" : canDrag ? "grab" : "pointer",
+          paddingTop: paddingClass.includes("py-2") ? "8px" : paddingClass.includes("py-2.5") ? "10px" : "12px",
+          paddingBottom: paddingClass.includes("py-2") ? "8px" : paddingClass.includes("py-2.5") ? "10px" : "12px",
+          paddingLeft: paddingClass.includes("px-3") ? "12px" : paddingClass.includes("px-3.5") ? "14px" : "16px",
+          paddingRight: paddingClass.includes("px-3") ? "12px" : paddingClass.includes("px-3.5") ? "14px" : "16px",
         }}
       >
         {/* Left colored accent bar */}
@@ -183,50 +187,63 @@ export function BookingCard({
           </>
         )}
 
-        {/* Card content - contained with overflow hidden */}
-        <div className="flex flex-col gap-1.5 pl-3 min-h-0 overflow-hidden">
-          {/* Top row: Customer + Time + Status */}
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+        {/* Card content - Layout horizontal optimizado */}
+        <div className="flex items-start gap-2 pl-3 min-h-0 overflow-hidden">
+          {/* Columna principal: Nombre del cliente */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-1">
               <User className="w-3.5 h-3.5 text-white/60 flex-shrink-0" />
-              <h3 className="text-sm font-medium text-white truncate" title={booking.customer?.name}>
+              <h3 className="text-sm font-semibold text-white truncate" title={booking.customer?.name}>
                 {booking.customer?.name || "Sin cliente"}
               </h3>
             </div>
-            <div className="flex items-center gap-1 text-[10px] font-medium text-white/70 whitespace-nowrap flex-shrink-0">
-              <Clock className="w-3 h-3" />
-              {startTime} - {endTime}
+
+            {/* Fila de información compacta: Servicio + Horario en horizontal */}
+            <div className="flex items-center gap-3 text-xs text-white/60 flex-wrap">
+              {/* Servicio */}
+              {booking.service?.name && (
+                <div className="flex items-center gap-1 min-w-0">
+                  <Scissors className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate max-w-[120px]" title={booking.service.name}>
+                    {booking.service.name}
+                  </span>
+                </div>
+              )}
+
+              {/* Horario */}
+              <div className="flex items-center gap-1 whitespace-nowrap">
+                <Clock className="w-3 h-3" />
+                <span>{startTime} - {endTime}</span>
+              </div>
+
+              {/* Staff (si hay espacio) */}
+              {booking.staff && durationMinutes > 30 && (
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 rounded-full bg-white/10 text-white/80 flex items-center justify-center text-[9px] font-medium">
+                    {booking.staff.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-[10px] text-white/50">{booking.staff.name.split(' ')[0]}</span>
+                </div>
+              )}
             </div>
+          </div>
+
+          {/* Columna derecha: Estado + Precio */}
+          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+            {/* Badge de estado */}
             <div
               className={cn(
-                "px-1.5 py-0.5 rounded-lg text-[10px] font-medium whitespace-nowrap flex-shrink-0",
+                "px-1.5 py-0.5 rounded-lg text-[10px] font-medium whitespace-nowrap",
                 statusColors.bg,
                 statusColors.text
               )}
             >
               {statusConfig.label}
             </div>
-          </div>
 
-          {/* Bottom row: Service + Staff + Price */}
-          <div className="flex items-center gap-2 text-xs text-white/60 min-w-0 overflow-hidden">
-            <div className="flex items-center gap-1 min-w-0 truncate flex-shrink">
-              <Scissors className="w-3 h-3 flex-shrink-0" />
-              <span className="truncate" title={booking.service?.name || "Sin servicio"}>
-                {booking.service?.name || "Sin servicio"}
-              </span>
-            </div>
-
-            {booking.staff && (
-              <div className="flex items-center gap-1 min-w-0 flex-shrink-0">
-                <div className="w-4 h-4 rounded-full bg-white/10 text-white/80 flex items-center justify-center text-[9px] font-medium">
-                  {booking.staff.name.charAt(0).toUpperCase()}
-                </div>
-              </div>
-            )}
-
+            {/* Precio (si existe) */}
             {booking.service?.price_cents && (
-              <div className="flex items-center gap-0.5 text-[10px] font-medium text-white/70 whitespace-nowrap flex-shrink-0 ml-auto">
+              <div className="flex items-center gap-0.5 text-[10px] font-medium text-white/70 whitespace-nowrap">
                 <Euro className="w-2.5 h-2.5" />
                 {(booking.service.price_cents / 100).toFixed(0)}€
               </div>

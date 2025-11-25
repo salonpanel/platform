@@ -20,6 +20,7 @@ interface AgendaFilters {
   payment: string[];
   status: string[];
   staff: string[];
+  services: string[]; // NUEVO
   highlighted: boolean | null;
 }
 
@@ -59,6 +60,7 @@ export function useAgendaData({
       payment: [],
       status: [],
       staff: [],
+      services: [], // NUEVO
       highlighted: null,
     };
   });
@@ -173,9 +175,33 @@ export function useAgendaData({
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Filtrar bookings por búsqueda y filtros aplicados
+  // Filtrar bookings por búsqueda y filtros aplicados - MEJORADO
   const filteredBookings = useMemo(() => {
     let result = [...bookings];
+    
+    // BÚSQUEDA MEJORADA: Cliente, servicio, staff, teléfono, email
+    if (debouncedSearchTerm.trim()) {
+      const term = debouncedSearchTerm.toLowerCase().trim();
+      result = result.filter((booking) => {
+        const customerName = booking.customer?.name?.toLowerCase() || "";
+        const customerPhone = booking.customer?.phone?.toLowerCase() || "";
+        const customerEmail = booking.customer?.email?.toLowerCase() || "";
+        const serviceName = booking.service?.name?.toLowerCase() || "";
+        const staffName = booking.staff?.name?.toLowerCase() || "";
+        const internalNotes = booking.internal_notes?.toLowerCase() || "";
+        const clientMessage = booking.client_message?.toLowerCase() || "";
+        
+        return (
+          customerName.includes(term) ||
+          customerPhone.includes(term) ||
+          customerEmail.includes(term) ||
+          serviceName.includes(term) ||
+          staffName.includes(term) ||
+          internalNotes.includes(term) ||
+          clientMessage.includes(term)
+        );
+      });
+    }
     
     // Aplicar filtros de estado de pago
     if (filters.payment.length > 0) {
@@ -183,16 +209,12 @@ export function useAgendaData({
         const isPaid = booking.status === "paid";
         const isUnpaid = booking.status !== "paid";
         
-        // Show paid bookings if "paid" is selected
         if (filters.payment.includes("paid") && isPaid) {
           return true;
         }
-        // Show unpaid bookings if "unpaid" is selected  
         if (filters.payment.includes("unpaid") && isUnpaid) {
           return true;
         }
-        // If both are selected, show all (handled by above conditions)
-        // If neither condition matches, exclude booking
         return false;
       });
     }
@@ -211,32 +233,17 @@ export function useAgendaData({
       });
     }
     
+    // NUEVO: Aplicar filtro de servicios
+    if (filters.services.length > 0) {
+      result = result.filter((booking) => {
+        return booking.service_id && filters.services.includes(booking.service_id);
+      });
+    }
+    
     // Aplicar filtro de destacados
     if (filters.highlighted !== null) {
       result = result.filter((booking) => {
         return booking.is_highlighted === filters.highlighted;
-      });
-    }
-    
-    // Aplicar búsqueda término
-    if (debouncedSearchTerm.trim()) {
-      const term = debouncedSearchTerm.toLowerCase().trim();
-      result = result.filter((booking) => {
-        const customerName = booking.customer?.name?.toLowerCase() || "";
-        const customerPhone = booking.customer?.phone?.toLowerCase() || "";
-        const customerEmail = booking.customer?.email?.toLowerCase() || "";
-        const serviceName = booking.service?.name?.toLowerCase() || "";
-        const internalNotes = booking.internal_notes?.toLowerCase() || "";
-        const clientMessage = booking.client_message?.toLowerCase() || "";
-        
-        return (
-          customerName.includes(term) ||
-          customerPhone.includes(term) ||
-          customerEmail.includes(term) ||
-          serviceName.includes(term) ||
-          internalNotes.includes(term) ||
-          clientMessage.includes(term)
-        );
       });
     }
     
@@ -364,12 +371,13 @@ export function useAgendaData({
     });
   }, [bookings, staffList, staffSchedules, selectedDate, viewMode, timezone, userRole]);
 
-  // Calcular número de filtros activos
+  // Calcular número de filtros activos - ACTUALIZADO
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     if (filters.payment.length > 0) count += filters.payment.length;
     if (filters.status.length > 0) count += filters.status.length;
     if (filters.staff.length > 0 && !filters.staff.includes("all")) count += filters.staff.length;
+    if (filters.services.length > 0) count += filters.services.length; // NUEVO
     if (filters.highlighted !== null) count += 1;
     return count;
   }, [filters]);

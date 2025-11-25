@@ -55,10 +55,8 @@ export default function AgendaPage() {
     return "day";
   });
 
-  // Estados de UI locales (modales y paneles)
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Estados de UI locales (modales y paneles) - SIMPLIFICADO
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [showFreeSlots, setShowFreeSlots] = useState(false);
   const [showNewBookingModal, setShowNewBookingModal] = useState(false);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
@@ -878,7 +876,7 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
 
   // Handler para filtrar por staff desde chips de utilización
   const handleStaffFilterChange = (staffId: string) => {
-    setFilters((prev: { payment: string[]; status: string[]; staff: string[]; highlighted: boolean | null }) => {
+    setFilters((prev: { payment: string[]; status: string[]; staff: string[]; services: string[]; highlighted: boolean | null }) => {
       // Si el staff ya está filtrado, quitarlo; si no, añadirlo
       const currentStaff = prev.staff.includes("all") ? [] : prev.staff;
       if (currentStaff.includes(staffId)) {
@@ -934,8 +932,7 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
         showBlockingModal ||
         showBookingDetail ||
         conflictsHook.showConflictModal ||
-        notificationsOpen ||
-        searchOpen;
+        notificationsOpen;
 
       if (shortcutsBlocked) {
         return;
@@ -1009,7 +1006,6 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
     showBookingDetail,
     conflictsHook.showConflictModal,
     notificationsOpen,
-    searchOpen,
   ]);
 
   useEffect(() => {
@@ -1042,6 +1038,7 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
           quickStats={quickStats}
           staffUtilization={staffUtilization}
           refreshDaySnapshots={refreshDaySnapshots}
+          services={services}
           
           // Core state from page.tsx
           tenantId={tenantId}
@@ -1056,7 +1053,8 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
           onStaffChange={(staffId) => {
             setFilters(prev => ({
               ...prev,
-              staff: staffId ? [staffId] : ["all"]
+              staff: staffId ? [staffId] : ["all"],
+              services: prev.services || [],
             }));
           }}
           onBookingClick={(booking) => {
@@ -1071,13 +1069,7 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
           onBookingResize={handleBookingResize}
           onNotificationsToggle={() => setNotificationsOpen((prev) => !prev)}
 
-          // UI state
-          searchOpen={searchOpen}
-          onSearchToggle={() => setSearchOpen(!searchOpen)}
-          onSearchClose={() => {
-            setSearchOpen(false);
-            setAgendaSearchTerm("");
-          }}
+          // UI state - SIMPLIFICADO (sin searchOpen)
           selectedBooking={selectedBooking}
           newBookingOpen={showNewBookingModal}
           unreadNotifications={unreadNotifications}
