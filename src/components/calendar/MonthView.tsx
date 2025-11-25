@@ -3,14 +3,11 @@
 import { useMemo } from "react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, startOfToday } from "date-fns";
 import { parseISO } from "date-fns";
-import { GlassCard } from "@/components/agenda/primitives/GlassCard";
-import { AppointmentCard } from "@/components/agenda/AppointmentCard";
 import { BookingCard } from "@/components/agenda/BookingCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { toTenantLocalDate, formatInTenantTz } from "@/lib/timezone";
 import { Booking } from "@/types/agenda";
-import { theme } from "@/theme/ui";
 import { cn } from "@/lib/utils";
 import { interactionPresets, getMotionSafeProps } from "@/components/agenda/motion/presets";
 
@@ -102,171 +99,161 @@ export function MonthView({
   };
 
   return (
-    <div className="space-y-5 h-full flex flex-col p-4" role="region" aria-label="Vista mensual de reservas">
-      {/* Month navigation - Premium */}
-      <div className="bg-[var(--glass-bg-default)] border border-[var(--glass-border)] backdrop-blur-md rounded-[var(--radius-xl)] p-4 shadow-[var(--shadow-premium)]">
-        <div className="flex items-center justify-between">
-          <motion.button
-            {...getMotionSafeProps({
-              whileHover: interactionPresets.button.hover,
-              whileTap: interactionPresets.button.tap,
-              transition: interactionPresets.button.transition,
-            })}
-            onClick={() => navigateMonth("prev")}
-            className={cn(
-              "p-2 rounded-[var(--radius-lg)] transition-all duration-200",
-              "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]"
-            )}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </motion.button>
-          <h3 className={cn(
-            "text-lg font-semibold tracking-tight",
-            "text-[var(--text-primary)] font-[var(--font-heading)]"
-          )}>
-            {new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric" }).format(currentDate)}
-          </h3>
-          <motion.button
-            {...getMotionSafeProps({
-              whileHover: interactionPresets.button.hover,
-              whileTap: interactionPresets.button.tap,
-              transition: interactionPresets.button.transition,
-            })}
-            onClick={() => navigateMonth("next")}
-            className={cn(
-              "p-2 rounded-[var(--radius-lg)] transition-all duration-200",
-              "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]"
-            )}
-          >
-            <ChevronRight className="h-5 w-5" />
-          </motion.button>
-        </div>
-      </div>
-
-      {/* Calendar grid */}
-      {/* TODO: PHASE 2 MOBILE FIX - Responsive tap targets */}
-      {/* Improved mobile tap targets with responsive gap and min-height */}
-      <div className="grid grid-cols-7 gap-3 md:gap-2 flex-1" role="grid" aria-label="Calendario mensual">
-        {/* Days of the week - Premium */}
-        {["L", "M", "X", "J", "V", "S", "D"].map((day, index) => (
-          <div
-            key={day}
-            className={cn(
-              "text-center text-xs font-semibold uppercase tracking-wider",
-              "text-[var(--text-tertiary)] font-[var(--font-body)]"
-            )}
-            role="columnheader"
-            aria-label={day}
-          >
-            {day}
-          </div>
-        ))}
-
-        {/* Días del mes */}
-        {allDays.map((day, idx) => {
-          const dayBookings = getBookingsForDay(day);
-          const isCurrentMonth = day ? isSameMonth(day, currentDate) : false;
-          const isSelected = day ? isSameDay(day, currentDate) : false;
-          const isTodayDate = day ? isSameDay(day, today) : false;
-
-          // Use theme-based status colors
-          const getStatusTokens = (status: string) => {
-            const statusMap: Record<string, any> = {
-              pending: theme.statusTokens?.pending || { bg: "rgba(255,193,7,0.12)", border: "rgba(255,193,7,0.25)", text: "#FFC107" },
-              confirmed: theme.statusTokens?.confirmed || { bg: "rgba(79,227,193,0.12)", border: "rgba(79,227,193,0.25)", text: "#4FE3C1" },
-              cancelled: theme.statusTokens?.cancelled || { bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.25)", text: "#EF4444" },
-              completed: theme.statusTokens?.completed || { bg: "rgba(58,109,255,0.12)", border: "rgba(58,109,255,0.25)", text: "#3A6DFF" },
-              "no-show": theme.statusTokens?.["no-show"] || { bg: "rgba(255,109,163,0.12)", border: "rgba(255,109,163,0.25)", text: "#FF6DA3" },
-            };
-            return statusMap[status] || statusMap.pending;
-          };
-
-          return (
-            <motion.div
-              key={idx}
+    <div className="w-full h-full flex flex-col overflow-hidden bg-[#0B0C10] relative p-4" role="region" aria-label="Vista mensual de reservas">
+      {/* Radial Gradient Overlay for Neo-Glass effect */}
+      <div 
+        className="absolute top-0 left-0 w-[500px] h-[500px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none z-0"
+        style={{ transform: 'translate(-20%, -20%)' }}
+      />
+      
+      <div className="relative z-10 flex flex-col h-full space-y-4">
+        {/* Month navigation - Unified */}
+        <div className="bg-[var(--glass-bg-default)] border border-[var(--glass-border)] backdrop-blur-md rounded-[var(--radius-xl)] p-4 shadow-[var(--shadow-premium)]">
+          <div className="flex items-center justify-between">
+            <motion.button
               {...getMotionSafeProps({
-                initial: { opacity: 0, scale: 0.98 },
-                animate: { opacity: 1, scale: 1 },
-                transition: { delay: idx * 0.005, duration: 0.15, ease: "easeOut" },
+                whileHover: interactionPresets.button.hover,
+                whileTap: interactionPresets.button.tap,
+                transition: interactionPresets.button.transition,
               })}
+              onClick={() => navigateMonth("prev")}
               className={cn(
-                "rounded-xl min-h-[80px] sm:min-h-[100px] cursor-pointer transition-all duration-200",
-                "bg-white dark:bg-slate-900/80 backdrop-blur-sm",
-                "border border-slate-200 dark:border-slate-700/50",
-                "shadow-sm hover:shadow-md",
-                !isCurrentMonth && "opacity-30",
-                isSelected
-                  ? "ring-2 ring-blue-500/50 bg-blue-50/50 dark:bg-blue-950/30"
-                  : "hover:border-slate-300 dark:hover:border-slate-600/70 hover:bg-slate-50/50 dark:hover:bg-slate-800/30",
-                isTodayDate && !isSelected && "ring-1 ring-blue-400/30 bg-blue-50/30 dark:bg-blue-950/20"
+                "p-2 rounded-[var(--radius-lg)] transition-all duration-200",
+                "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]"
               )}
-              role="gridcell"
-              aria-label={day ? `${format(day, "d 'de' MMMM")}${dayBookings.length > 0 ? `, ${dayBookings.length} reserva${dayBookings.length > 1 ? 's' : ''}` : ''}` : 'Día no disponible'}
-              aria-selected={isSelected}
-              tabIndex={day ? 0 : -1}
-              onClick={() => {
-                if (day) {
-                  onDateSelect(format(day, "yyyy-MM-dd"));
-                }
-              }}
             >
-              <div className="flex items-center justify-between p-2">
-                <div
-                  className={cn(
-                    "text-sm sm:text-base font-semibold",
-                    isTodayDate
-                      ? "text-[var(--accent-aqua)]"
-                      : isSelected
-                      ? "text-[var(--accent-blue)]"
-                      : "text-[var(--text-primary)]",
-                    "font-[var(--font-heading)]"
-                  )}
-                >
-                  {day ? format(day, "d") : ""}
-                </div>
-                {isTodayDate && (
-                  <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent-aqua)]" />
+              <ChevronLeft className="h-5 w-5" />
+            </motion.button>
+            <h3 className={cn(
+              "text-lg font-semibold tracking-tight",
+              "text-[var(--text-primary)] font-[var(--font-heading)]"
+            )}>
+              {new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric" }).format(currentDate)}
+            </h3>
+            <motion.button
+              {...getMotionSafeProps({
+                whileHover: interactionPresets.button.hover,
+                whileTap: interactionPresets.button.tap,
+                transition: interactionPresets.button.transition,
+              })}
+              onClick={() => navigateMonth("next")}
+              className={cn(
+                "p-2 rounded-[var(--radius-lg)] transition-all duration-200",
+                "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]"
+              )}
+            >
+              <ChevronRight className="h-5 w-5" />
+            </motion.button>
+          </div>
+        </div>
+
+        {/* Calendar grid - Unified */}
+        <div className="grid grid-cols-7 gap-2 flex-1 overflow-y-auto scrollbar-hide" role="grid" aria-label="Calendario mensual">
+          {/* Days of the week - Unified */}
+          {["L", "M", "X", "J", "V", "S", "D"].map((day, index) => (
+            <div
+              key={day}
+              className={cn(
+                "text-center text-xs font-semibold uppercase tracking-wider py-2",
+                "text-[var(--text-tertiary)] font-[var(--font-body)]"
+              )}
+              role="columnheader"
+              aria-label={day}
+            >
+              {day}
+            </div>
+          ))}
+
+          {/* Días del mes */}
+          {allDays.map((day, idx) => {
+            const dayBookings = getBookingsForDay(day);
+            const isCurrentMonth = day ? isSameMonth(day, currentDate) : false;
+            const isSelected = day ? isSameDay(day, currentDate) : false;
+            const isTodayDate = day ? isSameDay(day, today) : false;
+
+            return (
+              <motion.div
+                key={idx}
+                {...getMotionSafeProps({
+                  initial: { opacity: 0, scale: 0.98 },
+                  animate: { opacity: 1, scale: 1 },
+                  transition: { delay: idx * 0.005, duration: 0.15, ease: "easeOut" },
+                })}
+                className={cn(
+                  "rounded-xl min-h-[80px] sm:min-h-[100px] cursor-pointer transition-all duration-200",
+                  "bg-[var(--glass-bg-default)] backdrop-blur-md",
+                  "border border-[var(--glass-border)]",
+                  "shadow-[var(--shadow-premium)] hover:shadow-[var(--shadow-premium-hover)]",
+                  !isCurrentMonth && "opacity-30",
+                  isSelected
+                    ? "ring-2 ring-[var(--accent-blue)]/50 bg-[var(--accent-blue)]/10"
+                    : "hover:border-[var(--glass-border-hover)] hover:bg-[var(--glass-bg-subtle)]",
+                  isTodayDate && !isSelected && "ring-1 ring-[var(--accent-aqua)]/30 bg-[var(--accent-aqua)]/5"
                 )}
-              </div>
-              <div className="px-2 pb-2 space-y-1">
-                {dayBookings.slice(0, 2).map((booking, index) => (
-                  <div key={booking.id} onClick={(e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    onBookingClick(booking);
-                  }}>
-                    <AppointmentCard
-                      booking={booking}
-                      timezone={timezone}
-                      compact={true}
-                      variant="grid"
-                      onClick={() => onBookingClick(booking)}
-                      showStatus={false}
-                    />
-                  </div>
-                ))}
-                {dayBookings.length > 2 && (
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // TODO: Implement popover with full booking list
-                      console.log(`Show ${dayBookings.length - 2} more bookings`);
-                    }}
+                role="gridcell"
+                aria-label={day ? `${format(day, "d 'de' MMMM")}${dayBookings.length > 0 ? `, ${dayBookings.length} reserva${dayBookings.length > 1 ? 's' : ''}` : ''}` : 'Día no disponible'}
+                aria-selected={isSelected}
+                tabIndex={day ? 0 : -1}
+                onClick={() => {
+                  if (day) {
+                    onDateSelect(format(day, "yyyy-MM-dd"));
+                  }
+                }}
+              >
+                <div className="flex items-center justify-between p-2">
+                  <div
                     className={cn(
-                      "text-xs text-center py-1 px-2 rounded-md cursor-pointer transition-all duration-200",
-                      "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100",
-                      "bg-slate-100/50 dark:bg-slate-800/50 hover:bg-slate-200/50 dark:hover:bg-slate-700/50",
-                      "border border-slate-200/50 dark:border-slate-700/50 hover:border-slate-300/50 dark:hover:border-slate-600/50"
+                      "text-sm sm:text-base font-semibold",
+                      isTodayDate
+                        ? "text-[var(--accent-aqua)]"
+                        : isSelected
+                        ? "text-[var(--accent-blue)]"
+                        : "text-[var(--text-primary)]",
+                      "font-[var(--font-heading)]"
                     )}
                   >
-                    +{dayBookings.length - 2} más
-                  </motion.div>
-                )}
-              </div>
-            </motion.div>
-          );
-        })}
+                    {day ? format(day, "d") : ""}
+                  </div>
+                  {isTodayDate && (
+                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent-aqua)]" />
+                  )}
+                </div>
+                <div className="px-2 pb-2 space-y-1">
+                  {dayBookings.slice(0, 2).map((booking, index) => (
+                    <div key={booking.id} onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      onBookingClick(booking);
+                    }}>
+                      <BookingCard
+                        booking={booking}
+                        timezone={timezone}
+                        variant="grid"
+                        onClick={() => onBookingClick(booking)}
+                      />
+                    </div>
+                  ))}
+                  {dayBookings.length > 2 && (
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
+                      className={cn(
+                        "text-xs text-center py-1 px-2 rounded-md cursor-pointer transition-all duration-200",
+                        "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
+                        "bg-[var(--glass-bg-subtle)] hover:bg-[var(--glass-bg-hover)]",
+                        "border border-[var(--glass-border-subtle)] hover:border-[var(--glass-border)]"
+                      )}
+                    >
+                      +{dayBookings.length - 2} más
+                    </motion.div>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
