@@ -262,14 +262,7 @@ export function AgendaContainer({
               style={{ maxHeight: 'calc(100vh - 260px)' }}
             >
               {/* Day summary stats - compact bar above calendar */}
-              <AgendaContextBar
-                quickStats={quickStats}
-                staffUtilization={[]}
-                staffList={[]}
-                selectedStaffId={null}
-                onStaffChange={() => {}}
-                viewMode={viewMode}
-              />
+              <AgendaContextBar quickStats={quickStats} />
               
               {/* Scrollable calendar content */}
               <div className="flex-1 overflow-y-auto">
@@ -311,7 +304,6 @@ export function AgendaContainer({
                   onFiltersChange={setFilters}
                   staffList={[]}
                   showFreeSlots={false}
-                  onShowFreeSlotsChange={() => {}}
                   isOpen={sidebarOpen}
                   onOpen={() => setSidebarOpen(true)}
                   onClose={() => setSidebarOpen(false)}

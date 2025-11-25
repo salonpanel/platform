@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { StaffSelector } from "./StaffSelector";
 import { Search, X, Filter } from "lucide-react";
-import { Button } from "@/components/ui/Button";
 import { Staff } from "@/types/agenda";
 
 interface ActiveFilter {
@@ -77,14 +76,13 @@ export function AgendaFilters({
                     autoFocus
                   />
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <button
                   onClick={onSearchClose}
-                  className="flex-shrink-0 h-10 w-10 p-0 rounded-xl border border-white/10 hover:bg-white/10"
+                  className="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-xl border border-white/10 hover:bg-white/10 transition-colors"
+                  aria-label="Cerrar búsqueda"
                 >
                   <X className="h-4 w-4 text-white/70" />
-                </Button>
+                </button>
               </div>
             </motion.div>
           )}
