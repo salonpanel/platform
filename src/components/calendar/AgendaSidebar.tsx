@@ -446,10 +446,18 @@ export function AgendaSidebar({
   isOpen: externalIsOpen,
   onOpen: externalOnOpen,
 }: AgendaSidebarProps) {
-  const [isMobile, setIsMobile] = useState(false);
-  const [isTablet, setIsTablet] = useState(false);
   const [showMobileDrawer, setShowMobileDrawer] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Responsive detection - use lazy initial state to avoid hydration mismatch
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 640px)").matches;
+  });
+  const [isTablet, setIsTablet] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(min-width: 641px) and (max-width: 1024px)").matches;
+  });
 
   const isDrawerOpen = externalIsOpen !== undefined ? externalIsOpen : showMobileDrawer;
   const handleDrawerClose = externalIsOpen !== undefined ? onClose : () => setShowMobileDrawer(false);
@@ -464,16 +472,6 @@ export function AgendaSidebar({
     if (filters.highlighted !== null) count += 1;
     return count;
   }, [filters]);
-
-  // Responsive detection - use lazy initial state
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia("(max-width: 640px)").matches;
-  });
-  const [isTablet, setIsTablet] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia("(min-width: 641px) and (max-width: 1024px)").matches;
-  });
 
   // Subscribe to media query changes
   useEffect(() => {
