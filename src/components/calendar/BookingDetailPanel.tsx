@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Edit, Trash2, Phone, Mail, Calendar, User, Tag } from "lucide-react";
 import { UiModal, UiButton, UiBadge } from "@/components/ui/apple-ui-kit";
-import { AgendaModal } from "./AgendaModal";
 import { formatInTenantTz } from "@/lib/timezone";
 import { Booking } from "@/types/agenda";
 import { useToast } from "@/components/ui/Toast";
@@ -299,23 +298,15 @@ export function BookingDetailPanel({
 
   return (
     <>
-      <AgendaModal
-        isOpen={isOpen}
+      <UiModal
+        open={isOpen}
         onClose={onClose}
         title="Detalles de la cita"
-        variant="drawer"
-        showMobileDrawer={true}
-        drawerPosition="right"
         size="lg"
-        context={{
-          type: "booking",
-          data: booking
-        }}
-        actions={<ActionButtons />}
-        stickyFooter={true}
+        footer={<ActionButtons />}
       >
         <BookingContent />
-      </AgendaModal>
+      </UiModal>
 
       {/* Delete Confirmation Modal - Keep separate */}
       {showDeleteConfirm && (
