@@ -79,8 +79,22 @@ interface AgendaContainerProps {
  * ZONE 1: AgendaTopBar (sticky header con glassmorphism)
  * ZONE 2: AgendaContextBar (KPIs + filtros de staff)
  * ZONE 3: Agenda Canvas (contenido principal del calendario)
+ * 
+ * Note: This is a wrapper that provides NotificationProvider context.
+ * The actual content is rendered in AgendaContainerInner.
  */
-export function AgendaContainer({
+export function AgendaContainer(props: AgendaContainerProps) {
+  return (
+    <NotificationProvider position="top-right" maxNotifications={3}>
+      <AgendaContainerInner {...props} />
+    </NotificationProvider>
+  );
+}
+
+/**
+ * AgendaContainerInner - Inner component that consumes the notification context
+ */
+function AgendaContainerInner({
   loading,
   error,
   staffList,
@@ -196,66 +210,64 @@ export function AgendaContainer({
   // Handlers para drag & drop premium (using props from page.tsx)
 
   return (
-    <NotificationProvider position="top-right" maxNotifications={3}>
-      <div className="h-full flex flex-col">
-        {/* TopBar Unificado - Todo en uno */}
-        <div className="flex-shrink-0 mb-4">
-          <AgendaTopBarUnified
-            selectedDate={selectedDate}
-            viewMode={viewMode}
-            onDateChange={onDateChange}
-            onViewModeChange={onViewModeChange}
-            onNotificationsClick={onNotificationsToggle}
-            unreadNotifications={unreadNotifications}
-            staffList={staffList || []}
-            selectedStaffId={selectedStaffId}
-            onStaffChange={onStaffChange}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            selectedStatuses={filters?.status || []}
-            onStatusesChange={(statuses) => setFilters({ ...filters, status: statuses })}
-            selectedPaymentStates={filters?.payment || []}
-            onPaymentStatesChange={(states) => setFilters({ ...filters, payment: states })}
-            services={services || []}
-            selectedServiceIds={filters?.services || []}
-            onServiceIdsChange={(ids) => setFilters({ ...filters, services: ids })}
-          />
-        </div>
+    <div className="h-full flex flex-col">
+      {/* TopBar Unificado - Todo en uno */}
+      <div className="flex-shrink-0 mb-4">
+        <AgendaTopBarUnified
+          selectedDate={selectedDate}
+          viewMode={viewMode}
+          onDateChange={onDateChange}
+          onViewModeChange={onViewModeChange}
+          onNotificationsClick={onNotificationsToggle}
+          unreadNotifications={unreadNotifications}
+          staffList={staffList || []}
+          selectedStaffId={selectedStaffId}
+          onStaffChange={onStaffChange}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          selectedStatuses={filters?.status || []}
+          onStatusesChange={(statuses) => setFilters({ ...filters, status: statuses })}
+          selectedPaymentStates={filters?.payment || []}
+          onPaymentStatesChange={(states) => setFilters({ ...filters, payment: states })}
+          services={services || []}
+          selectedServiceIds={filters?.services || []}
+          onServiceIdsChange={(ids) => setFilters({ ...filters, services: ids })}
+        />
+      </div>
 
-        {/* Content - Full width sin sidebar */}
-        <div className="flex-1 min-h-0">
-          <div className="flex flex-col h-full">
-            {/* Day summary stats */}
-            <div className="flex-shrink-0 mb-4">
-              <AgendaContextBar quickStats={quickStats} />
-            </div>
-            
-            {/* Scrollable calendar content */}
-            <div className="flex-1 min-h-0 overflow-y-auto">
-              <AgendaContent
-                viewMode={viewMode}
-                onViewModeChange={onViewModeChange}
-                selectedDate={selectedDate}
-                onDateChange={onDateChange}
-                bookings={filteredBookings}
-                staffList={visibleStaff}
-                loading={loading}
-                error={error}
-                tenantTimezone={tenantTimezone}
-                onBookingClick={onBookingClick}
-                onNewBooking={onNewBooking}
-                density={density}
-                timeFormatter={timeFormatter}
-                onBookingDrag={handleBookingDrag}
-                onBookingResize={handleBookingResize}
-                enableDragDrop={enableDragDrop}
-                showConflicts={showConflicts}
-                notificationActions={{ info, warning }}
-              />
-            </div>
+      {/* Content - Full width sin sidebar */}
+      <div className="flex-1 min-h-0">
+        <div className="flex flex-col h-full">
+          {/* Day summary stats */}
+          <div className="flex-shrink-0 mb-4">
+            <AgendaContextBar quickStats={quickStats} />
+          </div>
+          
+          {/* Scrollable calendar content */}
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <AgendaContent
+              viewMode={viewMode}
+              onViewModeChange={onViewModeChange}
+              selectedDate={selectedDate}
+              onDateChange={onDateChange}
+              bookings={filteredBookings}
+              staffList={visibleStaff}
+              loading={loading}
+              error={error}
+              tenantTimezone={tenantTimezone}
+              onBookingClick={onBookingClick}
+              onNewBooking={onNewBooking}
+              density={density}
+              timeFormatter={timeFormatter}
+              onBookingDrag={handleBookingDrag}
+              onBookingResize={handleBookingResize}
+              enableDragDrop={enableDragDrop}
+              showConflicts={showConflicts}
+              notificationActions={{ info, warning }}
+            />
           </div>
         </div>
       </div>
-    </NotificationProvider>
+    </div>
   );
 }

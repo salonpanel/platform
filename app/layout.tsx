@@ -1,17 +1,9 @@
 ﻿import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SupabaseProvider } from "./supabase-provider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// Note: Using CSS system fonts as fallback since local fonts are not available
+// The font CSS variables are still set for consistency with the design system
 
 export const metadata: Metadata = {
   title: "BookFast Pro - Sistema de Reservas para Barberías",
@@ -49,7 +41,10 @@ export default function RootLayout({
         <link rel="shortcut icon" href="/favicon.ico" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className="antialiased"
+        style={{ 
+          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        }}
         suppressHydrationWarning
       >
         <SupabaseProvider>{children}</SupabaseProvider>
