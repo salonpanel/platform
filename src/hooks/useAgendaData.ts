@@ -65,7 +65,7 @@ export function useAgendaData({
             status: Array.isArray(parsed.status) ? parsed.status : [],
             staff: Array.isArray(parsed.staff) ? parsed.staff : [],
             services: Array.isArray(parsed.services) ? parsed.services : [],
-            highlighted: typeof parsed.highlighted === 'boolean' ? parsed.highlighted : null,
+            highlighted: parsed.highlighted === true || parsed.highlighted === false ? parsed.highlighted : null,
           };
         } catch {
           // Si hay error, usar valores por defecto

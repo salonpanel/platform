@@ -149,7 +149,12 @@ export function AgendaTopBarUnified({
     }
   };
 
-  const activeFiltersCount = (selectedStatuses?.length || 0) + (selectedPaymentStates?.length || 0) + (selectedServiceIds?.length || 0) + (selectedStaffId ? 1 : 0);
+  // Calculate active filters count with safe defaults
+  const statusCount = selectedStatuses?.length || 0;
+  const paymentCount = selectedPaymentStates?.length || 0;
+  const serviceCount = selectedServiceIds?.length || 0;
+  const staffCount = selectedStaffId ? 1 : 0;
+  const activeFiltersCount = statusCount + paymentCount + serviceCount + staffCount;
 
   return (
     <div className="rounded-2xl bg-[var(--glass-bg-default)] border border-[var(--glass-border)] backdrop-blur-md">
