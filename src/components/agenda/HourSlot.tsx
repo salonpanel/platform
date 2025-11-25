@@ -11,15 +11,16 @@ interface HourSlotProps {
   density?: "default" | "compact" | "ultra-compact";
   className?: string;
   isCurrentHour?: boolean;
+  hourHeight: number;
 }
 
 /**
  * Componente premium para representar una hora en el timeline de la agenda
  * Con indicador visual de hora actual y diseño glassmórfico
  */
-export function HourSlot({ hour, children, density = "default", className, isCurrentHour = false }: HourSlotProps) {
+export function HourSlot({ hour, children, density = "default", className, isCurrentHour = false, hourHeight }: HourSlotProps) {
   const hourLabel = format(new Date().setHours(hour, 0, 0, 0), "HH:mm");
-  const paddingClass = density === "ultra-compact" ? "py-2" : density === "compact" ? "py-3" : "py-4";
+  const verticalPadding = density === "ultra-compact" ? 8 : density === "compact" ? 12 : 16;
   const textSize = density === "ultra-compact" ? "text-[10px]" : density === "compact" ? "text-xs" : "text-sm";
   
   return (
@@ -28,13 +29,17 @@ export function HourSlot({ hour, children, density = "default", className, isCur
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.2, delay: hour * 0.01 }}
       className={cn(
-        "flex gap-4 border-b transition-all duration-200 relative",
+        "flex gap-4 transition-all duration-200 relative",
         isCurrentHour
-          ? "border-blue-500/30 bg-blue-500/5"
-          : "border-slate-200/50 dark:border-slate-700/50 hover:border-slate-300/70 dark:hover:border-slate-600/70",
+          ? "bg-blue-500/5"
+          : "hover:bg-slate-50/60 dark:hover:bg-slate-900/40",
         className
       )}
-      style={{ paddingTop: paddingClass === "py-2" ? "8px" : paddingClass === "py-3" ? "12px" : "16px" }}
+      style={{
+        height: `${hourHeight}px`,
+        paddingTop: `${verticalPadding}px`,
+        paddingBottom: `${verticalPadding}px`
+      }}
     >
       {/* Hour label */}
       <div className="relative flex-shrink-0 w-16">
@@ -70,9 +75,6 @@ export function HourSlot({ hour, children, density = "default", className, isCur
 
       {/* Content area */}
       <div className="flex-1 min-h-0 relative">
-        {/* Subtle horizontal grid line */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-200/30 dark:via-slate-700/30 to-transparent" />
-
         {/* Content */}
         <div className="relative z-10">
           {children ? (

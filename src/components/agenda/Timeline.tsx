@@ -83,6 +83,33 @@ export function Timeline({
           minHeight: `${hours.length * effectiveHourHeight}px`
         }}
       >
+        {/* Grid lines synchronized with hourHeight */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden>
+          {hours.map((_, index) => {
+            const top = index * effectiveHourHeight;
+            return (
+              <div
+                key={`hour-line-${index}`}
+                className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-200/40 dark:via-slate-700/40 to-transparent"
+                style={{ top }}
+              />
+            );
+          })}
+
+          {/* Half-hour tick marks for precision */}
+          {effectiveHourHeight >= 40 &&
+            hours.slice(0, -1).map((_, index) => {
+              const top = index * effectiveHourHeight + effectiveHourHeight / 2;
+              return (
+                <div
+                  key={`half-hour-line-${index}`}
+                  className="absolute left-4 right-0 h-px bg-gradient-to-r from-transparent via-slate-200/25 dark:via-slate-700/25 to-transparent"
+                  style={{ top }}
+                />
+              );
+            })}
+        </div>
+
         {hours.map((hour, index) => (
           <div
             key={hour}
@@ -99,6 +126,7 @@ export function Timeline({
               hour={hour}
               density={density}
               isCurrentHour={hour === currentHour}
+              hourHeight={effectiveHourHeight}
             >
               {children && children(hour)}
             </HourSlot>
