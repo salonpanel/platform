@@ -72,8 +72,9 @@ export function MiniBookingCard({
       whileTap={onClick ? { scale: 0.98 } : undefined}
       onClick={onClick}
       className={cn(
-        "group relative rounded-[var(--radius-lg) border backdrop-blur-sm transition-all duration-200",
+        "group relative rounded-2xl border backdrop-blur-sm transition-all duration-200",
         "hover:shadow-lg hover:shadow-[var(--accent-aqua)]/10",
+        "overflow-hidden",
         paddingClass,
         getStatusBorder(),
         onClick && "cursor-pointer",
@@ -82,11 +83,12 @@ export function MiniBookingCard({
       style={{
         background: "linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)",
         borderWidth: "1px",
+        borderRadius: "16px",
       }}
     >
       {/* Indicador de estado sutil */}
       <div className={cn(
-        "absolute top-0 left-0 w-1 h-full rounded-l-[var(--radius-lg)]",
+        "absolute top-0 left-0 w-1 h-full rounded-l-2xl",
         booking.status === "paid" && "bg-[var(--status-paid)]",
         booking.status === "pending" && "bg-[var(--status-pending)]",
         booking.status === "completed" && "bg-[var(--status-completed)]",
@@ -94,9 +96,9 @@ export function MiniBookingCard({
         booking.status === "no_show" && "bg-[var(--status-noshow)]"
       )} />
       
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-3 min-w-0 overflow-hidden">
         {/* Información principal */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 overflow-hidden">
           {/* Nombre del cliente */}
           <div className="flex items-center gap-2 mb-1">
             <User className={cn(iconSize, "text-[var(--text-secondary)] flex-shrink-0")} />
@@ -220,7 +222,7 @@ export function MiniBookingCard({
       </div>
       
       {/* Efecto de brillo sutil en hover */}
-      <div className="absolute inset-0 rounded-[var(--radius-lg)] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+      <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
       </div>
     </motion.div>
