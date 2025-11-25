@@ -45,40 +45,40 @@ export function BookingCard({
     switch (booking.status) {
       case "paid":
         return {
-          bg: "bg-emerald-50 dark:bg-emerald-950/30",
-          border: "border-emerald-200 dark:border-emerald-800/50",
-          text: "text-emerald-700 dark:text-emerald-300",
-          accent: "bg-emerald-500"
+          bg: "bg-[rgba(79,227,193,0.14)]",
+          border: "border border-[rgba(79,227,193,0.32)]",
+          text: "text-[#C7F7EA]",
+          accent: "bg-[#4FE3C1]"
         };
       case "completed":
         return {
-          bg: "bg-emerald-50 dark:bg-emerald-950/30",
-          border: "border-emerald-200 dark:border-emerald-800/50",
-          text: "text-emerald-700 dark:text-emerald-300",
-          accent: "bg-emerald-500"
+          bg: "bg-[rgba(58,109,255,0.14)]",
+          border: "border border-[rgba(58,109,255,0.32)]",
+          text: "text-[#C2D4FF]",
+          accent: "bg-[#3A6DFF]"
         };
       case "pending":
       case "hold":
         return {
-          bg: "bg-amber-50 dark:bg-amber-950/30",
-          border: "border-amber-200 dark:border-amber-800/50",
-          text: "text-amber-700 dark:text-amber-300",
-          accent: "bg-amber-500"
+          bg: "bg-[rgba(250,204,21,0.16)]",
+          border: "border border-[rgba(250,204,21,0.28)]",
+          text: "text-[#FACC15]",
+          accent: "bg-[#FACC15]"
         };
       case "cancelled":
       case "no_show":
         return {
-          bg: "bg-red-50 dark:bg-red-950/30",
-          border: "border-red-200 dark:border-red-800/50",
-          text: "text-red-700 dark:text-red-300",
-          accent: "bg-red-500"
+          bg: "bg-[rgba(255,109,163,0.16)]",
+          border: "border border-[rgba(255,109,163,0.32)]",
+          text: "text-[#FFB4D1]",
+          accent: "bg-[#FF6DA3]"
         };
       default:
         return {
-          bg: "bg-slate-50 dark:bg-slate-950/30",
-          border: "border-slate-200 dark:border-slate-800/50",
-          text: "text-slate-700 dark:text-slate-300",
-          accent: "bg-slate-500"
+          bg: "bg-white/5",
+          border: "border border-white/10",
+          text: "text-white",
+          accent: "bg-white/60"
         };
     }
   };
@@ -88,11 +88,12 @@ export function BookingCard({
   // Base card styles with consistent design tokens
   const baseClasses = cn(
     "relative group cursor-pointer transition-all duration-200",
-    "bg-white dark:bg-slate-900/80 backdrop-blur-sm",
-    "border border-slate-200 dark:border-slate-700/50",
-    "rounded-xl shadow-sm",
-    "focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-1",
-    "hover:shadow-md hover:-translate-y-0.5",
+    "bg-white/6 backdrop-blur-xl",
+    "border border-white/10",
+    "rounded-2xl shadow-[0_14px_32px_rgba(0,0,0,0.35)]",
+    "focus:outline-none focus:ring-2 focus:ring-[#3A6DFF]/50 focus:ring-offset-0",
+    "hover:shadow-[0_18px_40px_rgba(0,0,0,0.45)] hover:-translate-y-0.5",
+    "overflow-hidden",
     canDrag && "cursor-grab active:cursor-grabbing",
     isDragging && "opacity-50 shadow-lg scale-105 z-50",
     className
@@ -168,67 +169,62 @@ export function BookingCard({
           </>
         )}
 
-        <div className="pl-4 pr-3 py-3 space-y-3">
-          {/* Header: Customer name (large) + Time (top right) */}
-          <div className="flex items-start justify-between gap-2">
+        <div className="pl-4 pr-3 py-2 space-y-2">
+          <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              <User className="w-4 h-4 text-slate-500 dark:text-slate-400 flex-shrink-0" />
-              <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate">
-                {booking.customer?.name || "Sin cliente"}
-              </h3>
+              <div className="h-8 w-8 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-xs font-semibold text-white/90">
+                {(booking.customer?.name || "").charAt(0) || "C"}
+              </div>
+              <div className="min-w-0 space-y-0.5">
+                <p className="text-sm font-semibold text-white leading-tight truncate">
+                  {booking.customer?.name || "Sin cliente"}
+                </p>
+                <p className="text-[11px] text-white/60 leading-tight truncate">
+                  {booking.service?.name || "Sin servicio"}
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-1 text-sm font-mono font-medium text-slate-700 dark:text-slate-300 flex-shrink-0">
-              <Clock className="w-3 h-3" />
-              {startTime} - {endTime}
-            </div>
-          </div>
-
-          {/* Service details */}
-          <div className="flex items-center gap-2">
-            <Scissors className="w-4 h-4 text-slate-500 dark:text-slate-400 flex-shrink-0" />
-            <div className="text-sm text-slate-700 dark:text-slate-300">
-              {booking.service?.name || "Sin servicio"}
-              {booking.service?.duration_min && (
-                <span className="text-slate-500 dark:text-slate-400 ml-2">
-                  • {booking.service.duration_min}min
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Staff + Price row */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {booking.staff && (
-                <>
-                  <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
-                    <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">
-                      {booking.staff.name.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <span className="text-xs text-slate-600 dark:text-slate-400">
-                    {booking.staff.name}
-                  </span>
-                </>
-              )}
-            </div>
-
-            {/* Price + Status */}
-            <div className="flex items-center gap-2">
-              {booking.service?.price_cents && (
-                <div className="flex items-center gap-1 text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  <Euro className="w-3 h-3" />
-                  {(booking.service.price_cents / 100).toFixed(0)}€
-                </div>
-              )}
+            <div className="flex flex-col items-end gap-1 flex-shrink-0">
+              <div className="px-2 py-1 rounded-full bg-white/10 text-[11px] font-mono text-white/90 border border-white/15">
+                {startTime} - {endTime}
+              </div>
               <div className={cn(
-                "px-2 py-1 rounded-full text-xs font-medium",
-                statusColors.bg,
-                statusColors.text
+                "px-2 py-1 rounded-full text-[11px] font-semibold inline-flex items-center gap-1", statusColors.bg, statusColors.border, statusColors.text
               )}>
+                <span className={cn("w-1.5 h-1.5 rounded-full", statusColors.accent)} />
                 {statusConfig.label}
               </div>
             </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-2 text-xs text-white/70 leading-tight">
+            <div className="flex items-center gap-2 min-w-0">
+              <Scissors className="w-3.5 h-3.5 text-white/50" />
+              <span className="truncate">{booking.service?.name || "Servicio"}</span>
+            </div>
+            {booking.service?.duration_min && (
+              <span className="text-white/60">{booking.service.duration_min}min</span>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between text-xs text-white/70">
+            {booking.staff ? (
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="h-6 w-6 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-[10px] font-semibold text-white/80">
+                  {booking.staff.name.charAt(0).toUpperCase()}
+                </div>
+                <span className="truncate">{booking.staff.name}</span>
+              </div>
+            ) : (
+              <span className="text-white/50">Sin asignar</span>
+            )}
+
+            {booking.service?.price_cents && (
+              <div className="flex items-center gap-1 font-semibold text-white/90">
+                <Euro className="w-3 h-3" />
+                {(booking.service.price_cents / 100).toFixed(0)}€
+              </div>
+            )}
           </div>
         </div>
       </motion.div>

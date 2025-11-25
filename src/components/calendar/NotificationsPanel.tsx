@@ -34,7 +34,7 @@ const notificationColors = {
 };
 
 // Mock data para desarrollo
-const mockNotifications: Notification[] = [
+export const defaultNotifications: Notification[] = [
   {
     id: "1",
     type: "success",
@@ -64,7 +64,7 @@ const mockNotifications: Notification[] = [
 export function NotificationsPanel({
   isOpen,
   onClose,
-  notifications = mockNotifications,
+  notifications = defaultNotifications,
 }: NotificationsPanelProps) {
   if (!isOpen) return null;
 

@@ -138,7 +138,7 @@ export function AgendaSidebar({
 
   // Main sidebar content component
   const SidebarContent = () => (
-    <div className="h-full overflow-y-auto space-y-6 scrollbar-hide">
+    <div className="space-y-6">
       {/* Header - Only show in mobile drawer */}
       {isMobile && (
         <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.85)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3 flex items-center justify-between">
@@ -192,7 +192,7 @@ export function AgendaSidebar({
       )}
 
       {/* Quick Navigation */}
-      <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.65)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3">
+      <div className="relative rounded-2xl border border-white/8 bg-white/5 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-4 py-3">
         <div className="space-y-3">
           <h4 className={cn(
             "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
@@ -233,7 +233,7 @@ export function AgendaSidebar({
       </div>
 
       {/* Calendar Picker */}
-      <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.65)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3">
+      <div className="relative rounded-2xl border border-white/8 bg-white/5 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-4 py-3">
         <div className="space-y-3">
           <h4 className={cn(
             "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
@@ -259,7 +259,7 @@ export function AgendaSidebar({
       {/* Filter Sections */}
       <div className="space-y-5">
         {/* Payment Status */}
-        <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.65)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3">
+        <div className="relative rounded-2xl border border-white/8 bg-white/5 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-4 py-3">
           <div className="space-y-3">
             <h4 className={cn(
               "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
@@ -296,7 +296,7 @@ export function AgendaSidebar({
         </div>
 
         {/* Booking Status */}
-        <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.65)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3">
+        <div className="relative rounded-2xl border border-white/8 bg-white/5 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-4 py-3">
           <div className="space-y-3">
             <h4 className={cn(
               "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
@@ -343,7 +343,7 @@ export function AgendaSidebar({
         {/* Staff selection is handled in AgendaFilters header for better UX */}
 
         {/* Additional Options */}
-        <div className="relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.65)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3">
+        <div className="relative rounded-2xl border border-white/8 bg-white/5 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-4 py-3">
           <div className="space-y-3">
             <h4 className={cn(
               "text-xs font-semibold uppercase tracking-wider flex items-center gap-2",
@@ -481,7 +481,9 @@ export function AgendaSidebar({
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.2 }}
         >
-          <SidebarContent />
+          <div className="rounded-2xl border border-white/10 bg-[#15171A]/85 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] p-4">
+            <SidebarContent />
+          </div>
         </motion.div>
       )}
     </div>

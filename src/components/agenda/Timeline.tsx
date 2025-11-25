@@ -41,6 +41,18 @@ export function Timeline({
 
   return (
     <div className={cn("flex flex-col relative", className)}>
+      <div
+        className="absolute inset-0 pointer-events-none"
+        aria-hidden
+      >
+        {hours.map((hour, index) => (
+          <div
+            key={`grid-${hour}`}
+            className="absolute left-16 right-2 border-t border-white/5"
+            style={{ top: `${index * effectiveHourHeight}px` }}
+          />
+        ))}
+      </div>
       {/* Current time indicator */}
       <motion.div
         layoutId="current-time-line"

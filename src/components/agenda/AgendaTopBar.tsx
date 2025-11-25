@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { format, parseISO, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
 import { ChevronLeft, ChevronRight, Search, Bell, Filter, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { UiButton } from "@/components/ui/apple-ui-kit";
 
 type ViewMode = "day" | "week" | "month" | "list";
 
@@ -15,6 +14,7 @@ interface AgendaTopBarProps {
   onViewModeChange: (mode: ViewMode) => void;
   onSearchClick: () => void;
   onNotificationsClick: () => void;
+  unreadCount?: number;
   onFiltersClick?: () => void;
 }
 
@@ -29,6 +29,7 @@ export function AgendaTopBar({
   onViewModeChange,
   onSearchClick,
   onNotificationsClick,
+  unreadCount = 0,
   onFiltersClick,
 }: AgendaTopBarProps) {
   const viewModes: { key: ViewMode; label: string }[] = [
@@ -84,102 +85,108 @@ export function AgendaTopBar({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -10 }}
+      initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-[rgba(10,15,20,0.85)] backdrop-blur-xl"
+      className="rounded-2xl"
     >
-      <div className="px-4 py-2.5">
-        {/* Top Row: Date Navigation - Espaciado más compacto */}
-        <div className="flex items-center justify-between gap-3 mb-2">
-          {/* Date Controls */}
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleNavigate("prev")}
-              className="p-1.5 rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.08)] transition-all duration-200 flex-shrink-0"
-              aria-label="Fecha anterior"
-            >
-              <ChevronLeft className="h-4 w-4 text-[rgba(255,255,255,0.7)]" />
-            </motion.button>
-
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <Calendar className="h-4 w-4 text-[rgba(255,255,255,0.5)] flex-shrink-0" />
-              <span className="text-sm font-semibold text-white truncate">
-                {formatDateDisplay()}
-              </span>
+      <div className="px-6 py-5 flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-11 w-11 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center shadow-inner">
+              <Calendar className="h-5 w-5 text-white" />
             </div>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleNavigate("next")}
-              className="p-1.5 rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.08)] transition-all duration-200 flex-shrink-0"
-              aria-label="Fecha siguiente"
-            >
-              <ChevronRight className="h-4 w-4 text-[rgba(255,255,255,0.7)]" />
-            </motion.button>
+            <div className="min-w-0">
+              <p className="text-xs uppercase tracking-[0.08em] text-white/60">Agenda</p>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl lg:text-2xl font-semibold text-white truncate">{formatDateDisplay()}</h1>
+                <span className="text-sm text-white/60 hidden sm:inline">• Vista {viewModes.find((v) => v.key === viewMode)?.label}</span>
+              </div>
+            </div>
           </div>
 
-          {/* Today Button + Actions - Más compactos */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
+          <div className="flex items-center gap-2">
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleNavigate("prev")}
+              className="h-10 w-10 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all flex items-center justify-center"
+              aria-label="Fecha anterior"
+            >
+              <ChevronLeft className="h-4 w-4 text-white/80" />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={handleToday}
-              className="px-3 py-1.5 text-xs font-medium rounded-[10px] bg-[rgba(79,227,193,0.15)] border border-[rgba(79,227,193,0.3)] text-[#4FE3C1] hover:bg-[rgba(79,227,193,0.25)] transition-all duration-200"
+              className="px-4 h-10 rounded-xl bg-gradient-to-r from-[#4FE3C1] to-[#3A6DFF] text-sm font-semibold text-[#0E0F11] shadow-[0_10px_30px_rgba(58,109,255,0.35)]"
             >
               Hoy
             </motion.button>
-
-            {/* Mobile Filters Button */}
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onFiltersClick}
-              className="md:hidden p-1.5 rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.08)] transition-all duration-200"
-              aria-label="Filtros"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleNavigate("next")}
+              className="h-10 w-10 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all flex items-center justify-center"
+              aria-label="Fecha siguiente"
             >
-              <Filter className="h-4 w-4 text-[rgba(255,255,255,0.7)]" />
+              <ChevronRight className="h-4 w-4 text-white/80" />
             </motion.button>
 
-            {/* Search Button */}
+            <div className="h-6 w-px bg-white/10 hidden md:block" />
+
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={onSearchClick}
-              className="p-1.5 rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.08)] transition-all duration-200"
+              className="h-10 w-10 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all flex items-center justify-center"
               aria-label="Buscar"
             >
-              <Search className="h-4 w-4 text-[rgba(255,255,255,0.7)]" />
+              <Search className="h-4 w-4 text-white/80" />
             </motion.button>
-
-            {/* Notifications Button */}
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={onNotificationsClick}
-              className="p-1.5 rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.08)] transition-all duration-200"
+              className="h-10 w-10 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all flex items-center justify-center"
               aria-label="Notificaciones"
             >
-              <Bell className="h-4 w-4 text-[rgba(255,255,255,0.7)]" />
+              <div className="relative">
+                <Bell className="h-4 w-4 text-white/80" />
+                {unreadCount > 0 && (
+                  <motion.span
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="absolute -top-2 -right-2 min-w-[18px] px-1.5 h-5 rounded-full bg-[#FF6DA3] text-[11px] font-semibold text-white shadow-lg shadow-[#FF6DA3]/50 flex items-center justify-center"
+                  >
+                    {unreadCount}
+                  </motion.span>
+                )}
+              </div>
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onFiltersClick}
+              className="h-10 w-10 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all flex items-center justify-center md:hidden"
+              aria-label="Filtros"
+            >
+              <Filter className="h-4 w-4 text-white/80" />
             </motion.button>
           </div>
         </div>
 
-        {/* Bottom Row: View Mode Tabs - Más integrados */}
-        <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+        <div className="flex items-center flex-wrap gap-2">
           {viewModes.map((mode) => (
             <motion.button
               key={mode.key}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
               onClick={() => onViewModeChange(mode.key)}
               className={cn(
-                "px-3 py-1.5 text-sm font-medium rounded-[8px] transition-all duration-200 whitespace-nowrap flex-shrink-0",
+                "px-3.5 py-2 rounded-xl text-sm font-medium transition-all border",
                 viewMode === mode.key
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.8)] hover:bg-[rgba(255,255,255,0.12)] hover:text-white"
+                  ? "bg-white text-[#0E0F11] border-white shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
+                  : "bg-white/5 text-white/80 border-white/10 hover:bg-white/10"
               )}
             >
               {mode.label}

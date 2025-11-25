@@ -18,7 +18,7 @@ import { CustomerQuickView } from "@/components/calendar/CustomerQuickView";
 import { BookingDetailPanel } from "@/components/calendar/BookingDetailPanel";
 import { StaffBlockingModal } from "@/components/calendar/StaffBlockingModal";
 import { ConflictResolutionModal } from "@/components/calendar/ConflictResolutionModal";
-import { NotificationsPanel } from "@/components/calendar/NotificationsPanel";
+import { NotificationsPanel, defaultNotifications } from "@/components/calendar/NotificationsPanel";
 
 export default function AgendaPage() {
   const supabase = getSupabaseBrowser();
@@ -58,6 +58,11 @@ export default function AgendaPage() {
   const [selectedSlot, setSelectedSlot] = useState<CalendarSlot | null>(null);
   
   const { showToast, ToastComponent } = useToast();
+
+  const unreadNotifications = useMemo(
+    () => defaultNotifications.filter((notification) => !notification.read).length,
+    []
+  );
 
   // Hook para datos de la agenda (reemplaza estados locales)
   const agendaData = useAgendaData({
@@ -1008,6 +1013,8 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
           setSearchOpen(false);
           setAgendaSearchTerm("");
         }}
+        onNotificationsToggle={() => setNotificationsOpen(true)}
+        unreadNotifications={unreadNotifications}
         selectedBooking={selectedBooking}
         newBookingOpen={showNewBookingModal}
         
