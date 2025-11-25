@@ -107,18 +107,9 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
                       : "text-[var(--text-secondary)] active:text-[var(--text-primary)]"
                   )}
                 >
-                  {/* Active background indicator */}
-                  {active && (
-                    <motion.div
-                      layoutId="mobileActiveTab"
-                      className="absolute inset-0 rounded-xl bg-[var(--accent-aqua)]/12 border border-[var(--accent-aqua)]/20"
-                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                    />
-                  )}
-
                   <motion.div
                     animate={{
-                      scale: active ? 1.05 : 1,
+                      scale: active ? 1.1 : 1,
                       y: active ? -1 : 0,
                     }}
                     transition={{
@@ -158,19 +149,9 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
                   : "text-[var(--text-secondary)] active:text-[var(--text-primary)]"
               )}
             >
-              {/* Active background for More when a sub-item is active */}
-              {isMoreActive && (
-                <motion.div
-                  className="absolute inset-0 rounded-xl bg-[var(--accent-aqua)]/12 border border-[var(--accent-aqua)]/20"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.2 }}
-                />
-              )}
-              
               <motion.div
                 animate={{
-                  scale: showMoreMenu ? 1.05 : 1,
+                  scale: showMoreMenu ? 1.1 : 1,
                   rotate: showMoreMenu ? 90 : 0,
                 }}
                 transition={{
