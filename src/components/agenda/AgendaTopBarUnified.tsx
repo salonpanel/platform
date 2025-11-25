@@ -123,30 +123,33 @@ export function AgendaTopBarUnified({
   };
 
   const toggleStatus = (status: string) => {
-    if (selectedStatuses.includes(status)) {
-      onStatusesChange(selectedStatuses.filter(s => s !== status));
+    const statuses = selectedStatuses || [];
+    if (statuses.includes(status)) {
+      onStatusesChange(statuses.filter(s => s !== status));
     } else {
-      onStatusesChange([...selectedStatuses, status]);
+      onStatusesChange([...statuses, status]);
     }
   };
 
   const togglePayment = (payment: string) => {
-    if (selectedPaymentStates.includes(payment)) {
-      onPaymentStatesChange(selectedPaymentStates.filter(p => p !== payment));
+    const payments = selectedPaymentStates || [];
+    if (payments.includes(payment)) {
+      onPaymentStatesChange(payments.filter(p => p !== payment));
     } else {
-      onPaymentStatesChange([...selectedPaymentStates, payment]);
+      onPaymentStatesChange([...payments, payment]);
     }
   };
 
   const toggleService = (serviceId: string) => {
-    if (selectedServiceIds.includes(serviceId)) {
-      onServiceIdsChange(selectedServiceIds.filter(s => s !== serviceId));
+    const serviceIds = selectedServiceIds || [];
+    if (serviceIds.includes(serviceId)) {
+      onServiceIdsChange(serviceIds.filter(s => s !== serviceId));
     } else {
-      onServiceIdsChange([...selectedServiceIds, serviceId]);
+      onServiceIdsChange([...serviceIds, serviceId]);
     }
   };
 
-  const activeFiltersCount = selectedStatuses.length + selectedPaymentStates.length + selectedServiceIds.length + (selectedStaffId ? 1 : 0);
+  const activeFiltersCount = (selectedStatuses?.length || 0) + (selectedPaymentStates?.length || 0) + (selectedServiceIds?.length || 0) + (selectedStaffId ? 1 : 0);
 
   return (
     <div className="rounded-2xl bg-[var(--glass-bg-default)] border border-[var(--glass-border)] backdrop-blur-md">
@@ -256,7 +259,7 @@ export function AgendaTopBarUnified({
                 <span>Todos</span>
                 {!selectedStaffId && <Check className="h-4 w-4" />}
               </button>
-              {staffList.map((staff) => (
+              {(staffList || []).map((staff) => (
                 <button
                   key={staff.id}
                   onClick={() => { onStaffChange(staff.id); setShowStaffDropdown(false); }}
@@ -275,7 +278,7 @@ export function AgendaTopBarUnified({
           {/* Filtro Estado */}
           <FilterDropdown
             label="Estado"
-            count={selectedStatuses.length}
+            count={selectedStatuses?.length || 0}
             isOpen={showStatusDropdown}
             onToggle={() => setShowStatusDropdown(!showStatusDropdown)}
           >
@@ -286,11 +289,11 @@ export function AgendaTopBarUnified({
                   onClick={() => toggleStatus(status.value)}
                   className={cn(
                     "w-full px-3 py-2 text-left text-sm hover:bg-[var(--glass-bg-subtle)] rounded transition-colors flex items-center justify-between",
-                    selectedStatuses.includes(status.value) && "bg-[var(--accent-blue)]/10 text-[var(--accent-blue)]"
+                    selectedStatuses?.includes(status.value) && "bg-[var(--accent-blue)]/10 text-[var(--accent-blue)]"
                   )}
                 >
                   <span>{status.label}</span>
-                  {selectedStatuses.includes(status.value) && <Check className="h-4 w-4" />}
+                  {selectedStatuses?.includes(status.value) && <Check className="h-4 w-4" />}
                 </button>
               ))}
             </div>
@@ -299,7 +302,7 @@ export function AgendaTopBarUnified({
           {/* Filtro Pago */}
           <FilterDropdown
             label="Pago"
-            count={selectedPaymentStates.length}
+            count={selectedPaymentStates?.length || 0}
             isOpen={showPaymentDropdown}
             onToggle={() => setShowPaymentDropdown(!showPaymentDropdown)}
           >
@@ -310,11 +313,11 @@ export function AgendaTopBarUnified({
                   onClick={() => togglePayment(payment.value)}
                   className={cn(
                     "w-full px-3 py-2 text-left text-sm hover:bg-[var(--glass-bg-subtle)] rounded transition-colors flex items-center justify-between",
-                    selectedPaymentStates.includes(payment.value) && "bg-[var(--accent-blue)]/10 text-[var(--accent-blue)]"
+                    selectedPaymentStates?.includes(payment.value) && "bg-[var(--accent-blue)]/10 text-[var(--accent-blue)]"
                   )}
                 >
                   <span>{payment.label}</span>
-                  {selectedPaymentStates.includes(payment.value) && <Check className="h-4 w-4" />}
+                  {selectedPaymentStates?.includes(payment.value) && <Check className="h-4 w-4" />}
                 </button>
               ))}
             </div>
@@ -323,22 +326,22 @@ export function AgendaTopBarUnified({
           {/* Filtro Servicio */}
           <FilterDropdown
             label="Servicio"
-            count={selectedServiceIds.length}
+            count={selectedServiceIds?.length || 0}
             isOpen={showServiceDropdown}
             onToggle={() => setShowServiceDropdown(!showServiceDropdown)}
           >
             <div className="py-2 max-h-64 overflow-y-auto">
-              {services.map((service) => (
+              {(services || []).map((service) => (
                 <button
                   key={service.id}
                   onClick={() => toggleService(service.id)}
                   className={cn(
                     "w-full px-3 py-2 text-left text-sm hover:bg-[var(--glass-bg-subtle)] rounded transition-colors flex items-center justify-between",
-                    selectedServiceIds.includes(service.id) && "bg-[var(--accent-blue)]/10 text-[var(--accent-blue)]"
+                    selectedServiceIds?.includes(service.id) && "bg-[var(--accent-blue)]/10 text-[var(--accent-blue)]"
                   )}
                 >
                   <span>{service.name}</span>
-                  {selectedServiceIds.includes(service.id) && <Check className="h-4 w-4" />}
+                  {selectedServiceIds?.includes(service.id) && <Check className="h-4 w-4" />}
                 </button>
               ))}
             </div>

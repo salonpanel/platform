@@ -207,17 +207,17 @@ export function AgendaContainer({
             onViewModeChange={onViewModeChange}
             onNotificationsClick={onNotificationsToggle}
             unreadNotifications={unreadNotifications}
-            staffList={staffList}
+            staffList={staffList || []}
             selectedStaffId={selectedStaffId}
             onStaffChange={onStaffChange}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
-            selectedStatuses={filters.status || []}
+            selectedStatuses={filters?.status || []}
             onStatusesChange={(statuses) => setFilters({ ...filters, status: statuses })}
-            selectedPaymentStates={filters.payment || []}
+            selectedPaymentStates={filters?.payment || []}
             onPaymentStatesChange={(states) => setFilters({ ...filters, payment: states })}
-            services={services}
-            selectedServiceIds={filters.services || []}
+            services={services || []}
+            selectedServiceIds={filters?.services || []}
             onServiceIdsChange={(ids) => setFilters({ ...filters, services: ids })}
           />
         </div>
