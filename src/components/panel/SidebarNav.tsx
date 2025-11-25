@@ -285,7 +285,9 @@ export function SidebarNav({
                       }
                     }}
                     className={cn(
-                      "flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 text-sm font-medium font-satoshi transition-all duration-300 relative group overflow-hidden",
+                      "flex items-center rounded-[var(--radius-md)] text-sm font-medium font-satoshi transition-all duration-300 relative group overflow-hidden",
+                      // Collapsed: center icon, no gap; Expanded: gap between icon and text
+                      isExpanded ? "gap-3 px-3 py-2.5" : "justify-center px-0 py-2.5",
                       active
                         ? "gradient-aurora-1 text-white shadow-[0px_4px_16px_rgba(123,92,255,0.4)] ring-1 ring-white/20"
                         : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.08)] hover:shadow-[0px_2px_12px_rgba(255,255,255,0.1)]"
@@ -320,7 +322,9 @@ export function SidebarNav({
                         duration: active ? 0.5 : 0.2
                       }}
                       className={cn(
-                        "flex-shrink-0 relative z-10",
+                        "flex-shrink-0 relative z-10 flex items-center justify-center",
+                        // Consistent icon container size for better centering when collapsed
+                        !isExpanded && "w-10 h-10",
                         active ? "text-white drop-shadow-sm" : "text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]"
                       )}
                     >
@@ -360,7 +364,8 @@ export function SidebarNav({
                         </motion.span>
                       )}
                     </AnimatePresence>
-                    {active && (
+                    {/* Active indicator - only show when expanded */}
+                    {active && isExpanded && (
                       <motion.div
                         layoutId="activeIndicator"
                         className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white shadow-[0px_0px_12px_rgba(255,255,255,0.8)] ring-2 ring-white/30"
@@ -396,7 +401,10 @@ export function SidebarNav({
                 }, 150);
               }
             }}
-            className="flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.08)] hover:shadow-[0px_2px_12px_rgba(255,255,255,0.1)] transition-all duration-300 font-satoshi group overflow-hidden relative"
+            className={cn(
+              "flex items-center rounded-[var(--radius-md)] text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.08)] hover:shadow-[0px_2px_12px_rgba(255,255,255,0.1)] transition-all duration-300 font-satoshi group overflow-hidden relative",
+              isExpanded ? "gap-3 px-3 py-2.5" : "justify-center px-0 py-2.5"
+            )}
             style={{
               borderRadius: "var(--radius-md)",
               minHeight: "44px",
@@ -415,7 +423,10 @@ export function SidebarNav({
                 scale: hoveredItem === "logout" ? 1.05 : 1,
               }}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              className="flex-shrink-0 text-red-400 group-hover:text-red-300 relative z-10"
+              className={cn(
+                "flex-shrink-0 text-red-400 group-hover:text-red-300 relative z-10 flex items-center justify-center",
+                !isExpanded && "w-10 h-10"
+              )}
             >
               <LogOut className="h-4 w-4" />
             </motion.div>
