@@ -16,8 +16,8 @@ interface TimelineProps {
 }
 
 /**
- * Componente Timeline premium para mostrar horas del día
- * Con detección automática de hora actual y animaciones suaves
+ * Timeline component for day view with hour slots
+ * Shows current time indicator and hour grid lines
  */
 export function Timeline({
   startHour = 8,
@@ -29,51 +29,50 @@ export function Timeline({
 }: TimelineProps) {
   const hours = Array.from({ length: endHour - startHour + 1 }, (_, i) => startHour + i);
   
-  // Detectar hora actual para resaltar
+  // Current hour for highlighting
   const currentHour = useMemo(() => {
     const now = new Date();
     return now.getHours();
   }, []);
 
-  // Altura por hora según densidad (si no se proporciona)
-  const defaultHourHeight = density === "ultra-compact" ? 48 : density === "compact" ? 64 : 80;
+  // Height per hour based on density
+  const defaultHourHeight = density === "ultra-compact" ? 50 : density === "compact" ? 65 : 80;
   const effectiveHourHeight = hourHeight || defaultHourHeight;
 
   return (
     <div className={cn("flex flex-col relative", className)}>
       {/* Current time indicator */}
-      <motion.div
-        layoutId="current-time-line"
-        className="absolute left-0 right-0 z-20 pointer-events-none"
-        style={{
-          top: `${(currentHour - startHour) * effectiveHourHeight + effectiveHourHeight / 2}px`,
-        }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="relative">
-          {/* Main time line */}
-          <div className="absolute left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent shadow-lg shadow-blue-500/30" />
-          {/* Time indicator dot */}
-          <motion.div
-            className="absolute left-0 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-blue-500 border-2 border-slate-50 dark:border-slate-950 shadow-lg shadow-blue-500/30"
-            animate={{
-              scale: [1, 1.1, 1],
-              opacity: [1, 0.9, 1]
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-          {/* Current time label */}
-          <div className="absolute left-4 -translate-y-1/2 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-md shadow-lg">
-            {format(new Date(), "HH:mm")}
+      {currentHour >= startHour && currentHour <= endHour && (
+        <motion.div
+          layoutId="current-time-line"
+          className="absolute left-0 right-0 z-30 pointer-events-none"
+          style={{
+            top: `${(currentHour - startHour) * effectiveHourHeight + effectiveHourHeight / 2}px`,
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+        >
+          <div className="relative">
+            <div className="absolute left-0 w-full h-0.5 bg-gradient-to-r from-[#4FE3C1] via-[#3A6DFF] to-transparent" />
+            <motion.div
+              className="absolute left-0 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-[#4FE3C1] shadow-lg shadow-[#4FE3C1]/40"
+              animate={{
+                scale: [1, 1.2, 1],
+                opacity: [1, 0.8, 1]
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+            <div className="absolute left-4 -translate-y-1/2 bg-gradient-to-r from-[#4FE3C1] to-[#3A6DFF] text-white text-[10px] font-medium px-2 py-0.5 rounded-md shadow-lg">
+              {format(new Date(), "HH:mm")}
+            </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
 
       {/* Hours timeline */}
       <div
@@ -83,33 +82,34 @@ export function Timeline({
           minHeight: `${hours.length * effectiveHourHeight}px`
         }}
       >
-        {/* Grid lines synchronized with hourHeight */}
+        {/* Hour grid lines - aligned precisely with hour slots */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden>
-          {hours.map((_, index) => {
+          {hours.map((hour, index) => {
             const top = index * effectiveHourHeight;
             return (
               <div
-                key={`hour-line-${index}`}
-                className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-200/40 dark:via-slate-700/40 to-transparent"
+                key={`hour-line-${hour}`}
+                className="absolute left-14 right-0 h-px bg-white/5"
                 style={{ top }}
               />
             );
           })}
 
-          {/* Half-hour tick marks for precision */}
-          {effectiveHourHeight >= 40 &&
-            hours.slice(0, -1).map((_, index) => {
+          {/* Half-hour tick marks */}
+          {effectiveHourHeight >= 50 &&
+            hours.slice(0, -1).map((hour, index) => {
               const top = index * effectiveHourHeight + effectiveHourHeight / 2;
               return (
                 <div
-                  key={`half-hour-line-${index}`}
-                  className="absolute left-4 right-0 h-px bg-gradient-to-r from-transparent via-slate-200/25 dark:via-slate-700/25 to-transparent"
+                  key={`half-hour-${hour}`}
+                  className="absolute left-16 right-0 h-px bg-white/[0.02]"
                   style={{ top }}
                 />
               );
             })}
         </div>
 
+        {/* Hour slots with labels */}
         {hours.map((hour, index) => (
           <div
             key={hour}
@@ -134,8 +134,8 @@ export function Timeline({
         ))}
       </div>
 
-      {/* Subtle gradient fade at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent pointer-events-none" />
+      {/* Bottom fade */}
+      <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-[#0E0F11] to-transparent pointer-events-none" />
     </div>
   );
 }

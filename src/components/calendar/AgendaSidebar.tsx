@@ -139,206 +139,147 @@ export function AgendaSidebar({
 
   // Main sidebar content component
   const SidebarContent = () => (
-    <div className="space-y-4">
+    <div className="p-4 space-y-4">
       {/* Header - Only show in mobile drawer */}
       {isMobile && (
-        <div className="flex items-center justify-between rounded-2xl bg-[rgba(15,23,42,0.85)] px-4 py-3 backdrop-blur-xl">
+        <div className="flex items-center justify-between pb-2 border-b border-white/10">
           <div className="flex items-center gap-2">
-            <Filter className="h-5 w-5 text-[var(--accent-blue)]" />
-            <h3 className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-heading)]">
-              Filtros y Navegación
-            </h3>
+            <Filter className="h-4 w-4 text-[#4FE3C1]" />
+            <h3 className="text-base font-semibold text-white">Filtros</h3>
           </div>
           <button
             onClick={onClose || (() => {})}
-            className="p-2 rounded-xl transition-all duration-200 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)] active:scale-95"
+            className="p-1.5 rounded-lg transition-colors text-white/60 hover:text-white hover:bg-white/10"
             aria-label="Cerrar filtros"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
       )}
 
-      {/* Tablet collapse toggle */}
-      {isTablet && !isCollapsed && (
-        <div className="flex items-center justify-between rounded-2xl bg-[rgba(15,23,42,0.85)] px-4 py-3 backdrop-blur-xl">
-          <div className="flex items-center gap-2">
-            <Filter className="h-5 w-5 text-[var(--accent-blue)]" />
-            <h3 className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-heading)]">
-              Filtros
-            </h3>
-          </div>
-          <button
-            onClick={() => setIsCollapsed(true)}
-            className="p-2 rounded-xl transition-all duration-200 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)] active:scale-95"
-            aria-label="Contraer filtros"
+      {/* Date Navigation */}
+      <div className="space-y-3">
+        <p className="text-xs uppercase tracking-wider text-white/40">Navegación</p>
+        <div className="space-y-2">
+          <UiButton
+            variant="secondary"
+            size="sm"
+            onClick={goToToday}
+            className="w-full justify-center text-sm"
           >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-      )}
-
-      <div className="rounded-3xl bg-[rgba(15,23,42,0.7)]/90 px-5 py-6 backdrop-blur-2xl shadow-[0_18px_45px_rgba(0,0,0,0.35)] border border-white/5">
-        <div className="space-y-6">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-[var(--accent-blue)]" />
-              <h4 className="text-sm font-semibold text-[var(--text-primary)] font-[var(--font-heading)]">
-                Agenda y filtros
-              </h4>
-            </div>
+            Hoy
+          </UiButton>
+          <div className="grid grid-cols-2 gap-2">
             <UiButton
               variant="ghost"
               size="sm"
-              onClick={clearFilters}
-              className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              onClick={() => navigateWeek("prev")}
+              className="text-xs"
             >
-              Limpiar
+              -1 semana
             </UiButton>
-          </div>
-
-          <div className="space-y-6 text-[var(--text-secondary)]">
-            <div className="space-y-3">
-              <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-tertiary)]">Navegación</p>
-              <div className="flex flex-col gap-3">
-                <UiButton
-                  variant="secondary"
-                  size="sm"
-                  onClick={goToToday}
-                  className="justify-start"
-                >
-                  Hoy
-                </UiButton>
-                <div className="grid grid-cols-2 gap-2">
-                  <UiButton
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigateWeek("prev")}
-                  >
-                    -1 semana
-                  </UiButton>
-                  <UiButton
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigateWeek("next")}
-                  >
-                    +1 semana
-                  </UiButton>
-                </div>
-                <div className="rounded-2xl border border-white/5 bg-[rgba(255,255,255,0.02)] px-3 py-2.5">
-                  <label className="text-xs uppercase tracking-[0.08em] text-[var(--text-tertiary)]">Fecha</label>
-                  <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => onDateSelect(e.target.value)}
-                    className="mt-2 w-full rounded-xl border border-white/5 bg-transparent px-3 py-2 text-sm font-medium text-[var(--text-primary)] transition-all duration-200 hover:border-[var(--accent-blue)]/30 focus:border-[var(--accent-blue)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]/25"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="h-px bg-white/5" />
-
-            <div className="space-y-3">
-              <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-tertiary)] flex items-center gap-2">
-                <CreditCard className="h-3.5 w-3.5 text-[var(--accent-purple)]" />
-                Pagos
-              </p>
-              <div className="grid gap-2 text-sm text-[var(--text-secondary)]">
-                {["paid", "unpaid"].map((option) => (
-                  <label
-                    key={option}
-                    className="flex items-center gap-2.5 cursor-pointer rounded-xl px-2 py-2 transition-colors duration-200 hover:bg-white/3"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={filters.payment.includes(option)}
-                      onChange={() => handleFilterChange("payment", option)}
-                      className="w-4 h-4 rounded-lg border border-white/20 bg-[rgba(255,255,255,0.05)] text-[var(--accent-blue)] focus:ring-2 focus:ring-[var(--accent-blue)/30]"
-                    />
-                    <span className="font-medium capitalize text-[var(--text-secondary)]">
-                      {option === "paid" ? "Pagado" : "Sin pagar"}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="h-px bg-white/5" />
-
-            <div className="space-y-3">
-              <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-tertiary)] flex items-center gap-2">
-                <CheckCircle className="h-3.5 w-3.5 text-[var(--accent-pink)]" />
-                Estado de la cita
-              </p>
-              <div className="grid gap-2 text-sm text-[var(--text-secondary)]">
-                {([
-                  "pending",
-                  "paid",
-                  "completed",
-                  "cancelled",
-                  "no_show",
-                  "hold",
-                ] as BookingStatus[]).map((status) => (
-                  <label
-                    key={status}
-                    className="flex items-center gap-2.5 cursor-pointer rounded-xl px-2 py-2 transition-colors duration-200 hover:bg-white/3"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={filters.status.includes(status)}
-                      onChange={() => handleFilterChange("status", status)}
-                      className="w-4 h-4 rounded-lg border border-white/20 bg-[rgba(255,255,255,0.05)] text-[var(--accent-blue)] focus:ring-2 focus:ring-[var(--accent-blue)/30]"
-                    />
-                    <span className="font-medium text-[var(--text-secondary)]">
-                      {BOOKING_STATUS_CONFIG[status].label}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="h-px bg-white/5" />
-
-            <div className="space-y-3">
-              <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-tertiary)]">Detalles</p>
-              <div className="grid gap-2 text-sm">
-                <label className="flex items-center gap-2.5 cursor-pointer rounded-xl px-2 py-2 transition-colors duration-200 hover:bg-white/3">
-                  <input
-                    type="checkbox"
-                    checked={filters.highlighted === true}
-                    onChange={() => handleFilterChange("highlighted", true)}
-                    className="w-4 h-4 rounded-lg border border-white/20 bg-[rgba(255,255,255,0.05)] text-[var(--accent-blue)] focus:ring-2 focus:ring-[var(--accent-blue)/30]"
-                  />
-                  <span className="font-medium text-[var(--text-secondary)]">Marcadas como destacadas</span>
-                </label>
-                {onShowFreeSlotsChange && (
-                  <label className="flex items-center gap-2.5 cursor-pointer rounded-xl px-2 py-2 transition-colors duration-200 hover:bg-white/3">
-                    <input
-                      type="checkbox"
-                      checked={showFreeSlots}
-                      onChange={(e) => onShowFreeSlotsChange(e.target.checked)}
-                      className="w-4 h-4 rounded-lg border border-white/20 bg-[rgba(255,255,255,0.05)] text-[var(--accent-blue)] focus:ring-2 focus:ring-[var(--accent-blue)/30]"
-                    />
-                    <span className="font-medium text-[var(--text-secondary)]">Mostrar huecos libres</span>
-                  </label>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-4">
             <UiButton
-              variant="secondary"
+              variant="ghost"
               size="sm"
-              onClick={clearFilters}
-              className="w-full"
+              onClick={() => navigateWeek("next")}
+              className="text-xs"
             >
-              Limpiar todos los filtros
+              +1 semana
             </UiButton>
           </div>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => onDateSelect(e.target.value)}
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white transition-colors hover:border-white/20 focus:border-[#4FE3C1]/50 focus:outline-none focus:ring-1 focus:ring-[#4FE3C1]/30"
+          />
         </div>
       </div>
+
+      <div className="h-px bg-white/10" />
+
+      {/* Payment Filters */}
+      <div className="space-y-2">
+        <p className="text-xs uppercase tracking-wider text-white/40 flex items-center gap-1.5">
+          <CreditCard className="h-3 w-3" />
+          Pagos
+        </p>
+        <div className="space-y-1">
+          {["paid", "unpaid"].map((option) => (
+            <label
+              key={option}
+              className="flex items-center gap-2 cursor-pointer rounded-lg px-2 py-1.5 text-sm text-white/70 hover:bg-white/5 transition-colors"
+            >
+              <input
+                type="checkbox"
+                checked={filters.payment.includes(option)}
+                onChange={() => handleFilterChange("payment", option)}
+                className="w-3.5 h-3.5 rounded border border-white/30 bg-transparent text-[#4FE3C1] focus:ring-1 focus:ring-[#4FE3C1]/30"
+              />
+              <span>{option === "paid" ? "Pagado" : "Sin pagar"}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="h-px bg-white/10" />
+
+      {/* Status Filters */}
+      <div className="space-y-2">
+        <p className="text-xs uppercase tracking-wider text-white/40 flex items-center gap-1.5">
+          <CheckCircle className="h-3 w-3" />
+          Estado
+        </p>
+        <div className="space-y-1">
+          {([
+            "pending",
+            "paid",
+            "completed",
+            "cancelled",
+            "no_show",
+            "hold",
+          ] as BookingStatus[]).map((status) => (
+            <label
+              key={status}
+              className="flex items-center gap-2 cursor-pointer rounded-lg px-2 py-1.5 text-sm text-white/70 hover:bg-white/5 transition-colors"
+            >
+              <input
+                type="checkbox"
+                checked={filters.status.includes(status)}
+                onChange={() => handleFilterChange("status", status)}
+                className="w-3.5 h-3.5 rounded border border-white/30 bg-transparent text-[#4FE3C1] focus:ring-1 focus:ring-[#4FE3C1]/30"
+              />
+              <span>{BOOKING_STATUS_CONFIG[status].label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="h-px bg-white/10" />
+
+      {/* Details Filters */}
+      <div className="space-y-2">
+        <p className="text-xs uppercase tracking-wider text-white/40">Detalles</p>
+        <div className="space-y-1">
+          <label className="flex items-center gap-2 cursor-pointer rounded-lg px-2 py-1.5 text-sm text-white/70 hover:bg-white/5 transition-colors">
+            <input
+              type="checkbox"
+              checked={filters.highlighted === true}
+              onChange={() => handleFilterChange("highlighted", true)}
+              className="w-3.5 h-3.5 rounded border border-white/30 bg-transparent text-[#4FE3C1] focus:ring-1 focus:ring-[#4FE3C1]/30"
+            />
+            <span>Destacadas</span>
+          </label>
+        </div>
+      </div>
+
+      {/* Clear Button */}
+      <button
+        onClick={clearFilters}
+        className="w-full mt-2 py-2 text-xs font-medium text-white/50 hover:text-white/80 transition-colors"
+      >
+        Limpiar filtros
+      </button>
     </div>
   );
 

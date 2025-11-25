@@ -4,11 +4,8 @@ import React from "react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { Booking, BookingStatus } from "@/types/agenda";
-import { theme } from "@/theme/ui";
 import { cn } from "@/lib/utils";
-import { StatusBadge } from "@/components/ui/StatusBadge";
 import { interactionPresets, getMotionSafeProps } from "../motion/presets";
-import { SLOT_HEIGHT_PX, SLOT_DURATION_MINUTES, MIN_BOOKING_HEIGHT_PX } from "../constants/layout";
 
 interface AppointmentCardProps {
   booking: Booking;
@@ -19,24 +16,16 @@ interface AppointmentCardProps {
   onMouseDown?: (e: React.MouseEvent, booking: Booking, top: number) => void;
 }
 
-// Type para tokens de status
-interface StatusTokens {
-  bg: string;
-  border: string;
-  text: string;
-  borderLeft: string;
-}
-
-// Neo-Glass Status Colors (Neon/Vibrant)
+// Status color mapping
 const getStatusColor = (status: string) => {
   const colors: Record<string, string> = {
-    pending: "#FFC107",   // Neon Yellow
-    confirmed: "#4FE3C1", // Neon Aqua
-    paid: "#3A6DFF",      // Electric Blue
-    completed: "#3A6DFF", // Electric Blue
-    cancelled: "#EF4444", // Neon Red
-    "no-show": "#FF6DA3", // Neon Pink
-    "no_show": "#FF6DA3", // Neon Pink (alternative)
+    pending: "#FFC107",
+    confirmed: "#4FE3C1",
+    paid: "#3A6DFF",
+    completed: "#3A6DFF",
+    cancelled: "#EF4444",
+    "no-show": "#FF6DA3",
+    "no_show": "#FF6DA3",
   };
   return colors[status] || colors.pending;
 };
@@ -63,38 +52,23 @@ export const AppointmentCard = React.memo(function AppointmentCard({
 
   const isPast = localEndsAt < new Date();
   const statusColor = getStatusColor(booking.status);
-  const isSmallSlot = height < 60;
+  const isSmallSlot = height < 55;
 
   return (
     <motion.div
       {...getMotionSafeProps({
-        initial: { opacity: 0, y: 8, scale: 0.98 },
+        initial: { opacity: 0, y: 4, scale: 0.98 },
         animate: { opacity: 1, y: 0, scale: 1 },
-        exit: { opacity: 0, y: -8, scale: 0.98 },
-        transition: {
-          duration: 0.15,
-          ease: [0.4, 0, 0.2, 1]
-        },
-        whileHover: !isDragging ? interactionPresets.appointmentCard.hover : {},
-        whileTap: !isDragging ? interactionPresets.appointmentCard.tap : {},
+        exit: { opacity: 0, y: -4, scale: 0.98 },
+        transition: { duration: 0.15, ease: [0.4, 0, 0.2, 1] },
+        whileHover: !isDragging ? { y: -1, scale: 1.005 } : {},
+        whileTap: !isDragging ? { scale: 0.99 } : {},
       })}
       data-booking
       tabIndex={0}
       role="button"
       aria-label={`Cita de ${booking.customer?.name || "cliente"} con ${booking.staff?.name || "sin asignar"} de ${format(localStartsAt, "HH:mm")} a ${format(localEndsAt, "HH:mm")}, estado ${booking.status}`}
-      ref={(el) => {
-        if (el) {
-          // Store booking refs for keyboard navigation
-        }
-      }}
-      onFocus={() => {
-        // Handle focus
-      }}
-      onBlur={() => {
-        // Handle blur
-      }}
       onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
-        // Handle keyboard navigation
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onClick?.(booking);
@@ -111,31 +85,33 @@ export const AppointmentCard = React.memo(function AppointmentCard({
         onClick?.(booking);
       }}
       className={cn(
-        "absolute left-2 right-2 rounded-xl md:rounded-2xl transition-all duration-200",
-        "border border-white/10",
-        "backdrop-blur-md",
-        isGhost ? "opacity-30 border-dashed border-white/20" : "bg-[#15171C]/60 shadow-lg",
-        isPast && !isDragging ? "opacity-60 grayscale-[0.3]" : "",
-        isDragging && !isGhost ? "cursor-grabbing z-50 shadow-2xl scale-105 ring-1 ring-white/20" : "cursor-grab z-20",
-        "group overflow-hidden"
+        "absolute left-3 right-3 transition-all duration-200",
+        "border border-white/10 rounded-2xl",
+        "backdrop-blur-md overflow-hidden",
+        isGhost ? "opacity-30 border-dashed border-white/20" : "bg-[#1a1d24]/90 shadow-lg",
+        isPast && !isDragging ? "opacity-60" : "",
+        isDragging && !isGhost ? "cursor-grabbing z-50 shadow-2xl scale-[1.02] ring-1 ring-white/20" : "cursor-grab z-20",
+        "group"
       )}
       style={{
         top: `${top}px`,
-        height: `${Math.max(height, isSmallSlot ? 36 : 48)}px`,
-        minHeight: isSmallSlot ? "36px" : "48px",
+        height: `${Math.max(height, isSmallSlot ? 40 : 52)}px`,
+        minHeight: isSmallSlot ? "40px" : "52px",
         borderLeftWidth: "3px",
         borderLeftColor: statusColor,
-        // Inset top highlight for glass effect
-        boxShadow: isDragging ? "0 20px 40px -10px rgba(0,0,0,0.5)" : "inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 12px rgba(0,0,0,0.1)",
+        borderRadius: "16px",
       }}
       title={`${booking.customer?.name || "Sin cliente"} - ${booking.service?.name || "Sin servicio"} (${format(localStartsAt, "HH:mm")} - ${format(localEndsAt, "HH:mm")})`}
     >
-      <div className={cn("flex flex-col h-full w-full", isSmallSlot ? "justify-center px-2" : "p-3")}>
+      <div className={cn(
+        "flex flex-col h-full w-full overflow-hidden",
+        isSmallSlot ? "justify-center px-3" : "p-3"
+      )}>
         
-        {/* Top Row: Time & Status (Only show if space permits) */}
+        {/* Time header - only show if space permits */}
         {!isSmallSlot && (
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-mono font-medium text-gray-400 tracking-wide">
+            <span className="text-[10px] font-mono font-medium text-white/50">
               {format(localStartsAt, "HH:mm")}
             </span>
           </div>
@@ -143,7 +119,6 @@ export const AppointmentCard = React.memo(function AppointmentCard({
 
         {/* Main Content */}
         <div className="flex items-center gap-2 min-w-0">
-          {/* Client Name */}
           <div className={cn(
             "font-medium truncate text-white",
             isSmallSlot ? "text-xs" : "text-sm"
@@ -153,15 +128,15 @@ export const AppointmentCard = React.memo(function AppointmentCard({
           
           {/* Time for small slots (inline) */}
           {isSmallSlot && (
-            <span className="text-[10px] text-gray-500 font-mono shrink-0">
+            <span className="text-[10px] text-white/40 font-mono shrink-0">
               {format(localStartsAt, "HH:mm")}
             </span>
           )}
         </div>
 
-        {/* Secondary Info (Service) - Hide on small slots */}
+        {/* Service - hide on small slots */}
         {!isSmallSlot && (
-          <div className="text-xs text-gray-500 truncate mt-0.5 font-medium">
+          <div className="text-xs text-white/50 truncate mt-0.5">
             {booking.service?.name || "Sin servicio"}
           </div>
         )}
@@ -169,7 +144,6 @@ export const AppointmentCard = React.memo(function AppointmentCard({
     </motion.div>
   );
 }, (prevProps, nextProps) => {
-  // Custom comparison function for React.memo
   return (
     prevProps.booking.id === nextProps.booking.id &&
     prevProps.booking.status === nextProps.booking.status &&
