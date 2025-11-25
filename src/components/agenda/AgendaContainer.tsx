@@ -302,8 +302,6 @@ export function AgendaContainer({
                   onDateSelect={onDateChange}
                   filters={filters}
                   onFiltersChange={setFilters}
-                  staffList={[]}
-                  showFreeSlots={false}
                   isOpen={sidebarOpen}
                   onOpen={() => setSidebarOpen(true)}
                   onClose={() => setSidebarOpen(false)}
