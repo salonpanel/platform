@@ -93,18 +93,9 @@ export function BottomNavBar({ className }: BottomNavBarProps) {
                       : "text-[var(--text-secondary)] active:text-[var(--text-primary)]"
                   )}
                 >
-                  {/* Active background indicator */}
-                  {active && (
-                    <motion.div
-                      layoutId="bottomNavIndicatorBg"
-                      className="absolute inset-1 rounded-xl bg-[var(--accent-aqua)]/12 border border-[var(--accent-aqua)]/20"
-                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                    />
-                  )}
-                  
                   <motion.div
                     animate={{
-                      scale: active ? 1.05 : 1,
+                      scale: active ? 1.1 : 1,
                       y: active ? -1 : 0,
                     }}
                     transition={{ duration: 0.2 }}
