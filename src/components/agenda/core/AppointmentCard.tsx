@@ -3,9 +3,9 @@
 import React from "react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
-import { Booking, BookingStatus } from "@/types/agenda";
+import { Booking } from "@/types/agenda";
 import { cn } from "@/lib/utils";
-import { interactionPresets, getMotionSafeProps } from "../motion/presets";
+import { getMotionSafeProps } from "../motion/presets";
 
 interface AppointmentCardProps {
   booking: Booking;

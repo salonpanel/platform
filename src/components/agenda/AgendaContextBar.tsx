@@ -1,9 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { Clock, DollarSign, TrendingUp, Calendar } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Staff } from "@/types/agenda";
 
 interface QuickStats {
   totalBookings: number;
@@ -12,19 +9,14 @@ interface QuickStats {
   rangeLabel?: string;
 }
 
-interface StaffUtilization {
-  staffId: string;
-  staffName: string;
-  utilization: number;
-}
-
 interface AgendaContextBarProps {
   quickStats?: QuickStats | null;
-  staffUtilization: StaffUtilization[];
-  staffList: Staff[];
-  selectedStaffId: string | null;
-  onStaffChange: (staffId: string | null) => void;
-  viewMode: "day" | "week" | "month" | "list";
+  viewMode?: "day" | "week" | "month" | "list";
+  // Deprecated props - kept for backwards compatibility
+  staffUtilization?: unknown[];
+  staffList?: unknown[];
+  selectedStaffId?: string | null;
+  onStaffChange?: (staffId: string | null) => void;
 }
 
 /**
@@ -33,7 +25,6 @@ interface AgendaContextBarProps {
  */
 export function AgendaContextBar({
   quickStats,
-  viewMode,
 }: AgendaContextBarProps) {
   const hasStats = quickStats && (quickStats.totalBookings > 0 || quickStats.totalHours > 0 || quickStats.totalAmount > 0);
 
@@ -43,7 +34,7 @@ export function AgendaContextBar({
   }
 
   return (
-    <div className="flex-shrink-0 px-4 py-3 border-b border-white/5 bg-white/[0.02]">
+    <div className="flex-shrink-0 px-4 py-3 border-b border-white/5">
       <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide">
         {/* Bookings count */}
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5">
