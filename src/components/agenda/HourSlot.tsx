@@ -3,7 +3,6 @@
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { motion } from "framer-motion";
 
 interface HourSlotProps {
   hour: number;
@@ -15,95 +14,44 @@ interface HourSlotProps {
 }
 
 /**
- * Componente premium para representar una hora en el timeline de la agenda
- * Con indicador visual de hora actual y diseño glassmórfico
+ * Hour slot component for the timeline
+ * Shows hour label and content area for bookings
  */
 export function HourSlot({ hour, children, density = "default", className, isCurrentHour = false, hourHeight }: HourSlotProps) {
   const hourLabel = format(new Date().setHours(hour, 0, 0, 0), "HH:mm");
-  const verticalPadding = density === "ultra-compact" ? 8 : density === "compact" ? 12 : 16;
   const textSize = density === "ultra-compact" ? "text-[10px]" : density === "compact" ? "text-xs" : "text-sm";
   
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.2, delay: hour * 0.01 }}
+    <div
       className={cn(
-        "flex gap-4 transition-all duration-200 relative",
-        isCurrentHour
-          ? "bg-blue-500/5"
-          : "hover:bg-slate-50/60 dark:hover:bg-slate-900/40",
+        "flex gap-2 relative",
+        isCurrentHour ? "bg-[#4FE3C1]/5" : "",
         className
       )}
-      style={{
-        height: `${hourHeight}px`,
-        paddingTop: `${verticalPadding}px`,
-        paddingBottom: `${verticalPadding}px`
-      }}
+      style={{ height: `${hourHeight}px` }}
     >
-      {/* Hour label */}
-      <div className="relative flex-shrink-0 w-16">
+      {/* Hour label - fixed width column */}
+      <div className="flex-shrink-0 w-14 pt-1">
         <div
           className={cn(
-            "font-mono font-semibold text-right transition-colors duration-200",
-            isCurrentHour
-              ? "text-blue-600 dark:text-blue-400"
-              : "text-slate-500 dark:text-slate-400",
+            "font-mono font-medium text-right pr-2 transition-colors",
+            isCurrentHour ? "text-[#4FE3C1]" : "text-white/30",
             textSize
           )}
         >
           {hourLabel}
         </div>
-
-        {/* Current hour indicator */}
-        {isCurrentHour && (
-          <motion.div
-            layoutId="current-hour-indicator"
-            className="absolute -right-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-blue-500 shadow-lg shadow-blue-500/50"
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [1, 0.8, 1]
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-        )}
       </div>
 
-      {/* Content area */}
+      {/* Content area - for bookings */}
       <div className="flex-1 min-h-0 relative">
-        {/* Content */}
-        <div className="relative z-10">
-          {children ? (
-            <div>
-              {children}
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full min-h-[40px]">
-              <div className="w-full h-px bg-slate-200/20 dark:bg-slate-700/20" />
-            </div>
-          )}
-        </div>
-
-        {/* Current hour highlight effect */}
-        {isCurrentHour && (
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/10 to-transparent pointer-events-none"
-            animate={{
-              opacity: [0, 0.5, 0],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
+        {children && (
+          <div className="relative z-10">
+            {children}
+          </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }
 
