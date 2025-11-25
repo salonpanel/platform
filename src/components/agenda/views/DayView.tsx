@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useCallback } from "react";
 import { Staff, Booking, StaffBlocking, StaffSchedule } from "@/types/agenda";
 import { TimeColumn } from "../core/TimeColumn";
 import { StaffColumn } from "../core/StaffColumn";
@@ -71,9 +71,10 @@ export function DayView({
 
   // Scroll synchronization
   const columnRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const staffListLength = useMemo(() => staffList?.length || 0, [staffList?.length]);
   const columnElements = useMemo(() => {
     return Array.from(columnRefs.current.values());
-  }, [staffList?.length || 0]);
+  }, [staffListLength]);
 
   useScrollSyncManager({
     columns: columnElements,

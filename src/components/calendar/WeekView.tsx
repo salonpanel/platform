@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { format, startOfWeek, addDays, parseISO, isSameDay, startOfToday } from "date-fns";
 import { BookingCard } from "@/components/agenda/BookingCard";
 import { toTenantLocalDate, formatInTenantTz } from "@/lib/timezone";
@@ -22,10 +22,10 @@ export function WeekView({
   timezone,
   onBookingClick,
 }: WeekViewProps) {
-  const weekStart = startOfWeek(parseISO(selectedDate), { weekStartsOn: 1 }); // Lunes
+  const weekStart = useMemo(() => startOfWeek(parseISO(selectedDate), { weekStartsOn: 1 }), [selectedDate]);
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
-  const hours = Array.from({ length: 14 }, (_, i) => i + 8); // 8:00 - 21:00
-  const today = startOfToday();
+  const hours = useMemo(() => Array.from({ length: 14 }, (_, i) => i + 8), []);
+  const today = useMemo(() => startOfToday(), []);
 
   // Agrupar bookings por día usando useMemo para mejor performance
   const bookingsByDay = useMemo(() => {
@@ -49,12 +49,12 @@ export function WeekView({
     return map;
   }, [bookings, weekDays, timezone]);
 
-  const getBookingsForDay = (day: Date) => {
+  const getBookingsForDay = useCallback((day: Date) => {
     const dayKey = format(day, "yyyy-MM-dd");
     return bookingsByDay.get(dayKey) || [];
-  };
+  }, [bookingsByDay]);
 
-  const getBookingPosition = (booking: Booking) => {
+  const getBookingPosition = useCallback((booking: Booking) => {
     const start = new Date(booking.starts_at);
     const end = new Date(booking.ends_at);
     
@@ -70,7 +70,7 @@ export function WeekView({
     const height = (duration / 13) * 100;
 
     return { top: `${top}%`, height: `${height}%` };
-  };
+  }, [timezone]);
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden bg-[#0B0C10] relative p-4" role="region" aria-label="Vista semanal de reservas">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import React from "react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
@@ -58,15 +58,17 @@ export function ListView({
   }, [sortedBookings, timezone]);
 
   // Estado vacío mejorado
+  const emptyStateProps = useMemo(() => ({
+    initial: { opacity: 0, y: 12 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.2, ease: "easeOut" as const },
+  }), []);
+
   if (sortedBookings.length === 0) {
     const isEmptySearch = searchTerm.trim().length > 0;
     return (
       <motion.div
-        {...getMotionSafeProps({
-          initial: { opacity: 0, y: 12 },
-          animate: { opacity: 1, y: 0 },
-          transition: { duration: 0.2, ease: "easeOut" },
-        })}
+        {...getMotionSafeProps(emptyStateProps)}
         className="flex items-center justify-center h-full p-6"
       >
         <div className="bg-[var(--glass-bg-default)] border border-[var(--glass-border)] backdrop-blur-md rounded-[var(--radius-xl)] p-6 text-center shadow-[var(--shadow-premium)]">

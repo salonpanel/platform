@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, startOfToday } from "date-fns";
 import { parseISO } from "date-fns";
 import { BookingCard } from "@/components/agenda/BookingCard";
@@ -26,25 +26,25 @@ export function MonthView({
   onBookingClick,
   timezone = "Europe/Madrid",
 }: MonthViewProps) {
-  const currentDate = parseISO(selectedDate);
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const calendarStart = startOfMonth(currentDate);
-  const calendarEnd = endOfMonth(currentDate);
-  const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
-  const today = startOfToday();
+  const currentDate = useMemo(() => parseISO(selectedDate), [selectedDate]);
+  const monthStart = useMemo(() => startOfMonth(currentDate), [currentDate]);
+  const monthEnd = useMemo(() => endOfMonth(currentDate), [currentDate]);
+  const days = useMemo(() => eachDayOfInterval({ start: monthStart, end: monthEnd }), [monthStart, monthEnd]);
+  const today = useMemo(() => startOfToday(), []);
 
   // Añadir días del mes anterior/siguiente para completar la semana
-  const firstDayOfWeek = calendarStart.getDay();
-  const lastDayOfWeek = calendarEnd.getDay();
-  const daysBefore = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1; // Lunes = 0
-  const daysAfter = 7 - (lastDayOfWeek === 0 ? 7 : lastDayOfWeek);
-
-  const allDays: (Date | null)[] = useMemo(() => [
-    ...Array(daysBefore).fill(null),
-    ...days,
-    ...Array(daysAfter).fill(null),
-  ], [daysBefore, days, daysAfter]);
+  const allDays: (Date | null)[] = useMemo(() => {
+    const firstDayOfWeek = monthStart.getDay();
+    const lastDayOfWeek = monthEnd.getDay();
+    const daysBefore = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1; // Lunes = 0
+    const daysAfter = 7 - (lastDayOfWeek === 0 ? 7 : lastDayOfWeek);
+    
+    return [
+      ...Array(daysBefore).fill(null),
+      ...days,
+      ...Array(daysAfter).fill(null),
+    ];
+  }, [monthStart, monthEnd, days]);
 
   // Agrupar bookings por día usando useMemo para mejor performance
   const bookingsByDay = useMemo(() => {
@@ -77,28 +77,28 @@ export function MonthView({
     return map;
   }, [bookings, days, timezone]);
 
-  const getBookingsForDay = (day: Date | null) => {
+  const getBookingsForDay = useCallback((day: Date | null) => {
     if (!day) return [];
     const dayKey = format(day, "yyyy-MM-dd");
     return bookingsByDay.get(dayKey) || [];
-  };
+  }, [bookingsByDay]);
 
   // Obtener iniciales del cliente o nombre corto
-  const getCustomerInitial = (name: string | null | undefined): string => {
+  const getCustomerInitial = useCallback((name: string | null | undefined): string => {
     if (!name) return "?";
     const parts = name.trim().split(" ");
     if (parts.length >= 2) {
       return (parts[0][0] + parts[1][0]).toUpperCase().slice(0, 2);
     }
     return name.slice(0, 2).toUpperCase();
-  };
+  }, []);
 
-  const navigateMonth = (direction: "prev" | "next") => {
+  const navigateMonth = useMemo(() => (direction: "prev" | "next") => {
     const newDate = direction === "next" 
       ? addMonths(currentDate, 1)
       : subMonths(currentDate, 1);
     onDateSelect(format(newDate, "yyyy-MM-dd"));
-  };
+  }, [currentDate, onDateSelect]);
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden bg-[#0B0C10] relative p-4" role="region" aria-label="Vista mensual de reservas">
