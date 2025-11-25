@@ -14,6 +14,7 @@ interface AgendaTopBarProps {
   onViewModeChange: (mode: ViewMode) => void;
   onSearchClick: () => void;
   onNotificationsClick: () => void;
+  unreadNotifications?: number;
   onFiltersClick?: () => void;
 }
 
@@ -28,6 +29,7 @@ export function AgendaTopBar({
   onViewModeChange,
   onSearchClick,
   onNotificationsClick,
+  unreadNotifications = 0,
   onFiltersClick,
 }: AgendaTopBarProps) {
   const viewModes: { key: ViewMode; label: string }[] = [
@@ -145,10 +147,20 @@ export function AgendaTopBar({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onNotificationsClick}
-              className="h-10 w-10 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all flex items-center justify-center"
+              className="relative h-10 w-10 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all flex items-center justify-center"
               aria-label="Notificaciones"
             >
               <Bell className="h-4 w-4 text-white/80" />
+              {unreadNotifications > 0 && (
+                <motion.span
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 18 }}
+                  className="absolute -top-1 -right-1 h-5 min-w-[1.1rem] px-1 rounded-full bg-gradient-to-r from-[#4FE3C1] to-[#3A6DFF] text-[10px] font-semibold text-[#0E0F11] shadow-[0_6px_16px_rgba(58,109,255,0.4)] flex items-center justify-center"
+                >
+                  {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                </motion.span>
+              )}
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.02 }}

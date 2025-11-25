@@ -9,6 +9,7 @@ import { AgendaContextBar } from "@/components/agenda/AgendaContextBar";
 import { AgendaContent } from "@/components/agenda/AgendaContent";
 import { AgendaSidebar } from "@/components/calendar/AgendaSidebar";
 import { NotificationProvider, useNotificationActions } from "./NotificationSystem";
+import { AgendaFilters } from "./AgendaFilters";
 
 // Types for the data coming from useAgendaData hook
 interface QuickStats {
@@ -62,6 +63,8 @@ interface AgendaContainerProps {
   onNewBooking: () => void;
   onBookingDrag?: (bookingId: string, newTime: string, newStaffId?: string) => Promise<void>;
   onBookingResize?: (bookingId: string, newEndTime: string) => Promise<void>;
+  onNotificationsToggle: () => void;
+  unreadNotifications?: number;
 
   // UI state
   searchOpen: boolean;
@@ -109,6 +112,8 @@ export function AgendaContainer({
   onNewBooking,
   onBookingDrag,
   onBookingResize,
+  onNotificationsToggle,
+  unreadNotifications = 0,
   searchOpen,
   onSearchToggle,
   onSearchClose,
@@ -223,9 +228,32 @@ export function AgendaContainer({
               onDateChange={onDateChange}
               onViewModeChange={onViewModeChange}
               onSearchClick={onSearchToggle}
-              onNotificationsClick={() => {}}
+              onNotificationsClick={onNotificationsToggle}
+              unreadNotifications={unreadNotifications}
               onFiltersClick={() => setSidebarOpen(true)}
             />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.16, delay: 0.04 }}
+            className="rounded-2xl border border-white/8 bg-[#15171A]/80 backdrop-blur-xl shadow-[0_12px_50px_rgba(0,0,0,0.35)]"
+          >
+            <div className="px-4 lg:px-6 py-4">
+              <AgendaFilters
+                staffList={staffList}
+                selectedStaffId={selectedStaffId}
+                onStaffChange={onStaffChange}
+                searchOpen={searchOpen}
+                searchTerm={searchTerm}
+                onSearchToggle={onSearchToggle}
+                onSearchChange={setSearchTerm}
+                onSearchClose={onSearchClose}
+                activeFilters={activeFilters}
+                onResetFilters={handleResetFilters}
+              />
+            </div>
           </motion.div>
 
           <div className="grid lg:grid-cols-[minmax(0,1fr)_340px] gap-6 items-start">
