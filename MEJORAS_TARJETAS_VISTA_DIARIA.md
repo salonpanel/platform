@@ -44,9 +44,9 @@ Se ha rediseñado completamente el componente `AppointmentCard.tsx` utilizado en
 - Todo lo anterior +
 - Badge de estado con color codificado:
   - Pendiente: Amarillo/Ámbar
-  - Confirmado: Verde/Aqua
-  - Pagado: Azul/Cyan
-  - Completado: Azul cielo
+  - En espera (hold): Amarillo/Ámbar
+  - Pagado: Azul
+  - Completado: Azul
   - Cancelado: Rojo
   - No asistió: Rosa
 

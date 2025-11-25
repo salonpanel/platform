@@ -19,13 +19,12 @@ interface AppointmentCardProps {
 // Status color mapping
 const getStatusColor = (status: string) => {
   const colors: Record<string, string> = {
+    hold: "#FFC107",
     pending: "#FFC107",
-    confirmed: "#4FE3C1",
     paid: "#3A6DFF",
     completed: "#3A6DFF",
     cancelled: "#EF4444",
-    "no-show": "#FF6DA3",
-    "no_show": "#FF6DA3",
+    no_show: "#FF6DA3",
   };
   return colors[status] || colors.pending;
 };
@@ -162,11 +161,10 @@ export const AppointmentCard = React.memo(function AppointmentCard({
             }}
           >
             {booking.status === "pending" && "Pendiente"}
-            {booking.status === "confirmed" && "Confirmado"}
+            {booking.status === "hold" && "En espera"}
             {booking.status === "paid" && "Pagado"}
             {booking.status === "completed" && "Completado"}
             {booking.status === "cancelled" && "Cancelado"}
-            {booking.status === "no-show" && "No asistió"}
             {booking.status === "no_show" && "No asistió"}
           </div>
         )}
