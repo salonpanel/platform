@@ -60,3 +60,4 @@ supabase/.temp
 *.swo
 
 .vercel
+.env.local
