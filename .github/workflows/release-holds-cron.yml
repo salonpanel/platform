@@ -1,0 +1,32 @@
+name: Release Expired Holds
+
+on:
+  schedule:
+    # Ejecutar cada 5 minutos
+    - cron: '*/5 * * * *'
+  # Permitir ejecución manual desde GitHub
+  workflow_dispatch:
+
+jobs:
+  release-holds:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Call release-holds endpoint
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            "${{ secrets.VERCEL_URL }}/api/internal/cron/release-holds?key=${{ secrets.INTERNAL_CRON_KEY }}")
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n-1)
+          
+          echo "HTTP Status: $http_code"
+          echo "Response: $body"
+          
+          if [ "$http_code" != "200" ]; then
+            echo "Error: Cron job failed with status $http_code"
+            exit 1
+          fi
+        env:
+          VERCEL_URL: ${{ secrets.VERCEL_URL }}
+          INTERNAL_CRON_KEY: ${{ secrets.INTERNAL_CRON_KEY }}

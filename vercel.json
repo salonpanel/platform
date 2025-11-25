@@ -1,10 +1,6 @@
 {
   "crons": [
     {
-      "path": "/api/internal/cron/release-holds",
-      "schedule": "0 */6 * * *"
-    },
-    {
       "path": "/api/internal/cron/calculate-metrics",
       "schedule": "0 2 * * *"
     }
