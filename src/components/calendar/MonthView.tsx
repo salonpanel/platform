@@ -26,17 +26,24 @@ export function MonthView({
   onBookingClick,
   timezone = "Europe/Madrid",
 }: MonthViewProps) {
-  const currentDate = useMemo(() => parseISO(selectedDate), [selectedDate]);
-  const monthStart = useMemo(() => startOfMonth(currentDate), [currentDate]);
-  const monthEnd = useMemo(() => endOfMonth(currentDate), [currentDate]);
-  const days = useMemo(() => eachDayOfInterval({ start: monthStart, end: monthEnd }), [monthStart, monthEnd]);
+  // Usar solo selectedDate como dependencia primitiva
+  const days = useMemo(() => {
+    const currentDate = parseISO(selectedDate);
+    const monthStart = startOfMonth(currentDate);
+    const monthEnd = endOfMonth(currentDate);
+    return eachDayOfInterval({ start: monthStart, end: monthEnd });
+  }, [selectedDate]);
+
   const today = useMemo(() => startOfToday(), []);
 
   // Añadir días del mes anterior/siguiente para completar la semana
   const allDays: (Date | null)[] = useMemo(() => {
+    if (days.length === 0) return [];
+    const monthStart = startOfMonth(days[0]);
+    const monthEnd = endOfMonth(days[days.length - 1]);
     const firstDayOfWeek = monthStart.getDay();
     const lastDayOfWeek = monthEnd.getDay();
-    const daysBefore = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1; // Lunes = 0
+    const daysBefore = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
     const daysAfter = 7 - (lastDayOfWeek === 0 ? 7 : lastDayOfWeek);
     
     return [
@@ -44,7 +51,7 @@ export function MonthView({
       ...days,
       ...Array(daysAfter).fill(null),
     ];
-  }, [monthStart, monthEnd, days]);
+  }, [days]);
 
   // Agrupar bookings por día usando useMemo para mejor performance
   const bookingsByDay = useMemo(() => {
@@ -93,12 +100,13 @@ export function MonthView({
     return name.slice(0, 2).toUpperCase();
   }, []);
 
-  const navigateMonth = useMemo(() => (direction: "prev" | "next") => {
+  const navigateMonth = useCallback((direction: "prev" | "next") => {
+    const currentDate = parseISO(selectedDate);
     const newDate = direction === "next" 
       ? addMonths(currentDate, 1)
       : subMonths(currentDate, 1);
     onDateSelect(format(newDate, "yyyy-MM-dd"));
-  }, [currentDate, onDateSelect]);
+  }, [selectedDate, onDateSelect]);
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden bg-[#0B0C10] relative p-4" role="region" aria-label="Vista mensual de reservas">
@@ -130,7 +138,7 @@ export function MonthView({
               "text-lg font-semibold tracking-tight",
               "text-[var(--text-primary)] font-[var(--font-heading)]"
             )}>
-              {new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric" }).format(currentDate)}
+              {new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric" }).format(parseISO(selectedDate))}
             </h3>
             <motion.button
               {...getMotionSafeProps({
@@ -169,8 +177,8 @@ export function MonthView({
           {/* Días del mes */}
           {allDays.map((day, idx) => {
             const dayBookings = getBookingsForDay(day);
-            const isCurrentMonth = day ? isSameMonth(day, currentDate) : false;
-            const isSelected = day ? isSameDay(day, currentDate) : false;
+            const isCurrentMonth = day ? isSameMonth(day, parseISO(selectedDate)) : false;
+            const isSelected = day ? isSameDay(day, parseISO(selectedDate)) : false;
             const isTodayDate = day ? isSameDay(day, today) : false;
 
             return (

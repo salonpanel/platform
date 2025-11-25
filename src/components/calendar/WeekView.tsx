@@ -22,14 +22,21 @@ export function WeekView({
   timezone,
   onBookingClick,
 }: WeekViewProps) {
-  const weekStart = useMemo(() => startOfWeek(parseISO(selectedDate), { weekStartsOn: 1 }), [selectedDate]);
-  const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
+  // Simplificar y usar solo selectedDate como dependencia
+  const weekDays = useMemo(() => {
+    const weekStart = startOfWeek(parseISO(selectedDate), { weekStartsOn: 1 });
+    return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  }, [selectedDate]);
+  
   const hours = useMemo(() => Array.from({ length: 14 }, (_, i) => i + 8), []);
   const today = useMemo(() => startOfToday(), []);
 
   // Agrupar bookings por día usando useMemo para mejor performance
   const bookingsByDay = useMemo(() => {
     const map = new Map<string, Booking[]>();
+    const weekStart = startOfWeek(parseISO(selectedDate), { weekStartsOn: 1 });
+    const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+    
     weekDays.forEach((day) => {
       const dayKey = format(day, "yyyy-MM-dd");
       map.set(dayKey, []);
@@ -47,7 +54,7 @@ export function WeekView({
     }
 
     return map;
-  }, [bookings, weekDays, timezone]);
+  }, [bookings, selectedDate, timezone]);
 
   const getBookingsForDay = useCallback((day: Date) => {
     const dayKey = format(day, "yyyy-MM-dd");
