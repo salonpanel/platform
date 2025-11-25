@@ -42,9 +42,6 @@ export default function RootLayout({
       </head>
       <body
         className="antialiased"
-        style={{ 
-          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        }}
         suppressHydrationWarning
       >
         <SupabaseProvider>{children}</SupabaseProvider>
