@@ -208,15 +208,13 @@ export function AgendaContainer({
 
   return (
     <NotificationProvider position="top-right" maxNotifications={3}>
-      <div className="min-h-screen bg-[#0E0F11] text-white relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(58,109,255,0.08),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(79,227,193,0.08),transparent_30%)]" />
-
-        <main className="relative z-10 max-w-7xl mx-auto px-4 lg:px-10 py-8 space-y-6">
+      <div className="h-full flex flex-col text-white">
+        {/* Header section - fixed, no background box */}
+        <div className="flex-shrink-0 space-y-3 pb-3">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.18 }}
-            className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
           >
             <AgendaTopBar
               selectedDate={selectedDate}
@@ -234,84 +232,79 @@ export function AgendaContainer({
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.16, delay: 0.04 }}
-            className="rounded-2xl border border-white/8 bg-[#15171A]/80 backdrop-blur-xl shadow-[0_12px_50px_rgba(0,0,0,0.35)]"
           >
-            <div className="px-4 lg:px-6 py-4">
-              <AgendaFilters
-                staffList={staffList}
-                selectedStaffId={selectedStaffId}
-                onStaffChange={onStaffChange}
-                searchOpen={searchOpen}
-                searchTerm={searchTerm}
-                onSearchToggle={onSearchToggle}
-                onSearchChange={setSearchTerm}
-                onSearchClose={onSearchClose}
-                activeFilters={activeFilters}
-                onResetFilters={handleResetFilters}
+            <AgendaFilters
+              staffList={staffList}
+              selectedStaffId={selectedStaffId}
+              onStaffChange={onStaffChange}
+              searchOpen={searchOpen}
+              searchTerm={searchTerm}
+              onSearchToggle={onSearchToggle}
+              onSearchChange={setSearchTerm}
+              onSearchClose={onSearchClose}
+              activeFilters={activeFilters}
+              onResetFilters={handleResetFilters}
+            />
+          </motion.div>
+        </div>
+
+        {/* Main content area - flex-1 to fill remaining space */}
+        <div className="flex-1 min-h-0 grid lg:grid-cols-[minmax(0,1fr)_280px] gap-4">
+          {/* Main calendar area with scrollable content */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, delay: 0.05 }}
+            className="flex flex-col min-h-0 overflow-hidden"
+          >
+            {/* Day summary stats - compact bar above calendar */}
+            <AgendaContextBar quickStats={quickStats} />
+            
+            {/* Scrollable calendar content */}
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <AgendaContent
+                viewMode={viewMode}
+                onViewModeChange={onViewModeChange}
+                selectedDate={selectedDate}
+                onDateChange={onDateChange}
+                bookings={filteredBookings}
+                staffList={visibleStaff}
+                loading={loading}
+                error={error}
+                tenantTimezone={tenantTimezone}
+                onBookingClick={onBookingClick}
+                onNewBooking={onNewBooking}
+                density={density}
+                timeFormatter={timeFormatter}
+                onBookingDrag={handleBookingDrag}
+                onBookingResize={handleBookingResize}
+                enableDragDrop={enableDragDrop}
+                showConflicts={showConflicts}
+                notificationActions={{ info, warning }}
               />
             </div>
           </motion.div>
 
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_300px] gap-6 items-start">
-            {/* Main calendar area with fixed header and scrollable content */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, delay: 0.05 }}
-              className="rounded-2xl border border-white/8 bg-[#15171A]/90 overflow-hidden flex flex-col"
-              style={{ maxHeight: 'calc(100vh - 260px)' }}
-            >
-              {/* Day summary stats - compact bar above calendar */}
-              <AgendaContextBar quickStats={quickStats} />
-              
-              {/* Scrollable calendar content */}
-              <div className="flex-1 overflow-y-auto">
-                <AgendaContent
-                  viewMode={viewMode}
-                  onViewModeChange={onViewModeChange}
-                  selectedDate={selectedDate}
-                  onDateChange={onDateChange}
-                  bookings={filteredBookings}
-                  staffList={visibleStaff}
-                  loading={loading}
-                  error={error}
-                  tenantTimezone={tenantTimezone}
-                  onBookingClick={onBookingClick}
-                  onNewBooking={onNewBooking}
-                  density={density}
-                  timeFormatter={timeFormatter}
-                  onBookingDrag={handleBookingDrag}
-                  onBookingResize={handleBookingResize}
-                  enableDragDrop={enableDragDrop}
-                  showConflicts={showConflicts}
-                  notificationActions={{ info, warning }}
-                />
-              </div>
-            </motion.div>
-
-            {/* Sidebar - simplified */}
-            <motion.aside
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, delay: 0.1 }}
-              className="lg:sticky lg:top-8"
-            >
-              <div className="rounded-2xl border border-white/8 bg-[#15171A]/85 overflow-hidden">
-                <AgendaSidebar
-                  selectedDate={selectedDate}
-                  onDateSelect={onDateChange}
-                  filters={filters}
-                  onFiltersChange={setFilters}
-                  staffList={[]}
-                  showFreeSlots={false}
-                  isOpen={sidebarOpen}
-                  onOpen={() => setSidebarOpen(true)}
-                  onClose={() => setSidebarOpen(false)}
-                />
-              </div>
-            </motion.aside>
-          </div>
-        </main>
+          {/* Sidebar - hidden on mobile, shown on desktop */}
+          <motion.aside
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, delay: 0.1 }}
+            className="hidden lg:block min-h-0 overflow-y-auto"
+          >
+            <AgendaSidebar
+              selectedDate={selectedDate}
+              onDateSelect={onDateChange}
+              filters={filters}
+              onFiltersChange={setFilters}
+              staffList={[]}
+              showFreeSlots={false}
+              isOpen={sidebarOpen}
+              onOpen={() => setSidebarOpen(true)}
+              onClose={() => setSidebarOpen(false)}
+            />
+          </motion.aside>
+        </div>
       </div>
     </NotificationProvider>
   );
