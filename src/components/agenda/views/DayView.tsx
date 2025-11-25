@@ -32,10 +32,10 @@ interface DayViewProps {
 }
 
 export function DayView({
-  bookings,
-  staffBlockings,
-  staffList,
-  staffSchedules,
+  bookings = [],
+  staffBlockings = [],
+  staffList = [],
+  staffSchedules = [],
   selectedDate,
   timezone,
   showFreeSlots = false,
@@ -73,7 +73,7 @@ export function DayView({
   const columnRefs = useRef<Map<string, HTMLElement>>(new Map());
   const columnElements = useMemo(() => {
     return Array.from(columnRefs.current.values());
-  }, [staffList.length]);
+  }, [staffList?.length || 0]);
 
   useScrollSyncManager({
     columns: columnElements,
@@ -83,30 +83,38 @@ export function DayView({
   // Group data by staff
   const bookingsByStaff = useMemo(() => {
     const map = new Map<string, Booking[]>();
-    staffList.forEach((staff) => {
-      map.set(staff.id, []);
-    });
+    if (staffList && Array.isArray(staffList)) {
+      staffList.forEach((staff) => {
+        map.set(staff.id, []);
+      });
+    }
 
-    bookings.forEach((booking) => {
-      if (booking.staff_id && map.has(booking.staff_id)) {
-        map.get(booking.staff_id)!.push(booking);
-      }
-    });
+    if (bookings && Array.isArray(bookings)) {
+      bookings.forEach((booking) => {
+        if (booking.staff_id && map.has(booking.staff_id)) {
+          map.get(booking.staff_id)!.push(booking);
+        }
+      });
+    }
 
     return map;
   }, [bookings, staffList]);
 
   const blockingsByStaff = useMemo(() => {
     const map = new Map<string, StaffBlocking[]>();
-    staffList.forEach((staff) => {
-      map.set(staff.id, []);
-    });
+    if (staffList && Array.isArray(staffList)) {
+      staffList.forEach((staff) => {
+        map.set(staff.id, []);
+      });
+    }
 
-    staffBlockings.forEach((blocking) => {
-      if (blocking.staff_id && map.has(blocking.staff_id)) {
-        map.get(blocking.staff_id)!.push(blocking);
-      }
-    });
+    if (staffBlockings && Array.isArray(staffBlockings)) {
+      staffBlockings.forEach((blocking) => {
+        if (blocking.staff_id && map.has(blocking.staff_id)) {
+          map.get(blocking.staff_id)!.push(blocking);
+        }
+      });
+    }
 
     return map;
   }, [staffBlockings, staffList]);

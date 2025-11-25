@@ -20,7 +20,7 @@ interface MonthViewProps {
 }
 
 export function MonthView({
-  bookings,
+  bookings = [],
   selectedDate,
   onDateSelect,
   onBookingClick,
@@ -54,23 +54,25 @@ export function MonthView({
       map.set(dayKey, []);
     });
 
-    bookings.forEach((booking) => {
-      const bookingDate = new Date(booking.starts_at);
-      const localBookingDate = toTenantLocalDate(bookingDate, timezone);
-      const dayKey = format(localBookingDate, "yyyy-MM-dd");
-      if (map.has(dayKey)) {
-        map.get(dayKey)!.push(booking);
-      }
-    });
-
-    // Ordenar bookings por hora de inicio dentro de cada día
-    map.forEach((dayBookings) => {
-      dayBookings.sort((a, b) => {
-        const aTime = new Date(a.starts_at).getTime();
-        const bTime = new Date(b.starts_at).getTime();
-        return aTime - bTime;
+    if (bookings && Array.isArray(bookings)) {
+      bookings.forEach((booking) => {
+        const bookingDate = new Date(booking.starts_at);
+        const localBookingDate = toTenantLocalDate(bookingDate, timezone);
+        const dayKey = format(localBookingDate, "yyyy-MM-dd");
+        if (map.has(dayKey)) {
+          map.get(dayKey)!.push(booking);
+        }
       });
-    });
+
+      // Ordenar bookings por hora de inicio dentro de cada día
+      map.forEach((dayBookings) => {
+        dayBookings.sort((a, b) => {
+          const aTime = new Date(a.starts_at).getTime();
+          const bTime = new Date(b.starts_at).getTime();
+          return aTime - bTime;
+        });
+      });
+    }
 
     return map;
   }, [bookings, days, timezone]);

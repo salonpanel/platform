@@ -16,8 +16,8 @@ interface WeekViewProps {
 }
 
 export function WeekView({
-  bookings,
-  staffList,
+  bookings = [],
+  staffList = [],
   selectedDate,
   timezone,
   onBookingClick,
@@ -35,14 +35,16 @@ export function WeekView({
       map.set(dayKey, []);
     });
 
-    bookings.forEach((booking) => {
-      const bookingDate = new Date(booking.starts_at);
-      const localBookingDate = toTenantLocalDate(bookingDate, timezone);
-      const dayKey = format(localBookingDate, "yyyy-MM-dd");
-      if (map.has(dayKey)) {
-        map.get(dayKey)!.push(booking);
-      }
-    });
+    if (bookings && Array.isArray(bookings)) {
+      bookings.forEach((booking) => {
+        const bookingDate = new Date(booking.starts_at);
+        const localBookingDate = toTenantLocalDate(bookingDate, timezone);
+        const dayKey = format(localBookingDate, "yyyy-MM-dd");
+        if (map.has(dayKey)) {
+          map.get(dayKey)!.push(booking);
+        }
+      });
+    }
 
     return map;
   }, [bookings, weekDays, timezone]);

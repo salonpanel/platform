@@ -21,7 +21,7 @@ interface ListViewProps {
 }
 
 export function ListView({
-  bookings,
+  bookings = [],
   selectedDate,
   viewMode,
   timezone,
@@ -30,6 +30,7 @@ export function ListView({
 }: ListViewProps) {
   // Ordenar bookings por hora de inicio (por defecto: ascendente)
   const sortedBookings = useMemo(() => {
+    if (!bookings || !Array.isArray(bookings)) return [];
     return [...bookings].sort((a, b) => {
       return new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime();
     });
@@ -39,16 +40,18 @@ export function ListView({
   const bookingsByDate = useMemo(() => {
     const map = new Map<string, Booking[]>();
     
-    sortedBookings.forEach((booking) => {
-      const bookingDate = new Date(booking.starts_at);
-      const localBookingDate = toTenantLocalDate(bookingDate, timezone);
-      const dateKey = format(localBookingDate, "yyyy-MM-dd");
-      
-      if (!map.has(dateKey)) {
-        map.set(dateKey, []);
-      }
-      map.get(dateKey)!.push(booking);
-    });
+    if (sortedBookings && Array.isArray(sortedBookings)) {
+      sortedBookings.forEach((booking) => {
+        const bookingDate = new Date(booking.starts_at);
+        const localBookingDate = toTenantLocalDate(bookingDate, timezone);
+        const dateKey = format(localBookingDate, "yyyy-MM-dd");
+        
+        if (!map.has(dateKey)) {
+          map.set(dateKey, []);
+        }
+        map.get(dateKey)!.push(booking);
+      });
+    }
 
     // Convertir a array ordenado por fecha
     return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
