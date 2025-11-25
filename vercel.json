@@ -2,8 +2,7 @@
   "crons": [
     {
       "path": "/api/internal/cron/release-holds",
-      "schedule": "0 */6 * * *"  // Cada 6 horas
-      // O "0 0 * * *" para una vez al día
+      "schedule": "0 */6 * * *"
     },
     {
       "path": "/api/internal/cron/calculate-metrics",
