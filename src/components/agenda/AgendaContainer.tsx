@@ -7,7 +7,6 @@ import { Booking, Staff } from "@/types/agenda";
 import { AgendaTopBar } from "@/components/agenda/AgendaTopBar";
 import { AgendaContextBar } from "@/components/agenda/AgendaContextBar";
 import { AgendaContent } from "@/components/agenda/AgendaContent";
-import { AgendaSidebar } from "@/components/calendar/AgendaSidebar";
 import { NotificationProvider, useNotificationActions } from "./NotificationSystem";
 import { AgendaFilters } from "./AgendaFilters";
 
@@ -203,14 +202,11 @@ export function AgendaContainer({
     return filters;
   }, [selectedStaffId, staffList, onStaffChange]);
 
-  // UI state for sidebar (mobile drawer behavior)
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
   return (
     <NotificationProvider position="top-right" maxNotifications={3}>
       <div className="h-full flex flex-col">
         {/* Fixed Header Section */}
-        <div className="flex-shrink-0 space-y-4">
+        <div className="flex-shrink-0">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -224,7 +220,11 @@ export function AgendaContainer({
               onSearchClick={onSearchToggle}
               onNotificationsClick={onNotificationsToggle}
               unreadNotifications={unreadNotifications}
-              onFiltersClick={() => setSidebarOpen(true)}
+              staffList={staffList}
+              selectedStaffIds={selectedStaffId ? [selectedStaffId] : []}
+              onStaffFilterChange={(staffIds) => onStaffChange(staffIds.length > 0 ? staffIds[0] : null)}
+              filters={filters}
+              onFiltersChange={setFilters}
             />
           </motion.div>
 
@@ -248,66 +248,43 @@ export function AgendaContainer({
           </motion.div>
         </div>
 
-        {/* Scrollable Content Section */}
+        {/* Scrollable Content Section - Full width without sidebar */}
         <div className="flex-1 min-h-0 mt-4">
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_300px] gap-6 h-full">
-            {/* Main calendar area - fills available height */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, delay: 0.05 }}
-              className="flex flex-col h-full overflow-hidden"
-            >
-              {/* Day summary stats - compact bar above calendar */}
-              <div className="flex-shrink-0">
-                <AgendaContextBar quickStats={quickStats} />
-              </div>
-              
-              {/* Scrollable calendar content */}
-              <div className="flex-1 min-h-0 overflow-y-auto">
-                <AgendaContent
-                  viewMode={viewMode}
-                  onViewModeChange={onViewModeChange}
-                  selectedDate={selectedDate}
-                  onDateChange={onDateChange}
-                  bookings={filteredBookings}
-                  staffList={visibleStaff}
-                  loading={loading}
-                  error={error}
-                  tenantTimezone={tenantTimezone}
-                  onBookingClick={onBookingClick}
-                  onNewBooking={onNewBooking}
-                  density={density}
-                  timeFormatter={timeFormatter}
-                  onBookingDrag={handleBookingDrag}
-                  onBookingResize={handleBookingResize}
-                  enableDragDrop={enableDragDrop}
-                  showConflicts={showConflicts}
-                  notificationActions={{ info, warning }}
-                />
-              </div>
-            </motion.div>
-
-            {/* Sidebar - fills available height */}
-            <motion.aside
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, delay: 0.1 }}
-              className="hidden lg:flex flex-col h-full overflow-hidden"
-            >
-              <div className="flex-1 min-h-0 overflow-y-auto">
-                <AgendaSidebar
-                  selectedDate={selectedDate}
-                  onDateSelect={onDateChange}
-                  filters={filters}
-                  onFiltersChange={setFilters}
-                  isOpen={sidebarOpen}
-                  onOpen={() => setSidebarOpen(true)}
-                  onClose={() => setSidebarOpen(false)}
-                />
-              </div>
-            </motion.aside>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, delay: 0.05 }}
+            className="flex flex-col h-full overflow-hidden"
+          >
+            {/* Day summary stats - compact bar above calendar */}
+            <div className="flex-shrink-0">
+              <AgendaContextBar quickStats={quickStats} />
+            </div>
+            
+            {/* Scrollable calendar content */}
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <AgendaContent
+                viewMode={viewMode}
+                onViewModeChange={onViewModeChange}
+                selectedDate={selectedDate}
+                onDateChange={onDateChange}
+                bookings={filteredBookings}
+                staffList={visibleStaff}
+                loading={loading}
+                error={error}
+                tenantTimezone={tenantTimezone}
+                onBookingClick={onBookingClick}
+                onNewBooking={onNewBooking}
+                density={density}
+                timeFormatter={timeFormatter}
+                onBookingDrag={handleBookingDrag}
+                onBookingResize={handleBookingResize}
+                enableDragDrop={enableDragDrop}
+                showConflicts={showConflicts}
+                notificationActions={{ info, warning }}
+              />
+            </div>
+          </motion.div>
         </div>
       </div>
     </NotificationProvider>
