@@ -46,23 +46,33 @@ export function useAgendaData({
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [filters, setFilters] = useState<AgendaFilters>(() => {
+    const defaultFilters: AgendaFilters = {
+      payment: [],
+      status: [],
+      staff: [],
+      services: [],
+      highlighted: null,
+    };
+    
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("agenda_filters");
       if (saved) {
         try {
-          return JSON.parse(saved);
+          const parsed = JSON.parse(saved);
+          // Ensure all required fields exist with proper defaults
+          return {
+            payment: Array.isArray(parsed.payment) ? parsed.payment : [],
+            status: Array.isArray(parsed.status) ? parsed.status : [],
+            staff: Array.isArray(parsed.staff) ? parsed.staff : [],
+            services: Array.isArray(parsed.services) ? parsed.services : [],
+            highlighted: parsed.highlighted === true || parsed.highlighted === false ? parsed.highlighted : null,
+          };
         } catch {
           // Si hay error, usar valores por defecto
         }
       }
     }
-    return {
-      payment: [],
-      status: [],
-      staff: [],
-      services: [], // NUEVO
-      highlighted: null,
-    };
+    return defaultFilters;
   });
 
   // OPTIMIZACIÓN: Cargar datos críticos primero (staff) para mostrar UI rápidamente
