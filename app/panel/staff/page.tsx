@@ -131,7 +131,19 @@ function StaffContent() {
     setShowEditModal(true);
   };
 
-  const handleSaveStaff = async (staffData: Partial<Staff> & { createUser?: boolean; email?: string; userRole?: string }) => {
+  const handleSaveStaff = async (staffData: Partial<Staff> & { 
+    createUser?: boolean; 
+    email?: string; 
+    userRole?: string;
+    schedules?: Array<{
+      day_of_week: number;
+      start_time: string;
+      end_time: string;
+      is_active: boolean;
+    }>;
+    profile_photo_url?: string;
+    weekly_hours?: number;
+  }) => {
     if (!tenantId) return;
 
     setSaving(true);

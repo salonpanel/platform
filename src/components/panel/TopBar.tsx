@@ -29,6 +29,7 @@ export function TopBar({
 }: TopBarProps) {
   const supabase = getSupabaseBrowser();
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -40,6 +41,7 @@ export function TopBar({
       } = await supabase.auth.getUser();
       if (user) {
         setUserEmail(user.email || null);
+        setUserName(user.user_metadata?.full_name || null);
         setUserAvatar(user.user_metadata?.avatar_url || null);
       }
     };
@@ -118,7 +120,7 @@ export function TopBar({
             >
               <Avatar
                 src={userAvatar || undefined}
-                name={userEmail || undefined}
+                name={userName || userEmail || undefined}
                 size="sm"
                 className={cn(
                   "ring-2 ring-white/10",
@@ -158,13 +160,13 @@ export function TopBar({
                     <div className="flex items-start gap-3">
                       <Avatar
                         src={userAvatar || undefined}
-                        name={userEmail || undefined}
+                        name={userName || userEmail || undefined}
                         size="md"
                         className="ring-2 ring-white/10 flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-white/95 font-satoshi truncate">
-                          {userEmail?.split("@")[0] || "Usuario"}
+                          {userName || userEmail?.split("@")[0] || "Usuario"}
                         </p>
                         <p className="text-xs text-white/50 truncate mt-0.5 font-inter">
                           {userEmail || ""}
