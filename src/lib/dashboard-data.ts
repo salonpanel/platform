@@ -6,6 +6,16 @@ type TenantInfo = {
   timezone?: string | null;
 };
 
+export type UpcomingBooking = {
+  id: string;
+  starts_at: string;
+  ends_at: string | null;
+  status: string | null;
+  customer: { name: string | null; email: string | null } | null;
+  service: { name: string | null } | null;
+  staff: { name: string | null } | null;
+};
+
 type MetricRow = {
   metric_date: string;
   confirmed_bookings: number;
@@ -15,26 +25,28 @@ type MetricRow = {
   no_show_bookings: number;
 };
 
+export type DashboardKpis = {
+  bookingsToday: number;
+  activeServices: number;
+  activeStaff: number;
+  bookingsLast7Days: number[];
+  totalBookingsLast7Days: number;
+  totalBookingsLast30Days: number;
+  revenueToday: number;
+  revenueLast7Days: number;
+  revenueLast30Days: number;
+  noShowsLast7Days: number;
+  avgTicketLast7Days: number;
+};
+
 export type DashboardDataset = {
   tenant: {
     id: string;
     name: string;
     timezone: string;
   };
-  kpis: {
-    bookingsToday: number;
-    activeServices: number;
-    activeStaff: number;
-    bookingsLast7Days: number[];
-    totalBookingsLast7Days: number;
-    totalBookingsLast30Days: number;
-    revenueToday: number;
-    revenueLast7Days: number;
-    revenueLast30Days: number;
-    noShowsLast7Days: number;
-    avgTicketLast7Days: number;
-  };
-  upcomingBookings: any[];
+  kpis: DashboardKpis;
+  upcomingBookings: UpcomingBooking[];
 };
 
 export const EMPTY_DASHBOARD_KPIS: DashboardDataset["kpis"] = {
@@ -73,15 +85,9 @@ export async function fetchDashboardDataset(
   const [upcomingRes, metricsRes] = await Promise.all([
     supabase
       .from("bookings")
-      .select(`
-        id,
-        starts_at,
-        ends_at,
-        status,
-        customer:customers(name, email),
-        service:services(name),
-        staff:staff(name)
-      `)
+      .select(
+        `id, starts_at, ends_at, status, customer:customers(name, email), service:services(name), staff:staff(name)`
+      )
       .eq("tenant_id", tenant.id)
       .gte("starts_at", new Date().toISOString())
       .order("starts_at", { ascending: true })
@@ -95,6 +101,9 @@ export async function fetchDashboardDataset(
       .order("metric_date", { ascending: false })
       .limit(31),
   ]);
+
+  if (upcomingRes.error) throw upcomingRes.error;
+  if (metricsRes.error) throw metricsRes.error;
 
   const metrics: MetricRow[] = metricsRes.data || [];
   const metricsByDay = metrics.reduce((acc, row) => {
@@ -175,6 +184,22 @@ export async function fetchDashboardDataset(
     activeStaff = activeStaff ?? staffRes.count ?? 0;
   }
 
+  const upcomingBookings: UpcomingBooking[] = (upcomingRes.data || []).map(row => {
+    const customer = Array.isArray(row.customer) ? row.customer[0] : row.customer;
+    const service = Array.isArray(row.service) ? row.service[0] : row.service;
+    const staff = Array.isArray(row.staff) ? row.staff[0] : row.staff;
+
+    return {
+      id: row.id,
+      starts_at: row.starts_at,
+      ends_at: row.ends_at ?? null,
+      status: row.status ?? null,
+      customer: customer ? { name: customer?.name ?? null, email: customer?.email ?? null } : null,
+      service: service ? { name: service?.name ?? null } : null,
+      staff: staff ? { name: staff?.name ?? null } : null,
+    };
+  });
+
   return {
     tenant: {
       id: tenant.id,
@@ -194,6 +219,6 @@ export async function fetchDashboardDataset(
       noShowsLast7Days,
       avgTicketLast7Days,
     },
-    upcomingBookings: upcomingRes.data || [],
+    upcomingBookings,
   };
 }
