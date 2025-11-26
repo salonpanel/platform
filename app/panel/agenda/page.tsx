@@ -12,6 +12,7 @@ import { useAgendaConflicts } from "@/hooks/useAgendaConflicts";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { getBookingsNeedingStatusUpdate } from "@/lib/booking-status-transitions";
 import { useAgendaData } from "@/hooks/useAgendaData";
+import { useAgendaPageData } from "@/hooks/useOptimizedData";
 import { AgendaContainer } from "@/components/agenda/AgendaContainer";
 import { NewBookingModal } from "@/components/calendar/NewBookingModal";
 import { CustomerQuickView } from "@/components/calendar/CustomerQuickView";
@@ -95,14 +96,28 @@ export default function AgendaPage() {
   
   const { showToast, ToastComponent } = useToast();
 
-  // Hook para datos de la agenda (reemplaza estados locales)
+  // Hook optimizado que obtiene tenant + datos iniciales en UNA llamada
+  const impersonateOrgId = searchParams?.get("impersonate") || null;
+  const { data: pageData, isLoading: pageLoading, error: pageError } = useAgendaPageData(impersonateOrgId, selectedDate as string);
+
+  // Si la página optimizada nos devolvió datos, pasarlos como initialData al hook local para evitar refetch
   const agendaData = useAgendaData({
-    tenantId,
+    tenantId: pageData?.tenant?.id || tenantId,
     supabase,
     selectedDate,
     viewMode,
-    timezone: tenantTimezone,
+    timezone: pageData?.tenant?.timezone || tenantTimezone,
     userRole,
+    initialData: pageData
+      ? {
+          staff: pageData.staff,
+          services: pageData.services,
+          customers: pageData.customers,
+          bookings: pageData.bookings,
+          blockings: pageData.blockings,
+          schedules: pageData.schedules,
+        }
+      : undefined,
   });
 
   // Extraer datos del hook para usar en el componente
@@ -135,40 +150,35 @@ export default function AgendaPage() {
     tenantTimezone,
   });
 
-  // Cargar info del tenant (necesario para inicializar el hook useAgendaData)
+  // Cargar rol del usuario y sincronizar tenantId/timezone desde la carga optimizada
   useEffect(() => {
-    const loadTenant = async () => {
+    // If page-level data exists, initialize tenant fields from it
+    if (pageData?.tenant) {
+      setTenantId(pageData.tenant.id);
+      setTenantTimezone(pageData.tenant.timezone || "Europe/Madrid");
+    }
+
+    const loadUserRole = async () => {
       try {
-        const impersonateOrgId = searchParams?.get("impersonate");
-        const { tenant, role } = await getCurrentTenant(impersonateOrgId);
-
-        if (!tenant) {
-          return;
-        }
-
-        setTenantId(tenant.id);
-        setTenantTimezone(tenant.timezone);
-        setUserRole(role || null);
-
-        // Cargar rol del usuario en el tenant para gating de permisos
         const { data: authUser } = await supabase.auth.getUser();
         const currentUserId = authUser.user?.id || null;
-        if (currentUserId) {
+        if (currentUserId && pageData?.tenant?.id) {
           const { data: membership } = await supabase
             .from("memberships")
             .select("role")
-            .eq("tenant_id", tenant.id)
+            .eq("tenant_id", pageData.tenant.id)
             .eq("user_id", currentUserId)
             .maybeSingle();
           if (membership?.role) setUserRole(membership.role);
         }
       } catch (err) {
-        console.error("Error al cargar tenant:", err);
+        console.error("Error al cargar role de usuario:", err);
       }
     };
 
-    loadTenant();
-  }, [supabase, searchParams]);
+    loadUserRole();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageData, supabase]);
 
   // Transiciones automáticas de estado (paid -> completed cuando pasa la hora)
   useEffect(() => {
