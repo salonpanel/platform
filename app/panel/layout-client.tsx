@@ -17,6 +17,9 @@ import { PermissionsProvider, usePermissions } from "@/contexts/PermissionsConte
 import { usePrefetchRoutes, useSmartPrefetchData } from "@/hooks/usePrefetch";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
 import { useCacheWarmer } from "@/hooks/useCacheWarmer";
+import { BookingModalProvider } from "@/contexts/BookingModalContext";
+import { BookingCreateModal } from "@/modules/bookings/BookingCreateModal";
+import { BookingDetailModal } from "@/modules/bookings/BookingDetailModal";
 
 type TenantInfo = {
   id: string;
@@ -370,46 +373,52 @@ function PanelLayoutContent({ children, initialTenant, initialAuthStatus }: { ch
 
   return (
     <div className="flex h-screen bg-slate-950">
-      {/* Sidebar - Hidden on mobile */}
-      <div className="hidden md:block h-full">
-        <SidebarNav
-          items={navItems}
-          tenantName={tenant.name}
-          isOpen={sidebarOpen}
-          isCollapsed={sidebarCollapsed}
-          onClose={() => setSidebarOpen(false)}
-          onToggleCollapse={handleToggleSidebar}
-        />
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Impersonation Banner */}
-        {isImpersonating && (
-          <ImpersonationBanner
+      <BookingModalProvider>
+        {/* Sidebar - Hidden on mobile */}
+        <div className="hidden md:block h-full">
+          <SidebarNav
+            items={navItems}
             tenantName={tenant.name}
-            onEndImpersonation={handleExitImpersonation}
+            isOpen={sidebarOpen}
+            isCollapsed={sidebarCollapsed}
+            onClose={() => setSidebarOpen(false)}
+            onToggleCollapse={handleToggleSidebar}
           />
-        )}
+        </div>
 
-        {/* Top Bar */}
-        <TopBar
-          title={getPageTitle()}
-          tenantName={tenant.name}
-          userRole={userRole}
-          timezone={tenant.timezone}
-          onMenuClick={() => setSidebarOpen(!sidebarOpen)}
-          sidebarCollapsed={sidebarCollapsed}
-        />
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          {/* Impersonation Banner */}
+          {isImpersonating && (
+            <ImpersonationBanner
+              tenantName={tenant.name}
+              onEndImpersonation={handleExitImpersonation}
+            />
+          )}
 
-        {/* Page Content - Add bottom padding on mobile for bottom nav */}
-        <main className="flex-1 overflow-y-auto bg-slate-950 pb-16 md:pb-0">
-          <PageContainer>{children}</PageContainer>
-        </main>
-      </div>
+          {/* Top Bar */}
+          <TopBar
+            title={getPageTitle()}
+            tenantName={tenant.name}
+            userRole={userRole}
+            timezone={tenant.timezone}
+            onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+            sidebarCollapsed={sidebarCollapsed}
+          />
 
-      {/* Mobile Bottom Navigation - Only visible on mobile */}
-      <MobileBottomNav items={navItems} />
+          {/* Page Content - Add bottom padding on mobile for bottom nav */}
+          <main className="flex-1 overflow-y-auto bg-slate-950 pb-16 md:pb-0">
+            <PageContainer>{children}</PageContainer>
+          </main>
+        </div>
+
+        {/* Mobile Bottom Navigation - Only visible on mobile */}
+        <MobileBottomNav items={navItems} />
+
+        {/* Booking Modals */}
+        <BookingCreateModal />
+        <BookingDetailModal />
+      </BookingModalProvider>
     </div>
   );
 }

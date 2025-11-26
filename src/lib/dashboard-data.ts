@@ -43,6 +43,7 @@ export type DashboardKpis = {
   revenueLast30Days: number;
   noShowsLast7Days: number;
   avgTicketLast7Days: number;
+  bookingsLast30DaysByDay: number[];
 };
 
 export type DashboardDataset = {
@@ -64,10 +65,11 @@ export const EMPTY_DASHBOARD_KPIS: DashboardDataset["kpis"] = {
   revenueLast30Days: 0,
   noShowsLast7Days: 0,
   avgTicketLast7Days: 0,
+  bookingsLast30DaysByDay: Array(30).fill(0),
 };
 
 export function createEmptyDashboardKpis(): DashboardDataset["kpis"] {
-  return { ...EMPTY_DASHBOARD_KPIS, bookingsLast7Days: Array(7).fill(0) };
+  return { ...EMPTY_DASHBOARD_KPIS, bookingsLast7Days: Array(7).fill(0), bookingsLast30DaysByDay: Array(30).fill(0) };
 }
 
 export async function fetchDashboardDataset(
@@ -149,7 +151,7 @@ export async function fetchDashboardDataset(
     // 5. Reservas últimos 30 días - con precio del servicio
     supabase
       .from("bookings")
-      .select("id, status, service:services(price_cents)")
+      .select("id, starts_at, status, service:services(price_cents)")
       .eq("tenant_id", tenant.id)
       .gte("starts_at", thirtyDaysAgoISO)
       .not("status", "eq", "cancelled"),
@@ -208,6 +210,24 @@ export async function fetchDashboardDataset(
   
   const bookingsLast7Days = Object.values(bookingsByDay);
   const totalBookingsLast7Days = bookingsLast7DaysData.length;
+
+  // === KPI: Reservas últimos 30 días (por día) ===
+  const bookingsByDay30: Record<string, number> = {};
+  for (let i = 0; i < 30; i++) {
+    const date = new Date();
+    date.setDate(date.getDate() - (29 - i));
+    const key = date.toISOString().slice(0, 10);
+    bookingsByDay30[key] = 0;
+  }
+
+  for (const booking of bookingsLast30DaysData) {
+    const dateKey = booking.starts_at.slice(0, 10);
+    if (bookingsByDay30[dateKey] !== undefined) {
+      bookingsByDay30[dateKey]++;
+    }
+  }
+
+  const bookingsLast30DaysByDay = Object.values(bookingsByDay30);
 
   // === KPI: Ingresos últimos 7 días (solo completed/paid) - en centavos
   const revenueLast7Days = bookingsLast7DaysData
@@ -288,6 +308,7 @@ export async function fetchDashboardDataset(
       revenueLast30Days,
       noShowsLast7Days,
       avgTicketLast7Days,
+      bookingsLast30DaysByDay,
     },
     upcomingBookings,
     staffMembers,

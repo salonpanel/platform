@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, Suspense, ComponentType } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { MiniKPI } from "@/components/panel/MiniKPI";
 import { UpcomingAppointments } from "@/components/panel/UpcomingAppointments";
 import { MessagesWidget } from "@/components/panel/MessagesWidget";
@@ -30,6 +31,7 @@ import { useDashboardData } from "@/hooks/useOptimizedData";
 import { usePermissions } from "@/contexts/PermissionsContext";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { DashboardSkeleton } from "@/components/ui/Skeletons";
+import { useBookingModal } from "@/contexts/BookingModalContext";
 
 const QUICK_LINKS: {
   href: string;
@@ -80,6 +82,8 @@ type PanelHomeClientProps = {
 
 function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProps) {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { openCreate, openDetail } = useBookingModal();
   const [period, setPeriod] = useState<"today" | "week" | "month">("today");
   const [bookingsTab, setBookingsTab] = useState<"today" | "tomorrow" | "week">("today");
   const [performancePeriod, setPerformancePeriod] = useState<"7d" | "30d">("7d");
@@ -147,6 +151,15 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
 
   const tenantId = tenant?.id || null;
   const tenantTimezone = tenant?.timezone || "Europe/Madrid";
+  const shouldShowTimezone = tenantTimezone && tenantTimezone !== "Europe/Madrid";
+
+  // Helper para formatear moneda
+  const formatCurrency = (valueInCents: number) =>
+    new Intl.NumberFormat("es-ES", {
+      style: "currency",
+      currency: "EUR",
+      maximumFractionDigits: 2,
+    }).format(valueInCents / 100);
   const tenantName = tenant?.name || "Tu barbería";
 
   // Normalizar KPIs → use a defensive cast to support both legacy & full shapes
@@ -164,6 +177,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
     noShowsLast7Days: kp?.noShowsLast7Days ?? 0,
     avgTicketLast7Days: kp?.avgTicketLast7Days ?? 0,
     newClientsToday: kp?.newClientsToday ?? 0,
+    bookingsLast30DaysByDay: kp?.bookingsLast30DaysByDay ?? Array(30).fill(0),
   };
 
   // Transformar datos de reservas para compatibilidad con el componente
@@ -177,7 +191,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
     staff: Array.isArray(booking.staff) ? booking.staff[0] : booking.staff,
   }));
 
-  // 🔥 Filtrar reservas según el tab seleccionado
+  // Filtrar reservas según el tab seleccionado
   const filteredBookings = useMemo(() => {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -205,20 +219,77 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
   // Staff con datos reales
   const staffMembers = currentStaffMembers || [];
 
-  // 🔥 Calcular ocupación REAL basada en citas del staff
-  const totalOccupancy = useMemo(() => {
-    if (staffMembers.length === 0) return 0;
+  // === CÁLCULOS DE OCUPACIÓN POR PERIODO ===
+  // Ocupación basada en slots: cada staff tiene ~8 slots/día disponibles
+  const MAX_SLOTS_PER_STAFF_PER_DAY = 8;
+  
+  const occupancyCalculations = useMemo(() => {
+    const staffCount = staffMembers.length || 1;
     
-    // Sumar todas las citas de hoy de todos los staff
-    const totalBookingsToday = staffMembers.reduce((sum: number, staff: any) => 
+    // Ocupación HOY: citas de hoy / capacidad diaria
+    const totalBookingsTodayAllStaff = staffMembers.reduce((sum: number, staff: any) => 
       sum + (staff.bookingsToday || 0), 0);
+    const capacityToday = staffCount * MAX_SLOTS_PER_STAFF_PER_DAY;
+    const occupancyToday = capacityToday > 0 
+      ? Math.min(Math.round((totalBookingsTodayAllStaff / capacityToday) * 100), 100) 
+      : 0;
     
-    // Capacidad máxima: 8 citas por staff por día
-    const maxCapacity = staffMembers.length * 8;
+    // Ocupación SEMANA: reservas 7d / (7 días × capacidad diaria)
+    const capacityWeek = staffCount * MAX_SLOTS_PER_STAFF_PER_DAY * 7;
+    const occupancyWeek = capacityWeek > 0 
+      ? Math.min(Math.round((stats.totalBookingsLast7Days / capacityWeek) * 100), 100) 
+      : 0;
     
-    if (maxCapacity === 0) return 0;
-    return Math.min(Math.round((totalBookingsToday / maxCapacity) * 100), 100);
-  }, [staffMembers]);
+    // Ocupación MES: reservas 30d / (30 días × capacidad diaria)
+    const capacityMonth = staffCount * MAX_SLOTS_PER_STAFF_PER_DAY * 30;
+    const occupancyMonth = capacityMonth > 0 
+      ? Math.min(Math.round((stats.totalBookingsLast30Days / capacityMonth) * 100), 100) 
+      : 0;
+    
+    return { occupancyToday, occupancyWeek, occupancyMonth };
+  }, [staffMembers, stats.totalBookingsLast7Days, stats.totalBookingsLast30Days]);
+
+  // === CÁLCULOS DE TICKET MEDIO POR PERIODO ===
+  const ticketCalculations = useMemo(() => {
+    // Ticket hoy: ingresos hoy / reservas hoy
+    const avgTicketToday = stats.bookingsToday > 0 
+      ? stats.revenueToday / stats.bookingsToday 
+      : 0;
+    
+    // Ticket 7d: ya calculado en backend
+    const avgTicket7d = stats.avgTicketLast7Days;
+    
+    // Ticket 30d: ingresos 30d / reservas 30d
+    const avgTicket30d = stats.totalBookingsLast30Days > 0 
+      ? stats.revenueLast30Days / stats.totalBookingsLast30Days 
+      : 0;
+    
+    return { avgTicketToday, avgTicket7d, avgTicket30d };
+  }, [stats]);
+
+  // 🔥 Ocupación dinámica según periodo seleccionado
+  const currentOccupancy = useMemo(() => {
+    switch (period) {
+      case "week":
+        return occupancyCalculations.occupancyWeek;
+      case "month":
+        return occupancyCalculations.occupancyMonth;
+      default:
+        return occupancyCalculations.occupancyToday;
+    }
+  }, [period, occupancyCalculations]);
+
+  // 🔥 Ticket medio dinámico según periodo seleccionado
+  const currentAvgTicket = useMemo(() => {
+    switch (period) {
+      case "week":
+        return ticketCalculations.avgTicket7d;
+      case "month":
+        return ticketCalculations.avgTicket30d;
+      default:
+        return ticketCalculations.avgTicketToday;
+    }
+  }, [period, ticketCalculations]);
 
   const topServices: TopService[] = [];
   const operationalAlerts: OperationalAlert[] = [];
@@ -248,7 +319,9 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
 
   // Cálculos derivados optimizados con useMemo
   const chartCalculations = useMemo(() => {
-    const values = Array.isArray(stats.bookingsLast7Days) ? stats.bookingsLast7Days : [];
+    const values = performancePeriod === "7d" 
+      ? stats.bookingsLast7Days 
+      : stats.bookingsLast30DaysByDay;
     const hasValues = values.length > 0;
     const max = hasValues ? Math.max(...values, 1) : 1;
     const hasPositiveValues = values.some((value: number) => value > 0);
@@ -263,7 +336,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
       totalLast7Days: total,
       avgLast7Days: avg,
     };
-  }, [stats.bookingsLast7Days]);
+  }, [stats.bookingsLast7Days, stats.bookingsLast30DaysByDay, performancePeriod]);
 
   const { bookingValues, chartMax, showChartBars, totalLast7Days, avgLast7Days } = chartCalculations;
 
@@ -288,15 +361,18 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
 
   const showOnboardingHint =
     stats.bookingsToday === 0 && !chartCalculations.showChartBars && upcomingBookings.length === 0;
-  const shouldShowTimezone = tenantTimezone && tenantTimezone !== "Europe/Madrid";
+  const dayStatus = useMemo((): { label: string; color: string } => {
+    const todayOcc = occupancyCalculations.occupancyToday;
+    if (todayOcc < 40) return { label: "Día tranquilo", color: "bg-emerald-500/20 text-emerald-400" };
+    if (todayOcc < 70) return { label: "Día equilibrado", color: "bg-blue-500/20 text-blue-400" };
+    return { label: "Día lleno", color: "bg-amber-500/20 text-amber-400" };
+  }, [occupancyCalculations.occupancyToday]);
 
-  // Helper para formatear moneda
-  const formatCurrency = (valueInCents: number) =>
-    new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency: "EUR",
-      maximumFractionDigits: 2,
-    }).format(valueInCents / 100);
+  const periodOptions = [
+    { id: "today", label: "Hoy" },
+    { id: "week", label: "Semana" },
+    { id: "month", label: "Mes" },
+  ];
 
   // Helpers para KPIs según periodo
   const getBookingsKPI = () => {
@@ -349,6 +425,18 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
           trend: "neutral",
         };
     }
+  };
+
+  const getOccupancyLabel = (period: "today" | "week" | "month") => {
+    if (period === "week") return "Ocupación semana";
+    if (period === "month") return "Ocupación mes";
+    return "Ocupación hoy";
+  };
+
+  const getTicketLabel = (period: "today" | "week" | "month") => {
+    if (period === "week") return "Ticket 7d";
+    if (period === "month") return "Ticket 30d";
+    return "Ticket hoy";
   };
 
   const bookingsKPI = getBookingsKPI();
@@ -425,34 +513,33 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
               </p>
             </div>
 
-            {/* Selector de periodo */}
-            <div className="inline-flex items-center self-start sm:self-auto rounded-full bg-[var(--bg-card)]/60 backdrop-blur-xl p-1 text-[12px] sm:text-[13px] border border-white/10">
-              {[
-                { id: "today", label: "Hoy" },
-                { id: "week", label: "Semana" },
-                { id: "month", label: "Mes" },
-              ].map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => setPeriod(option.id as "today" | "week" | "month")}
-                  className={cn(
-                    "px-3 sm:px-4 py-1.5 rounded-full transition-all duration-150",
-                    period === option.id
-                      ? "bg-white text-slate-900 font-semibold shadow-sm"
-                      : "text-[var(--text-secondary)] hover:text-white"
-                  )}
-                >
-                  {option.label}
-                </button>
-              ))}
+            {/* Estado del día + Selector de periodo */}
+            <div className="flex items-center gap-3">
+              <div className={cn("px-2.5 py-1 rounded-full text-[11px] font-medium", dayStatus.color)}>
+                {dayStatus.label}
+              </div>
+
+              {/* Selector de periodo */}
+              <div className="inline-flex items-center rounded-full bg-[var(--bg-card)]/60 backdrop-blur-xl p-1 text-[12px] sm:text-[13px] border border-white/10">
+                {periodOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setPeriod(option.id as "today" | "week" | "month")}
+                    className={cn(
+                      "px-3 sm:px-4 py-1.5 rounded-full transition-all duration-150",
+                      period === option.id
+                        ? "bg-white text-slate-900 font-semibold shadow-sm"
+                        : "text-[var(--text-secondary)] hover:text-white"
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </motion.div>
 
-          {/* ═══════════════════════════════════════════════════════════════
-              FILA 2: KPIs - 4 Tarjetas (grid fijo, hover glow premium)
-              mb-8 = +16px separación con Reservas
-              ═══════════════════════════════════════════════════════════════ */}
           <motion.div
             initial="hidden"
             animate="visible"
@@ -463,7 +550,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             {/* KPI: Reservas - Label dinámico según periodo */}
             <motion.div 
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(79,227,193,0.12)" }}
-              onClick={() => (window.location.href = "/panel/agenda")}
+              onClick={() => router.push("/panel/agenda")}
               className="cursor-pointer glass rounded-xl p-3 sm:p-4 border border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.03] transition-all duration-200"
             >
               <div className="flex items-center gap-2 mb-2">
@@ -487,7 +574,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             {/* KPI: Ingresos - Label dinámico según periodo */}
             <motion.div 
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(52,211,153,0.12)" }}
-              onClick={() => (window.location.href = "/panel/monedero")}
+              onClick={() => router.push("/panel/monedero")}
               className="cursor-pointer glass rounded-xl p-3 sm:p-4 border border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.03] transition-all duration-200"
             >
               <div className="flex items-center gap-2 mb-2">
@@ -511,7 +598,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             {/* KPI: Ocupación - Siempre es de hoy */}
             <motion.div 
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(59,130,246,0.12)" }}
-              onClick={() => (window.location.href = "/panel/agenda")}
+              onClick={() => router.push("/panel/agenda")}
               className="cursor-pointer glass rounded-xl p-3 sm:p-4 border border-white/10 hover:border-blue-500/30 hover:bg-white/[0.03] transition-all duration-200"
             >
               <div className="flex items-center gap-2 mb-2">
@@ -523,15 +610,15 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                 </span>
               </div>
               <div className="text-[22px] sm:text-[26px] font-bold text-white leading-[1.2] mb-0.5">
-                {totalOccupancy}%
+                {currentOccupancy}%
               </div>
-              <div className="text-[11px] sm:text-[12px] text-[var(--text-secondary)] uppercase tracking-wider">Ocupación hoy</div>
+              <div className="text-[11px] sm:text-[12px] text-[var(--text-secondary)] uppercase tracking-wider">{getOccupancyLabel(period)}</div>
             </motion.div>
 
             {/* KPI: Ticket medio - Siempre 7 días (referencia estable) */}
             <motion.div 
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(168,85,247,0.12)" }}
-              onClick={() => (window.location.href = "/panel/monedero")}
+              onClick={() => router.push("/panel/monedero")}
               className="cursor-pointer glass rounded-xl p-3 sm:p-4 border border-white/10 hover:border-purple-500/30 hover:bg-white/[0.03] transition-all duration-200"
             >
               <div className="flex items-center gap-2 mb-2">
@@ -539,8 +626,8 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                   <Sparkles className="h-3.5 w-3.5 text-purple-400" />
                 </div>
               </div>
-              <div className="text-[22px] sm:text-[26px] font-bold text-white leading-[1.2] mb-0.5">{formatCurrency(avgTicketLast7Days)}</div>
-              <div className="text-[11px] sm:text-[12px] text-[var(--text-secondary)] uppercase tracking-wider">Ticket 7d</div>
+              <div className="text-[22px] sm:text-[26px] font-bold text-white leading-[1.2] mb-0.5">{formatCurrency(currentAvgTicket)}</div>
+              <div className="text-[11px] sm:text-[12px] text-[var(--text-secondary)] uppercase tracking-wider">{getTicketLabel(period)}</div>
             </motion.div>
           </motion.div>
 
@@ -587,7 +674,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                     </div>
                   </div>
                   <button
-                    onClick={() => (window.location.href = "/panel/agenda")}
+                    onClick={() => router.push("/panel/agenda")}
                     className="text-[11px] sm:text-[12px] text-emerald-400 hover:text-white transition-colors font-medium"
                   >
                     Ver agenda →
@@ -607,7 +694,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                         <div
                           key={booking.id}
                           className="flex items-center justify-between px-2.5 py-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 hover:border-white/10 transition-all cursor-pointer"
-                          onClick={() => (window.location.href = "/panel/agenda")}
+                          onClick={() => openDetail(booking.id)}
                         >
                           <div className="flex items-center gap-2.5">
                             <div className="text-[12px] sm:text-[13px] font-bold text-white w-10 font-mono">
@@ -689,7 +776,13 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                   ) : (
                     <div className="text-center py-5">
                       <User className="h-6 w-6 text-[var(--text-secondary)] mx-auto mb-1" />
-                      <p className="text-[11px] text-[var(--text-secondary)]">Sin staff activo</p>
+                      <p className="text-[11px] text-[var(--text-secondary)] mb-2">Sin staff activo</p>
+                      <button
+                        onClick={() => router.push("/panel/staff")}
+                        className="text-[9px] text-emerald-400 hover:text-white transition-colors font-medium"
+                      >
+                        Añadir staff →
+                      </button>
                     </div>
                   )}
                 </div>
@@ -730,7 +823,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                     >30d</button>
                   </div>
                 </div>
-                <div className="px-4 py-3">
+                <div className="px-4 py-2.5">
                   {/* Header del gráfico con divisor */}
                   <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.06] mb-3">
                     <div>
@@ -762,7 +855,11 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                                 className="w-full rounded-t bg-gradient-to-t from-emerald-500 to-blue-500"
                                 style={{ minHeight: count > 0 ? "3px" : "0" }}
                               />
-                              <span className="text-[8px] sm:text-[9px] text-[var(--text-secondary)] mt-1">{format(subDays(new Date(), 6 - index), "dd")}</span>
+                              <span className="text-[8px] sm:text-[9px] text-[var(--text-secondary)] mt-1">
+                                {performancePeriod === "7d" 
+                                  ? format(subDays(new Date(), 6 - index), "dd")
+                                  : (index % 3 === 0 ? format(subDays(new Date(), 29 - index), "dd") : "")}
+                              </span>
                               <span className="text-[10px] sm:text-[11px] font-semibold text-white">{count}</span>
                             </div>
                           );
@@ -779,7 +876,9 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                       <div className="text-[13px] sm:text-[14px] font-bold text-emerald-400">
                         {formatCurrency(performancePeriod === "7d" ? stats.revenueLast7Days : stats.revenueLast30Days)}
                       </div>
-                      <div className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">Ingresos</div>
+                      <div className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">
+                        {performancePeriod === "7d" ? "Ingresos 7d" : "Ingresos 30d"}
+                      </div>
                     </div>
                     <div className="text-center">
                       <div className="text-[13px] sm:text-[14px] font-bold text-blue-400">
@@ -787,11 +886,13 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                           ? avgLast7Days.toFixed(1) 
                           : (stats.totalBookingsLast30Days / 30).toFixed(1)}
                       </div>
-                      <div className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">Media/día</div>
+                      <div className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">
+                        {performancePeriod === "7d" ? "Media/día 7d" : "Media/día 30d"}
+                      </div>
                     </div>
                     <div className="text-center">
                       <div className="text-[13px] sm:text-[14px] font-bold text-purple-400">{formatCurrency(avgTicketLast7Days)}</div>
-                      <div className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">Ticket</div>
+                      <div className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">Ticket 7d</div>
                     </div>
                   </div>
                 </div>
@@ -816,7 +917,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                   <motion.button
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
-                    onClick={() => (window.location.href = "/panel/agenda")}
+                    onClick={() => openCreate()}
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-gradient-to-r from-purple-600/90 to-emerald-500/90 text-white font-semibold transition-all duration-200 mb-2.5"
                   >
                     <Plus className="h-4 w-4" />
@@ -826,14 +927,14 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                   {/* Botones secundarios - mismo height */}
                   <div className="space-y-1.5">
                     <button
-                      onClick={() => (window.location.href = "/panel/clientes")}
+                      onClick={() => router.push("/panel/clientes")}
                       className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-white/[0.04] border border-white/[0.08] text-white hover:bg-white/[0.08] transition-all"
                     >
                       <User className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
                       <span className="text-[12px] sm:text-[13px]">Clientes</span>
                     </button>
                     <button
-                      onClick={() => (window.location.href = "/panel/agenda")}
+                      onClick={() => router.push("/panel/agenda")}
                       className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-white/[0.04] border border-white/[0.08] text-white hover:bg-white/[0.08] transition-all"
                     >
                       <Calendar className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
@@ -843,17 +944,17 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
 
                   {/* Separador + Acciones rápidas */}
                   <div className="mt-3 pt-2.5 border-t border-white/[0.08]">
-                    <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Acceso rápido</p>
+                    <p className="text-[9px] text-[var(--text-secondary)]/80 uppercase tracking-wider mb-1.5">Acceso rápido</p>
                     <div className="grid grid-cols-2 gap-1.5">
                       <button
-                        onClick={() => (window.location.href = "/panel/clientes")}
+                        onClick={() => router.push("/panel/clientes")}
                         className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-all"
                       >
                         <Plus className="h-3 w-3 text-[var(--text-secondary)]" />
                         <span className="text-[9px] text-[var(--text-secondary)]">Cliente</span>
                       </button>
                       <button
-                        onClick={() => (window.location.href = "/panel/servicios")}
+                        onClick={() => router.push("/panel/servicios")}
                         className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-all"
                       >
                         <Scissors className="h-3 w-3 text-[var(--text-secondary)]" />
