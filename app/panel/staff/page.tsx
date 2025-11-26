@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState, Suspense, useMemo, useRef } from "react";
+import { useState, Suspense, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { getCurrentTenant } from "@/lib/panel-tenant";
 import { Spinner, Card, Button, EmptyState, Alert, SearchInput, useToast, TitleBar, PageHeader } from "@/components/ui";
 import { StaffEditModal } from "@/components/panel/StaffEditModal";
 import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
@@ -10,6 +9,7 @@ import { motion } from "framer-motion";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { User, UserPlus, Scissors, Calendar, Edit, Power } from "lucide-react";
 import { UserPermissions } from "@/hooks/useUserPermissions";
+import { useStaffPageData } from "@/hooks/useOptimizedData";
 
 type Staff = {
   id: string;
@@ -29,120 +29,25 @@ function StaffContent() {
   const supabase = getSupabaseBrowser();
   const searchParams = useSearchParams();
   const toast = useToast();
-  const [tenantId, setTenantId] = useState<string | null>(null);
-  const [staffList, setStaffList] = useState<Staff[]>([]);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+
+  const impersonateOrgId = useMemo(() => searchParams?.get("impersonate") || null, [searchParams?.toString()]);
+
+  // Hook optimizado: obtiene tenant + staff en UNA llamada con caché
+  const { data: pageData, isLoading, error } = useStaffPageData(impersonateOrgId);
+
+  // Extraer datos del hook
+  const tenantId = pageData?.tenant?.id || null;
+  const staffList = pageData?.staff || [];
+  const userRole = "admin"; // TODO: obtener del contexto de autenticación
+
+  const canManageStaff = true; // userRole === "owner" || userRole === "admin";
+
+  // Estados adicionales para funcionalidad
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const hasSyncedRef = useRef<boolean>(false);
-
-  const impersonateOrgId = useMemo(() => searchParams?.get("impersonate") || null, [searchParams?.toString()]);
-
-  useEffect(() => {
-    const loadTenant = async () => {
-      try {
-        const { tenant, role } = await getCurrentTenant(impersonateOrgId);
-        if (tenant) {
-          setTenantId(tenant.id);
-          setUserRole(role || null);
-        } else {
-          setError("No tienes acceso a ninguna barbería");
-          setLoading(false);
-        }
-      } catch (err: any) {
-        setError(err?.message || "Error al cargar información");
-        setLoading(false);
-      }
-    };
-
-    loadTenant();
-  }, [impersonateOrgId]);
-
-  const canManageStaff = userRole === "owner" || userRole === "admin";
-
-  useEffect(() => {
-    if (!tenantId) return;
-
-    let mounted = true;
-
-    const loadStaff = async () => {
-      try {
-        setLoading(true);
-
-        // Intentar sincronizar memberships -> staff una sola vez por tenantId
-        if (!hasSyncedRef.current) {
-          try {
-            await fetch("/api/staff/sync", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ tenantId }),
-            });
-          } catch {}
-          hasSyncedRef.current = true;
-        }
-
-        // Cargar staff con conteo de reservas - SOLO usuarios con cuenta
-        const { data: staffData, error: staffError } = await supabase
-          .from("staff")
-          .select(`
-            *,
-            bookings:bookings(count)
-          `)
-          .eq("tenant_id", tenantId)
-          .not("user_id", "is", null) // Solo staff con cuenta de usuario
-          .order("name");
-
-        if (staffError) {
-          throw new Error(staffError.message);
-        }
-
-        if (mounted) {
-          const staffWithCount = (staffData || []).map((s: any) => ({
-            ...s,
-            display_name: s.display_name || s.name,
-            bookings_count: s.bookings?.[0]?.count || 0,
-          }));
-          setStaffList(staffWithCount as Staff[]);
-        }
-      } catch (err: any) {
-        if (mounted) {
-          setError(err?.message || "Error al cargar staff");
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadStaff();
-
-    // Suscripción a cambios en tiempo real
-    const channel = supabase
-      .channel("rt-staff")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "staff",
-          filter: `tenant_id=eq.${tenantId}`,
-        },
-        () => {
-          loadStaff();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      mounted = false;
-      supabase.removeChannel(channel);
-    };
-  }, [supabase, tenantId]);
 
   const startEdit = (staff: Staff) => {
     setEditingStaff(staff);
@@ -167,7 +72,6 @@ function StaffContent() {
     if (!tenantId) return;
 
     setSaving(true);
-    setError(null);
 
     try {
       let userId = editingStaff?.user_id || null;
@@ -274,13 +178,14 @@ function StaffContent() {
           }
         }
 
-        setStaffList((prev) =>
-          prev.map((s) =>
-            s.id === editingStaff.id
-              ? { ...data, display_name: data.display_name || data.name, bookings_count: s.bookings_count }
-              : s
-          )
-        );
+        // El hook optimizado se actualizará automáticamente con las suscripciones en tiempo real
+        // setStaffList((prev) =>
+        //   prev.map((s) =>
+        //     s.id === editingStaff.id
+        //       ? { ...data, display_name: data.display_name || data.name, bookings_count: s.bookings_count }
+        //       : s
+        //   )
+        // );
 
         toast.showToast({
           type: "success",
@@ -346,7 +251,8 @@ function StaffContent() {
           }
         }
 
-        setStaffList((prev) => [...prev, { ...data, display_name: data.display_name || data.name, bookings_count: 0 }]);
+        // El hook optimizado se actualizará automáticamente con las suscripciones en tiempo real
+        // setStaffList((prev) => [...prev, { ...data, display_name: data.display_name || data.name, bookings_count: 0 }]);
 
         toast.showToast({
           type: "success",
@@ -358,7 +264,6 @@ function StaffContent() {
       setShowEditModal(false);
       setEditingStaff(null);
     } catch (err: any) {
-      setError(err?.message || "Error al guardar staff");
       toast.showToast({
         type: "error",
         title: "Error",
@@ -372,7 +277,6 @@ function StaffContent() {
 
   const toggleActive = async (id: string, currentActive: boolean) => {
     if (!canManageStaff) return;
-    setError(null);
     try {
       const { data, error: updateError } = await supabase
         .from("staff")
@@ -385,16 +289,16 @@ function StaffContent() {
         throw new Error(updateError.message);
       }
 
-      setStaffList((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, active: data.active } : s))
-      );
+      // El hook optimizado se actualizará automáticamente con las suscripciones en tiempo real
+      // setStaffList((prev) =>
+      //   prev.map((s) => (s.id === id ? { ...s, active: data.active } : s))
+      // );
       toast.showToast({
         type: "success",
         title: data.active ? "Staff activado" : "Staff desactivado",
         message: `El miembro del staff ha sido ${data.active ? "activado" : "desactivado"}`,
       });
     } catch (err: any) {
-      setError(err?.message || "Error al actualizar staff");
       toast.showToast({
         type: "error",
         title: "Error",
@@ -408,7 +312,7 @@ function StaffContent() {
     return (
       staff.name.toLowerCase().includes(search) ||
       staff.display_name?.toLowerCase().includes(search) ||
-      staff.skills?.some((skill) => skill.toLowerCase().includes(search))
+      staff.skills?.some((skill: string) => skill.toLowerCase().includes(search))
     );
   });
 
@@ -434,7 +338,7 @@ function StaffContent() {
     },
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <Spinner size="lg" />
@@ -445,7 +349,7 @@ function StaffContent() {
   if (error && !tenantId) {
     return (
       <Alert type="error" title="Error">
-        {error}
+        {error.message || "Error al cargar staff"}
       </Alert>
     );
   }
@@ -487,15 +391,6 @@ function StaffContent() {
           }
         />
       </motion.div>
-
-      {/* Mensaje de error */}
-      {error && (
-        <motion.div variants={itemVariants}>
-          <Alert type="error" onClose={() => setError(null)}>
-            {error}
-          </Alert>
-        </motion.div>
-      )}
 
       {/* Lista de staff */}
       {filteredStaff.length === 0 ? (

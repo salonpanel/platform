@@ -14,6 +14,14 @@ interface UseAgendaDataProps {
   viewMode: ViewMode;
   timezone: string;
   userRole: string | null;
+  initialData?: {
+    staff?: Staff[];
+    services?: Array<{ id: string; name: string; duration_min: number; price_cents: number; buffer_min: number }>;
+    customers?: Array<{ id: string; name: string; email: string | null; phone: string | null; notes?: string | null }>;
+    bookings?: Booking[];
+    blockings?: StaffBlocking[];
+    schedules?: StaffSchedule[];
+  };
 }
 
 interface AgendaFilters {
@@ -30,6 +38,7 @@ export function useAgendaData({
   viewMode,
   timezone,
   userRole,
+  initialData,
 }: UseAgendaDataProps) {
   // Estado base
   const [loading, setLoading] = useState(true);
@@ -63,11 +72,20 @@ export function useAgendaData({
     };
   });
 
-  // Cargar datos iniciales
+  // Cargar datos iniciales (puede venir provisto desde la página para evitar fetch duplicado)
   useEffect(() => {
     const loadInitialData = async () => {
       if (!tenantId) return;
-      
+
+      // If initial data supplied, use it and skip network fetch
+      if (initialData?.staff || initialData?.services || initialData?.customers) {
+        if (initialData.staff) setStaffList(initialData.staff);
+        if (initialData.services) setServices(initialData.services.map(s => ({ ...s, buffer_min: s.buffer_min ?? 0 })));
+        if (initialData.customers) setCustomers(initialData.customers);
+        setLoading(false);
+        return;
+      }
+
       try {
         const [staffResult, servicesResult, customersResult] = await Promise.all([
           supabase
@@ -84,22 +102,7 @@ export function useAgendaData({
             .order("name"),
           supabase
             .from("customers")
-            .select(`
-              id, 
-              name, 
-              email, 
-              phone, 
-              notes, 
-              internal_notes,
-              preferred_staff_id,
-              preferred_time_of_day,
-              preferred_days,
-              last_call_status,
-              last_call_date,
-              next_due_date,
-              call_attempts,
-              prefers_whatsapp
-            `)
+            .select("id, name, email, phone, notes")
             .eq("tenant_id", tenantId)
             .order("name")
             .limit(100),
@@ -118,7 +121,7 @@ export function useAgendaData({
     };
 
     loadInitialData();
-  }, [tenantId, supabase]);
+  }, [tenantId, supabase, initialData]);
 
   // Cargar bookings y bloqueos
   useEffect(() => {
@@ -128,6 +131,15 @@ export function useAgendaData({
       try {
         const start = startOfDay(parseISO(selectedDate));
         const end = endOfDay(parseISO(selectedDate));
+
+        // If initial data provided for the current selectedDate, use it to avoid an extra fetch
+        if (initialData?.bookings || initialData?.blockings || initialData?.schedules) {
+          if (initialData.bookings) setBookings(initialData.bookings);
+          if (initialData.blockings) setStaffBlockings(initialData.blockings);
+          if (initialData.schedules) setStaffSchedules(initialData.schedules);
+          setLoading(false);
+          return;
+        }
 
         const [bookingsResult, blockingsResult, schedulesResult] = await Promise.all([
           supabase

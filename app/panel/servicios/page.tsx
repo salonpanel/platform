@@ -1,78 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
 import { useSearchParams } from "next/navigation";
 import { Alert } from "@/components/ui/Alert";
 import type { Service } from "@/types/services";
 import { ServiciosClient } from "./ServiciosClient";
-import { getSupabaseBrowser } from "@/lib/supabase/browser";
-import { getCurrentTenant } from "@/lib/panel-tenant";
+import { useServicesPageData } from "@/hooks/useOptimizedData";
 
 export default function ServiciosPage() {
-  const supabase = getSupabaseBrowser();
   const searchParams = useSearchParams();
 
-  const [tenantId, setTenantId] = useState<string | null>(null);
-  const [initialServices, setInitialServices] = useState<Service[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const impersonateOrgId = searchParams?.get("impersonate") || null;
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const impersonateOrgId = searchParams?.get("impersonate") || null;
+  // Hook optimizado: obtiene tenant + servicios en UNA llamada con caché
+  const { data: pageData, isLoading, error } = useServicesPageData(impersonateOrgId);
 
-        // 1) Obtener tenant actual (igual que en Agenda)
-        const { tenant, role, status } = await getCurrentTenant(impersonateOrgId);
+  // Extraer datos del hook
+  const tenantId = pageData?.tenant?.id || null;
+  const services = pageData?.services || [];
 
-        if (!tenant) {
-          setError(
-            status === "UNAUTHENTICATED"
-              ? "Tu sesión no está activa. Vuelve a iniciar sesión."
-              : "No tienes acceso a ninguna barbería"
-          );
-          setLoading(false);
-          return;
-        }
-
-        setTenantId(tenant.id);
-
-        // 2) Cargar servicios del tenant
-        const { data: services, error: servicesError } = await supabase
-          .from("services")
-          .select("*")
-          .eq("tenant_id", tenant.id)
-          .order("name");
-
-        if (servicesError) {
-          console.error("Error al cargar servicios:", servicesError);
-          setError("Error al cargar servicios");
-          setLoading(false);
-          return;
-        }
-
-        setInitialServices((services ?? []) as Service[]);
-        setLoading(false);
-      } catch (err) {
-        console.error("[Servicios] Error al cargar datos iniciales:", err);
-        setError("Error inesperado al cargar servicios");
-        setLoading(false);
-      }
-    };
-
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams?.toString()]);
-
-  if (loading) {
+  if (isLoading) {
     return <div className="p-4">Cargando servicios...</div>;
   }
 
   if (error) {
     return (
       <Alert type="error" title="Error en servicios">
-        {error}
+        {error.message || "Error al cargar servicios"}
       </Alert>
     );
   }
@@ -89,7 +43,7 @@ export default function ServiciosPage() {
     <ProtectedRoute requiredPermission="servicios">
       <ServiciosClient
         tenantId={tenantId}
-        initialServices={initialServices}
+        initialServices={services}
       />
     </ProtectedRoute>
   );

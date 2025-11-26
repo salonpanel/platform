@@ -211,24 +211,209 @@ export function useServicesData(tenantId: string | null) {
 }
 
 /**
- * Hook optimizado para staff
+ * Hook optimizado para página de Clientes - obtiene tenant + clientes en paralelo
  */
-export function useStaffData(tenantId: string | null) {
+export function useCustomersPageData(impersonateOrgId: string | null) {
   const supabase = getSupabaseBrowser();
 
   return useStaleWhileRevalidate(
-    `staff-${tenantId}`,
+    `customers-page-${impersonateOrgId || 'default'}`,
     async () => {
-      if (!tenantId) return [];
+      // 1. Obtener tenant
+      const { tenant } = await getCurrentTenant(impersonateOrgId);
+      if (!tenant) return null;
 
-      const { data } = await supabase
-        .from("staff")
+      const tenantId = tenant.id;
+
+      // 2. Cargar clientes en paralelo
+      const { data: customers, error } = await supabase
+        .from("customers")
         .select("*")
         .eq("tenant_id", tenantId)
-        .order("name", { ascending: true });
+        .order("created_at", { ascending: false });
 
-      return data || [];
+      if (error) throw error;
+
+      return {
+        tenant: {
+          id: tenant.id,
+          name: tenant.name || "Tu barbería",
+          timezone: tenant.timezone || "Europe/Madrid",
+        },
+        customers: customers || [],
+      };
     },
-    { enabled: !!tenantId, staleTime: 120000 } // 2 minutos
+    { enabled: true }
+  );
+}
+
+/**
+ * Hook optimizado para página de Servicios - obtiene tenant + servicios en paralelo
+ */
+export function useServicesPageData(impersonateOrgId: string | null) {
+  const supabase = getSupabaseBrowser();
+
+  return useStaleWhileRevalidate(
+    `services-page-${impersonateOrgId || 'default'}`,
+    async () => {
+      // 1. Obtener tenant
+      const { tenant } = await getCurrentTenant(impersonateOrgId);
+      if (!tenant) return null;
+
+      const tenantId = tenant.id;
+
+      // 2. Cargar servicios
+      const { data: services, error } = await supabase
+        .from("services")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .order("name");
+
+      if (error) throw error;
+
+      return {
+        tenant: {
+          id: tenant.id,
+          name: tenant.name || "Tu barbería",
+          timezone: tenant.timezone || "Europe/Madrid",
+        },
+        services: services || [],
+      };
+    },
+    { enabled: true }
+  );
+}
+
+/**
+ * Hook optimizado para página de Staff - obtiene tenant + staff en paralelo
+ */
+export function useStaffPageData(impersonateOrgId: string | null) {
+  const supabase = getSupabaseBrowser();
+
+  return useStaleWhileRevalidate(
+    `staff-page-${impersonateOrgId || 'default'}`,
+    async () => {
+      // 1. Obtener tenant
+      const { tenant } = await getCurrentTenant(impersonateOrgId);
+      if (!tenant) return null;
+
+      const tenantId = tenant.id;
+
+      // 2. Cargar staff con estadísticas
+      const { data: staff, error } = await supabase
+        .from("staff")
+        .select(`
+          *,
+          bookings_count:bookings(count)
+        `)
+        .eq("tenant_id", tenantId)
+        .order("name");
+
+      if (error) throw error;
+
+      return {
+        tenant: {
+          id: tenant.id,
+          name: tenant.name || "Tu barbería",
+          timezone: tenant.timezone || "Europe/Madrid",
+        },
+        staff: (staff || []).map(s => ({
+          ...s,
+          bookings_count: Array.isArray(s.bookings_count) ? s.bookings_count.length : 0,
+        })),
+      };
+    },
+    { enabled: true }
+  );
+}
+
+/**
+ * Hook optimizado para página de Agenda - obtiene tenant + staff/services/customers/bookings/blockings/schedules
+ */
+export function useAgendaPageData(impersonateOrgId: string | null, selectedDate?: string) {
+  const supabase = getSupabaseBrowser();
+
+  return useStaleWhileRevalidate(
+    `agenda-page-${impersonateOrgId || 'default'}-${selectedDate || 'today'}`,
+    async () => {
+      // 1. Obtener tenant
+      const { tenant } = await getCurrentTenant(impersonateOrgId);
+      if (!tenant) return null;
+
+      const tenantId = tenant.id;
+
+      // determine date range to prefetch bookings/blockings/schedules (default: selectedDate or today)
+      const dateToLoad = selectedDate || new Date().toISOString().slice(0, 10);
+      const startISO = new Date(new Date(dateToLoad).setHours(0, 0, 0, 0)).toISOString();
+      const endISO = new Date(new Date(dateToLoad).setHours(23, 59, 59, 999)).toISOString();
+
+      // Run queries in parallel
+      const [staffRes, servicesRes, customersRes, bookingsRes, blockingsRes, schedulesRes] = await Promise.all([
+        supabase
+          .from("staff")
+          .select("id, name, active")
+          .eq("tenant_id", tenantId)
+          .eq("active", true)
+          .order("name"),
+        supabase
+          .from("services")
+          .select("id, name, duration_min, price_cents, buffer_min")
+          .eq("tenant_id", tenantId)
+          .eq("active", true)
+          .order("name"),
+        supabase
+          .from("customers")
+          .select("id, name, email, phone, notes")
+          .eq("tenant_id", tenantId)
+          .order("name")
+          .limit(100),
+        supabase
+          .from("bookings")
+          .select(`
+            *,
+            customer:customers(id, name, email, phone),
+            service:services(id, name, duration_min, price_cents),
+            staff:staff(id, name)
+          `)
+          .eq("tenant_id", tenantId)
+          .gte("starts_at", startISO)
+          .lte("starts_at", endISO)
+          .order("starts_at"),
+        supabase
+          .from("staff_blockings")
+          .select("*")
+          .eq("tenant_id", tenantId)
+          .gte("start_at", startISO)
+          .lte("end_at", endISO)
+          .order("start_at"),
+        supabase
+          .from("staff_schedules")
+          .select("staff_id, start_time, end_time")
+          .eq("tenant_id", tenantId)
+          .eq("is_active", true),
+      ]);
+
+      if (staffRes.error) throw staffRes.error;
+      if (servicesRes.error) throw servicesRes.error;
+      if (customersRes.error) throw customersRes.error;
+      if (bookingsRes.error) throw bookingsRes.error;
+      if (blockingsRes.error) throw blockingsRes.error;
+      if (schedulesRes.error) throw schedulesRes.error;
+
+      return {
+        tenant: {
+          id: tenant.id,
+          name: tenant.name || "Tu barbería",
+          timezone: tenant.timezone || "Europe/Madrid",
+        },
+        staff: staffRes.data || [],
+        services: (servicesRes.data || []).map((s: any) => ({ ...s, buffer_min: s.buffer_min ?? 0 })),
+        customers: customersRes.data || [],
+        bookings: bookingsRes.data || [],
+        blockings: blockingsRes.data || [],
+        schedules: schedulesRes.data || [],
+      };
+    },
+    { enabled: true, staleTime: 60000 }
   );
 }
