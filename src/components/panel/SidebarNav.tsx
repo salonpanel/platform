@@ -20,6 +20,7 @@ import {
   Wallet,
   Target
 } from "lucide-react";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 interface NavItem {
   href: string;
@@ -51,6 +52,33 @@ export function SidebarNav({
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const leaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { permissions, role, loading } = useUserPermissions();
+
+  // Mapeo de rutas a permisos
+  const routePermissionMap: Record<string, keyof typeof permissions> = {
+    "/panel": "dashboard",
+    "/panel/agenda": "agenda",
+    "/panel/clientes": "clientes",
+    "/panel/servicios": "servicios",
+    "/panel/staff": "staff",
+    "/panel/marketing": "marketing",
+    "/panel/monedero": "reportes", // monedero está dentro de reportes
+    "/panel/ajustes": "ajustes",
+  };
+
+  // Filtrar items según permisos
+  const filteredItems = useMemo(() => {
+    // Si está cargando o es owner/admin, mostrar todo
+    if (loading || role === "owner" || role === "admin") {
+      return items;
+    }
+
+    return items.filter((item) => {
+      const permissionKey = routePermissionMap[item.href];
+      if (!permissionKey) return true; // Si no está mapeado, mostrar por defecto
+      return permissions[permissionKey]; // Mostrar solo si tiene permiso
+    });
+  }, [items, permissions, role, loading]);
 
   const getNavIcon = useCallback((href: string): React.ReactNode => {
     const iconClass = "h-5 w-5";
@@ -231,7 +259,7 @@ export function SidebarNav({
               collapsed: {}
             }}
           >
-            {items.map((item, index) => {
+            {filteredItems.map((item, index) => {
               const active = isActive(item.href);
               const icon = getNavIcon(item.href);
               const isItemHovered = hoveredItem === item.href;

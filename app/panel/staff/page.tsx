@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { getCurrentTenant } from "@/lib/panel-tenant";
 import { Spinner, Card, Button, EmptyState, Alert, SearchInput, useToast, TitleBar, PageHeader } from "@/components/ui";
 import { StaffEditModal } from "@/components/panel/StaffEditModal";
+import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
 import { motion } from "framer-motion";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { User, UserPlus, Scissors, Calendar, Edit, Power } from "lucide-react";
@@ -594,14 +595,16 @@ function StaffContent() {
 
 export default function StaffPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center py-12">
-          <Spinner size="lg" />
-        </div>
-      }
-    >
-      <StaffContent />
-    </Suspense>
+    <ProtectedRoute requiredPermission="staff">
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-12">
+            <Spinner size="lg" />
+          </div>
+        }
+      >
+        <StaffContent />
+      </Suspense>
+    </ProtectedRoute>
   );
 }

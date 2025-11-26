@@ -6,6 +6,7 @@ import { getCurrentTenant } from "@/lib/panel-tenant";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
+import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
 import { Megaphone, Users, Calendar, TrendingUp } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 
@@ -145,15 +146,17 @@ function MarketingContent() {
 
 export default function MarketingPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center py-12">
-          <Spinner size="lg" />
-        </div>
-      }
-    >
-      <MarketingContent />
-    </Suspense>
+    <ProtectedRoute requiredPermission="marketing">
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-12">
+            <Spinner size="lg" />
+          </div>
+        }
+      >
+        <MarketingContent />
+      </Suspense>
+    </ProtectedRoute>
   );
 }
 

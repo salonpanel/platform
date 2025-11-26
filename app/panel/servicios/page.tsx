@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
 import { useSearchParams } from "next/navigation";
 import { Alert } from "@/components/ui/Alert";
 import type { Service } from "@/types/services";
@@ -85,9 +86,11 @@ export default function ServiciosPage() {
   }
 
   return (
-    <ServiciosClient
-      tenantId={tenantId}
-      initialServices={initialServices}
-    />
+    <ProtectedRoute requiredPermission="servicios">
+      <ServiciosClient
+        tenantId={tenantId}
+        initialServices={initialServices}
+      />
+    </ProtectedRoute>
   );
 }

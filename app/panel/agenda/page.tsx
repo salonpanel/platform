@@ -19,6 +19,7 @@ import { BookingDetailPanel } from "@/components/calendar/BookingDetailPanel";
 import { StaffBlockingModal } from "@/components/calendar/StaffBlockingModal";
 import { ConflictResolutionModal } from "@/components/calendar/ConflictResolutionModal";
 import { NotificationsPanel } from "@/components/calendar/NotificationsPanel";
+import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
 
 type AgendaNotification = {
   id: string;
@@ -1002,7 +1003,7 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
   );
 
   return (
-    <>
+    <ProtectedRoute requiredPermission="agenda">
       <div className="h-full flex flex-col">
         <AgendaContainer
           // Data from useAgendaData hook
@@ -1167,6 +1168,6 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
         />
       )}
       {ToastComponent}
-    </>
+    </ProtectedRoute>
   );
 }

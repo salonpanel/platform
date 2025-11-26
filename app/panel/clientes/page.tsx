@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { UiButton, UiCard, UiModal, UiInput, UiField, UiBadge, UiToast } from "@/components/ui/apple-ui-kit";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
 // import { CustomerHistory } from "@/components/customers/CustomerHistory";
 import { 
   Calendar, 
@@ -354,7 +355,8 @@ export default function ClientesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <ProtectedRoute requiredPermission="clientes">
+      <div className="space-y-6">
       <PageHeader
         title="Clientes"
         subtitle={`${customers.length} ${customers.length === 1 ? "cliente" : "clientes"}`}
@@ -824,6 +826,7 @@ export default function ClientesPage() {
           </div>
         </UiModal>
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
