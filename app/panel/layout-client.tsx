@@ -86,7 +86,21 @@ function PanelLayoutContent({ children, initialTenant, initialAuthStatus }: { ch
 
         if (!mounted) return;
 
-        if (!session || error) {
+        // Manejar errores de sesión
+        if (error) {
+          console.warn("[PanelLayoutClient] Session error:", error);
+          if (error.message?.toLowerCase().includes("jwt does not exist") ||
+              error.message?.toLowerCase().includes("invalid jwt")) {
+            // JWT inválido - limpiar cookies y marcar como no autenticado
+            console.log("[PanelLayoutClient] JWT inválido detectado en verificación inicial, limpiando");
+            await supabase.auth.signOut({ scope: 'local' });
+            setAuthStatus("UNAUTHENTICATED");
+            setSessionLoading(false);
+            return;
+          }
+        }
+
+        if (!session) {
           setAuthStatus("UNAUTHENTICATED");
           setSessionLoading(false);
           return;
@@ -205,6 +219,12 @@ function PanelLayoutContent({ children, initialTenant, initialAuthStatus }: { ch
         }
 
         if (err?.message && err.message.toLowerCase().includes("auth session missing")) {
+          setAuthStatus("UNAUTHENTICATED");
+        } else if (err?.message && err.message.toLowerCase().includes("jwt does not exist")) {
+          // Sesión JWT inválida - limpiar y redirigir
+          console.log("[PanelLayout] JWT inválido detectado, limpiando sesión");
+          const supabase = getSupabaseBrowser();
+          await supabase.auth.signOut({ scope: 'local' });
           setAuthStatus("UNAUTHENTICATED");
         } else {
           setPanelError({

@@ -310,21 +310,14 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
           animate="visible"
           variants={sectionVariants}
           transition={{ duration: 0.22, ease: "easeOut", delay: 0 }}
-          className="flex items-center justify-between mb-6"
+          className="flex items-center justify-end mb-6"
         >
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl font-semibold text-[var(--color-text-primary)] font-satoshi">
-              Dashboard
-            </h1>
+          <div className="flex items-center gap-2">
             {shouldShowTimezone && (
-              <span className="text-xs text-[var(--color-text-secondary)] px-2 py-1 rounded-full bg-white/5 border border-white/5">
+              <span className="text-xs text-[var(--color-text-secondary)] px-2 py-1 rounded-full bg-white/5 border border-white/5 mr-4">
                 {tenantTimezone}
               </span>
             )}
-          </div>
-
-          {/* Selector de periodo minimalista */}
-          <div className="flex items-center gap-2">
             <span className="text-xs text-[var(--text-secondary)] hidden sm:inline">Periodo:</span>
             <div className="inline-flex items-center rounded-full bg-white/5 p-1 text-[11px] font-satoshi border border-white/5">
               {[
@@ -350,19 +343,18 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
           </div>
         </motion.div>
 
-        {/* Layout Masonry - Grid responsive sin huecos */}
+        {/* Layout Masonry - Grid responsive con altura uniforme por fila */}
         <motion.div
           initial="hidden"
           animate="visible"
           variants={sectionVariants}
           transition={{ duration: 0.22, ease: "easeOut", delay: 0.1 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 auto-rows-min"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 auto-rows-fr"
           style={{
             gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gridAutoRows: 'minmax(120px, auto)'
           }}
         >
-          {/* KPIs principales - tamaño fijo */}
+          {/* KPIs principales - tamaño compacto */}
           <div className="col-span-1">
             <MiniKPI
               title={bookingsKPI.label}
@@ -400,24 +392,23 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             />
           </div>
 
-          {/* Gráfico de reservas - ocupa más espacio */}
+          {/* Gráfico de reservas - tamaño mediano, más compacto */}
           <div
             className={cn(
               cardBaseClass,
-              "flex flex-col gap-4 col-span-1 sm:col-span-2 lg:col-span-2 xl:col-span-3",
-              "row-span-2" // Ocupa 2 filas de altura
+              "flex flex-col gap-3 col-span-1 sm:col-span-2 lg:col-span-2 xl:col-span-3"
             )}
           >
-            <div className="mb-2">
+            <div className="mb-1">
               <h3 className="text-sm font-medium text-[var(--text-primary)] font-satoshi mb-1">
                 Reservas últimos 7 días
               </h3>
               <p className="text-xs text-[var(--text-secondary)]">
-                Tendencia diaria • {totalLast7Days} total • {avgLast7Days.toFixed(1)} promedio
+                Total: {totalLast7Days} • Media: {avgLast7Days.toFixed(1)} • Ticket: {formatCurrency(avgTicketLast7Days)}
               </p>
             </div>
             {showChartBars ? (
-              <div className="flex-1 flex items-end gap-1.5 sm:gap-2 relative min-h-[140px]">
+              <div className="flex items-end gap-1.5 sm:gap-2 relative min-h-[100px] flex-1">
                 {bookingValues.map((count: number, index: number) => {
                   const height = chartMax > 0 ? (count / chartMax) * 100 : 0;
                   return (
@@ -430,47 +421,37 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: `${height}%`, opacity: 1 }}
                         transition={{ duration: 0.2, delay: index * 0.03 }}
-                        whileHover={{ scale: 1.05, y: -4 }}
-                        className="w-full rounded-t-[var(--radius-md)] gradient-aurora-1 relative overflow-hidden cursor-pointer mb-6"
+                        whileHover={{ scale: 1.05, y: -2 }}
+                        className="w-full rounded-t-[var(--radius-md)] gradient-aurora-1 relative overflow-hidden cursor-pointer mb-4"
                         style={{
-                          minHeight: count > 0 ? "8px" : "0",
+                          minHeight: count > 0 ? "6px" : "0",
                           borderRadius: "var(--radius-md) var(--radius-md) 0 0",
-                          boxShadow: count > 0 ? "0px 4px 16px rgba(123,92,255,0.3), inset 0px 1px 0px rgba(255,255,255,0.2)" : "none",
+                          boxShadow: count > 0 ? "0px 4px 16px rgba(123,92,255,0.2)" : "none",
                         }}
                         title={`${format(subDays(new Date(), 6 - index), "dd/MM")}: ${count} reservas`}
                       >
                         {count > 0 && (
                           <motion.div
-                            className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"
+                            className="absolute inset-0 bg-gradient-to-t from-black/15 to-transparent"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.1 + index * 0.03 }}
                           />
                         )}
-                        {/* Tooltip al hover */}
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          whileHover={{ opacity: 1, y: 0 }}
-                          className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 rounded-lg border border-white/10 backdrop-blur-md text-xs font-semibold text-[var(--text-primary)] font-satoshi whitespace-nowrap shadow-lg"
-                          style={{
-                            background: "rgba(21, 23, 26, 0.9)",
-                          }}
-                        >
-                          {count} {count === 1 ? "reserva" : "reservas"}
-                        </motion.div>
                       </motion.div>
                       {/* Etiqueta del día */}
                       <motion.span
-                        initial={{ opacity: 0, y: 5 }}
+                        initial={{ opacity: 0, y: 3 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.15 + index * 0.03 }}
-                        className="text-[10px] sm:text-[11px] font-semibold text-[var(--text-primary)] font-satoshi absolute bottom-0 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded-md"
+                        className="text-[9px] sm:text-[10px] font-semibold text-[var(--text-primary)] font-satoshi absolute bottom-0 left-1/2 -translate-x-1/2 whitespace-nowrap px-1.5 py-0.5 rounded text-center"
                         style={{
                           background: "rgba(21, 23, 26, 0.8)",
-                          backdropFilter: "blur(8px)",
-                          WebkitBackdropFilter: "blur(8px)",
-                          border: "1px solid rgba(255, 255, 255, 0.1)",
-                          boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.3)",
+                          backdropFilter: "blur(4px)",
+                          WebkitBackdropFilter: "blur(4px)",
+                          border: "1px solid rgba(255, 255, 255, 0.08)",
+                          fontSize: "9px",
+                          lineHeight: "1",
                         }}
                       >
                         {format(subDays(new Date(), 6 - index), "dd")}
@@ -480,27 +461,22 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                 })}
               </div>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center gap-2 text-[var(--text-secondary)] min-h-[140px]">
+              <div className="flex-1 flex flex-col items-center justify-center text-center gap-1 min-h-[100px]">
                 <p className="text-sm font-medium text-[var(--text-primary)]">
                   No hay reservas recientes
                 </p>
                 <p className="text-xs text-[var(--text-secondary)] max-w-xs">
-                  Las reservas aparecerán aquí cuando empieces a recibirlas
+                  Las reservas aparecerán aquí
                 </p>
               </div>
             )}
 
-            {/* Métricas compactas */}
-            {showChartBars && (
-              <div className="grid grid-cols-2 gap-3 text-xs text-[var(--text-secondary)]">
-                <div>
-                  <span className="font-semibold text-[var(--text-primary)]">{formatCurrency(avgTicketLast7Days)}</span>
-                  <span className="ml-1">ticket medio</span>
-                </div>
-                <div>
-                  <span className="font-semibold text-[var(--text-primary)]">{stats.noShowsLast7Days}</span>
-                  <span className="ml-1">no-shows ({(noShowRateLast7Days * 100).toFixed(0)}%)</span>
-                </div>
+            {/* Métricas en línea más compactas */}
+            {showChartBars && stats.noShowsLast7Days > 0 && (
+              <div className="text-center">
+                <span className="text-xs text-[var(--text-secondary)]">
+                  No-shows: <span className="font-medium text-amber-400">{stats.noShowsLast7Days}</span> ({(noShowRateLast7Days * 100).toFixed(0)}%)
+                </span>
               </div>
             )}
           </div>
@@ -522,38 +498,37 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
           </div>
 
           {/* Alertas operativas - tamaño compacto */}
-          <div className={cn(cardBaseClass, "col-span-1 sm:col-span-1 lg:col-span-1 xl:col-span-2 flex flex-col gap-3")}>
+          <div className={cn(cardBaseClass, "col-span-1 sm:col-span-1 lg:col-span-1 xl:col-span-2 flex flex-col gap-2")}>
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-[var(--text-primary)] font-satoshi">
+              <h3 className="text-xs font-semibold text-[var(--text-primary)] font-satoshi uppercase tracking-[0.14em]">
                 Alertas
               </h3>
-              <span className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+              <span className="text-[9px] uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                 HOY
               </span>
             </div>
 
             {operationalAlerts.length === 0 ? (
-              <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
-                <Sparkles className="h-3 w-3" />
-                <span>Todo en orden</span>
+              <div className="flex items-center justify-center py-2">
+                <span className="text-xs text-[var(--text-secondary)] flex items-center gap-1.5">
+                  <Sparkles className="h-3 w-3" />
+                  Todo en orden
+                </span>
               </div>
             ) : (
-              <ul className="space-y-2">
-                {operationalAlerts.slice(0, 3).map((alert: OperationalAlert, idx: number) => (
+              <ul className="space-y-1.5">
+                {operationalAlerts.slice(0, 2).map((alert: OperationalAlert, idx: number) => (
                   <li
                     key={idx}
                     className={cn(
-                      "rounded-lg px-3 py-2 text-xs flex flex-col gap-0.5",
+                      "rounded px-2 py-1.5 text-xs flex flex-col gap-0.5",
                       alert.type === "danger" && "bg-red-500/5 border border-red-500/20",
                       alert.type === "warning" && "bg-amber-500/5 border border-amber-500/20",
                       alert.type === "info" && "bg-sky-500/5 border border-sky-500/20"
                     )}
                   >
-                    <span className="font-medium text-[var(--text-primary)]">
+                    <span className="font-medium text-[var(--text-primary)] text-xs leading-tight">
                       {alert.title}
-                    </span>
-                    <span className="text-[var(--text-secondary)] text-xs">
-                      {alert.description}
                     </span>
                   </li>
                 ))}
@@ -561,22 +536,22 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             )}
           </div>
 
-          {/* Accesos rápidos - ocupa espacio flexible */}
-          <div className={cn(cardBaseClass, "col-span-1 sm:col-span-1 lg:col-span-1 xl:col-span-2 space-y-4")}>
+          {/* Accesos rápidos - diseño más compacto */}
+          <div className={cn(cardBaseClass, "col-span-1 sm:col-span-1 lg:col-span-1 xl:col-span-2 space-y-3")}>
             <div>
-              <h3 className="text-sm font-medium text-[var(--text-primary)] font-satoshi mb-1">
+              <h3 className="text-xs font-semibold text-[var(--text-primary)] font-satoshi uppercase tracking-[0.14em] mb-1">
                 Accesos rápidos
               </h3>
-              <p className="text-xs text-[var(--text-secondary)]">Ir a secciones principales</p>
+              <p className="text-[10px] text-[var(--text-secondary)]">Ir a secciones principales</p>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              {QUICK_LINKS.map((link, index) => {
+              {QUICK_LINKS.slice(0, 4).map((link, index) => {
                 const Icon = link.icon;
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="flex flex-col items-center justify-center rounded-xl p-3 text-center transition-all duration-150 ease-out group relative overflow-hidden hover:-translate-y-[1px]"
+                    className="flex flex-col items-center justify-center rounded-lg p-2 text-center transition-all duration-150 ease-out group relative overflow-hidden hover:-translate-y-[1px]"
                     style={{
                       background: "rgba(255, 255, 255, 0.03)",
                       border: "1px solid rgba(255, 255, 255, 0.05)",
@@ -586,13 +561,13 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                       className="absolute inset-0 gradient-aurora-1 opacity-0 group-hover:opacity-5 transition-opacity duration-300"
                     />
                     <motion.span
-                      whileHover={{ scale: 1.1 }}
+                      whileHover={{ scale: 1.05 }}
                       transition={{ duration: 0.2 }}
-                      className="mb-1.5 relative z-10"
+                      className="mb-1 relative z-10"
                     >
-                      <Icon className="h-4 w-4 text-[var(--text-primary)]" />
+                      <Icon className="h-3.5 w-3.5 text-[var(--text-primary)]" />
                     </motion.span>
-                    <span className="font-medium text-[var(--text-primary)] font-satoshi text-xs relative z-10">
+                    <span className="font-medium text-[var(--text-primary)] font-satoshi text-[10px] leading-tight relative z-10">
                       {link.label}
                     </span>
                   </Link>
@@ -603,11 +578,11 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
 
           {/* Onboarding hint - solo si no hay actividad */}
           {showOnboardingHint && (
-            <div className={cn(cardBaseClass, "col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-4 text-center")}>
+            <div className={cn(cardBaseClass, "col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-4 text-center p-4")}>
               <p className="text-sm font-medium text-[var(--text-primary)] font-satoshi mb-2">
                 ¡Bienvenido! Configura tu barbería
               </p>
-              <p className="text-xs text-[var(--text-secondary)] mb-4 max-w-2xl mx-auto">
+              <p className="text-xs text-[var(--text-secondary)] mb-3 max-w-lg mx-auto">
                 Usa los accesos rápidos para configurar servicios, horarios y equipo
               </p>
               <div className="flex flex-wrap items-center justify-center gap-2">
@@ -630,20 +605,20 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
 
           {/* Top servicios - si hay datos */}
           {topServices.length > 0 && (
-            <div className={cn(cardBaseClass, "col-span-1 sm:col-span-1 lg:col-span-1 xl:col-span-2")}>
-              <h3 className="text-xs font-semibold text-[var(--text-primary)] font-satoshi mb-3 uppercase tracking-[0.14em]">
+            <div className={cn(cardBaseClass, "col-span-1 sm:col-span-1 lg:col-span-1 xl:col-span-2 p-3")}>
+              <h3 className="text-xs font-semibold text-[var(--text-primary)] font-satoshi mb-2 uppercase tracking-[0.14em]">
                 Top servicios
               </h3>
-              <ul className="space-y-2">
-                {topServices.slice(0, 4).map((service: TopService, index: number) => (
+              <ul className="space-y-1.5">
+                {topServices.slice(0, 3).map((service: TopService, index: number) => (
                   <li key={service.serviceId} className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
-                      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-white/10 text-[9px] font-semibold text-[var(--text-primary)]">
+                      <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white/10 text-[8px] font-semibold text-[var(--text-primary)]">
                         {index + 1}
                       </span>
-                      <span className="text-[var(--text-primary)] truncate max-w-[80px]">{service.name}</span>
+                      <span className="text-[var(--text-primary)] truncate max-w-[70px] text-xs">{service.name}</span>
                     </div>
-                    <span className="text-[var(--text-secondary)] font-medium">
+                    <span className="text-[var(--text-secondary)] font-medium text-xs">
                       {service.count}
                     </span>
                   </li>

@@ -171,18 +171,13 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(callbackUrl);
       }
       
-      // Proteger antes de rewrite: si no hay sesión y estamos en "/", redirigir a login
-      if (pathname === "/" && !session) {
+      // SIEMPRE redirigir "/" a "/login" - dejar que el componente maneje la autenticación
+      // Esto evita problemas con sesiones inválidas que causan redirecciones automáticas
+      if (pathname === "/") {
         url.pathname = "/login";
         url.searchParams.set("redirect", "/panel");
-        logDomainDebug(`[Pro Domain] No session at /, redirecting to login`);
+        logDomainDebug(`[Pro Domain] Always redirecting / to /login (let component handle auth)`);
         return NextResponse.redirect(url);
-      }
-      // Rewrite / a /panel si hay sesión
-      else if (pathname === "/" && session) {
-        url.pathname = "/panel";
-        logDomainDebug(`[Pro Domain] Rewriting / to /panel (session exists)`);
-        return NextResponse.rewrite(url);
       }
     }
 
