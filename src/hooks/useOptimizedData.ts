@@ -346,3 +346,84 @@ export function useAgendaPageData(
     }
   );
 }
+
+/**
+ * Hook optimizado para página de Chat - obtiene tenant + conversaciones + miembros en paralelo
+ * 🔥 AHORA CON REAL-TIME UPDATES
+ */
+export function useChatPageData(impersonateOrgId: string | null) {
+  const supabase = getSupabaseBrowser();
+
+  // 🔥 REAL-TIME CHAT: Actualiza automáticamente cuando llegan nuevos mensajes/conversaciones
+  return useRealtimeStaleWhileRevalidate(
+    `chat-page-${impersonateOrgId || 'default'}`,
+    async () => {
+      // 1. Obtener tenant
+      const { tenant } = await getCurrentTenant(impersonateOrgId);
+      if (!tenant) return null;
+
+      const tenantId = tenant.id;
+
+      // 2. Cargar datos en paralelo: conversaciones + miembros
+      const [conversationsResult, membersResult] = await Promise.all([
+        // Conversaciones optimizadas con RPC
+        supabase.rpc("get_user_conversations_optimized", {
+          p_user_id: null, // Se resolverá en la RPC
+          p_tenant_id: tenantId,
+        }),
+
+        // Directorio de miembros
+        supabase.rpc("list_tenant_members", { p_tenant_id: tenantId })
+      ]);
+
+      const conversations = conversationsResult.data || [];
+      const members = membersResult.data || [];
+
+      // Transformar miembros a formato de directorio
+      const membersDirectory: Record<string, any> = {};
+      for (const member of members) {
+        membersDirectory[member.user_id] = {
+          userId: member.user_id,
+          displayName: member.display_name,
+          tenantRole: member.tenant_role,
+          profilePhotoUrl: member.avatar_url || undefined,
+        };
+      }
+
+      return {
+        tenant: {
+          id: tenant.id,
+          name: tenant.name || "Tu barbería",
+          timezone: tenant.timezone || "Europe/Madrid",
+        },
+        conversations: conversations.map((conv: any) => ({
+          id: conv.id,
+          tenantId: conv.tenant_id,
+          type: conv.type as "all" | "direct" | "group",
+          name: conv.name,
+          lastMessageBody: conv.last_message_body,
+          lastMessageAt: conv.last_message_at,
+          unreadCount: conv.unread_count || 0,
+          membersCount: conv.members_count || 0,
+          lastReadAt: conv.last_read_at,
+          createdBy: conv.created_by,
+          viewerRole: conv.viewer_role as "member" | "admin",
+        })),
+        membersDirectory,
+      };
+    },
+    // 🔥 CONFIGURACIÓN REAL-TIME: Escucha cambios en mensajes y conversaciones
+    {
+      table: 'team_messages',
+      filter: `tenant_id=eq.${impersonateOrgId || 'default'}`, // TODO: Obtener tenantId real
+      event: '*',
+      tenantId: impersonateOrgId || 'default',
+      supabase: supabase,
+    },
+    {
+      enabled: true,
+      staleTime: 30000, // 30 segundos (chat necesita ser más fresco)
+      realtimeEnabled: true, // 🔥 HABILITADO: Actualiza en tiempo real
+    }
+  );
+}

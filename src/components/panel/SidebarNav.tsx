@@ -291,6 +291,50 @@ export function SidebarNav({
             return { staff: data || [] };
           });
         }
+
+        if (hoveredItem === "/panel/chat" && tId) {
+          await doPrefetch(`chat-page-${tId}`, async () => {
+            // Prefetch optimizado para chat: conversaciones + miembros en paralelo
+            const [conversationsResult, membersResult] = await Promise.all([
+              supabase.rpc("get_user_conversations_optimized", {
+                p_user_id: null, // Se resolverá en la RPC
+                p_tenant_id: tId,
+              }),
+              supabase.rpc("list_tenant_members", { p_tenant_id: tId })
+            ]);
+
+            const conversations = conversationsResult.data || [];
+            const members = membersResult.data || [];
+
+            const membersDirectory: Record<string, any> = {};
+            for (const member of members) {
+              membersDirectory[member.user_id] = {
+                userId: member.user_id,
+                displayName: member.display_name,
+                tenantRole: member.tenant_role,
+                profilePhotoUrl: member.avatar_url || undefined,
+              };
+            }
+
+            return {
+              tenant: { id: tId, name: "Tu barbería", timezone: "Europe/Madrid" },
+              conversations: conversations.map((conv: any) => ({
+                id: conv.id,
+                tenantId: conv.tenant_id,
+                type: conv.type,
+                name: conv.name,
+                lastMessageBody: conv.last_message_body,
+                lastMessageAt: conv.last_message_at,
+                unreadCount: conv.unread_count || 0,
+                membersCount: conv.members_count || 0,
+                lastReadAt: conv.last_read_at,
+                createdBy: conv.created_by,
+                viewerRole: conv.viewer_role,
+              })),
+              membersDirectory,
+            };
+          });
+        }
       } catch (err) {
         // ignore prefetch failures
       }
