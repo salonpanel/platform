@@ -84,6 +84,8 @@ export function StaffEditModal({
   const [loading, setLoading] = useState(false);
   const [loadingSchedules, setLoadingSchedules] = useState(false);
   const [loadingPermissions, setLoadingPermissions] = useState(false);
+  const [availableServices, setAvailableServices] = useState<Array<{id: string, name: string}>>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
 
   // Función para cargar horarios
   const loadSchedules = useCallback(async () => {
@@ -161,6 +163,29 @@ export function StaffEditModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [staff?.user_id, tenantId]);
 
+  // Cargar servicios disponibles de la barbería
+  useEffect(() => {
+    if (!isOpen || !tenantId) return;
+
+    const loadServices = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("services")
+          .select("id, name")
+          .eq("tenant_id", tenantId)
+          .eq("active", true)
+          .order("name");
+
+        if (error) throw error;
+        setAvailableServices(data || []);
+      } catch (err: any) {
+        console.error("Error al cargar servicios:", err);
+      }
+    };
+
+    loadServices();
+  }, [isOpen, tenantId, supabase]);
+
   // Inicializar formulario cuando se abre el modal
   useEffect(() => {
     if (!isOpen || !tenantId) {
@@ -181,6 +206,7 @@ export function StaffEditModal({
         endTime: "19:00",
         isActive: day.day !== 0 && day.day !== 6, // Activo de lunes a viernes por defecto
       })));
+      setSelectedServices([]);
       return;
     }
 
@@ -194,6 +220,9 @@ export function StaffEditModal({
         userRole: "staff",
         createUser: false,
       });
+
+      // Cargar servicios seleccionados
+      setSelectedServices(staff.skills || []);
 
       // Cargar horarios y permisos
       loadSchedules();
@@ -211,6 +240,7 @@ export function StaffEditModal({
         endTime: "19:00",
         isActive: day.day !== 0 && day.day !== 6, // Activo de lunes a viernes por defecto
       })));
+      setSelectedServices([]);
     }
   }, [isOpen, staff?.id, tenantId, loadSchedules, loadPermissions]);
 
@@ -227,10 +257,8 @@ export function StaffEditModal({
   const handleSave = async () => {
     setLoading(true);
     try {
-      const skillsArray = form.skills
-        .split(",")
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
+      // Usar selectedServices en lugar de parsear form.skills
+      const skillsArray = selectedServices.length > 0 ? selectedServices : [];
 
       const schedulesData = schedules
         .filter((s) => s.isActive)
@@ -247,9 +275,10 @@ export function StaffEditModal({
         profile_photo_url: form.profile_photo_url.trim() || undefined,
         weekly_hours: form.weekly_hours || undefined,
         schedules: schedulesData,
-        createUser: form.createUser,
-        email: form.createUser ? form.email.trim() : undefined,
-        userRole: form.createUser ? form.userRole : undefined,
+        // Siempre crear usuario para nuevo staff (obligatorio)
+        createUser: !staff, // true si es nuevo, false si estás editando
+        email: !staff ? form.email.trim() : undefined,
+        userRole: !staff ? form.userRole : undefined,
         permissions: staff?.user_id ? permissions : undefined, // Solo enviar permisos si el staff tiene user_id
       });
     } catch (err: any) {
@@ -294,59 +323,48 @@ export function StaffEditModal({
             placeholder="Nombre del barbero"
           />
 
-          {/* Sección de creación de usuario - Solo para nuevo staff */}
+          {/* Sección de creación de usuario - OBLIGATORIO para nuevo staff */}
           {!staff && (
             <div className="space-y-4 p-4 rounded-[var(--radius-md)] glass border border-[var(--glass-border)]">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="createUser"
-                  checked={form.createUser}
-                  onChange={(e) => setForm({ ...form, createUser: e.target.checked })}
-                  className="rounded border-[var(--glass-border)]"
-                />
-                <label
-                  htmlFor="createUser"
-                  className="text-sm font-medium text-[var(--color-text-primary)] cursor-pointer"
-                  style={{ fontFamily: "var(--font-heading)" }}
-                >
-                  Crear cuenta de usuario para este barbero
-                </label>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 rounded-full bg-[var(--accent-aqua)]" />
+                <h3 className="text-sm font-medium text-[var(--color-text-primary)]" style={{ fontFamily: "var(--font-heading)" }}>
+                  Cuenta de usuario (Obligatorio)
+                </h3>
               </div>
+              <p className="text-xs text-[var(--color-text-secondary)] mb-4" style={{ fontFamily: "var(--font-body)" }}>
+                Todos los miembros del equipo deben tener una cuenta para acceder al panel
+              </p>
 
-              {form.createUser && (
-                <div className="space-y-4 mt-4 pl-6 border-l-2 border-[var(--accent-aqua)]/30">
-                  <Input
-                    label="Email"
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    required
-                    placeholder="barbero@ejemplo.com"
-                    helperText="Se enviará un email de bienvenida con instrucciones de acceso"
-                  />
+              <Input
+                label="Email"
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                required
+                placeholder="barbero@ejemplo.com"
+                helperText="Se enviará un email de bienvenida con instrucciones de acceso"
+              />
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-[var(--color-text-primary)]" style={{ fontFamily: "var(--font-heading)" }}>
-                      Rol del usuario
-                    </label>
-                    <select
-                      value={form.userRole}
-                      onChange={(e) => setForm({ ...form, userRole: e.target.value })}
-                      className="w-full rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
-                    >
-                      <option value="staff">Staff - Solo puede ver su agenda</option>
-                      <option value="admin">Admin - Puede gestionar todo excepto configuración</option>
-                      <option value="owner">Owner - Acceso completo</option>
-                    </select>
-                    <p className="text-xs text-[var(--color-text-secondary)]" style={{ fontFamily: "var(--font-body)" }}>
-                      {form.userRole === "staff" && "Podrá ver y gestionar su propia agenda de citas"}
-                      {form.userRole === "admin" && "Podrá gestionar staff, servicios y ver todas las citas"}
-                      {form.userRole === "owner" && "Tendrá acceso completo a todas las funcionalidades"}
-                    </p>
-                  </div>
-                </div>
-              )}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[var(--color-text-primary)]" style={{ fontFamily: "var(--font-heading)" }}>
+                  Rol del usuario
+                </label>
+                <select
+                  value={form.userRole}
+                  onChange={(e) => setForm({ ...form, userRole: e.target.value })}
+                  className="w-full rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
+                >
+                  <option value="staff">Staff - Solo puede ver su agenda</option>
+                  <option value="admin">Admin - Puede gestionar todo excepto configuración</option>
+                  <option value="owner">Owner - Acceso completo</option>
+                </select>
+                <p className="text-xs text-[var(--color-text-secondary)]" style={{ fontFamily: "var(--font-body)" }}>
+                  {form.userRole === "staff" && "Podrá ver y gestionar su propia agenda de citas"}
+                  {form.userRole === "admin" && "Podrá gestionar staff, servicios y ver todas las citas"}
+                  {form.userRole === "owner" && "Tendrá acceso completo a todas las funcionalidades"}
+                </p>
+              </div>
             </div>
           )}
 
@@ -371,13 +389,44 @@ export function StaffEditModal({
             </div>
           )}
 
-          <Input
-            label="Habilidades"
-            value={form.skills}
-            onChange={(e) => setForm({ ...form, skills: e.target.value })}
-            placeholder="Corte, Barba, Tinte (separadas por comas)"
-            helperText="Separa las habilidades con comas"
-          />
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3" style={{ fontFamily: "var(--font-body)" }}>
+              Servicios que ofrece
+            </label>
+            {availableServices.length === 0 ? (
+              <p className="text-sm text-[var(--color-text-secondary)]" style={{ fontFamily: "var(--font-body)" }}>
+                No hay servicios configurados. Ve a la sección Servicios para crearlos.
+              </p>
+            ) : (
+              <div className="space-y-2 max-h-48 overflow-y-auto glass p-3 rounded-[var(--radius-md)] border border-[var(--glass-border)]">
+                {availableServices.map((service) => (
+                  <label
+                    key={service.id}
+                    className="flex items-center gap-3 p-2 rounded-[var(--radius-sm)] hover:bg-[rgba(255,255,255,0.05)] transition-colors cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedServices.includes(service.name)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedServices([...selectedServices, service.name]);
+                        } else {
+                          setSelectedServices(selectedServices.filter(s => s !== service.name));
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-[var(--glass-border)] text-[var(--accent-aqua)] focus:ring-2 focus:ring-[var(--accent-aqua)]"
+                    />
+                    <span className="text-sm text-[var(--color-text-primary)]" style={{ fontFamily: "var(--font-body)" }}>
+                      {service.name}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-[var(--color-text-secondary)] mt-2" style={{ fontFamily: "var(--font-body)" }}>
+              Selecciona los servicios que este miembro del equipo puede realizar
+            </p>
+          </div>
 
           <Input
             label="Horas semanales"
