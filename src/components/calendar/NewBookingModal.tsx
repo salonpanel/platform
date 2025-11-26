@@ -447,7 +447,6 @@ export function NewBookingModal({
                     </div>
                   )}
                 </div>
-              </div>
             </TabsContent>
 
             <TabsContent value="notes">
@@ -503,10 +502,10 @@ export function NewBookingModal({
             </div>
           </div>
         </div>
+        </div>
         {ToastComponent}
       </AgendaModal>
 
-      {/* Ficha rápida de cliente */}
       {showCustomerView && selectedCustomer && (
         <CustomerQuickView
           customer={{
