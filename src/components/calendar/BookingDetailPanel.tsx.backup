@@ -200,9 +200,9 @@ export function BookingDetailPanel({
                 )}>
                   {booking.customer.internal_notes}
                 </p>
-                <span className="text-xs text-amber-300/70 font-[var(--font-body)]">
-                  [TIP] La IA de voz usa estas notas para personalizar las llamadas
-                </span>
+                  <span className="text-xs text-amber-300/70 font-[var(--font-body)]">
+                    [TIP] La IA de voz usa estas notas para personalizar las llamadas
+                  </span>
               </div>
             )}
           </div>
@@ -316,4 +316,4 @@ export function BookingDetailPanel({
       {ToastComponent}
     </>
   );
-}
+
