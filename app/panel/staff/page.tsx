@@ -70,7 +70,7 @@ function StaffContent() {
       try {
         setLoading(true);
         
-        // Cargar staff con conteo de reservas
+        // Cargar staff con conteo de reservas - SOLO usuarios con cuenta
         const { data: staffData, error: staffError } = await supabase
           .from("staff")
           .select(`
@@ -78,6 +78,7 @@ function StaffContent() {
             bookings:bookings(count)
           `)
           .eq("tenant_id", tenantId)
+          .not("user_id", "is", null) // Solo staff con cuenta de usuario
           .order("name");
 
         if (staffError) {
