@@ -58,12 +58,21 @@ const nextConfig = {
 
   // Configuración de imágenes y optimización
   images: {
-    domains: ['jsqminbgggwhvkfgeibz.supabase.co'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'jsqminbgggwhvkfgeibz.supabase.co',
+      },
+    ],
   },
 
   // Configuración de compilación
-  swcMinify: true,
   poweredByHeader: false,
+
+  // Forzar raíz de Turbopack para evitar advertencia de lockfiles fuera
+  turbopack: {
+    root: __dirname,
+  },
 };
 
 module.exports = nextConfig;
