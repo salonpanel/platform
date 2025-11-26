@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { supabaseServer } from "@/lib/supabase";
+import { hasTenantPermission } from "@/lib/permissions/server";
 
 export const runtime = "nodejs";
 
@@ -101,14 +102,28 @@ export async function POST(req: Request) {
       .select("role")
       .eq("tenant_id", tenant_id)
       .eq("user_id", session.user.id)
-      .in("role", ["owner", "admin", "manager"])
       .maybeSingle();
 
     if (membershipError || !membership) {
       return NextResponse.json(
-        { error: "No tienes permiso para gestionar este tenant. Se requiere rol owner, admin o manager." },
+        { error: "No tienes acceso a este tenant." },
         { status: 403 }
       );
+    }
+
+    if (membership.role !== "owner" && membership.role !== "admin") {
+      const allowed = await hasTenantPermission(
+        supabase,
+        session.user.id,
+        tenant_id,
+        "servicios"
+      );
+      if (!allowed) {
+        return NextResponse.json(
+          { error: "No tienes permiso para gestionar servicios." },
+          { status: 403 }
+        );
+      }
     }
 
     // Crear servicio sin sincronizar con Stripe (se puede hacer después)
