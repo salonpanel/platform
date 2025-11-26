@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
+import { UserPermissions, DEFAULT_PERMISSIONS } from "@/hooks/useUserPermissions";
 
 type Staff = {
   id: string;
@@ -43,6 +44,8 @@ interface StaffEditModalProps {
     createUser?: boolean;
     email?: string;
     userRole?: string;
+    // Permisos
+    permissions?: UserPermissions;
   }) => Promise<void>;
   staff: Staff | null;
   tenantId: string;
@@ -77,8 +80,10 @@ export function StaffEditModal({
     createUser: false,
   });
   const [schedules, setSchedules] = useState<DaySchedule[]>([]);
+  const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS);
   const [loading, setLoading] = useState(false);
   const [loadingSchedules, setLoadingSchedules] = useState(false);
+  const [loadingPermissions, setLoadingPermissions] = useState(false);
 
   // Función para cargar horarios
   const loadSchedules = useCallback(async () => {
@@ -124,6 +129,38 @@ export function StaffEditModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [staff?.id, tenantId]);
 
+  // Función para cargar permisos
+  const loadPermissions = useCallback(async () => {
+    if (!staff || !staff.user_id || !tenantId) return;
+
+    setLoadingPermissions(true);
+    try {
+      const { data, error } = await supabase
+        .from("user_permissions")
+        .select("permissions")
+        .eq("user_id", staff.user_id)
+        .eq("tenant_id", tenantId)
+        .single();
+
+      if (error && error.code !== "PGRST116") {
+        // PGRST116 = no rows returned, es esperado si no tiene permisos configurados
+        throw error;
+      }
+
+      if (data?.permissions) {
+        setPermissions(data.permissions as UserPermissions);
+      } else {
+        setPermissions(DEFAULT_PERMISSIONS);
+      }
+    } catch (err: any) {
+      console.error("Error al cargar permisos:", err);
+      setPermissions(DEFAULT_PERMISSIONS);
+    } finally {
+      setLoadingPermissions(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [staff?.user_id, tenantId]);
+
   // Inicializar formulario cuando se abre el modal
   useEffect(() => {
     if (!isOpen || !tenantId) {
@@ -158,8 +195,13 @@ export function StaffEditModal({
         createUser: false,
       });
 
-      // Cargar horarios
+      // Cargar horarios y permisos
       loadSchedules();
+      if (staff.user_id) {
+        loadPermissions();
+      } else {
+        setPermissions(DEFAULT_PERMISSIONS);
+      }
     } else {
       // Nuevo staff - valores por defecto
       setSchedules(DAYS_OF_WEEK.map((day) => ({
@@ -170,12 +212,16 @@ export function StaffEditModal({
         isActive: day.day !== 0 && day.day !== 6, // Activo de lunes a viernes por defecto
       })));
     }
-  }, [isOpen, staff?.id, tenantId, loadSchedules]);
+  }, [isOpen, staff?.id, tenantId, loadSchedules, loadPermissions]);
 
   const handleScheduleChange = (day: number, field: "startTime" | "endTime" | "isActive", value: string | boolean) => {
     setSchedules((prev) =>
       prev.map((s) => (s.day === day ? { ...s, [field]: value } : s))
     );
+  };
+
+  const handlePermissionChange = (key: keyof UserPermissions, value: boolean) => {
+    setPermissions((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSave = async () => {
@@ -204,6 +250,7 @@ export function StaffEditModal({
         createUser: form.createUser,
         email: form.createUser ? form.email.trim() : undefined,
         userRole: form.createUser ? form.userRole : undefined,
+        permissions: staff?.user_id ? permissions : undefined, // Solo enviar permisos si el staff tiene user_id
       });
     } catch (err: any) {
       console.error("Error al guardar:", err);
@@ -235,6 +282,7 @@ export function StaffEditModal({
         <TabsList>
           <TabsTrigger value="info">Información</TabsTrigger>
           <TabsTrigger value="schedule">Horarios</TabsTrigger>
+          {staff?.user_id && <TabsTrigger value="permissions">Permisos</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="info" className="space-y-4 mt-4">
@@ -406,6 +454,213 @@ export function StaffEditModal({
             </div>
           )}
         </TabsContent>
+
+        {/* Pestaña de Permisos - Solo si el staff tiene user_id */}
+        {staff?.user_id && (
+          <TabsContent value="permissions" className="space-y-4 mt-4">
+            {loadingPermissions ? (
+              <div className="text-center py-8 text-[var(--color-text-secondary)]">
+                Cargando permisos...
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Descripción */}
+                <div className="p-4 rounded-[var(--radius-md)] glass border border-[var(--glass-border)] bg-[var(--accent-aqua-glass)]">
+                  <p className="text-sm text-[var(--color-text-secondary)]" style={{ fontFamily: "var(--font-body)" }}>
+                    Configura qué secciones del panel puede ver y acceder este usuario. Si desactivas una sección, no aparecerá en el menú y tampoco podrá acceder mediante URL directa.
+                  </p>
+                </div>
+
+                {/* Grid de permisos */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* Dashboard */}
+                  <div className="glass rounded-[var(--radius-md)] p-4 border border-[var(--glass-border)]">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-[var(--color-text-primary)] font-satoshi">
+                          Dashboard
+                        </h4>
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                          Vista general y estadísticas
+                        </p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={permissions.dashboard}
+                          onChange={(e) => handlePermissionChange("dashboard", e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--gradient-primary-start)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--gradient-primary-start)]"></div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Agenda */}
+                  <div className="glass rounded-[var(--radius-md)] p-4 border border-[var(--glass-border)]">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-[var(--color-text-primary)] font-satoshi">
+                          Agenda
+                        </h4>
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                          Calendario y citas
+                        </p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={permissions.agenda}
+                          onChange={(e) => handlePermissionChange("agenda", e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--gradient-primary-start)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--gradient-primary-start)]"></div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Clientes */}
+                  <div className="glass rounded-[var(--radius-md)] p-4 border border-[var(--glass-border)]">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-[var(--color-text-primary)] font-satoshi">
+                          Clientes
+                        </h4>
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                          Base de datos de clientes
+                        </p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={permissions.clientes}
+                          onChange={(e) => handlePermissionChange("clientes", e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--gradient-primary-start)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--gradient-primary-start)]"></div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Servicios */}
+                  <div className="glass rounded-[var(--radius-md)] p-4 border border-[var(--glass-border)]">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-[var(--color-text-primary)] font-satoshi">
+                          Servicios
+                        </h4>
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                          Gestión de servicios
+                        </p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={permissions.servicios}
+                          onChange={(e) => handlePermissionChange("servicios", e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--gradient-primary-start)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--gradient-primary-start)]"></div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Staff */}
+                  <div className="glass rounded-[var(--radius-md)] p-4 border border-[var(--glass-border)]">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-[var(--color-text-primary)] font-satoshi">
+                          Staff
+                        </h4>
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                          Equipo y barberos
+                        </p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={permissions.staff}
+                          onChange={(e) => handlePermissionChange("staff", e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--gradient-primary-start)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--gradient-primary-start)]"></div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Marketing */}
+                  <div className="glass rounded-[var(--radius-md)] p-4 border border-[var(--glass-border)]">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-[var(--color-text-primary)] font-satoshi">
+                          Marketing
+                        </h4>
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                          Campañas y promociones
+                        </p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={permissions.marketing}
+                          onChange={(e) => handlePermissionChange("marketing", e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--gradient-primary-start)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--gradient-primary-start)]"></div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Reportes */}
+                  <div className="glass rounded-[var(--radius-md)] p-4 border border-[var(--glass-border)]">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-[var(--color-text-primary)] font-satoshi">
+                          Reportes
+                        </h4>
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                          Informes y análisis
+                        </p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={permissions.reportes}
+                          onChange={(e) => handlePermissionChange("reportes", e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--gradient-primary-start)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--gradient-primary-start)]"></div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Ajustes */}
+                  <div className="glass rounded-[var(--radius-md)] p-4 border border-[var(--glass-border)]">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-[var(--color-text-primary)] font-satoshi">
+                          Ajustes
+                        </h4>
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                          Configuración del sistema
+                        </p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={permissions.ajustes}
+                          onChange={(e) => handlePermissionChange("ajustes", e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--gradient-primary-start)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--gradient-primary-start)]"></div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+        )}
       </Tabs>
     </Modal>
   );
