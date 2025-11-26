@@ -86,6 +86,18 @@ export function SidebarNav({
     });
   }, [items, permissions, role]);
 
+  // Agregar item de logout al final de la navegación
+  const navigationItems = useMemo(() => {
+    const items = [...filteredItems];
+    // Agregar logout al final
+    items.push({
+      href: "/logout",
+      label: "Cerrar sesión",
+      icon: "logout"
+    });
+    return items;
+  }, [filteredItems]);
+
   const getNavIcon = useCallback((href: string): React.ReactNode => {
     const iconClass = "h-5 w-5";
     switch (href) {
@@ -107,6 +119,8 @@ export function SidebarNav({
         return <MessageSquare className={iconClass} />;
       case "/panel/ajustes":
         return <Settings className={iconClass} />;
+      case "/logout":
+        return <LogOut className={iconClass} />;
       default:
         return null;
     }
@@ -381,7 +395,7 @@ export function SidebarNav({
         {/* Navigation - Scroll interno propio si supera altura disponible */}
         <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 scrollbar-hide">
           <motion.ul
-            className="space-y-1.5"
+            className="space-y-3"
             initial="collapsed"
             animate="expanded"
             variants={{
@@ -394,7 +408,7 @@ export function SidebarNav({
               collapsed: {}
             }}
           >
-            {filteredItems.map((item, index) => {
+            {navigationItems.map((item, index) => {
               const active = isActive(item.href);
               const icon = getNavIcon(item.href);
               const isItemHovered = hoveredItem === item.href;
@@ -429,8 +443,11 @@ export function SidebarNav({
                 >
                   <Link
                     href={item.href}
-                    prefetch={true}
+                    prefetch={item.href !== "/logout"} // No prefetch logout
                     onClick={() => {
+                      // Solo aplicar lógica especial para navegación normal, no para logout
+                      if (item.href === "/logout") return;
+
                       // En mobile, cerrar el sidebar completamente
                       if (typeof window !== "undefined" && window.innerWidth < 768) {
                         if (onClose) onClose();
@@ -454,6 +471,8 @@ export function SidebarNav({
                       isExpanded ? "gap-3 px-3 py-2.5" : "justify-center px-3 py-2.5",
                       active
                         ? "gradient-aurora-1 text-white shadow-[0px_4px_16px_rgba(123,92,255,0.4)] ring-1 ring-white/20"
+                        : item.href === "/logout"
+                        ? "text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:shadow-[0px_2px_12px_rgba(239,68,68,0.1)]"
                         : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.08)] hover:shadow-[0px_2px_12px_rgba(255,255,255,0.1)]"
                     )}
                     style={{
@@ -551,68 +570,6 @@ export function SidebarNav({
           </motion.ul>
         </nav>
 
-        {/* Footer - Logout */}
-        <div className="border-t border-[rgba(255,255,255,0.1)] p-3 glass-subtle">
-          <Link
-            href="/logout"
-            onClick={() => {
-              // Si está expandido y autoCollapseOnClick está activado, colapsarlo automáticamente
-              if (autoCollapseOnClick && !isCollapsed && onToggleCollapse) {
-                setTimeout(() => {
-                  onToggleCollapse();
-                }, 150);
-              }
-            }}
-            className={cn(
-              "flex items-center rounded-[var(--radius-md)] text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.08)] hover:shadow-[0px_2px_12px_rgba(255,255,255,0.1)] transition-all duration-300 font-satoshi group overflow-hidden relative",
-              isExpanded ? "gap-3 px-3 py-2.5" : "justify-center px-3 py-2.5"
-            )}
-            style={{
-              borderRadius: "var(--radius-md)",
-              minHeight: "44px",
-            }}
-            title={!isExpanded ? "Cerrar sesión" : undefined}
-          >
-            {/* Ripple effect para logout */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-red-400/10 rounded-[var(--radius-md)] opacity-0 group-hover:opacity-100"
-              initial={false}
-              transition={{ duration: 0.2 }}
-            />
-
-            <motion.div
-              animate={{
-                scale: hoveredItem === "logout" ? 1.05 : 1,
-              }}
-              transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              className={cn(
-                "flex-shrink-0 text-red-400 group-hover:text-red-300 relative z-10 flex items-center justify-center",
-                !isExpanded && "w-10 h-10"
-              )}
-            >
-              <LogOut className="h-4 w-4" />
-            </motion.div>
-            <AnimatePresence mode="wait">
-              {isExpanded && (
-                <motion.span
-                  key="logout-label"
-                  initial={{ opacity: 0, width: 0, x: -10 }}
-                  animate={{ opacity: 1, width: "auto", x: 0 }}
-                  exit={{ opacity: 0, width: 0, x: -10 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 300,
-                    damping: 30,
-                    duration: 0.3
-                  }}
-                  className="flex-1 whitespace-nowrap text-red-400 group-hover:text-red-300 relative z-10"
-                >
-                  Cerrar sesión
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </Link>
-        </div>
       </motion.aside>
     </>
   );
