@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 
 export type UserPermissions = {
@@ -46,61 +46,62 @@ function isRpcUserRoleAndPermissions(obj: any): obj is RpcUserRoleAndPermissions
 }
 
 export function useUserPermissions(tenantId: string | null) {
-  const supabase = getSupabaseBrowser();
-  const [permissions, setPermissions] = useState<UserPermissions>(FULL_PERMISSIONS); // Empezar con permisos completos por defecto
+  const supabase = useMemo(() => getSupabaseBrowser(), []);
+  const [permissions, setPermissions] = useState<UserPermissions>(FULL_PERMISSIONS);
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const loadPermissions = useCallback(async () => {
     if (!tenantId) {
       setLoading(false);
       return;
     }
 
-    const loadPermissions = async () => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-        if (!user) {
-          setPermissions(DEFAULT_PERMISSIONS);
-          setLoading(false);
-          return;
-        }
-
-        // Usar la función RPC optimizada
-        const { data, error } = await supabase
-          .rpc("get_user_role_and_permissions", {
-            p_user_id: user.id,
-            p_tenant_id: tenantId,
-          })
-          .single();
-
-        if (error || !isRpcUserRoleAndPermissions(data)) {
-          setPermissions(DEFAULT_PERMISSIONS);
-          setRole(null);
-          setLoading(false);
-          return;
-        }
-
-        setRole(data.role);
-        if (data.role === "owner" || data.role === "admin") {
-          setPermissions(FULL_PERMISSIONS);
-        } else {
-          setPermissions(data.permissions as UserPermissions);
-        }
-      } catch (error) {
-        console.error("Error loading permissions (rpc):", error);
-        setPermissions(FULL_PERMISSIONS);
+      if (!user) {
+        setPermissions(DEFAULT_PERMISSIONS);
         setRole(null);
-      } finally {
         setLoading(false);
+        return;
       }
-    };
 
-    loadPermissions();
+      // Usar la función RPC optimizada (una sola consulta)
+      const { data, error } = await supabase
+        .rpc("get_user_role_and_permissions", {
+          p_user_id: user.id,
+          p_tenant_id: tenantId,
+        })
+        .single();
+
+      if (error || !isRpcUserRoleAndPermissions(data)) {
+        setPermissions(DEFAULT_PERMISSIONS);
+        setRole(null);
+        setLoading(false);
+        return;
+      }
+
+      setRole(data.role);
+      if (data.role === "owner" || data.role === "admin") {
+        setPermissions(FULL_PERMISSIONS);
+      } else {
+        setPermissions(data.permissions as UserPermissions);
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error("Error loading permissions (rpc):", error);
+      setPermissions(FULL_PERMISSIONS);
+      setRole(null);
+      setLoading(false);
+    }
   }, [supabase, tenantId]);
+
+  useEffect(() => {
+    loadPermissions();
+  }, [loadPermissions]);
 
   return { permissions, role, loading };
 }

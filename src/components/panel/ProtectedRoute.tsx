@@ -41,13 +41,10 @@ export function ProtectedRoute({ children, requiredPermission }: ProtectedRouteP
     }
   }, [loading, role, permissions, requiredPermission, pathname, router, tenantId]);
 
-  // Mientras carga, mostrar nada o un loader (evitar flash de contenido)
+  // NO mostrar loader aquí - el layout global ya lo maneja
+  // Esto evita loaders anidados y mejora la UX
   if (loading || !tenantId) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[var(--accent-aqua)]"></div>
-      </div>
-    );
+    return null;
   }
 
   // Si es owner/admin o tiene el permiso, mostrar contenido
