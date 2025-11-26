@@ -16,6 +16,7 @@ type Staff = {
   profile_photo_url?: string | null;
   weekly_hours?: number | null;
   user_id?: string | null;
+  provides_services?: boolean;
 };
 
 type DaySchedule = {
@@ -46,6 +47,7 @@ interface StaffEditModalProps {
     userRole?: string;
     // Permisos
     permissions?: UserPermissions;
+    provides_services?: boolean;
   }) => Promise<void>;
   staff: Staff | null;
   tenantId: string;
@@ -78,6 +80,7 @@ export function StaffEditModal({
     email: "",
     userRole: "staff",
     createUser: false,
+    providesServices: true,
   });
   const [schedules, setSchedules] = useState<DaySchedule[]>([]);
   const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS);
@@ -198,6 +201,7 @@ export function StaffEditModal({
         email: "",
         userRole: "staff",
         createUser: false,
+        providesServices: true,
       });
       setSchedules(DAYS_OF_WEEK.map((day) => ({
         day: day.day,
@@ -219,6 +223,7 @@ export function StaffEditModal({
         email: "",
         userRole: "staff",
         createUser: false,
+        providesServices: staff.provides_services ?? true,
       });
 
       // Cargar servicios seleccionados
@@ -278,6 +283,7 @@ export function StaffEditModal({
         // Siempre crear usuario para nuevo staff (obligatorio)
         createUser: !staff, // true si es nuevo, false si estás editando
         email: !staff ? form.email.trim() : undefined,
+        provides_services: form.providesServices,
         userRole: !staff ? form.userRole : undefined,
         permissions: staff?.user_id ? permissions : undefined, // Solo enviar permisos si el staff tiene user_id
       });
@@ -388,6 +394,28 @@ export function StaffEditModal({
               />
             </div>
           )}
+
+          <div className="glass rounded-[var(--radius-md)] p-4 border border-[var(--glass-border)] space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-sm font-medium text-[var(--color-text-primary)] block" style={{ fontFamily: "var(--font-heading)" }}>
+                  Ofrece servicios
+                </label>
+                <p className="text-xs text-[var(--color-text-secondary)] mt-1" style={{ fontFamily: "var(--font-body)" }}>
+                  Indica si este miembro aparece como reservable en la agenda
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.providesServices}
+                  onChange={(e) => setForm({ ...form, providesServices: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-[var(--glass-bg)] border border-[var(--glass-border)] peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--accent-aqua)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--accent-aqua)]"></div>
+              </label>
+            </div>
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3" style={{ fontFamily: "var(--font-body)" }}>

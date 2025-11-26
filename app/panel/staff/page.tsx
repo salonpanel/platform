@@ -22,6 +22,7 @@ type Staff = {
   bookings_count?: number;
   profile_photo_url?: string | null;
   weekly_hours?: number | null;
+  provides_services?: boolean;
 };
 
 function StaffContent() {
@@ -161,6 +162,7 @@ function StaffContent() {
     profile_photo_url?: string;
     weekly_hours?: number;
     permissions?: UserPermissions;
+    provides_services?: boolean;
   }) => {
     if (!tenantId) return;
 
@@ -217,6 +219,7 @@ function StaffContent() {
             name: staffData.name,
             display_name: staffData.display_name,
             skills: staffData.skills,
+            provides_services: staffData.provides_services,
           })
           .eq("id", editingStaff.id)
           .select()
@@ -297,6 +300,7 @@ function StaffContent() {
             profile_photo_url: staffData.profile_photo_url,
             weekly_hours: staffData.weekly_hours,
             user_id: userId,
+            provides_services: staffData.provides_services ?? true,
           })
           .select()
           .single();
