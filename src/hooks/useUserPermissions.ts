@@ -38,7 +38,7 @@ export const FULL_PERMISSIONS: UserPermissions = {
 
 export function useUserPermissions(tenantId: string | null) {
   const supabase = getSupabaseBrowser();
-  const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS);
+  const [permissions, setPermissions] = useState<UserPermissions>(FULL_PERMISSIONS); // Empezar con permisos completos por defecto
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -55,6 +55,7 @@ export function useUserPermissions(tenantId: string | null) {
         } = await supabase.auth.getUser();
 
         if (!user) {
+          setPermissions(DEFAULT_PERMISSIONS);
           setLoading(false);
           return;
         }
@@ -68,6 +69,7 @@ export function useUserPermissions(tenantId: string | null) {
           .single();
 
         if (!membership) {
+          setPermissions(DEFAULT_PERMISSIONS);
           setLoading(false);
           return;
         }
@@ -97,7 +99,7 @@ export function useUserPermissions(tenantId: string | null) {
         }
       } catch (error) {
         console.error("Error loading permissions:", error);
-        setPermissions(DEFAULT_PERMISSIONS);
+        setPermissions(FULL_PERMISSIONS); // En caso de error, dar permisos completos para no bloquear
       } finally {
         setLoading(false);
       }
