@@ -4,7 +4,7 @@ import { DashboardDataset, createEmptyDashboardKpis, fetchDashboardDataset } fro
 import { fetchAgendaDataset, getAgendaRange } from "@/lib/agenda-data";
 import { getCurrentTenant } from "@/lib/panel-tenant";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
-import { useStaleWhileRevalidate } from "./useStaleWhileRevalidate";
+import { useStaleWhileRevalidate, useRealtimeStaleWhileRevalidate } from "./useStaleWhileRevalidate";
 import { ViewMode } from "@/types/agenda";
 
 /**
@@ -18,10 +18,10 @@ export function useDashboardData(
 
   const enabled = options?.enabled ?? true;
 
-  // Obtener tenant + datos en UNA SOLA llamada con caché
-  const cacheKey = options?.tenantId ? `dashboard-full-tenant-${options?.tenantId}` : `dashboard-full-${impersonateOrgId || 'default'}`;
+  // 🔥 REAL-TIME DASHBOARD: Actualiza automáticamente cuando llegan nuevas citas
+  const cacheKey = options?.tenantId ? `dashboard-full-tenant-${options.tenantId}` : `dashboard-full-${impersonateOrgId || 'default'}`;
 
-  const { data, isLoading } = useStaleWhileRevalidate(
+  const { data, isLoading } = useRealtimeStaleWhileRevalidate(
     cacheKey,
     async () => {
       // 1. Obtener tenant primero (si se pasó por opciones, no llamamos a getCurrentTenant)
@@ -40,7 +40,20 @@ export function useDashboardData(
 
       return fetchDashboardDataset(supabase, tenant);
     },
-    { enabled: enabled && !!options?.tenantId, initialData: options?.initialData || undefined, persist: true } // Solo ejecutar cuando tenemos tenantId y está habilitado
+    // 🔥 CONFIGURACIÓN REAL-TIME: Escucha cambios en bookings y metrics
+    {
+      table: 'bookings',
+      filter: options?.tenantId ? `tenant_id=eq.${options.tenantId}` : undefined,
+      event: '*',
+      tenantId: options?.tenantId || 'default',
+      supabase: supabase,
+    },
+    {
+      enabled: enabled && !!options?.tenantId,
+      initialData: options?.initialData || undefined,
+      persist: true,
+      realtimeEnabled: true, // 🔥 HABILITADO: Actualiza en tiempo real
+    }
   );
 
   return {
@@ -297,6 +310,7 @@ export function useStaffPageData(impersonateOrgId: string | null) {
 
 /**
  * Hook optimizado para página de Agenda - obtiene tenant + staff/services/customers/bookings/blockings/schedules
+ * 🔥 AHORA CON REAL-TIME UPDATES
  */
 export function useAgendaPageData(
   impersonateOrgId: string | null,
@@ -307,7 +321,8 @@ export function useAgendaPageData(
   const viewMode = options?.viewMode || "day";
   const range = getAgendaRange(selectedDate, viewMode);
 
-  return useStaleWhileRevalidate(
+  // 🔥 REAL-TIME AGENDA: Actualiza automáticamente cuando llegan cambios
+  return useRealtimeStaleWhileRevalidate(
     `agenda-page-${impersonateOrgId || 'default'}-${range.viewMode}-${range.anchorDate}`,
     async () => {
       const { tenant } = await getCurrentTenant(impersonateOrgId);
@@ -315,6 +330,19 @@ export function useAgendaPageData(
 
       return fetchAgendaDataset(supabase, tenant, range, { includeUserRole: true });
     },
-    { enabled: true, staleTime: 60000, initialData: options?.initialData }
+    // 🔥 CONFIGURACIÓN REAL-TIME: Escucha cambios en agenda (bookings, blockings, etc.)
+    {
+      table: 'bookings',
+      filter: `tenant_id=eq.${impersonateOrgId || 'default'}`, // TODO: Obtener tenantId real
+      event: '*',
+      tenantId: impersonateOrgId || 'default',
+      supabase: supabase,
+    },
+    {
+      enabled: true,
+      staleTime: 60000, // 1 minuto para agenda (más agresivo)
+      realtimeEnabled: true, // 🔥 HABILITADO: Actualiza en tiempo real
+      initialData: options?.initialData
+    }
   );
 }

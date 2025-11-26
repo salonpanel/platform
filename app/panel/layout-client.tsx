@@ -16,6 +16,7 @@ import { NotificationProvider } from "@/components/agenda/NotificationSystem";
 import { PermissionsProvider, usePermissions } from "@/contexts/PermissionsContext";
 import { usePrefetchRoutes, useSmartPrefetchData } from "@/hooks/usePrefetch";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
+import { useCacheWarmer } from "@/hooks/useCacheWarmer";
 
 type TenantInfo = {
   id: string;
@@ -46,6 +47,9 @@ function PanelLayoutContent({ children, initialTenant, initialAuthStatus }: { ch
   // Hooks de precarga para navegación instantánea
   usePrefetchRoutes();
   useServiceWorker();
+
+  // 🔥 CACHE WARMER: Mantiene datos frescos durante sesiones largas
+  useCacheWarmer(tenant?.id || null);
 
   // Extraer el valor de impersonate una sola vez para evitar re-renders
   const impersonateOrgId = useMemo(() => {

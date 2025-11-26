@@ -24,7 +24,6 @@ import { MessageComposer } from "./MessageComposer";
 import { MembersModal } from "./MembersModal";
 import { AddMembersModal } from "./AddMembersModal";
 import { UserProfileModal } from "./UserProfileModal";
-import { cache } from "@/hooks/useStaleWhileRevalidate";
 
 type ConversationType = "all" | "direct" | "group";
 
@@ -225,19 +224,6 @@ export function TeamChat() {
 			}
 
 			try {
-				// 🔥 OPTIMIZACIÓN: Primero buscar datos prefetched durante login
-				const prefetchedKey = `chat-conversations-${impersonateOrgId || 'default'}`;
-				const cached = cache.get(prefetchedKey);
-
-				if (cached && (Date.now() - cached.timestamp) < 30000) { // 30 segundos
-					console.log('[TeamChat] 🔥 Usando datos prefetched de login');
-					setConversations(cached.data);
-					if (!selectedConversationId && cached.data.length > 0) {
-						setSelectedConversationId(cached.data[0].id);
-					}
-					return cached.data;
-				}
-
 				// 🔥 OPTIMIZACIÓN: Una sola query con JOIN para obtener todo
 				// Esto reemplaza las múltiples queries N+1 de refreshConversations
 				const { data, error } = await supabase
@@ -297,7 +283,7 @@ export function TeamChat() {
 				return [];
 			}
 		},
-		[supabase, selectedConversationId, impersonateOrgId]
+		[supabase, selectedConversationId]
 	);
 
 	// Mantener compatibilidad: refreshConversations ahora usa loadConversationsOptimized
