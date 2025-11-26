@@ -1,21 +1,20 @@
 "use client";
 
-import { useEffect, useState, Suspense, useMemo } from "react";
+import { useState, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { getCurrentTenant } from "@/lib/panel-tenant";
-import { Spinner } from "@/components/ui/Spinner";
 import { MiniKPI } from "@/components/panel/MiniKPI";
 import { UpcomingAppointments } from "@/components/panel/UpcomingAppointments";
 import { MessagesWidget } from "@/components/panel/MessagesWidget";
-import { format, subDays, startOfDay, endOfDay } from "date-fns";
+import { format, subDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { motion } from "framer-motion";
 import { ComponentType } from "react";
 import { Calendar, Users, Scissors, User, ArrowRight, Euro, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { useDashboardData } from "@/hooks/useOptimizedData";
+import { DashboardSkeleton } from "@/components/ui/Skeletons";
 
 const QUICK_LINKS: {
   href: string;
@@ -58,300 +57,54 @@ type OperationalAlert = {
 };
 
 function PanelHomeContent() {
-  const supabase = getSupabaseBrowser();
   const searchParams = useSearchParams();
-  const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [period, setPeriod] = useState<"today" | "week" | "month">("today");
-  const [tenantId, setTenantId] = useState<string | null>(null);
-  const [tenantTimezone, setTenantTimezone] = useState<string>("Europe/Madrid");
-  const [tenantName, setTenantName] = useState<string>("");
-  const [stats, setStats] = useState({
-    bookingsToday: 0,
+  const [tenantTimezone] = useState<string>("Europe/Madrid");
+
+  const impersonateOrgId = useMemo(() => {
+    return searchParams?.get("impersonate") || null;
+  }, [searchParams?.toString()]);
+
+  // Usar hook optimizado con caché instantáneo
+  const dashboardData = useDashboardData(impersonateOrgId, tenantTimezone);
+
+  // Estado de carga
+  const isLoadingStats = dashboardData.isLoading;
+
+  // Extraer datos del hook con valores por defecto
+  const tenantId = impersonateOrgId;
+  const tenantName = "Tu barbería"; // TODO: obtener del tenant
+  const stats = {
+    bookingsToday: dashboardData.kpis?.bookingsToday || 0,
     bookingsLast7Days: [] as number[],
-    activeServices: 0,
-    activeStaff: 0,
+    activeServices: dashboardData.kpis?.activeServices || 0,
+    activeStaff: dashboardData.kpis?.activeStaff || 0,
     revenueToday: 0,
     totalBookingsLast7Days: 0,
     revenueLast7Days: 0,
     totalBookingsLast30Days: 0,
     revenueLast30Days: 0,
     noShowsLast7Days: 0,
-  });
-  const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
-  const [topServices, setTopServices] = useState<TopService[]>([]);
-  const [operationalAlerts, setOperationalAlerts] = useState<OperationalAlert[]>([]);
-
-  const impersonateOrgId = useMemo(() => {
-    return searchParams?.get("impersonate") || null;
-  }, [searchParams?.toString()]);
+  };
+  
+  // Transformar datos de reservas para compatibilidad con el componente
+  const upcomingBookings = (dashboardData.upcomingBookings || []).map((booking: any) => ({
+    id: booking.id,
+    starts_at: booking.starts_at,
+    ends_at: booking.ends_at,
+    status: booking.status,
+    customer: Array.isArray(booking.customer) ? booking.customer[0] : booking.customer,
+    service: Array.isArray(booking.service) ? booking.service[0] : booking.service,
+    staff: Array.isArray(booking.staff) ? booking.staff[0] : booking.staff,
+  }));
+  
+  const topServices: TopService[] = [];
+  const operationalAlerts: OperationalAlert[] = [];
 
   const todayLabel = useMemo(() => {
     const formatted = format(new Date(), "EEEE, d 'de' MMMM", { locale: es });
     return formatted.charAt(0).toUpperCase() + formatted.slice(1);
   }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    const loadData = async () => {
-      try {
-        const { tenant: tenantData } = await getCurrentTenant(impersonateOrgId);
-
-        if (tenantData && mounted) {
-          setTenantId(tenantData.id);
-          setTenantTimezone(tenantData.timezone || "Europe/Madrid");
-          setTenantName(tenantData.name || "Tu barbería");
-
-          const today = new Date();
-          const todayStart = startOfDay(today).toISOString();
-          const todayEnd = endOfDay(today).toISOString();
-
-          const last7Days = Array.from({ length: 7 }, (_, i) =>
-            format(subDays(today, 6 - i), "yyyy-MM-dd")
-          );
-
-          const bookingsTodayPromise = supabase
-            .from("bookings")
-            .select("*", { count: "exact", head: true })
-            .eq("tenant_id", tenantData.id)
-            .gte("starts_at", todayStart)
-            .lt("starts_at", todayEnd);
-
-          const bookingsLast7DaysPromise = Promise.all(
-            last7Days.map(async (date) => {
-              const dayStart = startOfDay(new Date(date)).toISOString();
-              const dayEnd = endOfDay(new Date(date)).toISOString();
-              const { count } = await supabase
-                .from("bookings")
-                .select("*", { count: "exact", head: true })
-                .eq("tenant_id", tenantData.id)
-                .gte("starts_at", dayStart)
-                .lt("starts_at", dayEnd);
-              return count || 0;
-            })
-          );
-
-          const revenuePromise = supabase
-            .from("bookings")
-            .select("service:services(price_cents)")
-            .eq("tenant_id", tenantData.id)
-            .in("status", ["paid", "completed"])
-            .gte("starts_at", todayStart)
-            .lt("starts_at", todayEnd);
-
-          const servicesCountPromise = supabase
-            .from("services")
-            .select("*", { count: "exact", head: true })
-            .eq("tenant_id", tenantData.id)
-            .eq("active", true);
-
-          const staffCountPromise = supabase
-            .from("staff")
-            .select("*", { count: "exact", head: true })
-            .eq("tenant_id", tenantData.id)
-            .eq("active", true);
-
-          const upcomingPromise = supabase
-            .from("bookings")
-            .select(
-              `
-              *,
-              customer:customers(id, name, email),
-              service:services(id, name),
-              staff:staff(id, name)
-            `
-            )
-            .eq("tenant_id", tenantData.id)
-            .gte("starts_at", todayStart)
-            .order("starts_at", { ascending: true })
-            .limit(3);
-
-          // Consulta para últimos 30 días
-          const thirtyDaysAgo = subDays(today, 29);
-          const bookingsLast30DaysPromise = supabase
-            .from("bookings")
-            .select(`
-              id,
-              starts_at,
-              status,
-              service:services(price_cents)
-            `)
-            .eq("tenant_id", tenantData.id)
-            .gte("starts_at", thirtyDaysAgo.toISOString())
-            .lte("starts_at", todayEnd);
-
-          // Consulta para ingresos últimos 7 días
-          const weekStart = subDays(today, 6);
-          const revenueLast7DaysPromise = supabase
-            .from("bookings")
-            .select("service:services(price_cents)")
-            .eq("tenant_id", tenantData.id)
-            .in("status", ["paid", "completed"])
-            .gte("starts_at", startOfDay(weekStart).toISOString())
-            .lte("starts_at", todayEnd);
-
-          // Consulta para top servicios últimos 7 días
-          const topServicesPromise = supabase
-            .from("bookings")
-            .select(`
-              id,
-              starts_at,
-              service:services(id, name)
-            `)
-            .eq("tenant_id", tenantData.id)
-            .gte("starts_at", startOfDay(weekStart).toISOString())
-            .lte("starts_at", todayEnd);
-
-          // Consulta para no-shows últimos 7 días
-          const noShowsLast7DaysPromise = supabase
-            .from("bookings")
-            .select("id", { count: "exact", head: true })
-            .eq("tenant_id", tenantData.id)
-            .eq("status", "no_show")
-            .gte("starts_at", startOfDay(weekStart).toISOString())
-            .lte("starts_at", todayEnd);
-
-          const [
-            { count: bookingsToday },
-            bookingsLast7Days,
-            { data: revenueData },
-            { count: servicesCount },
-            { count: staffCount },
-            { data: upcomingData },
-            { data: bookingsLast30DaysData },
-            { data: revenueLast7DaysData },
-            { data: topServicesData },
-            { count: noShowsLast7Days },
-          ] = await Promise.all([
-            bookingsTodayPromise,
-            bookingsLast7DaysPromise,
-            revenuePromise,
-            servicesCountPromise,
-            staffCountPromise,
-            upcomingPromise,
-            bookingsLast30DaysPromise,
-            revenueLast7DaysPromise,
-            topServicesPromise,
-            noShowsLast7DaysPromise,
-          ]);
-
-          // Fallbacks defensivos para arrays
-          const safeUpcoming = Array.isArray(upcomingData) ? upcomingData : [];
-          const safeRevenueData = Array.isArray(revenueData) ? revenueData : [];
-          const safeBookingsLast7Days = Array.isArray(bookingsLast7Days) ? bookingsLast7Days : [];
-          const safeBookingsLast30Days = Array.isArray(bookingsLast30DaysData) ? bookingsLast30DaysData : [];
-          const safeRevenueLast7Days = Array.isArray(revenueLast7DaysData) ? revenueLast7DaysData : [];
-          const safeTopServicesData = Array.isArray(topServicesData) ? topServicesData : [];
-
-          const revenueToday = safeRevenueData.reduce((sum, b: any) => {
-            return sum + (b.service?.price_cents || 0);
-          }, 0);
-
-          const totalBookingsLast7Days = safeBookingsLast7Days.reduce((sum, v) => sum + v, 0);
-          const revenueLast7Days = safeRevenueLast7Days.reduce((sum, b: any) => {
-            return sum + (b.service?.price_cents || 0);
-          }, 0);
-
-          const totalBookingsLast30Days = safeBookingsLast30Days.length;
-          const revenueLast30Days = safeBookingsLast30Days.reduce((sum, b: any) => {
-            return sum + (b.service?.price_cents || 0);
-          }, 0);
-
-          // Calcular top servicios
-          const serviceCounts = new Map<string, TopService>();
-          safeTopServicesData.forEach((b: any) => {
-            const serviceId = b.service?.id;
-            const name = b.service?.name || "Servicio sin nombre";
-
-            if (!serviceId) return;
-
-            const existing = serviceCounts.get(serviceId);
-            if (existing) {
-              existing.count += 1;
-            } else {
-              serviceCounts.set(serviceId, { serviceId, name, count: 1 });
-            }
-          });
-
-          const topServicesList = Array.from(serviceCounts.values())
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 3);
-
-          // Calcular métricas para alertas
-          const noShowsCount = noShowsLast7Days || 0;
-          const avgTicketLast7Days =
-            totalBookingsLast7Days > 0 ? revenueLast7Days / totalBookingsLast7Days : 0;
-          const noShowRateLast7Days =
-            totalBookingsLast7Days > 0 ? noShowsCount / totalBookingsLast7Days : 0;
-
-          // Calcular alertas operativas
-          const alerts: OperationalAlert[] = [];
-
-          if ((servicesCount || 0) === 0) {
-            alerts.push({
-              type: "danger",
-              title: "Sin servicios activos",
-              description: "Activa al menos un servicio para empezar a recibir reservas.",
-            });
-          }
-
-          if ((bookingsToday || 0) === 0 && totalBookingsLast7Days > 0) {
-            alerts.push({
-              type: "warning",
-              title: "Sin reservas hoy",
-              description: "Revisa la agenda y considera reforzar recordatorios o campañas.",
-            });
-          }
-
-          if (totalBookingsLast7Days > 0 && noShowRateLast7Days > 0.3) {
-            alerts.push({
-              type: "danger",
-              title: "Tasa de no-show alta",
-              description: "Valora solicitar señal, ajustar recordatorios o revisar políticas de cita.",
-            });
-          }
-
-          if (avgTicketLast7Days > 0 && avgTicketLast7Days / 100 < 15) {
-            alerts.push({
-              type: "info",
-              title: "Ticket medio bajo",
-              description: "Promociona servicios combinados o upgrades para aumentar el ticket.",
-            });
-          }
-
-          if (mounted) {
-            setStats({
-              bookingsToday: bookingsToday || 0,
-              bookingsLast7Days: safeBookingsLast7Days,
-              activeServices: servicesCount || 0,
-              activeStaff: staffCount || 0,
-              revenueToday,
-              totalBookingsLast7Days,
-              revenueLast7Days,
-              totalBookingsLast30Days,
-              revenueLast30Days,
-              noShowsLast7Days: noShowsCount,
-            });
-            setUpcomingBookings(safeUpcoming);
-            setTopServices(topServicesList);
-            setOperationalAlerts(alerts);
-            setIsLoadingStats(false);
-          }
-        } else if (mounted) {
-          setIsLoadingStats(false);
-        }
-      } catch (err) {
-        console.error("Error al cargar datos:", err);
-        if (mounted) setIsLoadingStats(false);
-      }
-    };
-
-    loadData();
-    
-    return () => {
-      mounted = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [impersonateOrgId]);
 
   const bookingsTrend = useMemo(() => {
     if (stats.bookingsLast7Days.length < 2) return "neutral";
@@ -376,9 +129,9 @@ function PanelHomeContent() {
     const values = Array.isArray(stats.bookingsLast7Days) ? stats.bookingsLast7Days : [];
     const hasValues = values.length > 0;
     const max = hasValues ? Math.max(...values, 1) : 1;
-    const hasPositiveValues = values.some((value) => value > 0);
+    const hasPositiveValues = values.some((value: number) => value > 0);
     const showBars = hasValues && hasPositiveValues;
-    const total = values.reduce((sum, value) => sum + value, 0);
+    const total = values.reduce((sum: number, value: number) => sum + value, 0);
     const avg = values.length > 0 ? total / values.length : 0;
 
     return {
@@ -477,31 +230,7 @@ function PanelHomeContent() {
   const revenueKPI = getRevenueKPI();
 
   if (isLoadingStats) {
-    return (
-      <div className="space-y-10">
-        <div className="space-y-3">
-          <div className="h-4 w-40 rounded-full bg-white/5 animate-pulse" />
-          <div className="h-10 w-2/3 rounded-full bg-white/5 animate-pulse" />
-          <div className="h-4 w-full max-w-md rounded-full bg-white/5 animate-pulse" />
-        </div>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          {[0, 1, 2].map((key) => (
-            <div
-              key={key}
-              className="h-28 rounded-[var(--radius-lg)] border border-white/5 bg-white/5 animate-pulse"
-            />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="h-64 rounded-[var(--radius-xl)] border border-white/5 bg-white/5 animate-pulse" />
-          <div className="h-64 rounded-[var(--radius-xl)] border border-white/5 bg-white/5 animate-pulse lg:col-span-2" />
-        </div>
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
-          <div className="h-56 rounded-[var(--radius-xl)] border border-white/5 bg-white/5 animate-pulse" />
-          <div className="h-56 rounded-[var(--radius-xl)] border border-white/5 bg-white/5 animate-pulse" />
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (
@@ -542,7 +271,7 @@ function PanelHomeContent() {
             transition={{ duration: 0.22, ease: "easeOut", delay: 0.05 }}
             className="grid gap-4 md:gap-6 md:grid-cols-2"
           >
-            {operationalAlerts.slice(0, 2).map((alert, idx) => (
+            {operationalAlerts.slice(0, 2).map((alert: OperationalAlert, idx: number) => (
               <div
                 key={idx}
                 className={cn(
@@ -694,7 +423,7 @@ function PanelHomeContent() {
             </div>
             {showChartBars ? (
               <div className="h-40 flex items-end gap-1.5 sm:gap-2 relative">
-                {bookingValues.map((count, index) => {
+                {bookingValues.map((count: number, index: number) => {
                   const height = chartMax > 0 ? (count / chartMax) * 100 : 0;
                   return (
                     <div
@@ -801,7 +530,7 @@ function PanelHomeContent() {
                   Top servicios últimos 7 días
                 </h3>
                 <ul className="space-y-2">
-                  {topServices.map((service, index) => (
+                  {topServices.map((service: TopService, index: number) => (
                     <li key={service.serviceId} className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
                         <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-[10px] font-semibold text-[var(--text-primary)]">
@@ -927,13 +656,7 @@ function PanelHomeContent() {
 
 export default function PanelHome() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center py-12">
-          <Spinner size="lg" />
-        </div>
-      }
-    >
+    <Suspense fallback={<DashboardSkeleton />}>
       <PanelHomeContent />
     </Suspense>
   );
