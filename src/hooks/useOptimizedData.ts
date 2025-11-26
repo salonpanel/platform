@@ -1,9 +1,11 @@
 "use client";
 
-import { DashboardDataset, fetchDashboardDataset } from "@/lib/dashboard-data";
+import { DashboardDataset, createEmptyDashboardKpis, fetchDashboardDataset } from "@/lib/dashboard-data";
+import { fetchAgendaDataset, getAgendaRange } from "@/lib/agenda-data";
 import { getCurrentTenant } from "@/lib/panel-tenant";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { useStaleWhileRevalidate } from "./useStaleWhileRevalidate";
+import { ViewMode } from "@/types/agenda";
 
 /**
  * Hook optimizado para Dashboard - obtiene tenant y datos en paralelo
@@ -38,7 +40,7 @@ export function useDashboardData(
 
   return {
     tenant: data?.tenant || null,
-    kpis: data?.kpis || { bookingsToday: 0, activeServices: 0, activeStaff: 0 },
+    kpis: data?.kpis || createEmptyDashboardKpis(),
     upcomingBookings: data?.upcomingBookings || [],
     isLoading,
   };
@@ -291,90 +293,23 @@ export function useStaffPageData(impersonateOrgId: string | null) {
 /**
  * Hook optimizado para página de Agenda - obtiene tenant + staff/services/customers/bookings/blockings/schedules
  */
-export function useAgendaPageData(impersonateOrgId: string | null, selectedDate?: string) {
+export function useAgendaPageData(
+  impersonateOrgId: string | null,
+  options?: { selectedDate?: string; viewMode?: ViewMode; initialData?: any }
+) {
   const supabase = getSupabaseBrowser();
+  const selectedDate = options?.selectedDate || new Date().toISOString().slice(0, 10);
+  const viewMode = options?.viewMode || "day";
+  const range = getAgendaRange(selectedDate, viewMode);
 
   return useStaleWhileRevalidate(
-    `agenda-page-${impersonateOrgId || 'default'}-${selectedDate || 'today'}`,
+    `agenda-page-${impersonateOrgId || 'default'}-${range.viewMode}-${range.anchorDate}`,
     async () => {
-      // 1. Obtener tenant
       const { tenant } = await getCurrentTenant(impersonateOrgId);
       if (!tenant) return null;
 
-      const tenantId = tenant.id;
-
-      // determine date range to prefetch bookings/blockings/schedules (default: selectedDate or today)
-      const dateToLoad = selectedDate || new Date().toISOString().slice(0, 10);
-      const startISO = new Date(new Date(dateToLoad).setHours(0, 0, 0, 0)).toISOString();
-      const endISO = new Date(new Date(dateToLoad).setHours(23, 59, 59, 999)).toISOString();
-
-      // Run queries in parallel
-      const [staffRes, servicesRes, customersRes, bookingsRes, blockingsRes, schedulesRes] = await Promise.all([
-        supabase
-          .from("staff")
-          .select("id, name, active")
-          .eq("tenant_id", tenantId)
-          .eq("active", true)
-          .order("name"),
-        supabase
-          .from("services")
-          .select("id, name, duration_min, price_cents, buffer_min")
-          .eq("tenant_id", tenantId)
-          .eq("active", true)
-          .order("name"),
-        supabase
-          .from("customers")
-          .select("id, name, email, phone, notes")
-          .eq("tenant_id", tenantId)
-          .order("name")
-          .limit(100),
-        supabase
-          .from("bookings")
-          .select(`
-            *,
-            customer:customers(id, name, email, phone),
-            service:services(id, name, duration_min, price_cents),
-            staff:staff(id, name)
-          `)
-          .eq("tenant_id", tenantId)
-          .gte("starts_at", startISO)
-          .lte("starts_at", endISO)
-          .order("starts_at"),
-        supabase
-          .from("staff_blockings")
-          .select("*")
-          .eq("tenant_id", tenantId)
-          .gte("start_at", startISO)
-          .lte("end_at", endISO)
-          .order("start_at"),
-        supabase
-          .from("staff_schedules")
-          .select("staff_id, start_time, end_time")
-          .eq("tenant_id", tenantId)
-          .eq("is_active", true),
-      ]);
-
-      if (staffRes.error) throw staffRes.error;
-      if (servicesRes.error) throw servicesRes.error;
-      if (customersRes.error) throw customersRes.error;
-      if (bookingsRes.error) throw bookingsRes.error;
-      if (blockingsRes.error) throw blockingsRes.error;
-      if (schedulesRes.error) throw schedulesRes.error;
-
-      return {
-        tenant: {
-          id: tenant.id,
-          name: tenant.name || "Tu barbería",
-          timezone: tenant.timezone || "Europe/Madrid",
-        },
-        staff: staffRes.data || [],
-        services: (servicesRes.data || []).map((s: any) => ({ ...s, buffer_min: s.buffer_min ?? 0 })),
-        customers: customersRes.data || [],
-        bookings: bookingsRes.data || [],
-        blockings: blockingsRes.data || [],
-        schedules: schedulesRes.data || [],
-      };
+      return fetchAgendaDataset(supabase, tenant, range, { includeUserRole: true });
     },
-    { enabled: true, staleTime: 60000 }
+    { enabled: true, staleTime: 60000, initialData: options?.initialData }
   );
 }

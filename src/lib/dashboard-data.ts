@@ -1,9 +1,15 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 
-type TenantInfo = {
+type TenantInfo = { id: string; name?: string | null; timezone?: string | null };
+
+export type UpcomingBooking = {
   id: string;
-  name?: string | null;
-  timezone?: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  status: string | null;
+  customer: { name: string | null; email: string | null } | null;
+  service: { name: string | null } | null;
+  staff: { name: string | null } | null;
 };
 
 type MetricRow = {
@@ -15,27 +21,43 @@ type MetricRow = {
   no_show_bookings: number;
 };
 
-export type DashboardDataset = {
-  tenant: {
-    id: string;
-    name: string;
-    timezone: string;
-  };
-  kpis: {
-    bookingsToday: number;
-    activeServices: number;
-    activeStaff: number;
-    bookingsLast7Days: number[];
-    totalBookingsLast7Days: number;
-    totalBookingsLast30Days: number;
-    revenueToday: number;
-    revenueLast7Days: number;
-    revenueLast30Days: number;
-    noShowsLast7Days: number;
-    avgTicketLast7Days: number;
-  };
-  upcomingBookings: any[];
+export type DashboardKpis = {
+  bookingsToday: number;
+  activeServices: number;
+  activeStaff: number;
+  bookingsLast7Days: number[];
+  totalBookingsLast7Days: number;
+  totalBookingsLast30Days: number;
+  revenueToday: number;
+  revenueLast7Days: number;
+  revenueLast30Days: number;
+  noShowsLast7Days: number;
+  avgTicketLast7Days: number;
 };
+
+export type DashboardDataset = {
+  tenant: { id: string; name: string; timezone: string };
+  kpis: DashboardKpis;
+  upcomingBookings: UpcomingBooking[];
+};
+
+export const EMPTY_DASHBOARD_KPIS: DashboardDataset["kpis"] = {
+  bookingsToday: 0,
+  bookingsLast7Days: Array(7).fill(0),
+  activeServices: 0,
+  activeStaff: 0,
+  totalBookingsLast7Days: 0,
+  totalBookingsLast30Days: 0,
+  revenueToday: 0,
+  revenueLast7Days: 0,
+  revenueLast30Days: 0,
+  noShowsLast7Days: 0,
+  avgTicketLast7Days: 0,
+};
+
+export function createEmptyDashboardKpis(): DashboardDataset["kpis"] {
+  return { ...EMPTY_DASHBOARD_KPIS, bookingsLast7Days: Array(7).fill(0) };
+}
 
 export async function fetchDashboardDataset(
   supabase: SupabaseClient,
@@ -48,34 +70,12 @@ export async function fetchDashboardDataset(
   const todayEnd = new Date(now.setHours(23, 59, 59, 999)).toISOString();
   const todayKey = new Date().toISOString().slice(0, 10);
 
-  const [bookingsRes, servicesRes, staffRes, upcomingRes, metricsRes] = await Promise.all([
+  const [upcomingRes, metricsRes] = await Promise.all([
     supabase
       .from("bookings")
-      .select("id", { head: true, count: "planned" })
-      .eq("tenant_id", tenant.id)
-      .gte("starts_at", todayStart)
-      .lte("starts_at", todayEnd),
-    supabase
-      .from("services")
-      .select("id", { head: true, count: "planned" })
-      .eq("tenant_id", tenant.id)
-      .eq("active", true),
-    supabase
-      .from("staff")
-      .select("id", { head: true, count: "planned" })
-      .eq("tenant_id", tenant.id)
-      .eq("active", true),
-    supabase
-      .from("bookings")
-      .select(`
-        id,
-        starts_at,
-        ends_at,
-        status,
-        customer:customers(name, email),
-        service:services(name),
-        staff:staff(name)
-      `)
+      .select(
+        `id, starts_at, ends_at, status, customer:customers(name, email), service:services(name), staff:staff(name)`
+      )
       .eq("tenant_id", tenant.id)
       .gte("starts_at", new Date().toISOString())
       .order("starts_at", { ascending: true })
@@ -90,20 +90,22 @@ export async function fetchDashboardDataset(
       .limit(31),
   ]);
 
+  if (upcomingRes.error) throw upcomingRes.error;
+  if (metricsRes.error) throw metricsRes.error;
+
   const metrics: MetricRow[] = metricsRes.data || [];
-  const metricsByDay = metrics.reduce((acc, row) => {
+  const metricsByDay = metrics.reduce<Record<string, MetricRow>>((acc, row) => {
     acc[row.metric_date] = row;
     return acc;
-  }, {} as Record<string, MetricRow>);
+  }, {});
 
-  const ensureDaysArray = (days: number) => {
-    return Array.from({ length: days }).map((_, idx) => {
+  const ensureDaysArray = (days: number) =>
+    Array.from({ length: days }).map((_, idx) => {
       const date = new Date();
       date.setDate(date.getDate() - (days - 1 - idx));
       const key = date.toISOString().slice(0, 10);
       return metricsByDay[key]?.confirmed_bookings || 0;
     });
-  };
 
   const bookingsLast7Days = ensureDaysArray(7);
   const todayMetrics = metricsByDay[todayKey];
@@ -116,21 +118,21 @@ export async function fetchDashboardDataset(
     return metricsByDay[key]?.confirmed_bookings || 0;
   });
 
-  const revenueLast7Days = Array.from({ length: 7 }).reduce((sum, _, idx) => {
+  const revenueLast7Days = Array.from({ length: 7 }).reduce<number>((sum, _, idx) => {
     const date = new Date();
     date.setDate(date.getDate() - (6 - idx));
     const key = date.toISOString().slice(0, 10);
     return sum + (metricsByDay[key]?.revenue_cents || 0);
   }, 0);
 
-  const revenueLast30Days = Array.from({ length: 30 }).reduce((sum, _, idx) => {
+  const revenueLast30Days = Array.from({ length: 30 }).reduce<number>((sum, _, idx) => {
     const date = new Date();
     date.setDate(date.getDate() - (29 - idx));
     const key = date.toISOString().slice(0, 10);
     return sum + (metricsByDay[key]?.revenue_cents || 0);
   }, 0);
 
-  const noShowsLast7Days = Array.from({ length: 7 }).reduce((sum, _, idx) => {
+  const noShowsLast7Days = Array.from({ length: 7 }).reduce<number>((sum, _, idx) => {
     const date = new Date();
     date.setDate(date.getDate() - (6 - idx));
     const key = date.toISOString().slice(0, 10);
@@ -140,16 +142,57 @@ export async function fetchDashboardDataset(
   const totalRevenueLast7Days = revenueLast7Days;
   const avgTicketLast7Days = totalBookingsLast7Days > 0 ? totalRevenueLast7Days / totalBookingsLast7Days : 0;
 
+  let bookingsToday = todayMetrics?.confirmed_bookings;
+  let activeServices = todayMetrics?.active_services;
+  let activeStaff = todayMetrics?.active_staff;
+
+  if (bookingsToday === undefined || activeServices === undefined || activeStaff === undefined) {
+    const [bookingsRes, servicesRes, staffRes] = await Promise.all([
+      supabase
+        .from("bookings")
+        .select("id", { head: true, count: "planned" })
+        .eq("tenant_id", tenant.id)
+        .gte("starts_at", todayStart)
+        .lte("starts_at", todayEnd),
+      supabase
+        .from("services")
+        .select("id", { head: true, count: "planned" })
+        .eq("tenant_id", tenant.id)
+        .eq("active", true),
+      supabase
+        .from("staff")
+        .select("id", { head: true, count: "planned" })
+        .eq("tenant_id", tenant.id)
+        .eq("active", true),
+    ]);
+
+    bookingsToday = bookingsToday ?? bookingsRes.count ?? 0;
+    activeServices = activeServices ?? servicesRes.count ?? 0;
+    activeStaff = activeStaff ?? staffRes.count ?? 0;
+  }
+
+  const upcomingBookings: UpcomingBooking[] = (upcomingRes.data || []).map((row: any) => {
+    const customer = Array.isArray(row.customer) ? row.customer[0] : row.customer;
+    const service = Array.isArray(row.service) ? row.service[0] : row.service;
+    const staff = Array.isArray(row.staff) ? row.staff[0] : row.staff;
+
+    return {
+      id: row.id,
+      starts_at: row.starts_at,
+      ends_at: row.ends_at ?? null,
+      status: row.status ?? null,
+      customer: customer ? { name: customer?.name ?? null, email: customer?.email ?? null } : null,
+      service: service ? { name: service?.name ?? null } : null,
+      staff: staff ? { name: staff?.name ?? null } : null,
+    };
+  });
+
   return {
-    tenant: {
-      id: tenant.id,
-      name: tenant.name || "Tu barbería",
-      timezone: tenant.timezone || "Europe/Madrid",
-    },
+    tenant: { id: tenant.id, name: tenant.name || "Tu barbería", timezone: tenant.timezone || "Europe/Madrid" },
     kpis: {
-      bookingsToday: todayMetrics?.confirmed_bookings ?? bookingsRes.count ?? 0,
-      activeServices: todayMetrics?.active_services ?? servicesRes.count ?? 0,
-      activeStaff: todayMetrics?.active_staff ?? staffRes.count ?? 0,
+      bookingsToday: bookingsToday ?? 0,
+      activeServices: activeServices ?? 0,
+      activeStaff: activeStaff ?? 0,
       bookingsLast7Days,
       totalBookingsLast7Days,
       totalBookingsLast30Days: bookingsLast30Days.reduce((sum, value) => sum + value, 0),
@@ -159,6 +202,6 @@ export async function fetchDashboardDataset(
       noShowsLast7Days,
       avgTicketLast7Days,
     },
-    upcomingBookings: upcomingRes.data || [],
+    upcomingBookings,
   };
 }
