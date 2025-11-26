@@ -8,6 +8,7 @@ import { StaffEditModal } from "@/components/panel/StaffEditModal";
 import { motion } from "framer-motion";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { User, UserPlus, Scissors, Calendar, Edit, Power } from "lucide-react";
+import { UserPermissions } from "@/hooks/useUserPermissions";
 
 type Staff = {
   id: string;
@@ -143,6 +144,7 @@ function StaffContent() {
     }>;
     profile_photo_url?: string;
     weekly_hours?: number;
+    permissions?: UserPermissions;
   }) => {
     if (!tenantId) return;
 
@@ -236,6 +238,23 @@ function StaffContent() {
           }
         }
 
+        // Si hay permisos y el staff tiene user_id, guardarlos o actualizarlos
+        if (staffData.permissions && editingStaff.user_id) {
+          const { error: permError } = await supabase
+            .from("user_permissions")
+            .upsert({
+              user_id: editingStaff.user_id,
+              tenant_id: tenantId,
+              permissions: staffData.permissions,
+            }, {
+              onConflict: "user_id,tenant_id"
+            });
+
+          if (permError) {
+            console.error("Error al guardar permisos:", permError);
+          }
+        }
+
         setStaffList((prev) =>
           prev.map((s) =>
             s.id === editingStaff.id
@@ -287,6 +306,23 @@ function StaffContent() {
 
           if (scheduleError) {
             console.error("Error al guardar horarios:", scheduleError);
+          }
+        }
+
+        // Si hay permisos y userId, guardarlos
+        if (staffData.permissions && userId) {
+          const { error: permError } = await supabase
+            .from("user_permissions")
+            .upsert({
+              user_id: userId,
+              tenant_id: tenantId,
+              permissions: staffData.permissions,
+            }, {
+              onConflict: "user_id,tenant_id"
+            });
+
+          if (permError) {
+            console.error("Error al guardar permisos:", permError);
           }
         }
 
