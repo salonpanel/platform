@@ -338,178 +338,169 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.25 }}
+        transition={{ duration: 0.3 }}
         className="flex-1 overflow-y-auto scrollbar-thin"
       >
-        {/* Container principal - COMPACTO sin scroll en 1080p+ */}
-        <div className="max-w-[1920px] mx-auto px-3 sm:px-4 lg:px-5 xl:px-6 py-3">
+        {/* Container principal - PREMIUM LAYOUT */}
+        <div className="max-w-[1920px] mx-auto px-6 sm:px-8 lg:px-10 xl:px-12 py-6 lg:py-8">
           
           {/* ═══════════════════════════════════════════════════════════════
-              FILA 1: HERO HEADER + KPIs (12/12)
+              FILA 1: HERO HEADER (flotante, sin card)
+              ═══════════════════════════════════════════════════════════════ */}
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="flex items-center justify-between mb-8"
+          >
+            <div>
+              <h1 className="text-2xl lg:text-3xl font-semibold text-white font-satoshi tracking-tight">
+                Hola, {user?.user_metadata?.full_name?.split(' ')[0] || 'Profesional'} 👋
+              </h1>
+              {shouldShowTimezone && (
+                <p className="text-sm text-[var(--text-secondary)] mt-1">
+                  {todayLabel} · {tenantTimezone}
+                </p>
+              )}
+            </div>
+
+            {/* Selector de periodo - elegante */}
+            <div className="inline-flex items-center rounded-full bg-white/5 backdrop-blur-sm p-1 text-xs font-satoshi border border-white/8">
+              {[
+                { id: "today", label: "Hoy" },
+                { id: "week", label: "Semana" },
+                { id: "month", label: "Mes" },
+              ].map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setPeriod(option.id as "today" | "week" | "month")}
+                  className={cn(
+                    "px-4 py-1.5 rounded-full transition-all duration-200",
+                    period === option.id
+                      ? "bg-white text-slate-900 font-semibold shadow-sm"
+                      : "text-[var(--text-secondary)] hover:text-white"
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* ═══════════════════════════════════════════════════════════════
+              FILA 2: KPIs - Tarjetas individuales premium
               ═══════════════════════════════════════════════════════════════ */}
           <motion.div
             initial="hidden"
             animate="visible"
             variants={sectionVariants}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="glass rounded-xl border border-white/10 p-3 lg:p-4 mb-4"
+            transition={{ duration: 0.25, delay: 0.05 }}
+            className="grid grid-cols-2 sm:grid-cols-4 gap-4 lg:gap-5 mb-8"
           >
-            {/* Header integrado en contenedor */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div>
-                  <h1 className="text-lg lg:text-xl font-semibold text-white font-satoshi">
-                    Hola, {user?.user_metadata?.full_name?.split(' ')[0] || 'Profesional'} 👋
-                  </h1>
-                  <p className="text-xs text-[var(--text-secondary)]">
-                    {todayLabel} · {tenantName}
-                  </p>
+            {/* KPI: Reservas */}
+            <motion.div 
+              whileHover={{ y: -2, boxShadow: "0 20px 50px rgba(0,0,0,0.4)" }}
+              onClick={() => (window.location.href = "/panel/agenda")}
+              className="group cursor-pointer glass rounded-[20px] p-5 border border-white/8 hover:border-white/15 transition-all duration-300 shadow-[0_18px_45px_rgba(0,0,0,0.35)]"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-2 rounded-xl bg-[var(--accent-aqua)]/10">
+                  <TrendingUp className="h-4 w-4 text-[var(--accent-aqua)]" />
                 </div>
-                {shouldShowTimezone && (
-                  <span className="hidden sm:inline text-[10px] text-[var(--text-secondary)] px-2 py-0.5 rounded-full bg-white/5">
-                    {tenantTimezone}
-                  </span>
-                )}
+                <span className={cn(
+                  "text-xs ml-auto",
+                  bookingsKPI.trend === 'up' ? "text-emerald-400" :
+                  bookingsKPI.trend === 'down' ? "text-red-400" : "text-slate-500"
+                )}>
+                  {bookingsKPI.trend === 'up' ? '↑' : bookingsKPI.trend === 'down' ? '↓' : '~'} {bookingsKPI.trendLabel || 'hoy'}
+                </span>
               </div>
+              <div className="text-3xl font-bold text-white font-satoshi mb-1">{bookingsKPI.value}</div>
+              <div className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Reservas</div>
+            </motion.div>
 
-              {/* Selector de periodo */}
-              <div className="inline-flex items-center rounded-full bg-white/5 p-0.5 text-[10px] font-satoshi border border-white/5">
-                {[
-                  { id: "today", label: "Hoy" },
-                  { id: "week", label: "Semana" },
-                  { id: "month", label: "Mes" },
-                ].map((option) => (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => setPeriod(option.id as "today" | "week" | "month")}
-                    className={cn(
-                      "px-2.5 py-1 rounded-full transition-all duration-150",
-                      period === option.id
-                        ? "bg-white text-slate-900 font-semibold"
-                        : "text-[var(--text-secondary)] hover:text-white"
-                    )}
-                  >
-                    {option.label}
-                  </button>
-                ))}
+            {/* KPI: Ingresos */}
+            <motion.div 
+              whileHover={{ y: -2, boxShadow: "0 20px 50px rgba(0,0,0,0.4)" }}
+              onClick={() => (window.location.href = "/panel/monedero")}
+              className="group cursor-pointer glass rounded-[20px] p-5 border border-white/8 hover:border-white/15 transition-all duration-300 shadow-[0_18px_45px_rgba(0,0,0,0.35)]"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-2 rounded-xl bg-emerald-500/10">
+                  <Euro className="h-4 w-4 text-emerald-400" />
+                </div>
+                <span className={cn(
+                  "text-xs ml-auto",
+                  revenueKPI.trend === 'up' ? "text-emerald-400" :
+                  revenueKPI.trend === 'down' ? "text-red-400" : "text-slate-500"
+                )}>
+                  {revenueKPI.trend === 'up' ? '↑' : revenueKPI.trend === 'down' ? '↓' : '~'} {revenueKPI.trendLabel || 'hoy'}
+                </span>
               </div>
-            </div>
+              <div className="text-3xl font-bold text-white font-satoshi mb-1">{revenueKPI.value}</div>
+              <div className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Ingresos hoy</div>
+            </motion.div>
 
-            {/* Strip de KPIs - 6 tarjetas UNIFORMES */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-              {/* KPI: Reservas */}
-              <div 
-                onClick={() => (window.location.href = "/panel/agenda")}
-                className="group cursor-pointer bg-white/5 hover:bg-white/10 rounded-lg p-2.5 border border-white/5 hover:border-white/15 transition-all duration-200"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <Calendar className="h-3.5 w-3.5 text-[var(--accent-aqua)]" />
-                  <span className={cn(
-                    "text-[10px]",
-                    bookingsKPI.trend === 'up' ? "text-emerald-400" :
-                    bookingsKPI.trend === 'down' ? "text-red-400" : "text-slate-500"
-                  )}>
-                    {bookingsKPI.trend === 'up' ? '↗' : bookingsKPI.trend === 'down' ? '↘' : '→'}
-                  </span>
+            {/* KPI: Ocupación */}
+            <motion.div 
+              whileHover={{ y: -2, boxShadow: "0 20px 50px rgba(0,0,0,0.4)" }}
+              onClick={() => (window.location.href = "/panel/agenda")}
+              className="group cursor-pointer glass rounded-[20px] p-5 border border-white/8 hover:border-white/15 transition-all duration-300 shadow-[0_18px_45px_rgba(0,0,0,0.35)]"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-2 rounded-xl bg-blue-500/10">
+                  <BarChart3 className="h-4 w-4 text-blue-400" />
                 </div>
-                <div className="text-lg font-bold text-white font-satoshi leading-none">{bookingsKPI.value}</div>
-                <div className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wide mt-0.5">Reservas</div>
               </div>
+              <div className="text-3xl font-bold text-white font-satoshi mb-1">
+                {Math.round((stats.activeStaff / Math.max(stats.activeStaff + 2, 1)) * 100)}%
+              </div>
+              <div className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Ocupación</div>
+            </motion.div>
 
-              {/* KPI: Ingresos */}
-              <div 
-                onClick={() => (window.location.href = "/panel/monedero")}
-                className="group cursor-pointer bg-white/5 hover:bg-white/10 rounded-lg p-2.5 border border-white/5 hover:border-white/15 transition-all duration-200"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <Euro className="h-3.5 w-3.5 text-emerald-400" />
-                  <span className={cn(
-                    "text-[10px]",
-                    revenueKPI.trend === 'up' ? "text-emerald-400" :
-                    revenueKPI.trend === 'down' ? "text-red-400" : "text-slate-500"
-                  )}>
-                    {revenueKPI.trend === 'up' ? '↗' : revenueKPI.trend === 'down' ? '↘' : '→'}
-                  </span>
+            {/* KPI: Ticket medio */}
+            <motion.div 
+              whileHover={{ y: -2, boxShadow: "0 20px 50px rgba(0,0,0,0.4)" }}
+              onClick={() => (window.location.href = "/panel/monedero")}
+              className="group cursor-pointer glass rounded-[20px] p-5 border border-white/8 hover:border-white/15 transition-all duration-300 shadow-[0_18px_45px_rgba(0,0,0,0.35)]"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-2 rounded-xl bg-purple-500/10">
+                  <Sparkles className="h-4 w-4 text-purple-400" />
                 </div>
-                <div className="text-lg font-bold text-white font-satoshi leading-none">{revenueKPI.value}</div>
-                <div className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wide mt-0.5">Ingresos</div>
               </div>
-
-              {/* KPI: Ocupación */}
-              <div 
-                onClick={() => (window.location.href = "/panel/agenda")}
-                className="group cursor-pointer bg-white/5 hover:bg-white/10 rounded-lg p-2.5 border border-white/5 hover:border-white/15 transition-all duration-200"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <BarChart3 className="h-3.5 w-3.5 text-blue-400" />
-                </div>
-                <div className="text-lg font-bold text-white font-satoshi leading-none">
-                  {Math.round((stats.activeStaff / Math.max(stats.activeStaff + 2, 1)) * 100)}%
-                </div>
-                <div className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wide mt-0.5">Ocupación</div>
-              </div>
-
-              {/* KPI: Clientes nuevos */}
-              <div 
-                onClick={() => (window.location.href = "/panel/clientes")}
-                className="group cursor-pointer bg-white/5 hover:bg-white/10 rounded-lg p-2.5 border border-white/5 hover:border-white/15 transition-all duration-200"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <User className="h-3.5 w-3.5 text-purple-400" />
-                </div>
-                <div className="text-lg font-bold text-white font-satoshi leading-none">{stats.newClientsToday || 0}</div>
-                <div className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wide mt-0.5">Nuevos</div>
-              </div>
-
-              {/* KPI: No-shows */}
-              <div 
-                onClick={() => (window.location.href = "/panel/agenda")}
-                className="group cursor-pointer bg-white/5 hover:bg-white/10 rounded-lg p-2.5 border border-white/5 hover:border-white/15 transition-all duration-200"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <AlertCircle className="h-3.5 w-3.5 text-amber-400" />
-                </div>
-                <div className="text-lg font-bold text-amber-400 font-satoshi leading-none">{stats.noShowsLast7Days}</div>
-                <div className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wide mt-0.5">No-shows</div>
-              </div>
-
-              {/* KPI: Ticket medio */}
-              <div 
-                onClick={() => (window.location.href = "/panel/monedero")}
-                className="group cursor-pointer bg-white/5 hover:bg-white/10 rounded-lg p-2.5 border border-white/5 hover:border-white/15 transition-all duration-200"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <TrendingUp className="h-3.5 w-3.5 text-cyan-400" />
-                </div>
-                <div className="text-lg font-bold text-white font-satoshi leading-none">{formatCurrency(avgTicketLast7Days)}</div>
-                <div className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wide mt-0.5">Ticket</div>
-              </div>
-            </div>
+              <div className="text-3xl font-bold text-white font-satoshi mb-1">{formatCurrency(avgTicketLast7Days)}</div>
+              <div className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Ticket medio</div>
+            </motion.div>
           </motion.div>
 
           {/* ═══════════════════════════════════════════════════════════════
-              GRID PRINCIPAL: FILAS 2 Y 3 (gap reducido 24px)
+              GRID PRINCIPAL: FILAS 3 Y 4 (gap 24px)
               ═══════════════════════════════════════════════════════════════ */}
-          <div className="grid grid-cols-12 gap-4">
+          <div className="grid grid-cols-12 gap-6">
             {/* ═══════════════════════════════════════════════════════════════
                 FILA 2: PRÓXIMAS RESERVAS (8/12) + STAFF (4/12)
                 ═══════════════════════════════════════════════════════════════ */}
             
-            {/* Próximas reservas - 8 columnas */}
+            {/* ═══════════════════════════════════════════════════════════════
+                FILA 3: PRÓXIMAS RESERVAS (8/12) + STAFF (4/12)
+                ═══════════════════════════════════════════════════════════════ */}
+            
+            {/* Próximas reservas - 8 columnas - PREMIUM */}
             <motion.div
               initial="hidden"
               animate="visible"
               variants={sectionVariants}
-              transition={{ duration: 0.2, delay: 0.05 }}
+              transition={{ duration: 0.25, delay: 0.1 }}
               className="col-span-12 lg:col-span-8"
             >
-              <div className="glass rounded-xl border border-white/10 overflow-hidden h-full">
-                {/* Header compacto con acción alineada a la derecha */}
-                <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-sm font-semibold text-white font-satoshi">Próximas reservas</h2>
-                    <div className="hidden sm:flex items-center rounded-full bg-white/5 p-0.5 text-[9px] font-satoshi">
+              <div className="glass rounded-[20px] border border-white/8 overflow-hidden shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
+                {/* Header elegante */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/8">
+                  <div className="flex items-center gap-4">
+                    <h2 className="text-base font-semibold text-white font-satoshi">Próximas reservas</h2>
+                    <div className="hidden sm:flex items-center rounded-full bg-white/5 p-0.5 text-[10px] font-satoshi border border-white/5">
                       {[
                         { id: "today", label: "Hoy" },
                         { id: "tomorrow", label: "Mañana" },
@@ -519,8 +510,8 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                           key={tab.id}
                           onClick={() => setBookingsTab(tab.id as "today" | "tomorrow" | "week")}
                           className={cn(
-                            "px-2 py-0.5 rounded-full transition-all",
-                            bookingsTab === tab.id ? "bg-white text-slate-900 font-semibold" : "text-[var(--text-secondary)]"
+                            "px-3 py-1 rounded-full transition-all",
+                            bookingsTab === tab.id ? "bg-white text-slate-900 font-semibold" : "text-[var(--text-secondary)] hover:text-white"
                           )}
                         >
                           {tab.label}
@@ -530,105 +521,89 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                   </div>
                   <button
                     onClick={() => (window.location.href = "/panel/agenda")}
-                    className="text-[10px] text-[var(--accent-aqua)] hover:text-white transition-colors"
+                    className="text-xs text-[var(--accent-aqua)] hover:text-white transition-colors"
                   >
                     Ver agenda →
                   </button>
                 </div>
 
-                {/* Lista de reservas - compacta */}
-                <div className="p-2">
+                {/* Lista de reservas - espaciada */}
+                <div className="p-5">
                   {upcomingBookings.length === 0 ? (
-                    <div className="text-center py-6">
-                      <Calendar className="h-8 w-8 text-[var(--text-secondary)] mx-auto mb-2" />
-                      <p className="text-xs text-[var(--text-secondary)]">Sin reservas próximas</p>
+                    <div className="text-center py-10">
+                      <Calendar className="h-10 w-10 text-[var(--text-secondary)] mx-auto mb-3" />
+                      <p className="text-sm text-[var(--text-secondary)]">Sin reservas próximas</p>
                     </div>
                   ) : (
-                    <div className="space-y-1">
-                      {upcomingBookings.slice(0, 4).map((booking, index) => (
+                    <div className="space-y-3">
+                      {upcomingBookings.slice(0, 4).map((booking) => (
                         <div
                           key={booking.id}
-                          className="flex items-center justify-between px-2.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all cursor-pointer group"
+                          className="flex items-center justify-between px-4 py-3.5 rounded-xl bg-white/5 hover:bg-white/8 border border-white/5 hover:border-white/10 transition-all cursor-pointer group"
                           onClick={() => (window.location.href = "/panel/agenda")}
                         >
-                          <div className="flex items-center gap-3">
-                            <div className="text-xs font-semibold text-white w-10">
+                          <div className="flex items-center gap-4">
+                            <div className="text-sm font-bold text-white w-12 font-satoshi">
                               {format(new Date(booking.starts_at), "HH:mm")}
                             </div>
-                            <div className="min-w-0">
-                              <div className="text-xs font-medium text-white truncate">
+                            <div>
+                              <div className="text-sm font-medium text-white">
                                 {booking.customer?.name || "Cliente"}
                               </div>
-                              <div className="text-[10px] text-[var(--text-secondary)] truncate">
+                              <div className="text-xs text-[var(--text-secondary)]">
                                 {booking.service?.name || "Servicio"}
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="hidden sm:block text-[10px] text-[var(--text-secondary)]">
-                              {booking.staff?.name?.split(' ')[0] || "—"}
+                          <div className="flex items-center gap-3">
+                            <span className="hidden sm:block text-xs text-[var(--text-secondary)]">
+                              {booking.staff?.name || "Sin asignar"}
                             </span>
                             <div className={cn(
-                              "px-1.5 py-0.5 rounded text-[9px] font-medium",
-                              booking.status === 'paid' ? "bg-emerald-500/20 text-emerald-400" :
-                              booking.status === 'confirmed' ? "bg-blue-500/20 text-blue-400" :
-                              "bg-amber-500/20 text-amber-400"
+                              "px-2.5 py-1 rounded-full text-[10px] font-medium",
+                              booking.status === 'paid' ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" :
+                              booking.status === 'confirmed' ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" :
+                              "bg-amber-500/20 text-amber-400 border border-amber-500/30"
                             )}>
-                              {booking.status === 'paid' ? "✓" : booking.status === 'confirmed' ? "●" : "○"}
-                            </div>
-                            <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={(e) => { e.stopPropagation(); }} className="p-1 hover:bg-white/10 rounded">
-                                <Phone className="h-3 w-3 text-[var(--accent-aqua)]" />
-                              </button>
-                              <button onClick={(e) => { e.stopPropagation(); }} className="p-1 hover:bg-white/10 rounded">
-                                <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-                              </button>
+                              {booking.status === 'paid' ? "Pagado" : booking.status === 'confirmed' ? "Confirmado" : "Pendiente"}
                             </div>
                           </div>
                         </div>
                       ))}
-                      {upcomingBookings.length > 4 && (
-                        <button
-                          onClick={() => (window.location.href = "/panel/agenda")}
-                          className="w-full text-center text-[10px] text-[var(--accent-aqua)] py-1"
-                        >
-                          +{upcomingBookings.length - 4} más
-                        </button>
-                      )}
                     </div>
                   )}
                 </div>
               </div>
             </motion.div>
 
-            {/* Staff hoy - 4 columnas */}
+            {/* Staff - 4 columnas - PREMIUM */}
             <motion.div
               initial="hidden"
               animate="visible"
               variants={sectionVariants}
-              transition={{ duration: 0.2, delay: 0.1 }}
+              transition={{ duration: 0.25, delay: 0.15 }}
               className="col-span-12 lg:col-span-4"
             >
-              <div className="glass rounded-xl border border-white/10 overflow-hidden h-full flex flex-col">
-                <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
-                  <h2 className="text-sm font-semibold text-white font-satoshi">Staff</h2>
-                  <span className="text-[10px] text-[var(--text-secondary)]">{stats.activeStaff} activos</span>
+              <div className="glass rounded-[20px] border border-white/8 overflow-hidden h-full flex flex-col shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
+                  <h2 className="text-base font-semibold text-white font-satoshi">Staff</h2>
+                  <span className="text-xs text-[var(--text-secondary)]">{stats.activeStaff} activo</span>
                 </div>
-                <div className="p-2 flex-1">
+                <div className="p-4 flex-1">
                   {stats.activeStaff > 0 ? (
-                    <div className="space-y-1">
+                    <div className="space-y-3">
                       {Array.from({ length: Math.min(stats.activeStaff, 3) }).map((_, i) => {
                         const colors = ["from-blue-500 to-purple-500", "from-green-500 to-teal-500", "from-amber-500 to-orange-500"];
-                        const occ = [85, 60, 40][i] || 50;
+                        const occ = [85, 64, 48][i] || 50;
                         return (
-                          <div key={i} className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-all cursor-pointer">
-                            <div className="flex items-center gap-2">
-                              <div className={cn("w-6 h-6 rounded-full bg-gradient-to-br flex items-center justify-center text-[9px] font-bold text-white", colors[i])}>
+                          <div key={i} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/8 border border-white/5 transition-all cursor-pointer">
+                            <div className="flex items-center gap-3">
+                              <div className={cn("w-8 h-8 rounded-full bg-gradient-to-br flex items-center justify-center text-xs font-bold text-white", colors[i])}>
                                 {String.fromCharCode(65 + i)}
                               </div>
-                              <div className="text-[10px] text-white">Prof. {i + 1}</div>
+                              <div className="text-sm text-white font-medium">Prof. {i + 1}</div>
                             </div>
-                            <div className={cn("text-[10px] font-semibold", occ >= 70 ? "text-emerald-400" : occ >= 40 ? "text-blue-400" : "text-slate-400")}>
+                            <div className={cn("text-sm font-semibold", occ >= 70 ? "text-emerald-400" : occ >= 40 ? "text-blue-400" : "text-slate-400")}>
                               {occ}%
                             </div>
                           </div>
@@ -636,143 +611,154 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                       })}
                     </div>
                   ) : (
-                    <div className="text-center py-4">
-                      <User className="h-6 w-6 text-[var(--text-secondary)] mx-auto mb-1" />
-                      <p className="text-[10px] text-[var(--text-secondary)]">Sin staff</p>
+                    <div className="text-center py-8">
+                      <User className="h-8 w-8 text-[var(--text-secondary)] mx-auto mb-2" />
+                      <p className="text-sm text-[var(--text-secondary)]">Sin staff activo</p>
                     </div>
                   )}
-                </div>
-                <div className="px-3 py-2 border-t border-white/10">
-                  <button onClick={() => (window.location.href = "/panel/staff")} className="w-full text-[10px] text-[var(--accent-aqua)]">
-                    Gestionar →
-                  </button>
                 </div>
               </div>
             </motion.div>
 
             {/* ═══════════════════════════════════════════════════════════════
-                FILA 3: PERFORMANCE (8/12) + ACCIONES (4/12)
+                FILA 4: PERFORMANCE (8/12) + ACCIONES (4/12)
                 ═══════════════════════════════════════════════════════════════ */}
             
-            {/* Performance - 8 columnas */}
+            {/* Performance - 8 columnas - PREMIUM */}
             <motion.div
               initial="hidden"
               animate="visible"
               variants={sectionVariants}
-              transition={{ duration: 0.2, delay: 0.15 }}
+              transition={{ duration: 0.25, delay: 0.2 }}
               className="col-span-12 lg:col-span-8"
             >
-              <div className="glass rounded-xl border border-white/10 overflow-hidden">
-                <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
-                  <h2 className="text-sm font-semibold text-white font-satoshi">Performance</h2>
-                  <div className="flex gap-1">
-                    <button className="px-2 py-0.5 text-[9px] rounded-full bg-white/10 text-white">7d</button>
-                    <button className="px-2 py-0.5 text-[9px] rounded-full bg-white/5 text-[var(--text-secondary)]">30d</button>
+              <div className="glass rounded-[20px] border border-white/8 overflow-hidden shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/8">
+                  <h2 className="text-base font-semibold text-white font-satoshi">Performance</h2>
+                  <div className="flex gap-2">
+                    <button className="px-3 py-1 text-xs rounded-full bg-white/10 text-white">7 días</button>
+                    <button className="px-3 py-1 text-xs rounded-full bg-white/5 text-[var(--text-secondary)] hover:bg-white/10 transition-colors">30 días</button>
                   </div>
                 </div>
-                <div className="p-3">
-                  {/* Gráfico compacto */}
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] text-[var(--text-secondary)]">Reservas últimos 7 días</span>
-                    <span className="text-sm font-bold text-white">{totalLast7Days}</span>
+                <div className="p-6">
+                  {/* Header del gráfico */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-sm font-medium text-white">Reservas diarias</h3>
+                      <p className="text-xs text-[var(--text-secondary)]">Últimos 7 días</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-white font-satoshi">{totalLast7Days}</div>
+                      <div className="text-xs text-[var(--text-secondary)]">total reservas</div>
+                    </div>
                   </div>
+
+                  {/* Gráfico de barras */}
                   {showChartBars ? (
-                    <div className="flex items-end gap-1 h-14 mb-3">
+                    <div className="flex items-end gap-2 h-20 mb-6">
                       {bookingValues.map((count: number, index: number) => {
                         const height = chartMax > 0 ? (count / chartMax) * 100 : 0;
                         return (
                           <div key={index} className="flex-1 flex flex-col items-center">
-                            <div
-                              className="w-full rounded-t gradient-aurora-1"
-                              style={{ height: `${height}%`, minHeight: count > 0 ? "4px" : "0" }}
+                            <motion.div
+                              initial={{ height: 0 }}
+                              animate={{ height: `${height}%` }}
+                              transition={{ duration: 0.4, delay: index * 0.05 }}
+                              className="w-full rounded-t-lg gradient-aurora-1"
+                              style={{ minHeight: count > 0 ? "6px" : "0" }}
                             />
-                            <span className="text-[8px] text-[var(--text-secondary)] mt-0.5">{format(subDays(new Date(), 6 - index), "dd")}</span>
+                            <span className="text-[10px] text-[var(--text-secondary)] mt-2">{format(subDays(new Date(), 6 - index), "dd/MM")}</span>
+                            <span className="text-xs font-semibold text-white">{count}</span>
                           </div>
                         );
                       })}
                     </div>
                   ) : (
-                    <div className="h-14 flex items-center justify-center text-[10px] text-[var(--text-secondary)]">Sin datos</div>
+                    <div className="h-20 flex items-center justify-center text-sm text-[var(--text-secondary)]">Sin datos suficientes</div>
                   )}
-                  {/* Métricas inline */}
-                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/5">
+
+                  {/* Métricas */}
+                  <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/8">
                     <div className="text-center">
-                      <div className="text-xs font-bold text-emerald-400">{formatCurrency(stats.revenueLast7Days || 0)}</div>
-                      <div className="text-[9px] text-[var(--text-secondary)]">Ingresos</div>
+                      <div className="text-lg font-bold text-emerald-400">{formatCurrency(stats.revenueLast7Days || 0)}</div>
+                      <div className="text-xs text-[var(--text-secondary)]">Ingresos 7d</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-xs font-bold text-blue-400">{avgLast7Days.toFixed(1)}</div>
-                      <div className="text-[9px] text-[var(--text-secondary)]">Media/día</div>
+                      <div className="text-lg font-bold text-blue-400">{avgLast7Days.toFixed(1)}</div>
+                      <div className="text-xs text-[var(--text-secondary)]">Media/día</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-xs font-bold text-purple-400">{formatCurrency(avgTicketLast7Days)}</div>
-                      <div className="text-[9px] text-[var(--text-secondary)]">Ticket</div>
+                      <div className="text-lg font-bold text-purple-400">{formatCurrency(avgTicketLast7Days)}</div>
+                      <div className="text-xs text-[var(--text-secondary)]">Ticket medio</div>
                     </div>
                   </div>
                 </div>
               </div>
             </motion.div>
 
-            {/* Acciones - 4 columnas, COMPACTO */}
+            {/* Acciones - 4 columnas - PREMIUM */}
             <motion.div
               initial="hidden"
               animate="visible"
               variants={sectionVariants}
-              transition={{ duration: 0.2, delay: 0.2 }}
+              transition={{ duration: 0.25, delay: 0.25 }}
               className="col-span-12 lg:col-span-4"
             >
-              <div className="glass rounded-xl border border-white/10 overflow-hidden h-full flex flex-col">
-                <div className="px-3 py-2 border-b border-white/10">
-                  <h2 className="text-sm font-semibold text-white font-satoshi">Acciones rápidas</h2>
+              <div className="glass rounded-[20px] border border-white/8 overflow-hidden h-full shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
+                <div className="px-5 py-4 border-b border-white/8">
+                  <h2 className="text-base font-semibold text-white font-satoshi">Acciones</h2>
                 </div>
-                <div className="p-2 flex-1">
-                  <div className="grid grid-cols-2 gap-1.5">
-                    <button
-                      onClick={() => (window.location.href = "/panel/agenda")}
-                      className="flex flex-col items-center justify-center p-2 rounded-lg bg-gradient-to-r from-[var(--accent-aqua)] to-[var(--accent-purple)] text-white hover:shadow-lg transition-all"
-                    >
-                      <Plus className="h-4 w-4 mb-0.5" />
-                      <span className="text-[10px] font-medium">Nueva cita</span>
-                    </button>
+                <div className="p-5">
+                  {/* Botón principal CTA */}
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => (window.location.href = "/panel/agenda")}
+                    className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl bg-gradient-to-r from-[var(--accent-aqua)] to-[var(--accent-purple)] text-white font-medium hover:shadow-[0_8px_30px_rgba(52,216,226,0.3)] transition-all mb-4"
+                  >
+                    <Plus className="h-5 w-5" />
+                    <span>Nueva cita</span>
+                  </motion.button>
+
+                  {/* Botones secundarios */}
+                  <div className="space-y-2">
                     <button
                       onClick={() => (window.location.href = "/panel/clientes")}
-                      className="flex flex-col items-center justify-center p-2 rounded-lg bg-white/10 border border-white/10 text-white hover:bg-white/15 transition-all"
+                      className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-white/5 border border-white/8 text-white hover:bg-white/10 transition-all"
                     >
-                      <User className="h-4 w-4 mb-0.5" />
-                      <span className="text-[10px] font-medium">Cliente</span>
+                      <User className="h-4 w-4 text-[var(--text-secondary)]" />
+                      <span className="text-sm">Clientes</span>
                     </button>
                     <button
                       onClick={() => (window.location.href = "/panel/agenda")}
-                      className="flex flex-col items-center justify-center p-2 rounded-lg bg-white/10 border border-white/10 text-white hover:bg-white/15 transition-all"
+                      className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-white/5 border border-white/8 text-white hover:bg-white/10 transition-all"
                     >
-                      <Calendar className="h-4 w-4 mb-0.5" />
-                      <span className="text-[10px] font-medium">Agenda</span>
-                    </button>
-                    <button
-                      onClick={() => (window.location.href = "/panel/chat")}
-                      className="flex flex-col items-center justify-center p-2 rounded-lg bg-white/10 border border-white/10 text-white hover:bg-white/15 transition-all"
-                    >
-                      <MessageSquare className="h-4 w-4 mb-0.5" />
-                      <span className="text-[10px] font-medium">Chat</span>
+                      <Calendar className="h-4 w-4 text-[var(--text-secondary)]" />
+                      <span className="text-sm">Agenda</span>
                     </button>
                   </div>
                 </div>
-                {/* Alertas opcionales */}
-                {operationalAlerts.length > 0 && (
-                  <div className="px-2 py-2 border-t border-white/10">
-                    <div className="space-y-1">
-                      {operationalAlerts.slice(0, 2).map((alert, idx) => (
-                        <div key={idx} className={cn(
-                          "px-2 py-1 rounded text-[9px]",
-                          alert.type === "danger" ? "bg-red-500/10 text-red-300" :
-                          alert.type === "warning" ? "bg-amber-500/10 text-amber-300" : "bg-sky-500/10 text-sky-300"
-                        )}>
-                          {alert.title}
-                        </div>
-                      ))}
-                    </div>
+
+                {/* Acciones rápidas pequeñas */}
+                <div className="px-5 pb-5">
+                  <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-3">Acciones rápidas</p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => (window.location.href = "/panel/clientes")}
+                      className="flex-1 flex flex-col items-center p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/8 transition-all"
+                    >
+                      <Plus className="h-4 w-4 text-[var(--text-secondary)] mb-1" />
+                      <span className="text-[10px] text-[var(--text-secondary)]">Clientes</span>
+                    </button>
+                    <button
+                      onClick={() => (window.location.href = "/panel/agenda")}
+                      className="flex-1 flex flex-col items-center p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/8 transition-all"
+                    >
+                      <Calendar className="h-4 w-4 text-[var(--text-secondary)] mb-1" />
+                      <span className="text-[10px] text-[var(--text-secondary)]">Agenda</span>
+                    </button>
                   </div>
-                )}
+                </div>
               </div>
             </motion.div>
           </div>
