@@ -14,6 +14,7 @@ import { Calendar, Users, Scissors, User, ArrowRight, Euro, Sparkles } from "luc
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useDashboardData } from "@/hooks/useOptimizedData";
+import { usePermissions } from "@/contexts/PermissionsContext";
 import { DashboardSkeleton } from "@/components/ui/Skeletons";
 
 const QUICK_LINKS: {
@@ -64,8 +65,11 @@ function PanelHomeContent() {
     return searchParams?.get("impersonate") || null;
   }, [searchParams?.toString()]);
 
+  // Preferir tenantId del contexto (ya cargado por el layout) para evitar volver a resolver tenant
+  const { tenantId: ctxTenantId } = usePermissions();
+
   // Hook optimizado: obtiene tenant + datos en UNA llamada con caché
-  const dashboardData = useDashboardData(impersonateOrgId);
+  const dashboardData = useDashboardData(impersonateOrgId, { tenantId: ctxTenantId });
 
   // Extraer datos del hook
   const { tenant, kpis, upcomingBookings: rawBookings, isLoading: isLoadingStats } = dashboardData;

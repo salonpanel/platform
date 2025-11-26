@@ -7,18 +7,28 @@ import { getCurrentTenant } from "@/lib/panel-tenant";
 /**
  * Hook optimizado para Dashboard - obtiene tenant y datos en paralelo
  */
-export function useDashboardData(impersonateOrgId: string | null) {
+export function useDashboardData(impersonateOrgId: string | null, options?: { tenantId?: string | null; timezone?: string | null }) {
   const supabase = getSupabaseBrowser();
 
   // Obtener tenant + datos en UNA SOLA llamada con caché
-  const { data, isLoading } = useStaleWhileRevalidate(
-    `dashboard-full-${impersonateOrgId || 'default'}`,
-    async () => {
-      // 1. Obtener tenant primero
-      const { tenant } = await getCurrentTenant(impersonateOrgId);
-      if (!tenant) return null;
+  const cacheKey = options?.tenantId ? `dashboard-full-tenant-${options.tenantId}` : `dashboard-full-${impersonateOrgId || 'default'}`;
 
-      const tenantId = tenant.id;
+  const { data, isLoading } = useStaleWhileRevalidate(
+    cacheKey,
+    async () => {
+      // 1. Obtener tenant primero (si se pasó por opciones, no llamamos a getCurrentTenant)
+      let tenant = null as any;
+      let tenantId: string | null = null;
+
+      if (options?.tenantId) {
+        tenantId = options.tenantId;
+        tenant = { id: options.tenantId, name: "Tu barbería", timezone: options.timezone || "Europe/Madrid" };
+      } else {
+        const result = await getCurrentTenant(impersonateOrgId);
+        if (!result?.tenant) return null;
+        tenant = result.tenant;
+        tenantId = tenant.id;
+      }
       const now = new Date();
       const todayStart = new Date(now.setHours(0, 0, 0, 0)).toISOString();
       const todayEnd = new Date(now.setHours(23, 59, 59, 999)).toISOString();
@@ -27,18 +37,19 @@ export function useDashboardData(impersonateOrgId: string | null) {
       const [bookingsRes, servicesRes, staffRes, upcomingRes] = await Promise.all([
         supabase
           .from("bookings")
-          .select("id, status", { count: "exact" })
+          // Use planner/estimated count (faster) and head:true to avoid fetching rows here
+          .select("id", { head: true, count: "planned" })
           .eq("tenant_id", tenantId)
           .gte("starts_at", todayStart)
           .lte("starts_at", todayEnd),
         supabase
           .from("services")
-          .select("id", { count: "exact" })
+          .select("id", { head: true, count: "planned" })
           .eq("tenant_id", tenantId)
           .eq("active", true),
         supabase
           .from("staff")
-          .select("id", { count: "exact" })
+          .select("id", { head: true, count: "planned" })
           .eq("tenant_id", tenantId)
           .eq("active", true),
         supabase
@@ -104,18 +115,18 @@ export function useDashboardDataLegacy(tenantId: string | null, timezone: string
       const [bookingsRes, servicesRes, staffRes] = await Promise.all([
         supabase
           .from("bookings")
-          .select("id, status", { count: "exact" })
+          .select("id", { head: true, count: "planned" })
           .eq("tenant_id", tenantId)
           .gte("starts_at", todayStart)
           .lte("starts_at", todayEnd),
         supabase
           .from("services")
-          .select("id", { count: "exact" })
+          .select("id", { head: true, count: "planned" })
           .eq("tenant_id", tenantId)
           .eq("active", true),
         supabase
           .from("staff")
-          .select("id", { count: "exact" })
+          .select("id", { head: true, count: "planned" })
           .eq("tenant_id", tenantId)
           .eq("active", true),
       ]);
