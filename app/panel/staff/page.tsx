@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense, useMemo } from "react";
+import { useEffect, useState, Suspense, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { getCurrentTenant } from "@/lib/panel-tenant";
 import { Spinner, Card, Button, EmptyState, Alert, SearchInput, useToast, TitleBar, PageHeader } from "@/components/ui";
@@ -37,6 +37,7 @@ function StaffContent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const hasSyncedRef = useRef<boolean>(false);
 
   const impersonateOrgId = useMemo(() => searchParams?.get("impersonate") || null, [searchParams?.toString()]);
 
@@ -66,10 +67,23 @@ function StaffContent() {
     if (!tenantId) return;
 
     let mounted = true;
+
     const loadStaff = async () => {
       try {
         setLoading(true);
-        
+
+        // Intentar sincronizar memberships -> staff una sola vez por tenantId
+        if (!hasSyncedRef.current) {
+          try {
+            await fetch("/api/staff/sync", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ tenantId }),
+            });
+          } catch {}
+          hasSyncedRef.current = true;
+        }
+
         // Cargar staff con conteo de reservas - SOLO usuarios con cuenta
         const { data: staffData, error: staffError } = await supabase
           .from("staff")
