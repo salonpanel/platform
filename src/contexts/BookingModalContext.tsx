@@ -1,6 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
+import { useAgendaModals } from '@/hooks/useAgendaModals';
 
 interface BookingModalState {
   isCreateOpen: boolean;
@@ -19,47 +20,24 @@ interface BookingModalContextType {
 const BookingModalContext = createContext<BookingModalContextType | null>(null);
 
 export function BookingModalProvider({ children }: { children: ReactNode }) {
-  const [modalState, setModalState] = useState<BookingModalState>({
-    isCreateOpen: false,
-    isDetailOpen: false,
-    bookingId: null,
-    initialDate: undefined,
-  });
+  // Usar el hook unificado internamente
+  const agendaModals = useAgendaModals();
 
-  const openCreate = (initialDate?: Date) => {
-    setModalState({
-      isCreateOpen: true,
-      isDetailOpen: false,
-      bookingId: null,
-      initialDate,
-    });
-  };
-
-  const openDetail = (bookingId: string) => {
-    setModalState({
-      isCreateOpen: false,
-      isDetailOpen: true,
-      bookingId,
-      initialDate: undefined,
-    });
-  };
-
-  const close = () => {
-    setModalState({
-      isCreateOpen: false,
-      isDetailOpen: false,
-      bookingId: null,
-      initialDate: undefined,
-    });
+  // Adaptar la interfaz del hook unificado al formato esperado por BookingModalContext
+  const contextValue: BookingModalContextType = {
+    modalState: {
+      isCreateOpen: agendaModals.isCreateOpen,
+      isDetailOpen: agendaModals.isDetailOpen,
+      bookingId: agendaModals.bookingId,
+      initialDate: agendaModals.initialDate,
+    },
+    openCreate: agendaModals.openCreate,
+    openDetail: agendaModals.openDetail,
+    close: agendaModals.close,
   };
 
   return (
-    <BookingModalContext.Provider value={{
-      modalState,
-      openCreate,
-      openDetail,
-      close,
-    }}>
+    <BookingModalContext.Provider value={contextValue}>
       {children}
     </BookingModalContext.Provider>
   );

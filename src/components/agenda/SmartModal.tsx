@@ -29,7 +29,7 @@ interface SmartModalProps {
   children: React.ReactNode;
   actions?: React.ReactNode;
   context?: {
-    type: "booking" | "customer" | "service" | "staff";
+    type: "booking" | "customer" | "service" | "staff" | "availability" | "conflict";
     data?: any;
   };
 }
@@ -115,6 +115,18 @@ export function SmartModal({
           accent: "var(--accent-pink)",
           bg: "bg-[var(--accent-pink-glass)]",
           border: "border-[var(--accent-pink-border)]",
+        };
+      case "availability":
+        return {
+          accent: "var(--accent-green)",
+          bg: "bg-[var(--accent-green-glass)]",
+          border: "border-[var(--accent-green-border)]",
+        };
+      case "conflict":
+        return {
+          accent: "var(--accent-orange)",
+          bg: "bg-[var(--accent-orange-glass)]",
+          border: "border-[var(--accent-orange-border)]",
         };
       default:
         return {

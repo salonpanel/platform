@@ -1,10 +1,9 @@
-"use client";
-
 import { ReactNode, useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SmartModal } from "@/components/agenda/SmartModal";
+import { ModalActions, ModalAction } from "@/components/agenda/ModalActions";
 
 // Define SmartModalProps interface locally since it's not exported
 interface SmartModalProps {
@@ -33,7 +32,7 @@ interface SmartModalProps {
 import { theme } from "@/theme/ui";
 import { getMotionSafeProps } from "@/components/agenda/motion/presets";
 
-interface AgendaModalProps extends Omit<SmartModalProps, 'variant' | 'size' | 'context'> {
+interface AgendaModalProps extends Omit<SmartModalProps, 'variant' | 'size' | 'context' | 'actions'> {
   // Agenda-specific variants
   variant?: "modal" | "drawer" | "slide";
   
@@ -63,6 +62,16 @@ interface AgendaModalProps extends Omit<SmartModalProps, 'variant' | 'size' | 'c
     data?: any;
   };
   
+  // Standard actions API
+  actions?: ModalAction[];
+  actionsConfig?: {
+    layout?: "start" | "center" | "end" | "space-between";
+    size?: "sm" | "md" | "lg";
+    showCancel?: boolean;
+    onCancel?: () => void;
+    cancelLabel?: string;
+  };
+  
   // Additional styling (handled internally, not passed to SmartModal)
   className?: string;
 }
@@ -86,6 +95,7 @@ export function AgendaModal({
   drawerPosition = "bottom",
   header,
   actions,
+  actionsConfig,
   stickyFooter = false,
   preventClose = false,
   children,
@@ -271,14 +281,16 @@ export function AgendaModal({
   );
 
   // Enhanced footer component
-  const enhancedFooter = actions ? (
-    <div className={cn(
-      "flex items-center justify-between gap-4 w-full",
-      stickyFooter && "sticky bottom-0 bg-[var(--glass-bg-subtle)] border-t border-[var(--glass-border-subtle)] p-4"
-    )}>
-      {actions}
-    </div>
-  ) : undefined;
+  const enhancedFooter = actions && actions.length > 0 ? (
+    <ModalActions
+      actions={actions}
+      layout={actionsConfig?.layout || "end"}
+      size={actionsConfig?.size || "md"}
+      showCancel={actionsConfig?.showCancel ?? true}
+      onCancel={actionsConfig?.onCancel || onClose}
+      cancelLabel={actionsConfig?.cancelLabel || "Cancelar"}
+    />
+  ) : null;
 
   // Drawer-specific styling and animations
   const drawerClasses: { size: "sm" | "md" | "lg" | "xl" | "full"; className: string } = 

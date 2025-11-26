@@ -2,12 +2,13 @@ import { useState } from "react";
 import { Booking, CalendarSlot } from "@/types/agenda";
 
 /**
- * Hook para centralizar el estado de todos los modales de la Agenda
- * 
+ * Hook unificado para centralizar el estado de todos los modales de la Agenda
+ *
  * Gestiona:
  * - Modal de nueva reserva / edición
  * - Modal de bloqueo de staff
  * - Panel de detalles de reserva
+ * - Estados de creación/detalle (compatibilidad con BookingModalContext)
  * - Slots y bookings seleccionados
  */
 export function useAgendaModals() {
@@ -15,6 +16,12 @@ export function useAgendaModals() {
   const [showNewBookingModal, setShowNewBookingModal] = useState(false);
   const [showBlockingModal, setShowBlockingModal] = useState(false);
   const [showBookingDetail, setShowBookingDetail] = useState(false);
+
+  // Estados de creación/detalle (compatibilidad con BookingModalContext)
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [bookingId, setBookingId] = useState<string | null>(null);
+  const [initialDate, setInitialDate] = useState<Date | undefined>(undefined);
 
   // Estados de selección
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
@@ -24,12 +31,57 @@ export function useAgendaModals() {
   // Funciones auxiliares para abrir modales con configuración
 
   /**
-   * Abre el modal de nueva reserva para un slot específico
+   * Abre el modal de creación (compatibilidad con BookingModalContext)
    */
+  const openCreate = (initialDate?: Date) => {
+    setIsCreateOpen(true);
+    setIsDetailOpen(false);
+    setBookingId(null);
+    setInitialDate(initialDate);
+    setShowNewBookingModal(true);
+  };
+
+  /**
+   * Abre el modal de detalle (compatibilidad con BookingModalContext)
+   */
+  const openDetail = (bookingId: string) => {
+    setIsCreateOpen(false);
+    setIsDetailOpen(true);
+    setBookingId(bookingId);
+    setInitialDate(undefined);
+    setShowBookingDetail(true);
+
+    // Buscar el booking por ID (esto debería hacerse en el componente padre)
+    // Por ahora solo configuramos el estado
+    setSelectedBooking({ id: bookingId } as Booking);
+  };
+
+  /**
+   * Cierra modal de creación/detalle (compatibilidad con BookingModalContext)
+   */
+  const close = () => {
+    setIsCreateOpen(false);
+    setIsDetailOpen(false);
+    setBookingId(null);
+    setInitialDate(undefined);
+    setShowNewBookingModal(false);
+    setShowBookingDetail(false);
+    setSelectedBooking(null);
+  };
   const openNewBookingModal = (slot: CalendarSlot) => {
     setSelectedSlot(slot);
     setShowNewBookingModal(true);
     setEditingBooking(null);
+  };
+
+  /**
+   * Función onSave para NewBookingModal - debe ser configurada por el componente padre
+   * El componente padre debe pasar una función que implemente la lógica de guardado
+   */
+  const createOnSave = (saveBookingFn: (bookingData: any, forceOverlap?: boolean, successMessage?: string) => Promise<{ ok: true; booking: any } | { ok: false; error: string }>) => {
+    return async (bookingData: any): Promise<{ ok: true; booking: any } | { ok: false; error: string }> => {
+      return await saveBookingFn(bookingData, false);
+    };
   };
 
   /**
@@ -63,6 +115,10 @@ export function useAgendaModals() {
     setShowNewBookingModal(false);
     setShowBlockingModal(false);
     setShowBookingDetail(false);
+    setIsCreateOpen(false);
+    setIsDetailOpen(false);
+    setBookingId(null);
+    setInitialDate(undefined);
     setEditingBooking(null);
     setSelectedBooking(null);
     setSelectedSlot(null);
@@ -94,25 +150,35 @@ export function useAgendaModals() {
   };
 
   return {
-    // Estados de visibilidad
+    // Estados de visibilidad (Agenda)
     showNewBookingModal,
     showBlockingModal,
     showBookingDetail,
-    
+
+    // Estados de creación/detalle (BookingModalContext)
+    isCreateOpen,
+    isDetailOpen,
+    bookingId,
+    initialDate,
+
     // Estados de selección
     editingBooking,
     selectedBooking,
     selectedSlot,
-    
+
     // Setters directos (para casos especiales)
     setShowNewBookingModal,
     setShowBlockingModal,
     setShowBookingDetail,
+    setIsCreateOpen,
+    setIsDetailOpen,
+    setBookingId,
+    setInitialDate,
     setEditingBooking,
     setSelectedBooking,
     setSelectedSlot,
-    
-    // Funciones auxiliares
+
+    // Funciones auxiliares (Agenda)
     openNewBookingModal,
     openEditBookingModal,
     openBlockingModal,
@@ -121,5 +187,21 @@ export function useAgendaModals() {
     closeNewBookingModal,
     closeBlockingModal,
     closeBookingDetail,
+
+    // Funciones de BookingModalContext
+    openCreate,
+    openDetail,
+    close,
+
+    // Función helper para crear onSave estructurado
+    createOnSave,
+
+    // Estado computado para compatibilidad
+    modalState: {
+      isCreateOpen,
+      isDetailOpen,
+      bookingId,
+      initialDate,
+    },
   };
 }

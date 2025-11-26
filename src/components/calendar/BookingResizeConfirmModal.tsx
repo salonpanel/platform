@@ -39,7 +39,7 @@ export function BookingResizeConfirmModal({
   let newStart = "";
   let newEnd = "";
   let newDuration = 0;
-  
+
   try {
     if (newStartTime.includes("T")) {
       const newStartDate = new Date(newStartTime);
@@ -48,8 +48,15 @@ export function BookingResizeConfirmModal({
       newEnd = format(newEndDate, "HH:mm");
       newDuration = Math.round((newEndDate.getTime() - newStartDate.getTime()) / (1000 * 60)); // minutos
     } else {
+      // Si no incluye "T", son horas en formato HH:mm, calcular duración con fecha ficticia
       newStart = newStartTime;
       newEnd = newEndTime;
+      // Crear fechas ficticias para calcular la duración
+      const [startHour, startMinute] = newStartTime.split(":").map(Number);
+      const [endHour, endMinute] = newEndTime.split(":").map(Number);
+      const startDate = new Date(2000, 0, 1, startHour, startMinute);
+      const endDate = new Date(2000, 0, 1, endHour, endMinute);
+      newDuration = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60)); // minutos
     }
   } catch {
     newStart = newStartTime;

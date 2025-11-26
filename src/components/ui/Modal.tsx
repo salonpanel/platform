@@ -15,6 +15,8 @@ interface ModalProps {
   size?: "sm" | "md" | "lg" | "xl";
   ariaLabelledBy?: string;
   ariaDescribedBy?: string;
+  preventClose?: boolean;
+  preventCloseMessage?: string;
 }
 
 export function Modal({
@@ -26,14 +28,24 @@ export function Modal({
   size = "md",
   ariaLabelledBy,
   ariaDescribedBy,
+  preventClose = false,
+  preventCloseMessage = "¿Estás seguro de que quieres cerrar sin guardar los cambios?",
 }: ModalProps) {
   const [mounted, setMounted] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
+  const titleId = useRef(`modal-title-${Math.random().toString(36).substr(2, 9)}`);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // Helper para manejar cierre con preventClose
+  const handleClose = () => {
+    if (preventClose) {
+      if (window.confirm(preventCloseMessage)) {
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  };
 
   // Focus trap y gestión de focus
   useEffect(() => {
@@ -121,12 +133,12 @@ export function Modal({
     
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
-        onClose();
+        handleClose();
       }
     };
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
-  }, [isOpen, onClose, mounted]);
+  }, [isOpen, handleClose, mounted]);
 
   if (!mounted) return null;
 
@@ -144,7 +156,7 @@ export function Modal({
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
-              onClose();
+              handleClose();
             }
           }}
         >
@@ -175,14 +187,14 @@ export function Modal({
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            aria-labelledby={ariaLabelledBy || "modal-title"}
+            aria-labelledby={ariaLabelledBy || titleId.current}
             aria-describedby={ariaDescribedBy}
             tabIndex={-1}
           >
             {/* Header - Premium */}
             <div className="flex items-center justify-between border-b border-[var(--glass-border-subtle)] px-6 py-5">
               <h2 
-                id="modal-title"
+                id={ariaLabelledBy || titleId.current}
                 className="text-xl font-semibold text-[var(--text-primary)] tracking-tight"
                 style={{ fontFamily: "var(--font-heading)" }}
               >
@@ -191,7 +203,7 @@ export function Modal({
               <motion.button
                 whileHover={{ scale: 1.05, rotate: 90 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={onClose}
+                onClick={handleClose}
                 className="p-2 rounded-[var(--radius-sm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)] transition-all"
                 style={{ transitionDuration: "var(--duration-base)" }}
                 aria-label="Cerrar modal"

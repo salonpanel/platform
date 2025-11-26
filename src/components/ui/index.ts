@@ -11,7 +11,7 @@ export { Card } from "./Card";
 
 export { Modal } from "./Modal";
 
-export { Tabs } from "./Tabs";
+export { Tabs, TabsList, TabsTrigger, TabsContent } from "./Tabs";
 
 export { DropdownMenu, DropdownMenuItem } from "./DropdownMenu";
 

@@ -8,6 +8,9 @@ import PanelLayoutClient from "./layout-client";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { supabaseServer } from "@/lib/supabase";
+import { BookingModalProvider } from "@/contexts/BookingModalContext";
+import { BookingCreateModal } from "@/modules/bookings/BookingCreateModal";
+import { BookingDetailModal } from "@/modules/bookings/BookingDetailModal";
 
 export default async function PanelLayout({ children }: { children: ReactNode }) {
   // Try a lightweight server-side user/tenant lookup when cookies are present.
@@ -35,7 +38,13 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return <PanelLayoutClient initialAuthStatus={"UNKNOWN"}>{children}</PanelLayoutClient>;
+      return (
+        <BookingModalProvider>
+          <PanelLayoutClient initialAuthStatus={"UNKNOWN"}>{children}</PanelLayoutClient>
+          <BookingCreateModal />
+          <BookingDetailModal />
+        </BookingModalProvider>
+      );
     }
 
     const sb = supabaseServer();
@@ -54,7 +63,13 @@ export default async function PanelLayout({ children }: { children: ReactNode })
 
     if (!membership?.tenant_id) {
       // Authenticated but without a tenant membership yet
-      return <PanelLayoutClient initialAuthStatus={"AUTHENTICATED"}>{children}</PanelLayoutClient>;
+      return (
+        <BookingModalProvider>
+          <PanelLayoutClient initialAuthStatus={"AUTHENTICATED"}>{children}</PanelLayoutClient>
+          <BookingCreateModal />
+          <BookingDetailModal />
+        </BookingModalProvider>
+      );
     }
 
     // Now fetch tenant and permissions in parallel
@@ -72,7 +87,13 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     const { data: tenant } = tenantResult;
 
     if (!tenant) {
-      return <PanelLayoutClient initialAuthStatus={"AUTHENTICATED"}>{children}</PanelLayoutClient>;
+      return (
+        <BookingModalProvider>
+          <PanelLayoutClient initialAuthStatus={"AUTHENTICATED"}>{children}</PanelLayoutClient>
+          <BookingCreateModal />
+          <BookingDetailModal />
+        </BookingModalProvider>
+      );
     }
 
     const initialTenant = {
@@ -94,17 +115,27 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     }
 
     return (
-      <PanelLayoutClient
-        initialAuthStatus={"AUTHENTICATED"}
-        initialTenant={initialTenant}
-        initialPermissions={initialPermissions}
-        initialRole={initialRole}
-      >
-        {children}
-      </PanelLayoutClient>
+      <BookingModalProvider>
+        <PanelLayoutClient
+          initialAuthStatus={"AUTHENTICATED"}
+          initialTenant={initialTenant}
+          initialPermissions={initialPermissions}
+          initialRole={initialRole}
+        >
+          {children}
+        </PanelLayoutClient>
+        <BookingCreateModal />
+        <BookingDetailModal />
+      </BookingModalProvider>
     );
   } catch (err) {
     // On any error, fallback to previous behavior (all client-side)
-    return <PanelLayoutClient>{children}</PanelLayoutClient>;
+    return (
+      <BookingModalProvider>
+        <PanelLayoutClient>{children}</PanelLayoutClient>
+        <BookingCreateModal />
+        <BookingDetailModal />
+      </BookingModalProvider>
+    );
   }
 }

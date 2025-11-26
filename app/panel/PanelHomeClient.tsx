@@ -1,12 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo, Suspense, ComponentType } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MiniKPI } from "@/components/panel/MiniKPI";
-import { UpcomingAppointments } from "@/components/panel/UpcomingAppointments";
-import { MessagesWidget } from "@/components/panel/MessagesWidget";
 import { format, subDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { motion } from "framer-motion";
@@ -15,62 +11,23 @@ import {
   Euro,
   BarChart3,
   User,
-  AlertCircle,
   TrendingUp,
   Sparkles,
-  Phone,
-  CheckCircle2,
-  MessageSquare,
   Plus,
   Scissors
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { DashboardDataset } from "@/lib/dashboard-data";
+import { DashboardDataset, validateDashboardKpis } from "@/lib/dashboard-data";
 import { useDashboardData } from "@/hooks/useOptimizedData";
 import { usePermissions } from "@/contexts/PermissionsContext";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { DashboardSkeleton } from "@/components/ui/Skeletons";
 import { useBookingModal } from "@/contexts/BookingModalContext";
 
-const QUICK_LINKS: {
-  href: string;
-  label: string;
-  icon: ComponentType<{ className?: string }>;
-  desc: string;
-}[] = [
-  { href: "/panel/agenda", label: "Agenda", icon: Calendar, desc: "Ver reservas" },
-  { href: "/panel/clientes", label: "Clientes", icon: User, desc: "Gestionar clientes" },
-  { href: "/panel/servicios", label: "Servicios", icon: Scissors, desc: "Gestionar servicios" },
-  { href: "/panel/staff", label: "Staff", icon: User, desc: "Gestionar staff" },
-];
-
-// Clase base común para todas las cards del dashboard
-const cardBaseClass = cn(
-  "relative rounded-2xl border border-white/5",
-  "bg-[rgba(15,23,42,0.85)] backdrop-blur-xl",
-  "shadow-[0_18px_45px_rgba(0,0,0,0.45)]",
-  "px-4 py-3 sm:px-5 sm:py-4",
-  "transition-transform transition-shadow duration-150 ease-out",
-  "hover:-translate-y-[1px] hover:shadow-[0_22px_55px_rgba(0,0,0,0.6)]"
-);
-
 // Variantes de animación para secciones
 const sectionVariants = {
   hidden: { opacity: 0, y: 12 },
   visible: { opacity: 1, y: 0 },
-};
-
-type TopService = {
-  serviceId: string;
-  name: string;
-  count: number;
-};
-
-type OperationalAlert = {
-  type: "info" | "warning" | "danger";
-  title: string;
-  description: string;
 };
 
 type KPITrend = "up" | "down" | "neutral";
@@ -149,6 +106,13 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
   const currentStaffMembers = hasInitialData ? (initialData as any).staffMembers || [] : rawStaffMembers || [];
   const isLoading = hasInitialData ? false : isLoadingStats;
 
+  // Validate KPIs in development mode
+  useEffect(() => {
+    if (currentKpis) {
+      validateDashboardKpis(currentKpis);
+    }
+  }, [currentKpis]);
+
   const tenantId = tenant?.id || null;
   const tenantTimezone = tenant?.timezone || "Europe/Madrid";
   const shouldShowTimezone = tenantTimezone && tenantTimezone !== "Europe/Madrid";
@@ -219,67 +183,14 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
   // Staff con datos reales
   const staffMembers = currentStaffMembers || [];
 
-  // === CÁLCULOS DE OCUPACIÓN POR PERIODO ===
-  // Ocupación basada en slots: cada staff tiene ~8 slots/día disponibles
-  const MAX_SLOTS_PER_STAFF_PER_DAY = 8;
-  
-  const occupancyCalculations = useMemo(() => {
-    const staffCount = staffMembers.length || 1;
-    
-    // Ocupación HOY: citas de hoy / capacidad diaria
-    const totalBookingsTodayAllStaff = staffMembers.reduce((sum: number, staff: any) => 
-      sum + (staff.bookingsToday || 0), 0);
-    const capacityToday = staffCount * MAX_SLOTS_PER_STAFF_PER_DAY;
-    const occupancyToday = capacityToday > 0 
-      ? Math.min(Math.round((totalBookingsTodayAllStaff / capacityToday) * 100), 100) 
-      : 0;
-    
-    // Ocupación SEMANA: reservas 7d / (7 días × capacidad diaria)
-    const capacityWeek = staffCount * MAX_SLOTS_PER_STAFF_PER_DAY * 7;
-    const occupancyWeek = capacityWeek > 0 
-      ? Math.min(Math.round((stats.totalBookingsLast7Days / capacityWeek) * 100), 100) 
-      : 0;
-    
-    // Ocupación MES: reservas 30d / (30 días × capacidad diaria)
-    const capacityMonth = staffCount * MAX_SLOTS_PER_STAFF_PER_DAY * 30;
-    const occupancyMonth = capacityMonth > 0 
-      ? Math.min(Math.round((stats.totalBookingsLast30Days / capacityMonth) * 100), 100) 
-      : 0;
-    
-    return { occupancyToday, occupancyWeek, occupancyMonth };
-  }, [staffMembers, stats.totalBookingsLast7Days, stats.totalBookingsLast30Days]);
+  // === CÁLCULOS DE TICKET MEDIO POR PERIODO - USING SERVER DATA ===
+  const ticketCalculations = useMemo(() => ({
+    avgTicketToday: kp?.avgTicketToday ?? 0,
+    avgTicket7d: kp?.avgTicketLast7Days ?? 0,  // Using existing server-calculated field
+    avgTicket30d: kp?.avgTicketLast30Days ?? 0,
+  }), [kp]);
 
-  // === CÁLCULOS DE TICKET MEDIO POR PERIODO ===
-  const ticketCalculations = useMemo(() => {
-    // Ticket hoy: ingresos hoy / reservas hoy
-    const avgTicketToday = stats.bookingsToday > 0 
-      ? stats.revenueToday / stats.bookingsToday 
-      : 0;
-    
-    // Ticket 7d: ya calculado en backend
-    const avgTicket7d = stats.avgTicketLast7Days;
-    
-    // Ticket 30d: ingresos 30d / reservas 30d
-    const avgTicket30d = stats.totalBookingsLast30Days > 0 
-      ? stats.revenueLast30Days / stats.totalBookingsLast30Days 
-      : 0;
-    
-    return { avgTicketToday, avgTicket7d, avgTicket30d };
-  }, [stats]);
-
-  // 🔥 Ocupación dinámica según periodo seleccionado
-  const currentOccupancy = useMemo(() => {
-    switch (period) {
-      case "week":
-        return occupancyCalculations.occupancyWeek;
-      case "month":
-        return occupancyCalculations.occupancyMonth;
-      default:
-        return occupancyCalculations.occupancyToday;
-    }
-  }, [period, occupancyCalculations]);
-
-  // 🔥 Ticket medio dinámico según periodo seleccionado
+  // 🔥 Ticket medio dinámico según periodo seleccionado - USING SERVER DATA
   const currentAvgTicket = useMemo(() => {
     switch (period) {
       case "week":
@@ -291,8 +202,23 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
     }
   }, [period, ticketCalculations]);
 
-  const topServices: TopService[] = [];
-  const operationalAlerts: OperationalAlert[] = [];
+  // 🔥 Ocupación dinámica según periodo seleccionado - USING SERVER DATA
+  // Force occupancy to 0 when no staff is configured
+  const currentOccupancy = useMemo(() => {
+    if (staffMembers.length === 0) return 0;
+
+    switch (period) {
+      case "week":
+        return kp?.occupancyLast7DaysPercent ?? 0;
+      case "month":
+        return kp?.occupancyLast30DaysPercent ?? 0;
+      default:
+        return kp?.occupancyTodayPercent ?? 0;
+    }
+  }, [period, kp, staffMembers.length]);
+
+  const topServices: any[] = [];
+  const operationalAlerts: any[] = [];
 
   const todayLabel = useMemo(() => {
     const formatted = format(new Date(), "EEEE, d 'de' MMMM", { locale: es });
@@ -317,56 +243,95 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
     return `${diff > 0 ? "+" : ""}${diff} vs ayer`;
   }, [stats.bookingsLast7Days]);
 
-  // Cálculos derivados optimizados con useMemo
+  // === NORMALIZACIÓN DE DATOS DIARIOS ===
+  // Función para normalizar series diarias: asegura labels correctas y llena huecos con 0
+  const normalizeDailySeries = useMemo(() => {
+    return (daysBack: number, rawData: number[]): { values: number[]; labels: string[]; total: number } => {
+      const values: number[] = [];
+      const labels: string[] = [];
+      let total = 0;
+
+      // Generar fechas desde hoy hacia atrás
+      for (let i = daysBack - 1; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+
+        const dateKey = date.toISOString().slice(0, 10);
+        const dayIndex = daysBack - 1 - i; // Índice en array (0 = día más antiguo)
+
+        // Usar dato real si existe, sino 0
+        const value = rawData[dayIndex] ?? 0;
+        values.push(value);
+        total += value;
+
+        // Label: mostrar día del mes, cada 3 días para legibilidad
+        const shouldShowLabel = i % 3 === 0 || i === daysBack - 1; // Último día siempre
+        labels.push(shouldShowLabel ? date.toLocaleDateString('es-ES', { day: 'numeric' }) : '');
+      }
+
+      return { values, labels, total };
+    };
+  }, []);
+
+  // === CÁLCULOS DERIVADOS OPTIMIZADOS CON useMemo ===
   const chartCalculations = useMemo(() => {
-    const values = performancePeriod === "7d" 
-      ? stats.bookingsLast7Days 
-      : stats.bookingsLast30DaysByDay;
-    const hasValues = values.length > 0;
-    const max = hasValues ? Math.max(...values, 1) : 1;
-    const hasPositiveValues = values.some((value: number) => value > 0);
-    const showBars = hasValues && hasPositiveValues;
-    const total = values.reduce((sum: number, value: number) => sum + value, 0);
-    const avg = values.length > 0 ? total / values.length : 0;
+    if (performancePeriod === "7d") {
+      // Para 7 días: usar datos directos
+      const values = stats.bookingsLast7Days;
+      const hasValues = values.length > 0;
+      const max = hasValues ? Math.max(...values, 1) : 1;
+      const hasPositiveValues = values.some((value: number) => value > 0);
+      const showBars = hasValues && hasPositiveValues;
+      const total = values.reduce((sum: number, value: number) => sum + value, 0);
+      const avg = values.length > 0 ? total / values.length : 0;
 
-    return {
-      bookingValues: values,
-      chartMax: max,
-      showChartBars: showBars,
-      totalLast7Days: total,
-      avgLast7Days: avg,
-    };
-  }, [stats.bookingsLast7Days, stats.bookingsLast30DaysByDay, performancePeriod]);
+      return {
+        bookingValues: values,
+        chartMax: max,
+        showChartBars: showBars,
+        totalBookingsInRange: total,
+        avgBookingsInRange: avg,
+        chartLabels: [], // 7d usa lógica diferente en render
+      };
+    } else {
+      // Para 30 días: usar normalización
+      const { values, labels, total } = normalizeDailySeries(30, stats.bookingsLast30DaysByDay);
+      const hasValues = values.length > 0;
+      const max = hasValues ? Math.max(...values, 1) : 1;
+      const hasPositiveValues = values.some((value: number) => value > 0);
+      const showBars = hasValues && hasPositiveValues;
+      const avg = values.length > 0 ? total / values.length : 0;
 
-  const { bookingValues, chartMax, showChartBars, totalLast7Days, avgLast7Days } = chartCalculations;
+      return {
+        bookingValues: values,
+        chartMax: max,
+        showChartBars: showBars,
+        totalBookingsInRange: total,
+        avgBookingsInRange: avg,
+        chartLabels: labels,
+      };
+    }
+  }, [stats.bookingsLast7Days, stats.bookingsLast30DaysByDay, performancePeriod, normalizeDailySeries]);
 
-  // Métricas avanzadas: ticket medio y tasa de no-show
-  const { avgTicketLast7Days, noShowRateLast7Days } = useMemo(() => {
-    const { totalBookingsLast7Days, revenueLast7Days, noShowsLast7Days } = stats;
+  const { bookingValues, chartMax, showChartBars, totalBookingsInRange, avgBookingsInRange } = chartCalculations;
 
-    const avgTicket = stats.avgTicketLast7Days
-      ? stats.avgTicketLast7Days
-      : totalBookingsLast7Days > 0
-        ? revenueLast7Days / totalBookingsLast7Days
-        : 0;
+  // QA Sanity Check: For 30-day chart, ensure sum of values equals total bookings
+  useEffect(() => {
+    if (performancePeriod === "30d" && totalBookingsInRange !== stats.totalBookingsLast30Days) {
+      console.warn('[QA Check] 30-day chart total mismatch:', {
+        chartTotal: totalBookingsInRange,
+        expectedTotal: stats.totalBookingsLast30Days,
+        difference: totalBookingsInRange - stats.totalBookingsLast30Days
+      });
+    }
+  }, [performancePeriod, totalBookingsInRange, stats.totalBookingsLast30Days]);
 
-    const noShowRate =
-      totalBookingsLast7Days > 0 ? noShowsLast7Days / totalBookingsLast7Days : 0;
-
-    return {
-      avgTicketLast7Days: avgTicket,
-      noShowRateLast7Days: noShowRate,
-    };
-  }, [stats]);
-
-  const showOnboardingHint =
-    stats.bookingsToday === 0 && !chartCalculations.showChartBars && upcomingBookings.length === 0;
   const dayStatus = useMemo((): { label: string; color: string } => {
-    const todayOcc = occupancyCalculations.occupancyToday;
+    const todayOcc = currentOccupancy;
     if (todayOcc < 40) return { label: "Día tranquilo", color: "bg-emerald-500/20 text-emerald-400" };
     if (todayOcc < 70) return { label: "Día equilibrado", color: "bg-blue-500/20 text-blue-400" };
     return { label: "Día lleno", color: "bg-amber-500/20 text-amber-400" };
-  }, [occupancyCalculations.occupancyToday]);
+  }, [currentOccupancy]);
 
   const periodOptions = [
     { id: "today", label: "Hoy" },
@@ -492,8 +457,8 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
         transition={{ duration: 0.2 }}
         className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
       >
-        {/* Container principal - INTEGRADO en la página */}
-        <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        {/* Container principal - OPTIMIZADO para viewport */}
+        <div className="w-full px-3 sm:px-4 lg:px-6 py-2 sm:py-3">
           
           {/* ═══════════════════════════════════════════════════════════════
               FILA 1: HERO HEADER (flotante, sin card)
@@ -502,32 +467,32 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-5"
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-4"
           >
             <div>
-              <h1 className="text-[24px] sm:text-[28px] font-semibold text-white tracking-tight leading-[1.2]">
+              <h1 className="text-[22px] sm:text-[26px] font-semibold text-white tracking-tight leading-[1.2] mb-0.5">
                 Hola, {userName} 👋
               </h1>
-              <p className="text-[12px] sm:text-[13px] text-[var(--text-secondary)] mt-0.5">
+              <p className="text-[11px] sm:text-[12px] text-[var(--text-secondary)]">
                 {todayLabel} {shouldShowTimezone && `· ${tenantTimezone}`}
               </p>
             </div>
 
             {/* Estado del día + Selector de periodo */}
-            <div className="flex items-center gap-3">
-              <div className={cn("px-2.5 py-1 rounded-full text-[11px] font-medium", dayStatus.color)}>
+            <div className="flex items-center gap-2.5">
+              <div className={cn("px-2 py-1 rounded-full text-[10px] font-medium", dayStatus.color)}>
                 {dayStatus.label}
               </div>
 
               {/* Selector de periodo */}
-              <div className="inline-flex items-center rounded-full bg-[var(--bg-card)]/60 backdrop-blur-xl p-1 text-[12px] sm:text-[13px] border border-white/10">
+              <div className="inline-flex items-center rounded-full bg-[var(--bg-card)]/60 backdrop-blur-xl p-0.5 text-[11px] sm:text-[12px] border border-white/10">
                 {periodOptions.map((option) => (
                   <button
                     key={option.id}
                     type="button"
                     onClick={() => setPeriod(option.id as "today" | "week" | "month")}
                     className={cn(
-                      "px-3 sm:px-4 py-1.5 rounded-full transition-all duration-150",
+                      "px-2.5 sm:px-3 py-1 rounded-full transition-all duration-150",
                       period === option.id
                         ? "bg-white text-slate-900 font-semibold shadow-sm"
                         : "text-[var(--text-secondary)] hover:text-white"
@@ -545,13 +510,13 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             animate="visible"
             variants={sectionVariants}
             transition={{ duration: 0.2, delay: 0.05 }}
-            className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mb-5"
           >
             {/* KPI: Reservas - Label dinámico según periodo */}
             <motion.div 
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(79,227,193,0.12)" }}
               onClick={() => router.push("/panel/agenda")}
-              className="cursor-pointer glass rounded-xl p-3 sm:p-4 border border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.03] transition-all duration-200"
+              className="cursor-pointer glass rounded-xl p-2.5 sm:p-3 border border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.03] transition-all duration-200"
             >
               <div className="flex items-center gap-2 mb-2">
                 <div className="p-1.5 rounded-lg bg-emerald-500/15">
@@ -634,7 +599,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
           {/* ═══════════════════════════════════════════════════════════════
               GRID PRINCIPAL - Responsive: stack en móvil, 12 cols en desktop
               ═══════════════════════════════════════════════════════════════ */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 mb-4">
             
             {/* ═══════════════════════════════════════════════════════════════
                 FILA 3: PRÓXIMAS RESERVAS (8/12) + STAFF (4/12)
@@ -652,10 +617,10 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             >
               <div className="glass rounded-xl border border-white/10 hover:border-white/15 transition-all overflow-hidden">
                 {/* Header compacto */}
-                <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10">
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-[15px] sm:text-[16px] font-semibold text-white">Próximas reservas</h2>
-                    <div className="flex items-center rounded-full bg-white/10 p-0.5 text-[10px] sm:text-[11px]">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
+                  <div className="flex items-center gap-2.5">
+                    <h2 className="text-[14px] sm:text-[15px] font-semibold text-white">Próximas reservas</h2>
+                    <div className="flex items-center rounded-full bg-white/10 p-0.5 text-[9px] sm:text-[10px]">
                       {[
                         { id: "today", label: "Hoy" },
                         { id: "tomorrow", label: "Mañana" },
@@ -664,7 +629,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                           key={tab.id}
                           onClick={() => setBookingsTab(tab.id as "today" | "tomorrow" | "week")}
                           className={cn(
-                            "px-2 sm:px-2.5 py-0.5 rounded-full transition-all duration-150",
+                            "px-1.5 sm:px-2 py-0.5 rounded-full transition-all duration-150",
                             bookingsTab === tab.id ? "bg-white text-slate-900 font-medium" : "text-[var(--text-secondary)] hover:text-white"
                           )}
                         >
@@ -675,46 +640,46 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                   </div>
                   <button
                     onClick={() => router.push("/panel/agenda")}
-                    className="text-[11px] sm:text-[12px] text-emerald-400 hover:text-white transition-colors font-medium"
+                    className="text-[10px] sm:text-[11px] text-emerald-400 hover:text-white transition-colors font-medium"
                   >
                     Ver agenda →
                   </button>
                 </div>
 
                 {/* Lista de reservas - padding reducido */}
-                <div className="px-3 py-2.5">
+                <div className="px-2.5 py-2">
                   {upcomingBookings.length === 0 ? (
-                    <div className="text-center py-6">
-                      <Calendar className="h-7 w-7 text-[var(--text-secondary)] mx-auto mb-1.5" />
-                      <p className="text-[12px] text-[var(--text-secondary)]">Sin reservas próximas</p>
+                    <div className="text-center py-4">
+                      <Calendar className="h-6 w-6 text-[var(--text-secondary)] mx-auto mb-1" />
+                      <p className="text-[11px] text-[var(--text-secondary)]">Sin reservas próximas</p>
                     </div>
                   ) : (
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       {upcomingBookings.slice(0, 4).map((booking) => (
                         <div
                           key={booking.id}
-                          className="flex items-center justify-between px-2.5 py-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 hover:border-white/10 transition-all cursor-pointer"
+                          className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 hover:border-white/10 transition-all cursor-pointer"
                           onClick={() => openDetail(booking.id)}
                         >
-                          <div className="flex items-center gap-2.5">
-                            <div className="text-[12px] sm:text-[13px] font-bold text-white w-10 font-mono">
+                          <div className="flex items-center gap-2">
+                            <div className="text-[11px] sm:text-[12px] font-bold text-white w-9 font-mono">
                               {format(new Date(booking.starts_at), "HH:mm")}
                             </div>
                             <div className="min-w-0">
-                              <div className="text-[12px] sm:text-[13px] font-medium text-white truncate">
+                              <div className="text-[11px] sm:text-[12px] font-medium text-white truncate">
                                 {booking.customer?.name || "Cliente"}
                               </div>
-                              <div className="text-[10px] sm:text-[11px] text-[var(--text-secondary)] truncate">
+                              <div className="text-[9px] sm:text-[10px] text-[var(--text-secondary)] truncate">
                                 {booking.service?.name || "Servicio"}
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="hidden sm:block text-[10px] text-[var(--text-secondary)]">
+                          <div className="flex items-center gap-1.5">
+                            <span className="hidden sm:block text-[9px] text-[var(--text-secondary)]">
                               {booking.staff?.name || "—"}
                             </span>
                             <div className={cn(
-                              "px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold",
+                              "px-1 py-0.5 rounded text-[8px] sm:text-[9px] font-semibold",
                               booking.status === 'paid' ? "bg-emerald-500/20 text-emerald-400" :
                               booking.status === 'confirmed' ? "bg-blue-500/20 text-blue-400" :
                               "bg-amber-500/20 text-amber-400"
@@ -740,11 +705,11 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
               whileHover={{ boxShadow: "0 12px 40px rgba(0,0,0,0.2)" }}
             >
               <div className="glass rounded-xl border border-white/10 hover:border-white/15 transition-all overflow-hidden h-full flex flex-col">
-                <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10">
-                  <h2 className="text-[15px] sm:text-[16px] font-semibold text-white">Staff hoy</h2>
-                  <span className="text-[10px] sm:text-[11px] text-[var(--text-secondary)]">{staffMembers.length} activo{staffMembers.length !== 1 ? 's' : ''}</span>
+                <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
+                  <h2 className="text-[14px] sm:text-[15px] font-semibold text-white">Staff hoy</h2>
+                  <span className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">{staffMembers.length} activo{staffMembers.length !== 1 ? 's' : ''}</span>
                 </div>
-                <div className="px-3 py-2.5 flex-1">
+                <div className="px-2.5 py-2 flex-1">
                   {staffMembers.length > 0 ? (
                     <div className="divide-y divide-white/[0.06]">
                       {staffMembers.slice(0, 4).map((staff: any, i: number) => {
@@ -793,8 +758,8 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
           {/* ═══════════════════════════════════════════════════════════════
               FILA 4: PERFORMANCE (8/12) + ACCIONES (4/12)
               ═══════════════════════════════════════════════════════════════ */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
-            {/* Performance - AJUSTADO max-w-[85%] */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4">
+            {/* Performance - COMPACTADO */}
             <motion.div
               initial="hidden"
               animate="visible"
@@ -804,46 +769,46 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
               whileHover={{ boxShadow: "0 12px 40px rgba(0,0,0,0.2)" }}
             >
               <div className="glass rounded-xl border border-white/10 hover:border-white/15 transition-all overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10">
-                  <h2 className="text-[15px] sm:text-[16px] font-semibold text-white">Performance</h2>
-                  <div className="flex gap-1">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
+                  <h2 className="text-[14px] sm:text-[15px] font-semibold text-white">Performance</h2>
+                  <div className="flex gap-0.5">
                     <button 
                       onClick={() => setPerformancePeriod("7d")}
                       className={cn(
-                        "px-2 py-0.5 text-[10px] sm:text-[11px] rounded-lg transition-colors",
+                        "px-1.5 py-0.5 text-[9px] sm:text-[10px] rounded-lg transition-colors",
                         performancePeriod === "7d" ? "bg-white/10 text-white font-medium" : "bg-white/5 text-[var(--text-secondary)] hover:bg-white/10"
                       )}
                     >7d</button>
                     <button 
                       onClick={() => setPerformancePeriod("30d")}
                       className={cn(
-                        "px-2 py-0.5 text-[10px] sm:text-[11px] rounded-lg transition-colors",
+                        "px-1.5 py-0.5 text-[9px] sm:text-[10px] rounded-lg transition-colors",
                         performancePeriod === "30d" ? "bg-white/10 text-white font-medium" : "bg-white/5 text-[var(--text-secondary)] hover:bg-white/10"
                       )}
                     >30d</button>
                   </div>
                 </div>
-                <div className="px-4 py-2.5">
+                <div className="px-3 py-2">
                   {/* Header del gráfico con divisor */}
-                  <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.06] mb-3">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-white/[0.06] mb-2">
                     <div>
-                      <h3 className="text-[12px] sm:text-[13px] font-medium text-white">Reservas diarias</h3>
-                      <p className="text-[10px] sm:text-[11px] text-[var(--text-secondary)]">
+                      <h3 className="text-[11px] sm:text-[12px] font-medium text-white">Reservas diarias</h3>
+                      <p className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">
                         {performancePeriod === "7d" ? "Últimos 7 días" : "Últimos 30 días"}
                       </p>
                     </div>
                     <div className="text-right">
-                      <div className="text-[16px] sm:text-[18px] font-bold text-white">
-                        {performancePeriod === "7d" ? totalLast7Days : stats.totalBookingsLast30Days}
+                      <div className="text-[14px] sm:text-[16px] font-bold text-white">
+                        {performancePeriod === "7d" ? totalBookingsInRange : stats.totalBookingsLast30Days}
                       </div>
-                      <div className="text-[10px] text-[var(--text-secondary)]">total</div>
+                      <div className="text-[8px] text-[var(--text-secondary)]">total</div>
                     </div>
                   </div>
 
                   {/* Gráfico de barras - max-w-[85%] centrado */}
                   <div className="max-w-[85%] mx-auto">
                     {showChartBars ? (
-                      <div className="flex items-end gap-2 h-11 sm:h-12 mb-3">
+                      <div className="flex items-end gap-1 h-9 sm:h-10 mb-2">
                         {bookingValues.map((count: number, index: number) => {
                           const height = chartMax > 0 ? (count / chartMax) * 100 : 0;
                           return (
@@ -853,53 +818,53 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                                 animate={{ height: `${height}%` }}
                                 transition={{ duration: 0.3, delay: index * 0.05 }}
                                 className="w-full rounded-t bg-gradient-to-t from-emerald-500 to-blue-500"
-                                style={{ minHeight: count > 0 ? "3px" : "0" }}
+                                style={{ minHeight: count > 0 ? "2px" : "0" }}
                               />
-                              <span className="text-[8px] sm:text-[9px] text-[var(--text-secondary)] mt-1">
+                              <span className="text-[7px] sm:text-[8px] text-[var(--text-secondary)] mt-0.5">
                                 {performancePeriod === "7d" 
                                   ? format(subDays(new Date(), 6 - index), "dd")
-                                  : (index % 3 === 0 ? format(subDays(new Date(), 29 - index), "dd") : "")}
+                                  : chartCalculations.chartLabels?.[index] || ""}
                               </span>
-                              <span className="text-[10px] sm:text-[11px] font-semibold text-white">{count}</span>
+                              <span className="text-[9px] sm:text-[10px] font-semibold text-white">{count}</span>
                             </div>
                           );
                         })}
                       </div>
                     ) : (
-                      <div className="h-11 flex items-center justify-center text-[12px] text-[var(--text-secondary)]">Sin datos</div>
+                      <div className="h-9 flex items-center justify-center text-[11px] text-[var(--text-secondary)]">Sin datos</div>
                     )}
                   </div>
 
                   {/* Métricas compactas centradas - cambian según periodo */}
-                  <div className="flex justify-center gap-5 sm:gap-8 pt-2.5 border-t border-white/[0.06]">
+                  <div className="flex justify-center gap-3 sm:gap-4 pt-1.5 border-t border-white/[0.06]">
                     <div className="text-center">
-                      <div className="text-[13px] sm:text-[14px] font-bold text-emerald-400">
+                      <div className="text-[11px] sm:text-[12px] font-bold text-emerald-400">
                         {formatCurrency(performancePeriod === "7d" ? stats.revenueLast7Days : stats.revenueLast30Days)}
                       </div>
-                      <div className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">
+                      <div className="text-[8px] sm:text-[9px] text-[var(--text-secondary)]">
                         {performancePeriod === "7d" ? "Ingresos 7d" : "Ingresos 30d"}
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-[13px] sm:text-[14px] font-bold text-blue-400">
+                      <div className="text-[11px] sm:text-[12px] font-bold text-blue-400">
                         {performancePeriod === "7d" 
-                          ? avgLast7Days.toFixed(1) 
+                          ? avgBookingsInRange.toFixed(1) 
                           : (stats.totalBookingsLast30Days / 30).toFixed(1)}
                       </div>
-                      <div className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">
+                      <div className="text-[8px] sm:text-[9px] text-[var(--text-secondary)]">
                         {performancePeriod === "7d" ? "Media/día 7d" : "Media/día 30d"}
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-[13px] sm:text-[14px] font-bold text-purple-400">{formatCurrency(avgTicketLast7Days)}</div>
-                      <div className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">Ticket 7d</div>
+                      <div className="text-[11px] sm:text-[12px] font-bold text-purple-400">{formatCurrency(ticketCalculations.avgTicket7d)}</div>
+                      <div className="text-[8px] sm:text-[9px] text-[var(--text-secondary)]">Ticket 7d</div>
                     </div>
                   </div>
                 </div>
               </div>
             </motion.div>
 
-            {/* Acciones - COMPACTADO con separador */}
+            {/* Acciones - COMPACTADO */}
             <motion.div
               initial="hidden"
               animate="visible"
@@ -909,56 +874,56 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
               whileHover={{ boxShadow: "0 12px 40px rgba(0,0,0,0.2)" }}
             >
               <div className="glass rounded-xl border border-white/10 hover:border-white/15 transition-all overflow-hidden h-full">
-                <div className="px-4 py-2.5 border-b border-white/10">
-                  <h2 className="text-[15px] sm:text-[16px] font-semibold text-white">Acciones</h2>
+                <div className="px-3 py-2 border-b border-white/10">
+                  <h2 className="text-[14px] sm:text-[15px] font-semibold text-white">Acciones</h2>
                 </div>
-                <div className="px-3 py-3">
+                <div className="px-2.5 py-2">
                   {/* Botón principal CTA - saturación reducida, altura reducida */}
                   <motion.button
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                     onClick={() => openCreate()}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-gradient-to-r from-purple-600/90 to-emerald-500/90 text-white font-semibold transition-all duration-200 mb-2.5"
+                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-gradient-to-r from-purple-600/90 to-emerald-500/90 text-white font-semibold transition-all duration-200 mb-2"
                   >
-                    <Plus className="h-4 w-4" />
-                    <span className="text-[13px] sm:text-[14px]">Nueva cita</span>
+                    <Plus className="h-3.5 w-3.5" />
+                    <span className="text-[12px] sm:text-[13px]">Nueva cita</span>
                   </motion.button>
 
                   {/* Botones secundarios - mismo height */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <button
                       onClick={() => router.push("/panel/clientes")}
-                      className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-white/[0.04] border border-white/[0.08] text-white hover:bg-white/[0.08] transition-all"
+                      className="w-full flex items-center gap-2 py-1.5 px-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-white hover:bg-white/[0.08] transition-all"
                     >
-                      <User className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
-                      <span className="text-[12px] sm:text-[13px]">Clientes</span>
+                      <User className="h-3 w-3 text-[var(--text-secondary)]" />
+                      <span className="text-[11px] sm:text-[12px]">Clientes</span>
                     </button>
                     <button
                       onClick={() => router.push("/panel/agenda")}
-                      className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-white/[0.04] border border-white/[0.08] text-white hover:bg-white/[0.08] transition-all"
+                      className="w-full flex items-center gap-2 py-1.5 px-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-white hover:bg-white/[0.08] transition-all"
                     >
-                      <Calendar className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
-                      <span className="text-[12px] sm:text-[13px]">Agenda</span>
+                      <Calendar className="h-3 w-3 text-[var(--text-secondary)]" />
+                      <span className="text-[11px] sm:text-[12px]">Agenda</span>
                     </button>
                   </div>
 
                   {/* Separador + Acciones rápidas */}
-                  <div className="mt-3 pt-2.5 border-t border-white/[0.08]">
-                    <p className="text-[9px] text-[var(--text-secondary)]/80 uppercase tracking-wider mb-1.5">Acceso rápido</p>
-                    <div className="grid grid-cols-2 gap-1.5">
+                  <div className="mt-2 pt-1.5 border-t border-white/[0.08]">
+                    <p className="text-[8px] text-[var(--text-secondary)]/80 uppercase tracking-wider mb-1">Acceso rápido</p>
+                    <div className="grid grid-cols-2 gap-1">
                       <button
                         onClick={() => router.push("/panel/clientes")}
-                        className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-all"
+                        className="flex items-center justify-center gap-1 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-all"
                       >
-                        <Plus className="h-3 w-3 text-[var(--text-secondary)]" />
-                        <span className="text-[9px] text-[var(--text-secondary)]">Cliente</span>
+                        <Plus className="h-2.5 w-2.5 text-[var(--text-secondary)]" />
+                        <span className="text-[8px] text-[var(--text-secondary)]">Cliente</span>
                       </button>
                       <button
                         onClick={() => router.push("/panel/servicios")}
-                        className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-all"
+                        className="flex items-center justify-center gap-1 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-all"
                       >
-                        <Scissors className="h-3 w-3 text-[var(--text-secondary)]" />
-                        <span className="text-[9px] text-[var(--text-secondary)]">Servicio</span>
+                        <Scissors className="h-2.5 w-2.5 text-[var(--text-secondary)]" />
+                        <span className="text-[8px] text-[var(--text-secondary)]">Servicio</span>
                       </button>
                     </div>
                   </div>

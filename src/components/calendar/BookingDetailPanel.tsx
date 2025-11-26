@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Edit, Trash2, Phone, Mail, Calendar, User, Tag } from "lucide-react";
-import { UiModal, UiButton, UiBadge } from "@/components/ui/apple-ui-kit";
+import { AgendaModal } from "@/components/calendar/AgendaModal";
+import { ModalActions, useModalActions, type ModalAction } from "@/components/agenda/ModalActions";
 import { formatInTenantTz } from "@/lib/timezone";
 import { Booking } from "@/types/agenda";
 import { useToast } from "@/components/ui/Toast";
@@ -29,6 +30,7 @@ export function BookingDetailPanel({
 }: BookingDetailPanelProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { showToast, ToastComponent } = useToast();
+  const modalActions = useModalActions();
 
   if (!isOpen || !booking) return null;
 
@@ -44,6 +46,17 @@ export function BookingDetailPanel({
       showToast("Cita eliminada correctamente", "success");
     }
   };
+
+  // Crear acciones para el footer
+  const footerActions: ModalAction[] = [
+    ...(onEdit ? [modalActions.createSaveAction(() => onEdit(booking), {
+      label: "Editar cita",
+      variant: "secondary" as const,
+    })] : []),
+    ...(onDelete ? [modalActions.createDeleteAction(() => setShowDeleteConfirm(true), {
+      label: "Eliminar cita",
+    })] : []),
+  ];
 
   const BookingContent = () => (
     <div className="space-y-4">
@@ -68,9 +81,9 @@ export function BookingDetailPanel({
               {booking.customer?.name || "Sin cliente"}
             </p>
           </div>
-          <UiBadge tone="info" soft>
+          <span className="px-2 py-1 text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-full">
             {booking.status}
-          </UiBadge>
+          </span>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pt-3 border-t border-[var(--glass-border-subtle)]">
           <div>
@@ -262,85 +275,48 @@ export function BookingDetailPanel({
     </div>
   );
 
-  const ActionButtons = () => (
-    <div className="flex items-center justify-between gap-3">
-      <div className="flex items-center gap-2">
-        {onEdit && (
-          <UiButton
-            variant="ghost"
-            size="sm"
-            onClick={() => onEdit(booking)}
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Editar
-          </UiButton>
-        )}
-        {onDelete && (
-          <UiButton
-            variant="danger"
-            size="sm"
-            onClick={() => setShowDeleteConfirm(true)}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Eliminar
-          </UiButton>
-        )}
-      </div>
-      <UiButton
-        variant="ghost"
-        size="sm"
-        onClick={onClose}
-      >
-        Cerrar
-      </UiButton>
-    </div>
-  );
-
   return (
     <>
-      <UiModal
-        open={isOpen}
+      <AgendaModal
+        isOpen={isOpen}
         onClose={onClose}
         title="Detalles de la cita"
         size="lg"
-        footer={<ActionButtons />}
+        context={{ type: "booking" }}
+        actions={footerActions}
+        actionsConfig={{
+          layout: "end",
+          showCancel: false,
+        }}
       >
         <BookingContent />
-      </UiModal>
+      </AgendaModal>
 
-      {/* Delete Confirmation Modal - Keep separate */}
+      {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <UiModal
-          open={showDeleteConfirm}
+        <AgendaModal
+          isOpen={showDeleteConfirm}
           onClose={() => setShowDeleteConfirm(false)}
           title="Confirmar eliminación"
           size="sm"
-          footer={
-            <div className="flex items-center justify-end gap-3">
-              <UiButton
-                variant="secondary"
-                onClick={() => setShowDeleteConfirm(false)}
-              >
-                Cancelar
-              </UiButton>
-              <UiButton
-                variant="danger"
-                onClick={handleDelete}
-              >
-                Eliminar cita
-              </UiButton>
-            </div>
-          }
+          context={{ type: "booking" }}
+          actions={[
+            modalActions.createCancelAction(() => setShowDeleteConfirm(false)),
+            modalActions.createDeleteAction(handleDelete, { label: "Eliminar cita" }),
+          ]}
+          actionsConfig={{
+            layout: "end",
+            showCancel: false,
+          }}
         >
           <p className="text-[var(--text-secondary)]">
             ¿Estás seguro de que deseas eliminar esta cita con {booking.customer?.name || "el cliente"}?
             Esta acción no se puede deshacer.
           </p>
-        </UiModal>
+        </AgendaModal>
       )}
 
       {ToastComponent}
     </>
   );
-}
 

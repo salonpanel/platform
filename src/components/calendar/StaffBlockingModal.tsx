@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { format, addMinutes, parseISO } from "date-fns";
-import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
+import { AgendaModal } from "@/components/calendar/AgendaModal";
+import { ModalActions, useModalActions, type ModalAction } from "@/components/agenda/ModalActions";
 import { Input } from "@/components/ui/Input";
 import { Staff, CalendarSlot } from "@/types/agenda";
 import { useToast } from "@/components/ui/Toast";
@@ -70,6 +70,7 @@ export function StaffBlockingModal({
   const [reason, setReason] = useState("");
   const [notes, setNotes] = useState("");
   const { showToast, ToastComponent } = useToast();
+  const modalActions = useModalActions();
   const selectedStaffMember = staff.find((member) => member.id === selectedStaffId);
   const summaryTimeLabel = `${startTime} - ${endTime}`;
 
@@ -146,15 +147,28 @@ export function StaffBlockingModal({
       return;
     }
 
-    await onSave({
-      staff_id: selectedStaffId,
-      start_at: startAt,
-      end_at: endAt,
-      type,
-      reason: reason.trim(),
-      notes: notes.trim() || undefined,
-    });
+    try {
+      await onSave({
+        staff_id: selectedStaffId,
+        start_at: startAt,
+        end_at: endAt,
+        type,
+        reason: reason.trim(),
+        notes: notes.trim() || undefined,
+      });
+    } catch (error: any) {
+      showToast(error.message || "Error al guardar el bloqueo", "error");
+    }
   };
+
+  // Crear acciones para el footer
+  const footerActions: ModalAction[] = [
+    modalActions.createSaveAction(handleSave, {
+      label: "Guardar bloqueo",
+      disabled: isLoading || !selectedStaffId || !reason.trim(),
+      loading: isLoading,
+    }),
+  ];
 
   const reasonSuggestions = {
     block: ["Descanso", "Reunión", "Pausa", "Otro"],
@@ -164,21 +178,19 @@ export function StaffBlockingModal({
 
   return (
     <>
-      <Modal
+      <AgendaModal
         isOpen={isOpen}
         onClose={onClose}
         title="Añadir bloqueo o ausencia"
         size="md"
-        footer={
-          <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={onClose} disabled={isLoading}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSave} disabled={isLoading} isLoading={isLoading}>
-              Guardar
-            </Button>
-          </div>
-        }
+        context={{ type: "staff" }}
+        actions={footerActions}
+        actionsConfig={{
+          layout: "end",
+          showCancel: true,
+          onCancel: onClose,
+          cancelLabel: "Cancelar",
+        }}
       >
         <div className="space-y-5">
         <div className="p-4 rounded-[16px] border border-white/5 bg-white/3 backdrop-blur-sm">
@@ -332,7 +344,7 @@ export function StaffBlockingModal({
             />
           </div>
         </div>
-      </Modal>
+      </AgendaModal>
       {ToastComponent}
     </>
   );
