@@ -328,6 +328,98 @@ export function TeamChatOptimized({
 		}
 	};
 
+	const loadConversationsOptimized = useCallback(
+		async (targetTenantId: string, targetUserId: string): Promise<Conversation[]> => {
+			try {
+				// 🔥 OPTIMIZACIÓN: Una sola query con JOIN para obtener todo
+				const { data, error } = await supabase
+					.rpc("get_user_conversations_optimized", {
+						p_user_id: targetUserId,
+						p_tenant_id: targetTenantId,
+					});
+
+				if (error) throw error;
+
+				if (!data || data.length === 0) {
+					setConversations([]);
+					return [];
+				}
+
+				// Transformar datos de la RPC a formato Conversation
+				const conversations: Conversation[] = data.map((conv: any) => ({
+					id: conv.id,
+					tenantId: conv.tenant_id,
+					type: conv.type as ConversationType,
+					name: conv.name,
+					lastMessageBody: conv.last_message_body,
+					lastMessageAt: conv.last_message_at,
+					unreadCount: conv.unread_count || 0,
+					membersCount: conv.members_count || 0,
+					lastReadAt: conv.last_read_at,
+					createdBy: conv.created_by,
+					viewerRole: conv.viewer_role as "member" | "admin",
+				}));
+
+				// Ordenar por última actividad
+				conversations.sort((a, b) => {
+					const aTimestamp = a.lastMessageAt ?? MESSAGE_FALLBACK_DATE;
+					const bTimestamp = b.lastMessageAt ?? b.lastReadAt ?? MESSAGE_FALLBACK_DATE;
+					return bTimestamp.localeCompare(aTimestamp);
+				});
+
+				setConversations(conversations);
+
+				// Seleccionar primera conversación si no hay ninguna seleccionada
+				if (!selectedConversationId && conversations.length > 0) {
+					setSelectedConversationId(conversations[0].id);
+				}
+
+				return conversations;
+			} catch (err) {
+				console.error("[TeamChatOptimized] Error cargando conversaciones optimizadas", err);
+				setConversations([]);
+				return [];
+			}
+		},
+		[supabase, selectedConversationId]
+	);
+
+	const refreshConversations = useCallback(
+		async () => {
+			if (!tenantId || !currentUserId) return;
+			await loadConversationsOptimized(tenantId, currentUserId);
+		},
+		[tenantId, currentUserId, loadConversationsOptimized]
+	);
+
+	const handleAddMembersToGroup = useCallback(
+		async (userIds: string[]) => {
+			if (!selectedConversation || !tenantId || userIds.length === 0) return;
+
+			try {
+				const rows = userIds.map((userId) => ({
+					conversation_id: selectedConversation.id,
+					user_id: userId,
+					role: "member" as const,
+				}));
+
+				const { error } = await supabase.from("team_conversation_members").insert(rows);
+
+				if (error) throw error;
+
+				// Refrescar conversaciones para actualizar membersCount
+				await refreshConversations();
+
+				// Mostrar mensaje de éxito
+				console.log(`Miembros añadidos correctamente a ${selectedConversation.name}`);
+			} catch (err) {
+				console.error("[TeamChatOptimized] Error al añadir miembros:", err);
+				throw err;
+			}
+		},
+		[supabase, selectedConversation, tenantId, refreshConversations]
+	);
+
 	const availableMembers = useMemo(() => {
 		return Object.values(membersDirectory).filter((member) => member.userId !== currentUserId);
 	}, [membersDirectory, currentUserId]);
@@ -418,8 +510,7 @@ export function TeamChatOptimized({
 						selectedConversationId={selectedConversationId}
 						onSelectConversation={setSelectedConversationId}
 						showUnreadOnly={showUnreadOnly}
-						onToggleUnreadOnly={setShowUnreadOnly}
-						membersDirectory={membersDirectory}
+						onToggleUnread={() => setShowUnreadOnly(!showUnreadOnly)}
 					/>
 				</div>
 
@@ -429,9 +520,8 @@ export function TeamChatOptimized({
 						<>
 							<ConversationHeader
 								conversation={selectedConversation}
-								membersDirectory={membersDirectory}
-								onOpenMembers={() => setShowMembersModal(true)}
-								onOpenAddMembers={() => setShowAddMemberModal(true)}
+								onViewMembers={() => setShowMembersModal(true)}
+								onAddMember={() => setShowAddMemberModal(true)}
 							/>
 
 							<div className="flex-1 min-h-0 flex flex-col">
@@ -444,7 +534,7 @@ export function TeamChatOptimized({
 								/>
 
 								<MessageComposer
-									onSendMessage={handleSendMessage}
+									onSend={handleSendMessage}
 									disabled={!selectedConversation}
 								/>
 							</div>
@@ -479,8 +569,10 @@ export function TeamChatOptimized({
 				<MembersModal
 					isOpen={showMembersModal}
 					onClose={() => setShowMembersModal(false)}
-					conversation={selectedConversation}
-					membersDirectory={membersDirectory}
+					members={[]} // TODO: Implementar carga de miembros
+					conversationName={selectedConversation.name}
+					currentUserId={currentUserId}
+					onSetNickname={undefined} // TODO: Implementar funcionalidad de apodos
 				/>
 			)}
 
@@ -488,8 +580,10 @@ export function TeamChatOptimized({
 				<AddMembersModal
 					isOpen={showAddMemberModal}
 					onClose={() => setShowAddMemberModal(false)}
-					conversation={selectedConversation}
+					conversationId={selectedConversation.id}
+					existingMemberIds={[]} // TODO: Implementar lista de miembros existentes
 					availableMembers={availableMembers}
+					onAddMembers={handleAddMembersToGroup}
 				/>
 			)}
 
@@ -497,6 +591,8 @@ export function TeamChatOptimized({
 				<UserProfileModal
 					isOpen={showUserProfileModal}
 					onClose={() => setShowUserProfileModal(false)}
+					currentUserId={currentUserId || ""}
+					tenantId={tenantId || ""}
 				/>
 			)}
 		</div>
