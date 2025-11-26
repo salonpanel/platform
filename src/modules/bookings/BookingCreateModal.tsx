@@ -6,6 +6,23 @@ import { useBookingModal } from "@/contexts/BookingModalContext";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { useToast } from "@/components/ui/Toast";
 
+type SaveBookingResult =
+  | { ok: true; booking: any }
+  | { ok: false; error: string };
+
+interface BookingFormPayload {
+  id?: string;
+  customer_id: string;
+  service_id: string;
+  staff_id: string;
+  starts_at: string;
+  ends_at: string;
+  status?: "pending" | "paid" | "completed" | "cancelled" | "no_show";
+  internal_notes?: string | null;
+  client_message?: string | null;
+  is_highlighted?: boolean;
+}
+
 export function BookingCreateModal() {
   const { modalState, close } = useBookingModal();
   const { showToast } = useToast();
@@ -76,10 +93,41 @@ export function BookingCreateModal() {
     loadData();
   }, [modalState.isCreateOpen, supabase, showToast]);
 
-  const handleSave = async (bookingData: any) => {
-    // Lógica de guardar similar a la de AgendaPageClient
-    // Por simplicidad, redirigir a agenda por ahora
-    window.location.href = "/panel/agenda";
+  const handleSave = async (bookingData: BookingFormPayload): Promise<SaveBookingResult> => {
+    if (!tenantId) {
+      return { ok: false, error: "Tenant ID no disponible" };
+    }
+
+    try {
+      // Crear nuevo booking
+      const bookingPayload = {
+        tenant_id: tenantId,
+        customer_id: bookingData.customer_id,
+        service_id: bookingData.service_id,
+        staff_id: bookingData.staff_id,
+        starts_at: bookingData.starts_at,
+        ends_at: bookingData.ends_at,
+        status: bookingData.status || "pending",
+        internal_notes: bookingData.internal_notes || null,
+        client_message: bookingData.client_message || null,
+        is_highlighted: bookingData.is_highlighted || false,
+      };
+
+      const { data: newBooking, error } = await supabase
+        .from("bookings")
+        .insert(bookingPayload)
+        .select()
+        .single();
+
+      if (error) {
+        return { ok: false, error: error.message || "Error al crear la cita" };
+      }
+
+      return { ok: true, booking: newBooking };
+    } catch (error: any) {
+      console.error("Error al guardar cita:", error);
+      return { ok: false, error: error.message || "Error al guardar la cita" };
+    }
   };
 
   if (!modalState.isCreateOpen) return null;
