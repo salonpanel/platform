@@ -28,6 +28,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { DashboardDataset } from "@/lib/dashboard-data";
 import { useDashboardData } from "@/hooks/useOptimizedData";
 import { usePermissions } from "@/contexts/PermissionsContext";
+import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { DashboardSkeleton } from "@/components/ui/Skeletons";
 
 const QUICK_LINKS: {
@@ -81,6 +82,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
   const searchParams = useSearchParams();
   const [period, setPeriod] = useState<"today" | "week" | "month">("today");
   const [bookingsTab, setBookingsTab] = useState<"today" | "tomorrow" | "week">("today");
+  const [performancePeriod, setPerformancePeriod] = useState<"7d" | "30d">("7d");
   const [prefetchedData, setPrefetchedData] = useState<DashboardDataset | null>(null);
 
   const currentImpersonation = useMemo(() => {
@@ -355,21 +357,18 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
   // Estados del componente
   const [user, setUser] = useState<any>(null);
 
-  // Efecto para obtener información del usuario
+  // Efecto para obtener información del usuario - usando getSupabaseBrowser como TopBar
   useEffect(() => {
-    const getUser = async () => {
+    const supabase = getSupabaseBrowser();
+    const loadUser = async () => {
       try {
-        const { data: { user } } = await import("@supabase/auth-helpers-nextjs").then(({ createClientComponentClient }) => {
-          const supabase = createClientComponentClient();
-          return supabase.auth.getUser();
-        });
+        const { data: { user } } = await supabase.auth.getUser();
         setUser(user);
       } catch (error) {
         console.error("Error obteniendo usuario:", error);
       }
     };
-
-    getUser();
+    loadUser();
   }, []);
 
   // Obtener nombre del usuario de múltiples fuentes
@@ -461,7 +460,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             transition={{ duration: 0.2, delay: 0.05 }}
             className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8"
           >
-            {/* KPI: Reservas */}
+            {/* KPI: Reservas - Label dinámico según periodo */}
             <motion.div 
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(79,227,193,0.12)" }}
               onClick={() => (window.location.href = "/panel/agenda")}
@@ -476,14 +475,16 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                   bookingsKPI.trend === 'up' ? "text-emerald-400" :
                   bookingsKPI.trend === 'down' ? "text-red-400" : "text-[var(--text-secondary)]"
                 )}>
-                  {bookingsKPI.trend === 'up' ? '↑' : bookingsKPI.trend === 'down' ? '↓' : '~'} hoy
+                  {bookingsKPI.trend === 'up' ? '↑' : bookingsKPI.trend === 'down' ? '↓' : '~'}
                 </span>
               </div>
               <div className="text-[22px] sm:text-[26px] font-bold text-white leading-[1.2] mb-0.5">{bookingsKPI.value}</div>
-              <div className="text-[11px] sm:text-[12px] text-[var(--text-secondary)] uppercase tracking-wider">Reservas</div>
+              <div className="text-[11px] sm:text-[12px] text-[var(--text-secondary)] uppercase tracking-wider">
+                {period === 'today' ? 'Reservas hoy' : period === 'week' ? 'Reservas 7d' : 'Reservas 30d'}
+              </div>
             </motion.div>
 
-            {/* KPI: Ingresos */}
+            {/* KPI: Ingresos - Label dinámico según periodo */}
             <motion.div 
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(52,211,153,0.12)" }}
               onClick={() => (window.location.href = "/panel/monedero")}
@@ -498,14 +499,16 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                   revenueKPI.trend === 'up' ? "text-emerald-400" :
                   revenueKPI.trend === 'down' ? "text-red-400" : "text-[var(--text-secondary)]"
                 )}>
-                  {revenueKPI.trend === 'up' ? '↑' : revenueKPI.trend === 'down' ? '↓' : '~'} hoy
+                  {revenueKPI.trend === 'up' ? '↑' : revenueKPI.trend === 'down' ? '↓' : '~'}
                 </span>
               </div>
               <div className="text-[22px] sm:text-[26px] font-bold text-white leading-[1.2] mb-0.5">{revenueKPI.value}</div>
-              <div className="text-[11px] sm:text-[12px] text-[var(--text-secondary)] uppercase tracking-wider">Ingresos</div>
+              <div className="text-[11px] sm:text-[12px] text-[var(--text-secondary)] uppercase tracking-wider">
+                {period === 'today' ? 'Ingresos hoy' : period === 'week' ? 'Ingresos 7d' : 'Ingresos 30d'}
+              </div>
             </motion.div>
 
-            {/* KPI: Ocupación */}
+            {/* KPI: Ocupación - Siempre es de hoy */}
             <motion.div 
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(59,130,246,0.12)" }}
               onClick={() => (window.location.href = "/panel/agenda")}
@@ -522,10 +525,10 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
               <div className="text-[22px] sm:text-[26px] font-bold text-white leading-[1.2] mb-0.5">
                 {totalOccupancy}%
               </div>
-              <div className="text-[11px] sm:text-[12px] text-[var(--text-secondary)] uppercase tracking-wider">Ocupación</div>
+              <div className="text-[11px] sm:text-[12px] text-[var(--text-secondary)] uppercase tracking-wider">Ocupación hoy</div>
             </motion.div>
 
-            {/* KPI: Ticket medio */}
+            {/* KPI: Ticket medio - Siempre 7 días (referencia estable) */}
             <motion.div 
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(168,85,247,0.12)" }}
               onClick={() => (window.location.href = "/panel/monedero")}
@@ -537,7 +540,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                 </div>
               </div>
               <div className="text-[22px] sm:text-[26px] font-bold text-white leading-[1.2] mb-0.5">{formatCurrency(avgTicketLast7Days)}</div>
-              <div className="text-[11px] sm:text-[12px] text-[var(--text-secondary)] uppercase tracking-wider">Ticket medio</div>
+              <div className="text-[11px] sm:text-[12px] text-[var(--text-secondary)] uppercase tracking-wider">Ticket 7d</div>
             </motion.div>
           </motion.div>
 
@@ -711,8 +714,20 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                 <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10">
                   <h2 className="text-[15px] sm:text-[16px] font-semibold text-white">Performance</h2>
                   <div className="flex gap-1">
-                    <button className="px-2 py-0.5 text-[10px] sm:text-[11px] rounded-lg bg-white/10 text-white font-medium">7d</button>
-                    <button className="px-2 py-0.5 text-[10px] sm:text-[11px] rounded-lg bg-white/5 text-[var(--text-secondary)] hover:bg-white/10 transition-colors">30d</button>
+                    <button 
+                      onClick={() => setPerformancePeriod("7d")}
+                      className={cn(
+                        "px-2 py-0.5 text-[10px] sm:text-[11px] rounded-lg transition-colors",
+                        performancePeriod === "7d" ? "bg-white/10 text-white font-medium" : "bg-white/5 text-[var(--text-secondary)] hover:bg-white/10"
+                      )}
+                    >7d</button>
+                    <button 
+                      onClick={() => setPerformancePeriod("30d")}
+                      className={cn(
+                        "px-2 py-0.5 text-[10px] sm:text-[11px] rounded-lg transition-colors",
+                        performancePeriod === "30d" ? "bg-white/10 text-white font-medium" : "bg-white/5 text-[var(--text-secondary)] hover:bg-white/10"
+                      )}
+                    >30d</button>
                   </div>
                 </div>
                 <div className="px-4 py-3">
@@ -720,10 +735,14 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                   <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.06] mb-3">
                     <div>
                       <h3 className="text-[12px] sm:text-[13px] font-medium text-white">Reservas diarias</h3>
-                      <p className="text-[10px] sm:text-[11px] text-[var(--text-secondary)]">Últimos 7 días</p>
+                      <p className="text-[10px] sm:text-[11px] text-[var(--text-secondary)]">
+                        {performancePeriod === "7d" ? "Últimos 7 días" : "Últimos 30 días"}
+                      </p>
                     </div>
                     <div className="text-right">
-                      <div className="text-[16px] sm:text-[18px] font-bold text-white">{totalLast7Days}</div>
+                      <div className="text-[16px] sm:text-[18px] font-bold text-white">
+                        {performancePeriod === "7d" ? totalLast7Days : stats.totalBookingsLast30Days}
+                      </div>
                       <div className="text-[10px] text-[var(--text-secondary)]">total</div>
                     </div>
                   </div>
@@ -754,14 +773,20 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                     )}
                   </div>
 
-                  {/* Métricas compactas centradas */}
+                  {/* Métricas compactas centradas - cambian según periodo */}
                   <div className="flex justify-center gap-5 sm:gap-8 pt-2.5 border-t border-white/[0.06]">
                     <div className="text-center">
-                      <div className="text-[13px] sm:text-[14px] font-bold text-emerald-400">{formatCurrency(stats.revenueLast7Days || 0)}</div>
+                      <div className="text-[13px] sm:text-[14px] font-bold text-emerald-400">
+                        {formatCurrency(performancePeriod === "7d" ? stats.revenueLast7Days : stats.revenueLast30Days)}
+                      </div>
                       <div className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">Ingresos</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-[13px] sm:text-[14px] font-bold text-blue-400">{avgLast7Days.toFixed(1)}</div>
+                      <div className="text-[13px] sm:text-[14px] font-bold text-blue-400">
+                        {performancePeriod === "7d" 
+                          ? avgLast7Days.toFixed(1) 
+                          : (stats.totalBookingsLast30Days / 30).toFixed(1)}
+                      </div>
                       <div className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">Media/día</div>
                     </div>
                     <div className="text-center">

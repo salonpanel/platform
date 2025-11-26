@@ -106,20 +106,20 @@ export async function fetchDashboardDataset(
     servicesRes,
     staffBookingsTodayRes,
   ] = await Promise.all([
-    // 1. Próximas reservas (no canceladas)
+    // 1. Reservas de HOY y MAÑANA (para el widget de próximas)
     supabase
       .from("bookings")
       .select(`
-        id, starts_at, ends_at, status, price,
+        id, starts_at, ends_at, status,
         customer:customers(name, email),
-        service:services(name, price),
+        service:services(name, price_cents),
         staff:staff(name)
       `)
       .eq("tenant_id", tenant.id)
-      .gte("starts_at", new Date().toISOString())
+      .gte("starts_at", todayStart) // Desde el inicio de hoy, no desde ahora
       .not("status", "eq", "cancelled")
       .order("starts_at", { ascending: true })
-      .limit(10),
+      .limit(15),
 
     // 2. Staff activo
     supabase
