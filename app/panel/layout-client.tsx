@@ -12,6 +12,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { ToastProvider } from "@/components/ui";
 import { getCurrentTenant } from "@/lib/panel-tenant";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
+import { NotificationProvider } from "@/components/agenda/NotificationSystem";
 import { PermissionsProvider, usePermissions } from "@/contexts/PermissionsContext";
 import { usePrefetchRoutes, usePrefetchData } from "@/hooks/usePrefetch";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
