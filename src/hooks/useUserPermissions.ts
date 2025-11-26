@@ -36,6 +36,15 @@ export const FULL_PERMISSIONS: UserPermissions = {
   ajustes: true,
 };
 
+type RpcUserRoleAndPermissions = {
+  role: string;
+  permissions: UserPermissions;
+};
+
+function isRpcUserRoleAndPermissions(obj: any): obj is RpcUserRoleAndPermissions {
+  return obj && typeof obj.role === "string" && typeof obj.permissions === "object";
+}
+
 export function useUserPermissions(tenantId: string | null) {
   const supabase = getSupabaseBrowser();
   const [permissions, setPermissions] = useState<UserPermissions>(FULL_PERMISSIONS); // Empezar con permisos completos por defecto
@@ -68,7 +77,7 @@ export function useUserPermissions(tenantId: string | null) {
           })
           .single();
 
-        if (error || !data) {
+        if (error || !isRpcUserRoleAndPermissions(data)) {
           setPermissions(DEFAULT_PERMISSIONS);
           setRole(null);
           setLoading(false);
