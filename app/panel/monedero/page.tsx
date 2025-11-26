@@ -189,29 +189,6 @@ export default function MonederoPage() {
         transition={{ duration: 0.3 }}
         className="space-y-6"
       >
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <Card variant="glass" padding="md">
-          <TitleBar
-            title="Monedero"
-            subtitle="Balance y movimientos de tu cuenta Stripe"
-          >
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => loadData(true)}
-              isLoading={refreshing}
-              icon={<RefreshCw className="h-4 w-4" />}
-            >
-              Actualizar
-            </Button>
-          </TitleBar>
-        </Card>
-      </motion.div>
 
       {/* Error Alert */}
       {error && (
@@ -304,9 +281,20 @@ export default function MonederoPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
         >
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold text-white mb-1">Métricas Clave</h3>
-            <p className="text-sm text-slate-400">Análisis de rendimiento de tu cuenta</p>
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-1">Métricas Clave</h3>
+              <p className="text-sm text-slate-400">Análisis de rendimiento de tu cuenta</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => loadData(true)}
+              isLoading={refreshing}
+              icon={<RefreshCw className="h-4 w-4" />}
+            >
+              Actualizar
+            </Button>
           </div>
           <MetricsGrid columns={4}>
             <MetricCard

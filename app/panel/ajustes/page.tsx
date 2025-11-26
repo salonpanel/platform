@@ -7,7 +7,6 @@ import { getCurrentTenant } from "@/lib/panel-tenant";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { PageHeader } from "@/components/ui/PageHeader";
 import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
 import { motion } from "framer-motion";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
@@ -221,10 +220,6 @@ function AjustesContent() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Ajustes"
-        description="Configuración general de tu barbería"
-      />
 
       {/* Mensajes */}
       {error && (

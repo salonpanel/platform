@@ -54,12 +54,6 @@ function MarketingContent() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Marketing</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          Activa campañas para recuperar clientes y rellenar huecos libres
-        </p>
-      </div>
 
       {/* Card principal */}
       <Card className="border-gray-200 bg-white">

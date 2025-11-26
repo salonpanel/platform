@@ -5,7 +5,6 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { UiButton, UiCard, UiModal, UiInput, UiField, UiBadge, UiToast } from "@/components/ui/apple-ui-kit";
-import { PageHeader } from "@/components/ui/PageHeader";
 import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
 // import { CustomerHistory } from "@/components/customers/CustomerHistory";
 import {
@@ -331,11 +330,8 @@ export default function ClientesPage() {
   return (
     <ProtectedRoute requiredPermission="clientes">
       <div className="space-y-6">
-      <PageHeader
-        title="Clientes"
-        subtitle={`${customers.length} ${customers.length === 1 ? "cliente" : "clientes"}`}
-        description="Gestiona tu base de clientes, filtra y busca fácilmente, y accede a sus historiales de reservas."
-        actions={
+        {/* Controles principales */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <UiButton
               variant="secondary"
@@ -353,8 +349,7 @@ export default function ClientesPage() {
               + Nuevo Cliente
             </UiButton>
           </div>
-        }
-      />
+        </div>
       
       <div className="space-y-4">
         <UiInput

@@ -2,7 +2,7 @@
 
 import { useState, Suspense, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { Spinner, Card, Button, EmptyState, Alert, SearchInput, useToast, TitleBar, PageHeader } from "@/components/ui";
+import { Spinner, Card, Button, EmptyState, Alert, SearchInput, useToast } from "@/components/ui";
 import { StaffEditModal } from "@/components/panel/StaffEditModal";
 import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
 import { motion } from "framer-motion";
@@ -361,35 +361,30 @@ function StaffContent() {
       animate="visible"
       className="space-y-6"
     >
-      {/* Premium Header */}
+      {/* Controles principales */}
       <motion.div variants={itemVariants}>
-        <PageHeader
-          title="Staff"
-          subtitle={`${staffList.filter((s) => s.active).length} activos de ${staffList.length} total`}
-          description="Gestiona los miembros de tu equipo, configura sus horarios y habilidades."
-          actions={
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <SearchInput
-                value={searchTerm}
-                onChange={setSearchTerm}
-                placeholder="Buscar por nombre o habilidades..."
-                debounceMs={300}
-                className="w-full sm:w-64"
-              />
-              {canManageStaff && (
-                <Button
-                  onClick={() => {
-                    setEditingStaff(null);
-                    setShowEditModal(true);
-                  }}
-                  icon={<UserPlus className="h-4 w-4" />}
-                >
-                  Nuevo Staff
-                </Button>
-              )}
-            </div>
-          }
-        />
+        <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <SearchInput
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Buscar por nombre o habilidades..."
+              debounceMs={300}
+              className="w-full sm:w-64"
+            />
+            {canManageStaff && (
+              <Button
+                onClick={() => {
+                  setEditingStaff(null);
+                  setShowEditModal(true);
+                }}
+                icon={<UserPlus className="h-4 w-4" />}
+              >
+                Nuevo Staff
+              </Button>
+            )}
+          </div>
+        </div>
       </motion.div>
 
       {/* Lista de staff */}

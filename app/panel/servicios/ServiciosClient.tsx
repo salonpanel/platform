@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Alert } from "@/components/ui/Alert";
-import { PageHeader } from "@/components/ui/PageHeader";
 import { Modal } from "@/components/ui/Modal";
 import { ServiceCard } from "./components/ServiceCard";
 import { ServiceForm } from "./components/ServiceForm";
@@ -643,30 +642,26 @@ export function ServiciosClient({
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Servicios"
-        subtitle={`${stats.total} ${stats.total === 1 ? "servicio" : "servicios"} · ${stats.activeCount} activos · ${stats.pendingCount} pendientes de Stripe`}
-        description="Gestiona los servicios de tu barbería, configura precios, duraciones y sincroniza con Stripe para procesar pagos."
-        actions={
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <Button
-              variant="secondary"
-              onClick={handleSyncStripe}
-              disabled={!tenantId || syncingStripe}
-              isLoading={syncingStripe}
-              className="w-full sm:w-auto"
-            >
-              Sincronizar con Stripe
-            </Button>
-            <Button
-              onClick={() => openNewModal()}
-              className="w-full sm:w-auto"
-            >
-              + Nuevo servicio
-            </Button>
-          </div>
-        }
-      />
+      {/* Controles principales */}
+      <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button
+            variant="secondary"
+            onClick={handleSyncStripe}
+            disabled={!tenantId || syncingStripe}
+            isLoading={syncingStripe}
+            className="w-full sm:w-auto"
+          >
+            Sincronizar con Stripe
+          </Button>
+          <Button
+            onClick={() => openNewModal()}
+            className="w-full sm:w-auto"
+          >
+            + Nuevo servicio
+          </Button>
+        </div>
+      </div>
 
       <Card className="rounded-[14px] border border-white/10 bg-white/5 p-4 shadow-glass">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
