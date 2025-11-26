@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
 import { motion } from "framer-motion";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 
@@ -592,18 +593,20 @@ function AjustesContent() {
 
 export default function AjustesPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-            <p className="text-gray-600">Cargando...</p>
+    <ProtectedRoute requiredPermission="ajustes">
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+              <p className="text-gray-600">Cargando...</p>
+            </div>
           </div>
-        </div>
-      }
-    >
-      <AjustesContent />
-    </Suspense>
+        }
+      >
+        <AjustesContent />
+      </Suspense>
+    </ProtectedRoute>
   );
 }
 

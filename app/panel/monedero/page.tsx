@@ -6,6 +6,7 @@ import { Wallet, RefreshCw, TrendingUp, DollarSign, BarChart3, Clock, CheckCircl
 import { Card, Button, Spinner, EmptyState, Alert, TitleBar } from "@/components/ui";
 import { BalanceCard, BalanceGrid } from "@/components/ui/BalanceCard";
 import { MetricCard, MetricsGrid } from "@/components/ui/MetricCard";
+import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
 import { Transaction, Payout, Balance } from '@/types/wallet';
 import { WalletFiltersComponent, useWalletFilters } from "@/components/ui/WalletFilters";
 import { TransactionList } from "@/components/ui/TransactionList";
@@ -181,12 +182,13 @@ export default function MonederoPage() {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6"
-    >
+    <ProtectedRoute requiredPermission="reportes">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="space-y-6"
+      >
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
@@ -612,6 +614,7 @@ export default function MonederoPage() {
           </div>
         </Card>
       </motion.div>
-    </motion.div>
+      </motion.div>
+    </ProtectedRoute>
   );
 }
