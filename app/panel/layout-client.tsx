@@ -45,13 +45,15 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
 
   // Hooks de precarga para navegación instantánea
   usePrefetchRoutes();
-  usePrefetchData(tenant?.id || null);
   useServiceWorker();
 
   // Extraer el valor de impersonate una sola vez para evitar re-renders
   const impersonateOrgId = useMemo(() => {
     return searchParams?.get("impersonate") || null;
   }, [searchParams?.toString()]);
+
+  // Prefetch data (dashboard, etc.) using tenant + impersonate info
+  usePrefetchData(tenant?.id || null, impersonateOrgId);
 
   // Cargar estado del sidebar desde localStorage
   useEffect(() => {
