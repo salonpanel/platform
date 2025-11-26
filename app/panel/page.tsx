@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, Suspense, useMemo, useEffect } from "react";
+import { useState, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { getCurrentTenant } from "@/lib/panel-tenant";
 import { MiniKPI } from "@/components/panel/MiniKPI";
 import { UpcomingAppointments } from "@/components/panel/UpcomingAppointments";
 import { MessagesWidget } from "@/components/panel/MessagesWidget";
@@ -60,37 +59,25 @@ type OperationalAlert = {
 function PanelHomeContent() {
   const searchParams = useSearchParams();
   const [period, setPeriod] = useState<"today" | "week" | "month">("today");
-  const [tenantId, setTenantId] = useState<string | null>(null);
-  const [tenantTimezone, setTenantTimezone] = useState<string>("Europe/Madrid");
-  const [tenantName, setTenantName] = useState<string>("Tu barbería");
 
   const impersonateOrgId = useMemo(() => {
     return searchParams?.get("impersonate") || null;
   }, [searchParams?.toString()]);
 
-  // Obtener tenant info primero
-  useEffect(() => {
-    let mounted = true;
-    getCurrentTenant(impersonateOrgId).then(({ tenant }) => {
-      if (mounted && tenant) {
-        setTenantId(tenant.id);
-        setTenantTimezone(tenant.timezone || "Europe/Madrid");
-        setTenantName(tenant.name || "Tu barbería");
-      }
-    });
-    return () => { mounted = false; };
-  }, [impersonateOrgId]);
+  // Hook optimizado: obtiene tenant + datos en UNA llamada con caché
+  const dashboardData = useDashboardData(impersonateOrgId);
 
-  // Usar hook optimizado con caché instantáneo SOLO cuando tenemos tenantId
-  const dashboardData = useDashboardData(tenantId, tenantTimezone);
-
-  // Estado de carga: mostrar skeleton hasta tener tenantId Y datos
-  const isLoadingStats = !tenantId || dashboardData.isLoading;
+  // Extraer datos del hook
+  const { tenant, kpis, upcomingBookings: rawBookings, isLoading: isLoadingStats } = dashboardData;
+  const tenantId = tenant?.id || null;
+  const tenantTimezone = tenant?.timezone || "Europe/Madrid";
+  const tenantName = tenant?.name || "Tu barbería";
+  
   const stats = {
-    bookingsToday: dashboardData.kpis?.bookingsToday || 0,
+    bookingsToday: kpis?.bookingsToday || 0,
     bookingsLast7Days: [] as number[],
-    activeServices: dashboardData.kpis?.activeServices || 0,
-    activeStaff: dashboardData.kpis?.activeStaff || 0,
+    activeServices: kpis?.activeServices || 0,
+    activeStaff: kpis?.activeStaff || 0,
     revenueToday: 0,
     totalBookingsLast7Days: 0,
     revenueLast7Days: 0,
@@ -100,7 +87,7 @@ function PanelHomeContent() {
   };
   
   // Transformar datos de reservas para compatibilidad con el componente
-  const upcomingBookings = (dashboardData.upcomingBookings || []).map((booking: any) => ({
+  const upcomingBookings = (rawBookings || []).map((booking: any) => ({
     id: booking.id,
     starts_at: booking.starts_at,
     ends_at: booking.ends_at,
