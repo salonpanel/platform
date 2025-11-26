@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { supabaseServer } from "@/lib/supabase";
+import { hasTenantPermission } from "@/lib/permissions/server";
 import { stripe } from "@/lib/stripe";
 
 const CURRENCY = process.env.STRIPE_DEFAULT_CURRENCY ?? "eur";
@@ -51,14 +52,29 @@ export async function POST(_: Request, { params }: RouteParams) {
       .select("role")
       .eq("tenant_id", service.tenant_id)
       .eq("user_id", session.user.id)
-      .in("role", ["owner", "admin", "manager"])
       .maybeSingle();
 
     if (membershipError || !membership) {
       return NextResponse.json(
-        { error: "No tienes permiso para sincronizar este servicio." },
+        { error: "No tienes acceso a este tenant." },
         { status: 403 }
       );
+    }
+
+    // Owners/Admins siempre permitidos; resto requiere permiso granular "servicios"
+    if (membership.role !== "owner" && membership.role !== "admin") {
+      const allowed = await hasTenantPermission(
+        supabase,
+        session.user.id,
+        service.tenant_id,
+        "servicios"
+      );
+      if (!allowed) {
+        return NextResponse.json(
+          { error: "No tienes permiso para gestionar servicios." },
+          { status: 403 }
+        );
+      }
     }
 
     let productId = service.stripe_product_id;

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { stripe } from "@/lib/stripe";
 import { supabaseServer } from "@/lib/supabase";
+import { hasTenantPermission } from "@/lib/permissions/server";
 
 export const runtime = "nodejs";
 
@@ -82,14 +83,28 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       .select("role")
       .eq("tenant_id", service.tenant_id)
       .eq("user_id", session.user.id)
-      .in("role", ["owner", "admin", "manager"])
       .maybeSingle();
 
     if (membershipError || !membership) {
       return NextResponse.json(
-        { error: "No tienes permiso para gestionar este servicio. Se requiere rol owner, admin o manager." },
+        { error: "No tienes acceso a este tenant." },
         { status: 403 }
       );
+    }
+
+    if (membership.role !== "owner" && membership.role !== "admin") {
+      const allowed = await hasTenantPermission(
+        supabase,
+        session.user.id,
+        service.tenant_id,
+        "servicios"
+      );
+      if (!allowed) {
+        return NextResponse.json(
+          { error: "No tienes permiso para gestionar servicios." },
+          { status: 403 }
+        );
+      }
     }
 
     // Preparar actualización
@@ -211,14 +226,28 @@ export async function DELETE(_: Request, { params }: RouteParams) {
       .select("role")
       .eq("tenant_id", service.tenant_id)
       .eq("user_id", session.user.id)
-      .in("role", ["owner", "admin", "manager"])
       .maybeSingle();
 
     if (membershipError || !membership) {
       return NextResponse.json(
-        { error: "No tienes permiso para eliminar este servicio." },
+        { error: "No tienes acceso a este tenant." },
         { status: 403 }
       );
+    }
+
+    if (membership.role !== "owner" && membership.role !== "admin") {
+      const allowed = await hasTenantPermission(
+        supabase,
+        session.user.id,
+        service.tenant_id,
+        "servicios"
+      );
+      if (!allowed) {
+        return NextResponse.json(
+          { error: "No tienes permiso para gestionar servicios." },
+          { status: 403 }
+        );
+      }
     }
 
     const { data: updated, error: updateError } = await supabase
