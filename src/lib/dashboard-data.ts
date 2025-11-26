@@ -12,6 +12,16 @@ export type UpcomingBooking = {
   staff: { name: string | null } | null;
 };
 
+export type StaffMember = {
+  id: string;
+  name: string;
+  color: string | null;
+  avatar_url: string | null;
+  bookingsToday: number;
+  occupancyPercent: number;
+  isActive: boolean;
+};
+
 type MetricRow = {
   metric_date: string;
   confirmed_bookings: number;
@@ -39,6 +49,7 @@ export type DashboardDataset = {
   tenant: { id: string; name: string; timezone: string };
   kpis: DashboardKpis;
   upcomingBookings: UpcomingBooking[];
+  staffMembers: StaffMember[];
 };
 
 export const EMPTY_DASHBOARD_KPIS: DashboardDataset["kpis"] = {
@@ -70,7 +81,7 @@ export async function fetchDashboardDataset(
   const todayEnd = new Date(now.setHours(23, 59, 59, 999)).toISOString();
   const todayKey = new Date().toISOString().slice(0, 10);
 
-  const [upcomingRes, metricsRes] = await Promise.all([
+  const [upcomingRes, metricsRes, staffRes, staffBookingsRes] = await Promise.all([
     supabase
       .from("bookings")
       .select(
@@ -88,6 +99,21 @@ export async function fetchDashboardDataset(
       .eq("tenant_id", tenant.id)
       .order("metric_date", { ascending: false })
       .limit(31),
+    // 🔥 Obtener staff activo
+    supabase
+      .from("staff")
+      .select("id, name, color, avatar_url, active")
+      .eq("tenant_id", tenant.id)
+      .eq("active", true)
+      .order("name"),
+    // 🔥 Obtener citas de hoy por staff para calcular ocupación
+    supabase
+      .from("bookings")
+      .select("staff_id")
+      .eq("tenant_id", tenant.id)
+      .gte("starts_at", todayStart)
+      .lte("starts_at", todayEnd)
+      .in("status", ["confirmed", "completed", "paid"]),
   ]);
 
   if (upcomingRes.error) throw upcomingRes.error;
@@ -187,6 +213,31 @@ export async function fetchDashboardDataset(
     };
   });
 
+  // 🔥 Procesar staff con ocupación real
+  const staffBookingCounts: Record<string, number> = {};
+  for (const booking of staffBookingsRes.data || []) {
+    if (booking.staff_id) {
+      staffBookingCounts[booking.staff_id] = (staffBookingCounts[booking.staff_id] || 0) + 1;
+    }
+  }
+
+  // Calcular ocupación: asumimos 8 citas máx por día = 100%
+  const MAX_BOOKINGS_PER_DAY = 8;
+  const staffMembers: StaffMember[] = (staffRes.data || []).map((staff: any) => {
+    const bookingsCount = staffBookingCounts[staff.id] || 0;
+    const occupancy = Math.min(Math.round((bookingsCount / MAX_BOOKINGS_PER_DAY) * 100), 100);
+
+    return {
+      id: staff.id,
+      name: staff.name || "Sin nombre",
+      color: staff.color || null,
+      avatar_url: staff.avatar_url || null,
+      bookingsToday: bookingsCount,
+      occupancyPercent: occupancy,
+      isActive: staff.active ?? true,
+    };
+  });
+
   return {
     tenant: { id: tenant.id, name: tenant.name || "Tu barbería", timezone: tenant.timezone || "Europe/Madrid" },
     kpis: {
@@ -203,5 +254,6 @@ export async function fetchDashboardDataset(
       avgTicketLast7Days,
     },
     upcomingBookings,
+    staffMembers,
   };
 }

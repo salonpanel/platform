@@ -60,6 +60,7 @@ export function useDashboardData(
     tenant: data?.tenant || null,
     kpis: data?.kpis || createEmptyDashboardKpis(),
     upcomingBookings: data?.upcomingBookings || [],
+    staffMembers: data?.staffMembers || [],
     isLoading,
   };
 }

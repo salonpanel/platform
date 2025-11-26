@@ -133,13 +133,14 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
   });
 
   // Extraer datos del hook o usar initialData si está disponible
-  const { tenant: hookTenant, kpis, upcomingBookings: rawBookings, isLoading: isLoadingStats } = dashboardData;
+  const { tenant: hookTenant, kpis, upcomingBookings: rawBookings, staffMembers: rawStaffMembers, isLoading: isLoadingStats } = dashboardData;
 
   // Si tenemos initialData, usarlo inmediatamente; sino usar datos del hook
   const hasInitialData = !!initialData;
   const tenant = hasInitialData ? initialData.tenant : hookTenant;
   const currentKpis = hasInitialData ? initialData.kpis : kpis;
   const currentUpcomingBookings = hasInitialData ? initialData.upcomingBookings : rawBookings;
+  const currentStaffMembers = hasInitialData ? (initialData as any).staffMembers || [] : rawStaffMembers || [];
   const isLoading = hasInitialData ? false : isLoadingStats;
 
   const tenantId = tenant?.id || null;
@@ -164,7 +165,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
   };
 
   // Transformar datos de reservas para compatibilidad con el componente
-  const upcomingBookings = (currentUpcomingBookings || []).map((booking: any) => ({
+  const allBookings = (currentUpcomingBookings || []).map((booking: any) => ({
     id: booking.id,
     starts_at: booking.starts_at,
     ends_at: booking.ends_at,
@@ -173,6 +174,34 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
     service: Array.isArray(booking.service) ? booking.service[0] : booking.service,
     staff: Array.isArray(booking.staff) ? booking.staff[0] : booking.staff,
   }));
+
+  // 🔥 Filtrar reservas según el tab seleccionado
+  const filteredBookings = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+    const dayAfterTomorrow = new Date(tomorrowStart);
+    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+
+    return allBookings.filter((booking) => {
+      const bookingDate = new Date(booking.starts_at);
+      switch (bookingsTab) {
+        case "today":
+          return bookingDate >= todayStart && bookingDate < tomorrowStart;
+        case "tomorrow":
+          return bookingDate >= tomorrowStart && bookingDate < dayAfterTomorrow;
+        case "week":
+        default:
+          return true; // Mostrar todas las próximas
+      }
+    });
+  }, [allBookings, bookingsTab]);
+
+  const upcomingBookings = filteredBookings;
+
+  // Staff con datos reales
+  const staffMembers = currentStaffMembers || [];
 
   const topServices: TopService[] = [];
   const operationalAlerts: OperationalAlert[] = [];
@@ -573,7 +602,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
               </div>
             </motion.div>
 
-            {/* Staff - 4 columnas con divisores */}
+            {/* Staff - 4 columnas con datos REALES */}
             <motion.div
               initial="hidden"
               animate="visible"
@@ -584,21 +613,29 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
               <div className="bg-[#15171A] rounded-[14px] border border-white/6 overflow-hidden h-full flex flex-col shadow-[0_6px_20px_rgba(0,0,0,0.45)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)] transition-shadow duration-200">
                 <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/6">
                   <h2 className="text-[18px] font-semibold text-white leading-[1.2]">Staff hoy</h2>
-                  <span className="text-[12px] text-white/50">{stats.activeStaff} activo</span>
+                  <span className="text-[12px] text-white/50">{staffMembers.length} activo{staffMembers.length !== 1 ? 's' : ''}</span>
                 </div>
                 <div className="px-4 pt-4 pb-3 flex-1">
-                  {stats.activeStaff > 0 ? (
+                  {staffMembers.length > 0 ? (
                     <div className="divide-y divide-white/5">
-                      {Array.from({ length: Math.min(stats.activeStaff, 3) }).map((_, i) => {
-                        const colors = ["from-[#3A6DFF] to-[#A06BFF]", "from-[#4FE3C1] to-[#3A6DFF]", "from-[#FF6DA3] to-[#A06BFF]"];
-                        const occ = [85, 64, 48][i] || 50;
+                      {staffMembers.slice(0, 4).map((staff: any, i: number) => {
+                        const colors = ["from-[#3A6DFF] to-[#A06BFF]", "from-[#4FE3C1] to-[#3A6DFF]", "from-[#FF6DA3] to-[#A06BFF]", "from-[#FFC107] to-[#FF6DA3]"];
+                        const occ = staff.occupancyPercent || 0;
+                        const initial = staff.name?.charAt(0)?.toUpperCase() || "?";
                         return (
-                          <div key={i} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                          <div key={staff.id} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
                             <div className="flex items-center gap-2.5">
-                              <div className={cn("w-7 h-7 rounded-full bg-gradient-to-br flex items-center justify-center text-[11px] font-bold text-white", colors[i])}>
-                                {String.fromCharCode(65 + i)}
+                              {staff.avatar_url ? (
+                                <img src={staff.avatar_url} alt={staff.name} className="w-7 h-7 rounded-full object-cover" />
+                              ) : (
+                                <div className={cn("w-7 h-7 rounded-full bg-gradient-to-br flex items-center justify-center text-[11px] font-bold text-white", colors[i % colors.length])}>
+                                  {initial}
+                                </div>
+                              )}
+                              <div>
+                                <div className="text-[14px] text-white font-medium">{staff.name}</div>
+                                <div className="text-[10px] text-white/40">{staff.bookingsToday} cita{staff.bookingsToday !== 1 ? 's' : ''} hoy</div>
                               </div>
-                              <div className="text-[14px] text-white font-medium">Prof. {i + 1}</div>
                             </div>
                             <div className={cn("text-[14px] font-semibold", occ >= 70 ? "text-[#4FE3C1]" : occ >= 40 ? "text-[#3A6DFF]" : "text-white/40")}>
                               {occ}%
