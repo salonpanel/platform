@@ -60,46 +60,31 @@ export function useUserPermissions(tenantId: string | null) {
           return;
         }
 
-        // Obtener rol del usuario
-        const { data: membership } = await supabase
-          .from("memberships")
-          .select("role")
-          .eq("user_id", user.id)
-          .eq("tenant_id", tenantId)
+        // Usar la función RPC optimizada
+        const { data, error } = await supabase
+          .rpc("get_user_role_and_permissions", {
+            p_user_id: user.id,
+            p_tenant_id: tenantId,
+          })
           .single();
 
-        if (!membership) {
+        if (error || !data) {
           setPermissions(DEFAULT_PERMISSIONS);
+          setRole(null);
           setLoading(false);
           return;
         }
 
-        setRole(membership.role);
-
-        // Owners y admins tienen todos los permisos
-        if (membership.role === "owner" || membership.role === "admin") {
+        setRole(data.role);
+        if (data.role === "owner" || data.role === "admin") {
           setPermissions(FULL_PERMISSIONS);
-          setLoading(false);
-          return;
-        }
-
-        // Para staff, obtener permisos personalizados
-        const { data: userPerms } = await supabase
-          .from("user_permissions")
-          .select("permissions")
-          .eq("user_id", user.id)
-          .eq("tenant_id", tenantId)
-          .single();
-
-        if (userPerms?.permissions) {
-          setPermissions(userPerms.permissions as UserPermissions);
         } else {
-          // Si no tiene permisos configurados, usar defaults
-          setPermissions(DEFAULT_PERMISSIONS);
+          setPermissions(data.permissions as UserPermissions);
         }
       } catch (error) {
-        console.error("Error loading permissions:", error);
-        setPermissions(FULL_PERMISSIONS); // En caso de error, dar permisos completos para no bloquear
+        console.error("Error loading permissions (rpc):", error);
+        setPermissions(FULL_PERMISSIONS);
+        setRole(null);
       } finally {
         setLoading(false);
       }
