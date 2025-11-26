@@ -451,24 +451,25 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
           </motion.div>
 
           {/* ═══════════════════════════════════════════════════════════════
-              FILA 2: KPIs - 4 Tarjetas GLASS (estilo azulado premium)
+              FILA 2: KPIs - 4 Tarjetas (grid fijo, hover glow premium)
+              mb-8 = +16px separación con Reservas
               ═══════════════════════════════════════════════════════════════ */}
           <motion.div
             initial="hidden"
             animate="visible"
             variants={sectionVariants}
             transition={{ duration: 0.2, delay: 0.05 }}
-            className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8"
           >
             {/* KPI: Reservas */}
             <motion.div 
-              whileHover={{ y: -2 }}
+              whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(79,227,193,0.12)" }}
               onClick={() => (window.location.href = "/panel/agenda")}
-              className="cursor-pointer glass rounded-xl p-3 sm:p-4 border border-white/10 hover:border-[var(--accent-aqua)]/40 transition-all duration-200 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
+              className="cursor-pointer glass rounded-xl p-3 sm:p-4 border border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.03] transition-all duration-200"
             >
               <div className="flex items-center gap-2 mb-2">
-                <div className="p-1.5 rounded-lg bg-[var(--accent-aqua)]/15">
-                  <TrendingUp className="h-3.5 w-3.5 text-[var(--accent-aqua)]" />
+                <div className="p-1.5 rounded-lg bg-emerald-500/15">
+                  <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
                 </div>
                 <span className={cn(
                   "text-[11px] sm:text-[12px] ml-auto",
@@ -484,9 +485,9 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
 
             {/* KPI: Ingresos */}
             <motion.div 
-              whileHover={{ y: -2 }}
+              whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(52,211,153,0.12)" }}
               onClick={() => (window.location.href = "/panel/monedero")}
-              className="cursor-pointer glass rounded-xl p-3 sm:p-4 border border-white/10 hover:border-emerald-500/40 transition-all duration-200 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
+              className="cursor-pointer glass rounded-xl p-3 sm:p-4 border border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.03] transition-all duration-200"
             >
               <div className="flex items-center gap-2 mb-2">
                 <div className="p-1.5 rounded-lg bg-emerald-500/15">
@@ -504,11 +505,11 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
               <div className="text-[11px] sm:text-[12px] text-[var(--text-secondary)] uppercase tracking-wider">Ingresos</div>
             </motion.div>
 
-            {/* KPI: Ocupación - CALCULADA DESDE STAFF REAL */}
+            {/* KPI: Ocupación */}
             <motion.div 
-              whileHover={{ y: -2 }}
+              whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(59,130,246,0.12)" }}
               onClick={() => (window.location.href = "/panel/agenda")}
-              className="cursor-pointer glass rounded-xl p-3 sm:p-4 border border-white/10 hover:border-blue-500/40 transition-all duration-200 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
+              className="cursor-pointer glass rounded-xl p-3 sm:p-4 border border-white/10 hover:border-blue-500/30 hover:bg-white/[0.03] transition-all duration-200"
             >
               <div className="flex items-center gap-2 mb-2">
                 <div className="p-1.5 rounded-lg bg-blue-500/15">
@@ -521,14 +522,14 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
               <div className="text-[22px] sm:text-[26px] font-bold text-white leading-[1.2] mb-0.5">
                 {totalOccupancy}%
               </div>
-              <div className="text-[11px] sm:text-[12px] text-[var(--text-secondary)] uppercase tracking-wider">Ocupación hoy</div>
+              <div className="text-[11px] sm:text-[12px] text-[var(--text-secondary)] uppercase tracking-wider">Ocupación</div>
             </motion.div>
 
             {/* KPI: Ticket medio */}
             <motion.div 
-              whileHover={{ y: -2 }}
+              whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(168,85,247,0.12)" }}
               onClick={() => (window.location.href = "/panel/monedero")}
-              className="cursor-pointer glass rounded-xl p-3 sm:p-4 border border-white/10 hover:border-purple-500/40 transition-all duration-200 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
+              className="cursor-pointer glass rounded-xl p-3 sm:p-4 border border-white/10 hover:border-purple-500/30 hover:bg-white/[0.03] transition-all duration-200"
             >
               <div className="flex items-center gap-2 mb-2">
                 <div className="p-1.5 rounded-lg bg-purple-500/15">
@@ -550,19 +551,21 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                 ═══════════════════════════════════════════════════════════════ */}
             
             {/* Próximas reservas */}
+            {/* Próximas reservas - COMPACTADO */}
             <motion.div
               initial="hidden"
               animate="visible"
               variants={sectionVariants}
               transition={{ duration: 0.2, delay: 0.1 }}
               className="lg:col-span-8"
+              whileHover={{ boxShadow: "0 12px 40px rgba(0,0,0,0.2)" }}
             >
-              <div className="glass rounded-xl border border-white/10 overflow-hidden">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-3 border-b border-white/10 gap-2 sm:gap-0">
+              <div className="glass rounded-xl border border-white/10 hover:border-white/15 transition-all overflow-hidden">
+                {/* Header compacto */}
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10">
                   <div className="flex items-center gap-3">
-                    <h2 className="text-[16px] sm:text-[18px] font-semibold text-white">Próximas reservas</h2>
-                    <div className="flex items-center rounded-full bg-white/10 p-0.5 text-[11px] sm:text-[12px]">
+                    <h2 className="text-[15px] sm:text-[16px] font-semibold text-white">Próximas reservas</h2>
+                    <div className="flex items-center rounded-full bg-white/10 p-0.5 text-[10px] sm:text-[11px]">
                       {[
                         { id: "today", label: "Hoy" },
                         { id: "tomorrow", label: "Mañana" },
@@ -571,7 +574,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                           key={tab.id}
                           onClick={() => setBookingsTab(tab.id as "today" | "tomorrow" | "week")}
                           className={cn(
-                            "px-2.5 sm:px-3 py-1 rounded-full transition-all duration-150",
+                            "px-2 sm:px-2.5 py-0.5 rounded-full transition-all duration-150",
                             bookingsTab === tab.id ? "bg-white text-slate-900 font-medium" : "text-[var(--text-secondary)] hover:text-white"
                           )}
                         >
@@ -582,46 +585,46 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                   </div>
                   <button
                     onClick={() => (window.location.href = "/panel/agenda")}
-                    className="text-[12px] sm:text-[13px] text-[var(--accent-aqua)] hover:text-white transition-colors font-medium self-end sm:self-auto"
+                    className="text-[11px] sm:text-[12px] text-emerald-400 hover:text-white transition-colors font-medium"
                   >
                     Ver agenda →
                   </button>
                 </div>
 
-                {/* Lista de reservas */}
-                <div className="p-3 sm:p-4">
+                {/* Lista de reservas - padding reducido */}
+                <div className="px-3 py-2.5">
                   {upcomingBookings.length === 0 ? (
-                    <div className="text-center py-8">
-                      <Calendar className="h-8 w-8 text-[var(--text-secondary)] mx-auto mb-2" />
-                      <p className="text-[13px] text-[var(--text-secondary)]">Sin reservas próximas</p>
+                    <div className="text-center py-6">
+                      <Calendar className="h-7 w-7 text-[var(--text-secondary)] mx-auto mb-1.5" />
+                      <p className="text-[12px] text-[var(--text-secondary)]">Sin reservas próximas</p>
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       {upcomingBookings.slice(0, 4).map((booking) => (
                         <div
                           key={booking.id}
-                          className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/15 transition-all cursor-pointer"
+                          className="flex items-center justify-between px-2.5 py-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 hover:border-white/10 transition-all cursor-pointer"
                           onClick={() => (window.location.href = "/panel/agenda")}
                         >
-                          <div className="flex items-center gap-3">
-                            <div className="text-[13px] sm:text-[14px] font-bold text-white w-10 sm:w-12 font-mono">
+                          <div className="flex items-center gap-2.5">
+                            <div className="text-[12px] sm:text-[13px] font-bold text-white w-10 font-mono">
                               {format(new Date(booking.starts_at), "HH:mm")}
                             </div>
                             <div className="min-w-0">
-                              <div className="text-[13px] sm:text-[14px] font-medium text-white truncate">
+                              <div className="text-[12px] sm:text-[13px] font-medium text-white truncate">
                                 {booking.customer?.name || "Cliente"}
                               </div>
-                              <div className="text-[11px] sm:text-[12px] text-[var(--text-secondary)] truncate">
+                              <div className="text-[10px] sm:text-[11px] text-[var(--text-secondary)] truncate">
                                 {booking.service?.name || "Servicio"}
                               </div>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="hidden sm:block text-[11px] text-[var(--text-secondary)]">
+                            <span className="hidden sm:block text-[10px] text-[var(--text-secondary)]">
                               {booking.staff?.name || "—"}
                             </span>
                             <div className={cn(
-                              "px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-semibold",
+                              "px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold",
                               booking.status === 'paid' ? "bg-emerald-500/20 text-emerald-400" :
                               booking.status === 'confirmed' ? "bg-blue-500/20 text-blue-400" :
                               "bg-amber-500/20 text-amber-400"
@@ -637,42 +640,43 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
               </div>
             </motion.div>
 
-            {/* Staff - datos REALES */}
+            {/* Staff - COMPACTADO con hover glow */}
             <motion.div
               initial="hidden"
               animate="visible"
               variants={sectionVariants}
               transition={{ duration: 0.2, delay: 0.15 }}
               className="lg:col-span-4"
+              whileHover={{ boxShadow: "0 12px 40px rgba(0,0,0,0.2)" }}
             >
-              <div className="glass rounded-xl border border-white/10 overflow-hidden h-full flex flex-col">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-                  <h2 className="text-[16px] sm:text-[18px] font-semibold text-white">Staff hoy</h2>
-                  <span className="text-[11px] sm:text-[12px] text-[var(--text-secondary)]">{staffMembers.length} activo{staffMembers.length !== 1 ? 's' : ''}</span>
+              <div className="glass rounded-xl border border-white/10 hover:border-white/15 transition-all overflow-hidden h-full flex flex-col">
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10">
+                  <h2 className="text-[15px] sm:text-[16px] font-semibold text-white">Staff hoy</h2>
+                  <span className="text-[10px] sm:text-[11px] text-[var(--text-secondary)]">{staffMembers.length} activo{staffMembers.length !== 1 ? 's' : ''}</span>
                 </div>
-                <div className="p-3 sm:p-4 flex-1">
+                <div className="px-3 py-2.5 flex-1">
                   {staffMembers.length > 0 ? (
-                    <div className="divide-y divide-white/5">
+                    <div className="divide-y divide-white/[0.06]">
                       {staffMembers.slice(0, 4).map((staff: any, i: number) => {
                         const colors = ["from-blue-500 to-purple-500", "from-emerald-500 to-blue-500", "from-pink-500 to-purple-500", "from-amber-500 to-pink-500"];
                         const occ = staff.occupancyPercent || 0;
                         const initial = staff.name?.charAt(0)?.toUpperCase() || "?";
                         return (
-                          <div key={staff.id} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
-                            <div className="flex items-center gap-2.5">
+                          <div key={staff.id} className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
+                            <div className="flex items-center gap-2">
                               {staff.avatar_url ? (
-                                <img src={staff.avatar_url} alt={staff.name} className="w-7 h-7 rounded-full object-cover" />
+                                <img src={staff.avatar_url} alt={staff.name} className="w-6 h-6 rounded-full object-cover" />
                               ) : (
-                                <div className={cn("w-7 h-7 rounded-full bg-gradient-to-br flex items-center justify-center text-[10px] font-bold text-white", colors[i % colors.length])}>
+                                <div className={cn("w-6 h-6 rounded-full bg-gradient-to-br flex items-center justify-center text-[9px] font-bold text-white", colors[i % colors.length])}>
                                   {initial}
                                 </div>
                               )}
                               <div className="min-w-0">
-                                <div className="text-[13px] sm:text-[14px] text-white font-medium truncate">{staff.name}</div>
-                                <div className="text-[10px] text-[var(--text-secondary)]">{staff.bookingsToday} cita{staff.bookingsToday !== 1 ? 's' : ''}</div>
+                                <div className="text-[12px] sm:text-[13px] text-white font-medium truncate">{staff.name}</div>
+                                <div className="text-[9px] text-[var(--text-secondary)]">{staff.bookingsToday} cita{staff.bookingsToday !== 1 ? 's' : ''}</div>
                               </div>
                             </div>
-                            <div className={cn("text-[13px] sm:text-[14px] font-semibold", occ >= 70 ? "text-emerald-400" : occ >= 40 ? "text-blue-400" : "text-[var(--text-secondary)]")}>
+                            <div className={cn("text-[12px] sm:text-[13px] font-semibold", occ >= 70 ? "text-emerald-400" : occ >= 40 ? "text-blue-400" : "text-[var(--text-secondary)]")}>
                               {occ}%
                             </div>
                           </div>
@@ -680,9 +684,9 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                       })}
                     </div>
                   ) : (
-                    <div className="text-center py-6">
-                      <User className="h-7 w-7 text-[var(--text-secondary)] mx-auto mb-1.5" />
-                      <p className="text-[12px] text-[var(--text-secondary)]">Sin staff activo</p>
+                    <div className="text-center py-5">
+                      <User className="h-6 w-6 text-[var(--text-secondary)] mx-auto mb-1" />
+                      <p className="text-[11px] text-[var(--text-secondary)]">Sin staff activo</p>
                     </div>
                   )}
                 </div>
@@ -693,40 +697,41 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
           {/* ═══════════════════════════════════════════════════════════════
               FILA 4: PERFORMANCE (8/12) + ACCIONES (4/12)
               ═══════════════════════════════════════════════════════════════ */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-            {/* Performance */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
+            {/* Performance - AJUSTADO max-w-[85%] */}
             <motion.div
               initial="hidden"
               animate="visible"
               variants={sectionVariants}
               transition={{ duration: 0.2, delay: 0.2 }}
               className="lg:col-span-8"
+              whileHover={{ boxShadow: "0 12px 40px rgba(0,0,0,0.2)" }}
             >
-              <div className="glass rounded-xl border border-white/10 overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-                  <h2 className="text-[16px] sm:text-[18px] font-semibold text-white">Performance</h2>
-                  <div className="flex gap-1.5">
-                    <button className="px-2.5 py-1 text-[11px] sm:text-[12px] rounded-lg bg-white/10 text-white font-medium">7d</button>
-                    <button className="px-2.5 py-1 text-[11px] sm:text-[12px] rounded-lg bg-white/5 text-[var(--text-secondary)] hover:bg-white/10 transition-colors">30d</button>
+              <div className="glass rounded-xl border border-white/10 hover:border-white/15 transition-all overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10">
+                  <h2 className="text-[15px] sm:text-[16px] font-semibold text-white">Performance</h2>
+                  <div className="flex gap-1">
+                    <button className="px-2 py-0.5 text-[10px] sm:text-[11px] rounded-lg bg-white/10 text-white font-medium">7d</button>
+                    <button className="px-2 py-0.5 text-[10px] sm:text-[11px] rounded-lg bg-white/5 text-[var(--text-secondary)] hover:bg-white/10 transition-colors">30d</button>
                   </div>
                 </div>
-                <div className="p-3 sm:p-4">
-                  {/* Header del gráfico */}
-                  <div className="flex items-center justify-between pb-3 border-b border-white/5 mb-3">
+                <div className="px-4 py-3">
+                  {/* Header del gráfico con divisor */}
+                  <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.06] mb-3">
                     <div>
-                      <h3 className="text-[13px] sm:text-[14px] font-medium text-white">Reservas diarias</h3>
-                      <p className="text-[11px] sm:text-[12px] text-[var(--text-secondary)]">Últimos 7 días</p>
+                      <h3 className="text-[12px] sm:text-[13px] font-medium text-white">Reservas diarias</h3>
+                      <p className="text-[10px] sm:text-[11px] text-[var(--text-secondary)]">Últimos 7 días</p>
                     </div>
                     <div className="text-right">
-                      <div className="text-[18px] sm:text-[20px] font-bold text-white">{totalLast7Days}</div>
-                      <div className="text-[11px] text-[var(--text-secondary)]">total</div>
+                      <div className="text-[16px] sm:text-[18px] font-bold text-white">{totalLast7Days}</div>
+                      <div className="text-[10px] text-[var(--text-secondary)]">total</div>
                     </div>
                   </div>
 
-                  {/* Gráfico de barras */}
-                  <div className="max-w-full sm:max-w-[90%] mx-auto">
+                  {/* Gráfico de barras - max-w-[85%] centrado */}
+                  <div className="max-w-[85%] mx-auto">
                     {showChartBars ? (
-                      <div className="flex items-end gap-2 sm:gap-3 h-12 sm:h-14 mb-4">
+                      <div className="flex items-end gap-2 h-11 sm:h-12 mb-3">
                         {bookingValues.map((count: number, index: number) => {
                           const height = chartMax > 0 ? (count / chartMax) * 100 : 0;
                           return (
@@ -735,98 +740,99 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                                 initial={{ height: 0 }}
                                 animate={{ height: `${height}%` }}
                                 transition={{ duration: 0.3, delay: index * 0.05 }}
-                                className="w-full rounded-t bg-gradient-to-t from-[var(--accent-aqua)] to-[var(--accent-purple)]"
-                                style={{ minHeight: count > 0 ? "4px" : "0" }}
+                                className="w-full rounded-t bg-gradient-to-t from-emerald-500 to-blue-500"
+                                style={{ minHeight: count > 0 ? "3px" : "0" }}
                               />
-                              <span className="text-[9px] sm:text-[10px] text-[var(--text-secondary)] mt-1">{format(subDays(new Date(), 6 - index), "dd")}</span>
-                              <span className="text-[11px] sm:text-[12px] font-semibold text-white">{count}</span>
+                              <span className="text-[8px] sm:text-[9px] text-[var(--text-secondary)] mt-1">{format(subDays(new Date(), 6 - index), "dd")}</span>
+                              <span className="text-[10px] sm:text-[11px] font-semibold text-white">{count}</span>
                             </div>
                           );
                         })}
                       </div>
                     ) : (
-                      <div className="h-12 flex items-center justify-center text-[13px] text-[var(--text-secondary)]">Sin datos</div>
+                      <div className="h-11 flex items-center justify-center text-[12px] text-[var(--text-secondary)]">Sin datos</div>
                     )}
                   </div>
 
-                  {/* Métricas */}
-                  <div className="flex justify-center gap-6 sm:gap-10 pt-3 border-t border-white/5">
+                  {/* Métricas compactas centradas */}
+                  <div className="flex justify-center gap-5 sm:gap-8 pt-2.5 border-t border-white/[0.06]">
                     <div className="text-center">
-                      <div className="text-[14px] sm:text-[16px] font-bold text-emerald-400">{formatCurrency(stats.revenueLast7Days || 0)}</div>
-                      <div className="text-[10px] sm:text-[11px] text-[var(--text-secondary)]">Ingresos</div>
+                      <div className="text-[13px] sm:text-[14px] font-bold text-emerald-400">{formatCurrency(stats.revenueLast7Days || 0)}</div>
+                      <div className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">Ingresos</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-[14px] sm:text-[16px] font-bold text-blue-400">{avgLast7Days.toFixed(1)}</div>
-                      <div className="text-[10px] sm:text-[11px] text-[var(--text-secondary)]">Media/día</div>
+                      <div className="text-[13px] sm:text-[14px] font-bold text-blue-400">{avgLast7Days.toFixed(1)}</div>
+                      <div className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">Media/día</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-[14px] sm:text-[16px] font-bold text-purple-400">{formatCurrency(avgTicketLast7Days)}</div>
-                      <div className="text-[10px] sm:text-[11px] text-[var(--text-secondary)]">Ticket</div>
+                      <div className="text-[13px] sm:text-[14px] font-bold text-purple-400">{formatCurrency(avgTicketLast7Days)}</div>
+                      <div className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">Ticket</div>
                     </div>
                   </div>
                 </div>
               </div>
             </motion.div>
 
-            {/* Acciones */}
+            {/* Acciones - COMPACTADO con separador */}
             <motion.div
               initial="hidden"
               animate="visible"
               variants={sectionVariants}
               transition={{ duration: 0.2, delay: 0.25 }}
               className="lg:col-span-4"
+              whileHover={{ boxShadow: "0 12px 40px rgba(0,0,0,0.2)" }}
             >
-              <div className="glass rounded-xl border border-white/10 overflow-hidden h-full">
-                <div className="px-4 py-3 border-b border-white/10">
-                  <h2 className="text-[16px] sm:text-[18px] font-semibold text-white">Acciones</h2>
+              <div className="glass rounded-xl border border-white/10 hover:border-white/15 transition-all overflow-hidden h-full">
+                <div className="px-4 py-2.5 border-b border-white/10">
+                  <h2 className="text-[15px] sm:text-[16px] font-semibold text-white">Acciones</h2>
                 </div>
-                <div className="p-3 sm:p-4">
-                  {/* Botón principal CTA */}
+                <div className="px-3 py-3">
+                  {/* Botón principal CTA - saturación reducida, altura reducida */}
                   <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
                     onClick={() => (window.location.href = "/panel/agenda")}
-                    className="w-full flex items-center justify-center gap-2 p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-[var(--accent-purple)] to-[var(--accent-aqua)] text-white font-semibold transition-all duration-200 mb-3 shadow-lg shadow-purple-500/20"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-gradient-to-r from-purple-600/90 to-emerald-500/90 text-white font-semibold transition-all duration-200 mb-2.5"
                   >
-                    <Plus className="h-4 sm:h-[18px] w-4 sm:w-[18px]" />
-                    <span className="text-[14px] sm:text-[15px]">Nueva cita</span>
+                    <Plus className="h-4 w-4" />
+                    <span className="text-[13px] sm:text-[14px]">Nueva cita</span>
                   </motion.button>
 
-                  {/* Botones secundarios */}
-                  <div className="space-y-1.5 mb-3">
+                  {/* Botones secundarios - mismo height */}
+                  <div className="space-y-1.5">
                     <button
                       onClick={() => (window.location.href = "/panel/clientes")}
-                      className="w-full flex items-center gap-2.5 p-2.5 sm:p-3 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all"
+                      className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-white/[0.04] border border-white/[0.08] text-white hover:bg-white/[0.08] transition-all"
                     >
-                      <User className="h-4 w-4 text-[var(--text-secondary)]" />
-                      <span className="text-[13px] sm:text-[14px]">Clientes</span>
+                      <User className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
+                      <span className="text-[12px] sm:text-[13px]">Clientes</span>
                     </button>
                     <button
                       onClick={() => (window.location.href = "/panel/agenda")}
-                      className="w-full flex items-center gap-2.5 p-2.5 sm:p-3 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all"
+                      className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-white/[0.04] border border-white/[0.08] text-white hover:bg-white/[0.08] transition-all"
                     >
-                      <Calendar className="h-4 w-4 text-[var(--text-secondary)]" />
-                      <span className="text-[13px] sm:text-[14px]">Agenda</span>
+                      <Calendar className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
+                      <span className="text-[12px] sm:text-[13px]">Agenda</span>
                     </button>
                   </div>
 
-                  {/* Acciones rápidas */}
-                  <div className="pt-3 border-t border-white/10">
-                    <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">Rápido</p>
-                    <div className="flex gap-2">
+                  {/* Separador + Acciones rápidas */}
+                  <div className="mt-3 pt-2.5 border-t border-white/[0.08]">
+                    <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Acceso rápido</p>
+                    <div className="grid grid-cols-2 gap-1.5">
                       <button
                         onClick={() => (window.location.href = "/panel/clientes")}
-                        className="flex-1 flex flex-col items-center p-2 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 transition-all"
+                        className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-all"
                       >
-                        <Plus className="h-3.5 w-3.5 text-[var(--text-secondary)] mb-0.5" />
+                        <Plus className="h-3 w-3 text-[var(--text-secondary)]" />
                         <span className="text-[9px] text-[var(--text-secondary)]">Cliente</span>
                       </button>
                       <button
-                        onClick={() => (window.location.href = "/panel/agenda")}
-                        className="flex-1 flex flex-col items-center p-2 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 transition-all"
+                        onClick={() => (window.location.href = "/panel/servicios")}
+                        className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-all"
                       >
-                        <Calendar className="h-3.5 w-3.5 text-[var(--text-secondary)] mb-0.5" />
-                        <span className="text-[9px] text-[var(--text-secondary)]">Agenda</span>
+                        <Scissors className="h-3 w-3 text-[var(--text-secondary)]" />
+                        <span className="text-[9px] text-[var(--text-secondary)]">Servicio</span>
                       </button>
                     </div>
                   </div>
