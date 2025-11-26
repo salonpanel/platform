@@ -334,15 +334,15 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden bg-[#0E0F11]">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        className="flex-1 overflow-y-auto scrollbar-thin"
+        transition={{ duration: 0.2 }}
+        className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
       >
-        {/* Container principal - PREMIUM LAYOUT */}
-        <div className="max-w-[1920px] mx-auto px-6 sm:px-8 lg:px-10 xl:px-12 py-6 lg:py-8">
+        {/* Container principal - BOOKFAST DESIGN SYSTEM */}
+        <div className="max-w-[1920px] mx-auto px-6 lg:px-8 xl:px-10 py-6 lg:py-8">
           
           {/* ═══════════════════════════════════════════════════════════════
               FILA 1: HERO HEADER (flotante, sin card)
@@ -350,22 +350,20 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="flex items-center justify-between mb-8"
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="flex items-center justify-between mb-4"
           >
             <div>
-              <h1 className="text-2xl lg:text-3xl font-semibold text-white font-satoshi tracking-tight">
+              <h1 className="text-[28px] font-semibold text-white tracking-tight leading-[1.2]">
                 Hola, {user?.user_metadata?.full_name?.split(' ')[0] || 'Profesional'} 👋
               </h1>
-              {shouldShowTimezone && (
-                <p className="text-sm text-[var(--text-secondary)] mt-1">
-                  {todayLabel} · {tenantTimezone}
-                </p>
-              )}
+              <p className="text-[13px] text-white/55 mt-1">
+                {todayLabel} {shouldShowTimezone && `· ${tenantTimezone}`}
+              </p>
             </div>
 
-            {/* Selector de periodo - elegante */}
-            <div className="inline-flex items-center rounded-full bg-white/5 backdrop-blur-sm p-1 text-xs font-satoshi border border-white/8">
+            {/* Selector de periodo - DS compliant */}
+            <div className="inline-flex items-center rounded-[9999px] bg-white/8 backdrop-blur-[12px] p-1 text-[13px] border border-white/6">
               {[
                 { id: "today", label: "Hoy" },
                 { id: "week", label: "Semana" },
@@ -376,10 +374,10 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                   type="button"
                   onClick={() => setPeriod(option.id as "today" | "week" | "month")}
                   className={cn(
-                    "px-4 py-1.5 rounded-full transition-all duration-200",
+                    "px-4 py-1.5 rounded-[9999px] transition-all duration-150",
                     period === option.id
-                      ? "bg-white text-slate-900 font-semibold shadow-sm"
-                      : "text-[var(--text-secondary)] hover:text-white"
+                      ? "bg-white text-[#0E0F11] font-semibold"
+                      : "text-white/55 hover:text-white"
                   )}
                 >
                   {option.label}
@@ -389,129 +387,128 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
           </motion.div>
 
           {/* ═══════════════════════════════════════════════════════════════
-              FILA 2: KPIs - Tarjetas individuales premium
+              FILA 2: KPIs - 4 Tarjetas (grid fijo, hover glow)
+              Espaciado: mb-10 (40px) para crear jerarquía visual
               ═══════════════════════════════════════════════════════════════ */}
           <motion.div
             initial="hidden"
             animate="visible"
             variants={sectionVariants}
-            transition={{ duration: 0.25, delay: 0.05 }}
-            className="grid grid-cols-2 sm:grid-cols-4 gap-4 lg:gap-5 mb-8"
+            transition={{ duration: 0.2, delay: 0.05 }}
+            className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10"
           >
             {/* KPI: Reservas */}
             <motion.div 
-              whileHover={{ y: -2, boxShadow: "0 20px 50px rgba(0,0,0,0.4)" }}
+              whileHover={{ y: -2, boxShadow: "0 8px 30px rgba(79,227,193,0.15)" }}
               onClick={() => (window.location.href = "/panel/agenda")}
-              className="group cursor-pointer glass rounded-[20px] p-5 border border-white/8 hover:border-white/15 transition-all duration-300 shadow-[0_18px_45px_rgba(0,0,0,0.35)]"
+              className="cursor-pointer bg-[#15171A] rounded-[14px] p-4 border border-white/6 hover:border-[#4FE3C1]/30 transition-all duration-150 shadow-[0_6px_20px_rgba(0,0,0,0.45)]"
             >
-              <div className="flex items-center gap-2 mb-3">
-                <div className="p-2 rounded-xl bg-[var(--accent-aqua)]/10">
-                  <TrendingUp className="h-4 w-4 text-[var(--accent-aqua)]" />
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 rounded-[8px] bg-[#4FE3C1]/10">
+                  <TrendingUp className="h-[14px] w-[14px] text-[#4FE3C1]" />
                 </div>
                 <span className={cn(
-                  "text-xs ml-auto",
-                  bookingsKPI.trend === 'up' ? "text-emerald-400" :
-                  bookingsKPI.trend === 'down' ? "text-red-400" : "text-slate-500"
+                  "text-[12px] ml-auto",
+                  bookingsKPI.trend === 'up' ? "text-[#4FE3C1]" :
+                  bookingsKPI.trend === 'down' ? "text-[#EF4444]" : "text-white/40"
                 )}>
-                  {bookingsKPI.trend === 'up' ? '↑' : bookingsKPI.trend === 'down' ? '↓' : '~'} {bookingsKPI.trendLabel || 'hoy'}
+                  {bookingsKPI.trend === 'up' ? '↑' : bookingsKPI.trend === 'down' ? '↓' : '~'} hoy
                 </span>
               </div>
-              <div className="text-3xl font-bold text-white font-satoshi mb-1">{bookingsKPI.value}</div>
-              <div className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Reservas</div>
+              <div className="text-[26px] font-bold text-white leading-[1.2] mb-0.5">{bookingsKPI.value}</div>
+              <div className="text-[12px] text-white/50 uppercase tracking-wider">Reservas</div>
             </motion.div>
 
             {/* KPI: Ingresos */}
             <motion.div 
-              whileHover={{ y: -2, boxShadow: "0 20px 50px rgba(0,0,0,0.4)" }}
+              whileHover={{ y: -2, boxShadow: "0 8px 30px rgba(79,227,193,0.15)" }}
               onClick={() => (window.location.href = "/panel/monedero")}
-              className="group cursor-pointer glass rounded-[20px] p-5 border border-white/8 hover:border-white/15 transition-all duration-300 shadow-[0_18px_45px_rgba(0,0,0,0.35)]"
+              className="cursor-pointer bg-[#15171A] rounded-[14px] p-4 border border-white/6 hover:border-[#4FE3C1]/30 transition-all duration-150 shadow-[0_6px_20px_rgba(0,0,0,0.45)]"
             >
-              <div className="flex items-center gap-2 mb-3">
-                <div className="p-2 rounded-xl bg-emerald-500/10">
-                  <Euro className="h-4 w-4 text-emerald-400" />
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 rounded-[8px] bg-[#4FE3C1]/10">
+                  <Euro className="h-[14px] w-[14px] text-[#4FE3C1]" />
                 </div>
                 <span className={cn(
-                  "text-xs ml-auto",
-                  revenueKPI.trend === 'up' ? "text-emerald-400" :
-                  revenueKPI.trend === 'down' ? "text-red-400" : "text-slate-500"
+                  "text-[12px] ml-auto",
+                  revenueKPI.trend === 'up' ? "text-[#4FE3C1]" :
+                  revenueKPI.trend === 'down' ? "text-[#EF4444]" : "text-white/40"
                 )}>
-                  {revenueKPI.trend === 'up' ? '↑' : revenueKPI.trend === 'down' ? '↓' : '~'} {revenueKPI.trendLabel || 'hoy'}
+                  {revenueKPI.trend === 'up' ? '↑' : revenueKPI.trend === 'down' ? '↓' : '~'} hoy
                 </span>
               </div>
-              <div className="text-3xl font-bold text-white font-satoshi mb-1">{revenueKPI.value}</div>
-              <div className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Ingresos hoy</div>
+              <div className="text-[26px] font-bold text-white leading-[1.2] mb-0.5">{revenueKPI.value}</div>
+              <div className="text-[12px] text-white/50 uppercase tracking-wider">Ingresos hoy</div>
             </motion.div>
 
             {/* KPI: Ocupación */}
             <motion.div 
-              whileHover={{ y: -2, boxShadow: "0 20px 50px rgba(0,0,0,0.4)" }}
+              whileHover={{ y: -2, boxShadow: "0 8px 30px rgba(58,109,255,0.15)" }}
               onClick={() => (window.location.href = "/panel/agenda")}
-              className="group cursor-pointer glass rounded-[20px] p-5 border border-white/8 hover:border-white/15 transition-all duration-300 shadow-[0_18px_45px_rgba(0,0,0,0.35)]"
+              className="cursor-pointer bg-[#15171A] rounded-[14px] p-4 border border-white/6 hover:border-[#3A6DFF]/30 transition-all duration-150 shadow-[0_6px_20px_rgba(0,0,0,0.45)]"
             >
-              <div className="flex items-center gap-2 mb-3">
-                <div className="p-2 rounded-xl bg-blue-500/10">
-                  <BarChart3 className="h-4 w-4 text-blue-400" />
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 rounded-[8px] bg-[#3A6DFF]/10">
+                  <BarChart3 className="h-[14px] w-[14px] text-[#3A6DFF]" />
                 </div>
               </div>
-              <div className="text-3xl font-bold text-white font-satoshi mb-1">
+              <div className="text-[26px] font-bold text-white leading-[1.2] mb-0.5">
                 {Math.round((stats.activeStaff / Math.max(stats.activeStaff + 2, 1)) * 100)}%
               </div>
-              <div className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Ocupación</div>
+              <div className="text-[12px] text-white/50 uppercase tracking-wider">Ocupación</div>
             </motion.div>
 
             {/* KPI: Ticket medio */}
             <motion.div 
-              whileHover={{ y: -2, boxShadow: "0 20px 50px rgba(0,0,0,0.4)" }}
+              whileHover={{ y: -2, boxShadow: "0 8px 30px rgba(160,107,255,0.15)" }}
               onClick={() => (window.location.href = "/panel/monedero")}
-              className="group cursor-pointer glass rounded-[20px] p-5 border border-white/8 hover:border-white/15 transition-all duration-300 shadow-[0_18px_45px_rgba(0,0,0,0.35)]"
+              className="cursor-pointer bg-[#15171A] rounded-[14px] p-4 border border-white/6 hover:border-[#A06BFF]/30 transition-all duration-150 shadow-[0_6px_20px_rgba(0,0,0,0.45)]"
             >
-              <div className="flex items-center gap-2 mb-3">
-                <div className="p-2 rounded-xl bg-purple-500/10">
-                  <Sparkles className="h-4 w-4 text-purple-400" />
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 rounded-[8px] bg-[#A06BFF]/10">
+                  <Sparkles className="h-[14px] w-[14px] text-[#A06BFF]" />
                 </div>
               </div>
-              <div className="text-3xl font-bold text-white font-satoshi mb-1">{formatCurrency(avgTicketLast7Days)}</div>
-              <div className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Ticket medio</div>
+              <div className="text-[26px] font-bold text-white leading-[1.2] mb-0.5">{formatCurrency(avgTicketLast7Days)}</div>
+              <div className="text-[12px] text-white/50 uppercase tracking-wider">Ticket medio</div>
             </motion.div>
           </motion.div>
 
           {/* ═══════════════════════════════════════════════════════════════
-              GRID PRINCIPAL: FILAS 3 Y 4 (gap 24px)
+              GRID PRINCIPAL: 12 columnas estrictas
+              Fila Reservas+Staff: mb-8 (32px)
+              Fila Performance+Acciones: mb-6 (24px)
               ═══════════════════════════════════════════════════════════════ */}
-          <div className="grid grid-cols-12 gap-6">
-            {/* ═══════════════════════════════════════════════════════════════
-                FILA 2: PRÓXIMAS RESERVAS (8/12) + STAFF (4/12)
-                ═══════════════════════════════════════════════════════════════ */}
+          <div className="grid grid-cols-12 gap-6 mb-8">
             
             {/* ═══════════════════════════════════════════════════════════════
                 FILA 3: PRÓXIMAS RESERVAS (8/12) + STAFF (4/12)
                 ═══════════════════════════════════════════════════════════════ */}
             
-            {/* Próximas reservas - 8 columnas - PREMIUM */}
+            {/* Próximas reservas - 8 columnas */}
             <motion.div
               initial="hidden"
               animate="visible"
               variants={sectionVariants}
-              transition={{ duration: 0.25, delay: 0.1 }}
+              transition={{ duration: 0.2, delay: 0.1 }}
               className="col-span-12 lg:col-span-8"
             >
-              <div className="glass rounded-[20px] border border-white/8 overflow-hidden shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
-                {/* Header elegante */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-white/8">
+              <div className="bg-[#15171A] rounded-[14px] border border-white/6 overflow-hidden shadow-[0_6px_20px_rgba(0,0,0,0.45)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)] transition-shadow duration-200">
+                {/* Header con "Ver agenda" integrado */}
+                <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/6">
                   <div className="flex items-center gap-4">
-                    <h2 className="text-base font-semibold text-white font-satoshi">Próximas reservas</h2>
-                    <div className="hidden sm:flex items-center rounded-full bg-white/5 p-0.5 text-[10px] font-satoshi border border-white/5">
+                    <h2 className="text-[18px] font-semibold text-white leading-[1.2]">Próximas reservas</h2>
+                    <div className="hidden sm:flex items-center rounded-[9999px] bg-white/8 p-0.5 text-[12px] border border-white/6">
                       {[
                         { id: "today", label: "Hoy" },
                         { id: "tomorrow", label: "Mañana" },
-                        { id: "week", label: "Semana" },
                       ].map((tab) => (
                         <button
                           key={tab.id}
                           onClick={() => setBookingsTab(tab.id as "today" | "tomorrow" | "week")}
                           className={cn(
-                            "px-3 py-1 rounded-full transition-all",
-                            bookingsTab === tab.id ? "bg-white text-slate-900 font-semibold" : "text-[var(--text-secondary)] hover:text-white"
+                            "px-3 py-1 rounded-[9999px] transition-all duration-150",
+                            bookingsTab === tab.id ? "bg-white text-[#0E0F11] font-medium" : "text-white/55 hover:text-white"
                           )}
                         >
                           {tab.label}
@@ -521,51 +518,51 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                   </div>
                   <button
                     onClick={() => (window.location.href = "/panel/agenda")}
-                    className="text-xs text-[var(--accent-aqua)] hover:text-white transition-colors"
+                    className="text-[13px] text-[#3A6DFF] hover:text-[#4FE3C1] transition-colors duration-150 font-medium"
                   >
                     Ver agenda →
                   </button>
                 </div>
 
-                {/* Lista de reservas - espaciada */}
-                <div className="p-5">
+                {/* Lista de reservas - padding reducido */}
+                <div className="px-5 py-4">
                   {upcomingBookings.length === 0 ? (
-                    <div className="text-center py-10">
-                      <Calendar className="h-10 w-10 text-[var(--text-secondary)] mx-auto mb-3" />
-                      <p className="text-sm text-[var(--text-secondary)]">Sin reservas próximas</p>
+                    <div className="text-center py-8">
+                      <Calendar className="h-9 w-9 text-white/25 mx-auto mb-2" />
+                      <p className="text-[14px] text-white/50">Sin reservas próximas</p>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {upcomingBookings.slice(0, 4).map((booking) => (
                         <div
                           key={booking.id}
-                          className="flex items-center justify-between px-4 py-3.5 rounded-xl bg-white/5 hover:bg-white/8 border border-white/5 hover:border-white/10 transition-all cursor-pointer group"
+                          className="flex items-center justify-between px-3.5 py-2.5 rounded-[10px] bg-white/3 hover:bg-white/6 border border-white/6 hover:border-white/10 transition-all duration-150 cursor-pointer"
                           onClick={() => (window.location.href = "/panel/agenda")}
                         >
-                          <div className="flex items-center gap-4">
-                            <div className="text-sm font-bold text-white w-12 font-satoshi">
+                          <div className="flex items-center gap-3">
+                            <div className="text-[14px] font-bold text-white w-11 font-mono">
                               {format(new Date(booking.starts_at), "HH:mm")}
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-white">
+                              <div className="text-[14px] font-medium text-white">
                                 {booking.customer?.name || "Cliente"}
                               </div>
-                              <div className="text-xs text-[var(--text-secondary)]">
+                              <div className="text-[12px] text-white/50">
                                 {booking.service?.name || "Servicio"}
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <span className="hidden sm:block text-xs text-[var(--text-secondary)]">
-                              {booking.staff?.name || "Sin asignar"}
+                          <div className="flex items-center gap-2.5">
+                            <span className="hidden sm:block text-[12px] text-white/50">
+                              {booking.staff?.name || "—"}
                             </span>
                             <div className={cn(
-                              "px-2.5 py-1 rounded-full text-[10px] font-medium",
-                              booking.status === 'paid' ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" :
-                              booking.status === 'confirmed' ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" :
-                              "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                              "px-2 py-0.5 rounded-[6px] text-[11px] font-semibold",
+                              booking.status === 'paid' ? "bg-[#4FE3C1]/20 text-[#4FE3C1]" :
+                              booking.status === 'confirmed' ? "bg-[#3A6DFF]/20 text-[#3A6DFF]" :
+                              "bg-[#FFC107]/20 text-[#FFC107]"
                             )}>
-                              {booking.status === 'paid' ? "Pagado" : booking.status === 'confirmed' ? "Confirmado" : "Pendiente"}
+                              {booking.status === 'paid' ? "Pagado" : booking.status === 'confirmed' ? "Conf." : "Pend."}
                             </div>
                           </div>
                         </div>
@@ -576,34 +573,34 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
               </div>
             </motion.div>
 
-            {/* Staff - 4 columnas - PREMIUM */}
+            {/* Staff - 4 columnas con divisores */}
             <motion.div
               initial="hidden"
               animate="visible"
               variants={sectionVariants}
-              transition={{ duration: 0.25, delay: 0.15 }}
+              transition={{ duration: 0.2, delay: 0.15 }}
               className="col-span-12 lg:col-span-4"
             >
-              <div className="glass rounded-[20px] border border-white/8 overflow-hidden h-full flex flex-col shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
-                  <h2 className="text-base font-semibold text-white font-satoshi">Staff</h2>
-                  <span className="text-xs text-[var(--text-secondary)]">{stats.activeStaff} activo</span>
+              <div className="bg-[#15171A] rounded-[14px] border border-white/6 overflow-hidden h-full flex flex-col shadow-[0_6px_20px_rgba(0,0,0,0.45)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)] transition-shadow duration-200">
+                <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/6">
+                  <h2 className="text-[18px] font-semibold text-white leading-[1.2]">Staff hoy</h2>
+                  <span className="text-[12px] text-white/50">{stats.activeStaff} activo</span>
                 </div>
-                <div className="p-4 flex-1">
+                <div className="px-4 pt-4 pb-3 flex-1">
                   {stats.activeStaff > 0 ? (
-                    <div className="space-y-3">
+                    <div className="divide-y divide-white/5">
                       {Array.from({ length: Math.min(stats.activeStaff, 3) }).map((_, i) => {
-                        const colors = ["from-blue-500 to-purple-500", "from-green-500 to-teal-500", "from-amber-500 to-orange-500"];
+                        const colors = ["from-[#3A6DFF] to-[#A06BFF]", "from-[#4FE3C1] to-[#3A6DFF]", "from-[#FF6DA3] to-[#A06BFF]"];
                         const occ = [85, 64, 48][i] || 50;
                         return (
-                          <div key={i} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/8 border border-white/5 transition-all cursor-pointer">
-                            <div className="flex items-center gap-3">
-                              <div className={cn("w-8 h-8 rounded-full bg-gradient-to-br flex items-center justify-center text-xs font-bold text-white", colors[i])}>
+                          <div key={i} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                            <div className="flex items-center gap-2.5">
+                              <div className={cn("w-7 h-7 rounded-full bg-gradient-to-br flex items-center justify-center text-[11px] font-bold text-white", colors[i])}>
                                 {String.fromCharCode(65 + i)}
                               </div>
-                              <div className="text-sm text-white font-medium">Prof. {i + 1}</div>
+                              <div className="text-[14px] text-white font-medium">Prof. {i + 1}</div>
                             </div>
-                            <div className={cn("text-sm font-semibold", occ >= 70 ? "text-emerald-400" : occ >= 40 ? "text-blue-400" : "text-slate-400")}>
+                            <div className={cn("text-[14px] font-semibold", occ >= 70 ? "text-[#4FE3C1]" : occ >= 40 ? "text-[#3A6DFF]" : "text-white/40")}>
                               {occ}%
                             </div>
                           </div>
@@ -611,152 +608,155 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                       })}
                     </div>
                   ) : (
-                    <div className="text-center py-8">
-                      <User className="h-8 w-8 text-[var(--text-secondary)] mx-auto mb-2" />
-                      <p className="text-sm text-[var(--text-secondary)]">Sin staff activo</p>
+                    <div className="text-center py-6">
+                      <User className="h-7 w-7 text-white/25 mx-auto mb-1.5" />
+                      <p className="text-[13px] text-white/50">Sin staff activo</p>
                     </div>
                   )}
                 </div>
               </div>
             </motion.div>
+          </div>
 
-            {/* ═══════════════════════════════════════════════════════════════
-                FILA 4: PERFORMANCE (8/12) + ACCIONES (4/12)
-                ═══════════════════════════════════════════════════════════════ */}
-            
-            {/* Performance - 8 columnas - PREMIUM */}
+          {/* ═══════════════════════════════════════════════════════════════
+              FILA 4: PERFORMANCE (8/12) + ACCIONES (4/12)
+              ═══════════════════════════════════════════════════════════════ */}
+          <div className="grid grid-cols-12 gap-6">
+            {/* Performance - 8 columnas */}
             <motion.div
               initial="hidden"
               animate="visible"
               variants={sectionVariants}
-              transition={{ duration: 0.25, delay: 0.2 }}
+              transition={{ duration: 0.2, delay: 0.2 }}
               className="col-span-12 lg:col-span-8"
             >
-              <div className="glass rounded-[20px] border border-white/8 overflow-hidden shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-white/8">
-                  <h2 className="text-base font-semibold text-white font-satoshi">Performance</h2>
-                  <div className="flex gap-2">
-                    <button className="px-3 py-1 text-xs rounded-full bg-white/10 text-white">7 días</button>
-                    <button className="px-3 py-1 text-xs rounded-full bg-white/5 text-[var(--text-secondary)] hover:bg-white/10 transition-colors">30 días</button>
+              <div className="bg-[#15171A] rounded-[14px] border border-white/6 overflow-hidden shadow-[0_6px_20px_rgba(0,0,0,0.45)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)] transition-shadow duration-200">
+                <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/6">
+                  <h2 className="text-[18px] font-semibold text-white leading-[1.2]">Performance</h2>
+                  <div className="flex gap-1.5">
+                    <button className="px-2.5 py-1 text-[12px] rounded-[8px] bg-white/10 text-white font-medium">7d</button>
+                    <button className="px-2.5 py-1 text-[12px] rounded-[8px] bg-white/5 text-white/50 hover:bg-white/8 transition-colors duration-150">30d</button>
                   </div>
                 </div>
-                <div className="p-6">
-                  {/* Header del gráfico */}
-                  <div className="flex items-center justify-between mb-4">
+                <div className="p-5">
+                  {/* Header del gráfico con divisor */}
+                  <div className="flex items-center justify-between pb-4 border-b border-white/5 mb-4">
                     <div>
-                      <h3 className="text-sm font-medium text-white">Reservas diarias</h3>
-                      <p className="text-xs text-[var(--text-secondary)]">Últimos 7 días</p>
+                      <h3 className="text-[14px] font-medium text-white">Reservas diarias</h3>
+                      <p className="text-[12px] text-white/50">Últimos 7 días</p>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-white font-satoshi">{totalLast7Days}</div>
-                      <div className="text-xs text-[var(--text-secondary)]">total reservas</div>
+                      <div className="text-[20px] font-bold text-white leading-[1.2]">{totalLast7Days}</div>
+                      <div className="text-[12px] text-white/50">total</div>
                     </div>
                   </div>
 
-                  {/* Gráfico de barras */}
-                  {showChartBars ? (
-                    <div className="flex items-end gap-2 h-20 mb-6">
-                      {bookingValues.map((count: number, index: number) => {
-                        const height = chartMax > 0 ? (count / chartMax) * 100 : 0;
-                        return (
-                          <div key={index} className="flex-1 flex flex-col items-center">
-                            <motion.div
-                              initial={{ height: 0 }}
-                              animate={{ height: `${height}%` }}
-                              transition={{ duration: 0.4, delay: index * 0.05 }}
-                              className="w-full rounded-t-lg gradient-aurora-1"
-                              style={{ minHeight: count > 0 ? "6px" : "0" }}
-                            />
-                            <span className="text-[10px] text-[var(--text-secondary)] mt-2">{format(subDays(new Date(), 6 - index), "dd/MM")}</span>
-                            <span className="text-xs font-semibold text-white">{count}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="h-20 flex items-center justify-center text-sm text-[var(--text-secondary)]">Sin datos suficientes</div>
-                  )}
+                  {/* Gráfico de barras - centrado al 85% */}
+                  <div className="max-w-[85%] mx-auto">
+                    {showChartBars ? (
+                      <div className="flex items-end gap-3 h-14 mb-5">
+                        {bookingValues.map((count: number, index: number) => {
+                          const height = chartMax > 0 ? (count / chartMax) * 100 : 0;
+                          return (
+                            <div key={index} className="flex-1 flex flex-col items-center">
+                              <motion.div
+                                initial={{ height: 0 }}
+                                animate={{ height: `${height}%` }}
+                                transition={{ duration: 0.3, delay: index * 0.05 }}
+                                className="w-full rounded-t-[3px] bg-gradient-to-t from-[#4FE3C1] to-[#3A6DFF]"
+                                style={{ minHeight: count > 0 ? "4px" : "0" }}
+                              />
+                              <span className="text-[10px] text-white/40 mt-1.5">{format(subDays(new Date(), 6 - index), "dd")}</span>
+                              <span className="text-[12px] font-semibold text-white">{count}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="h-14 flex items-center justify-center text-[14px] text-white/50">Sin datos suficientes</div>
+                    )}
+                  </div>
 
-                  {/* Métricas */}
-                  <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/8">
+                  {/* Métricas centradas */}
+                  <div className="flex justify-center gap-10 pt-4 border-t border-white/5">
                     <div className="text-center">
-                      <div className="text-lg font-bold text-emerald-400">{formatCurrency(stats.revenueLast7Days || 0)}</div>
-                      <div className="text-xs text-[var(--text-secondary)]">Ingresos 7d</div>
+                      <div className="text-[16px] font-bold text-[#4FE3C1]">{formatCurrency(stats.revenueLast7Days || 0)}</div>
+                      <div className="text-[11px] text-white/50">Ingresos</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-bold text-blue-400">{avgLast7Days.toFixed(1)}</div>
-                      <div className="text-xs text-[var(--text-secondary)]">Media/día</div>
+                      <div className="text-[16px] font-bold text-[#3A6DFF]">{avgLast7Days.toFixed(1)}</div>
+                      <div className="text-[11px] text-white/50">Media/día</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-bold text-purple-400">{formatCurrency(avgTicketLast7Days)}</div>
-                      <div className="text-xs text-[var(--text-secondary)]">Ticket medio</div>
+                      <div className="text-[16px] font-bold text-[#A06BFF]">{formatCurrency(avgTicketLast7Days)}</div>
+                      <div className="text-[11px] text-white/50">Ticket</div>
                     </div>
                   </div>
                 </div>
               </div>
             </motion.div>
 
-            {/* Acciones - 4 columnas - PREMIUM */}
+            {/* Acciones - 4 columnas con glass blur */}
             <motion.div
               initial="hidden"
               animate="visible"
               variants={sectionVariants}
-              transition={{ duration: 0.25, delay: 0.25 }}
+              transition={{ duration: 0.2, delay: 0.25 }}
               className="col-span-12 lg:col-span-4"
             >
-              <div className="glass rounded-[20px] border border-white/8 overflow-hidden h-full shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
-                <div className="px-5 py-4 border-b border-white/8">
-                  <h2 className="text-base font-semibold text-white font-satoshi">Acciones</h2>
+              <div className="bg-[#15171A]/95 backdrop-blur-[12px] rounded-[14px] border border-white/6 overflow-hidden h-full shadow-[0_6px_20px_rgba(0,0,0,0.45)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)] transition-shadow duration-200">
+                <div className="px-5 py-3.5 border-b border-white/6">
+                  <h2 className="text-[18px] font-semibold text-white leading-[1.2]">Acciones</h2>
                 </div>
-                <div className="p-5">
-                  {/* Botón principal CTA */}
+                <div className="p-4">
+                  {/* Botón principal CTA - Gradient más sutil */}
                   <motion.button
-                    whileHover={{ scale: 1.02 }}
+                    whileHover={{ scale: 1.02, boxShadow: "0 8px 24px rgba(79,227,193,0.2)" }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => (window.location.href = "/panel/agenda")}
-                    className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl bg-gradient-to-r from-[var(--accent-aqua)] to-[var(--accent-purple)] text-white font-medium hover:shadow-[0_8px_30px_rgba(52,216,226,0.3)] transition-all mb-4"
+                    className="w-full flex items-center justify-center gap-2 p-3.5 rounded-[14px] bg-gradient-to-r from-[#8B5CF6] to-[#4FE3C1] text-white font-semibold transition-all duration-200 mb-3"
                   >
-                    <Plus className="h-5 w-5" />
-                    <span>Nueva cita</span>
+                    <Plus className="h-[18px] w-[18px]" />
+                    <span className="text-[15px]">Nueva cita</span>
                   </motion.button>
 
-                  {/* Botones secundarios */}
-                  <div className="space-y-2">
+                  {/* Botones secundarios - Glass */}
+                  <div className="space-y-1.5 mb-4">
                     <button
                       onClick={() => (window.location.href = "/panel/clientes")}
-                      className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-white/5 border border-white/8 text-white hover:bg-white/10 transition-all"
+                      className="w-full flex items-center gap-2.5 p-3 rounded-[10px] bg-white/5 border border-white/10 text-white hover:bg-white/8 hover:border-white/15 transition-all duration-150"
                     >
-                      <User className="h-4 w-4 text-[var(--text-secondary)]" />
-                      <span className="text-sm">Clientes</span>
+                      <User className="h-[16px] w-[16px] text-white/50" />
+                      <span className="text-[14px]">Clientes</span>
                     </button>
                     <button
                       onClick={() => (window.location.href = "/panel/agenda")}
-                      className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-white/5 border border-white/8 text-white hover:bg-white/10 transition-all"
+                      className="w-full flex items-center gap-2.5 p-3 rounded-[10px] bg-white/5 border border-white/10 text-white hover:bg-white/8 hover:border-white/15 transition-all duration-150"
                     >
-                      <Calendar className="h-4 w-4 text-[var(--text-secondary)]" />
-                      <span className="text-sm">Agenda</span>
+                      <Calendar className="h-[16px] w-[16px] text-white/50" />
+                      <span className="text-[14px]">Agenda</span>
                     </button>
                   </div>
-                </div>
 
-                {/* Acciones rápidas pequeñas */}
-                <div className="px-5 pb-5">
-                  <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-3">Acciones rápidas</p>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => (window.location.href = "/panel/clientes")}
-                      className="flex-1 flex flex-col items-center p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/8 transition-all"
-                    >
-                      <Plus className="h-4 w-4 text-[var(--text-secondary)] mb-1" />
-                      <span className="text-[10px] text-[var(--text-secondary)]">Clientes</span>
-                    </button>
-                    <button
-                      onClick={() => (window.location.href = "/panel/agenda")}
-                      className="flex-1 flex flex-col items-center p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/8 transition-all"
-                    >
-                      <Calendar className="h-4 w-4 text-[var(--text-secondary)] mb-1" />
-                      <span className="text-[10px] text-[var(--text-secondary)]">Agenda</span>
-                    </button>
+                  {/* Acciones rápidas integradas */}
+                  <div className="pt-3 border-t border-white/6">
+                    <p className="text-[10px] text-white/40 uppercase tracking-wider mb-2">Acciones rápidas</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => (window.location.href = "/panel/clientes")}
+                        className="flex-1 flex flex-col items-center p-2.5 rounded-[10px] bg-white/5 border border-white/6 hover:bg-white/8 transition-all"
+                      >
+                        <Plus className="h-[14px] w-[14px] text-white/50 mb-1" />
+                        <span className="text-[10px] text-white/50">Cliente</span>
+                      </button>
+                      <button
+                        onClick={() => (window.location.href = "/panel/agenda")}
+                        className="flex-1 flex flex-col items-center p-2.5 rounded-[10px] bg-white/5 border border-white/6 hover:bg-white/8 transition-all"
+                      >
+                        <Calendar className="h-[14px] w-[14px] text-white/50 mb-1" />
+                        <span className="text-[10px] text-white/50">Agenda</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
