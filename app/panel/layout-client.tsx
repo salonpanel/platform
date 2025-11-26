@@ -13,6 +13,8 @@ import { ToastProvider } from "@/components/ui";
 import { getCurrentTenant } from "@/lib/panel-tenant";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { PermissionsProvider, usePermissions } from "@/contexts/PermissionsContext";
+import { usePrefetchRoutes, usePrefetchData } from "@/hooks/usePrefetch";
+import { useServiceWorker } from "@/hooks/useServiceWorker";
 
 type TenantInfo = {
   id: string;
@@ -39,6 +41,11 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
   
   // Obtener el contexto de permisos para setear el tenantId
   const { setTenantId: setPermissionsTenantId } = usePermissions();
+
+  // Hooks de precarga para navegación instantánea
+  usePrefetchRoutes();
+  usePrefetchData(tenant?.id || null);
+  useServiceWorker();
 
   // Extraer el valor de impersonate una sola vez para evitar re-renders
   const impersonateOrgId = useMemo(() => {
