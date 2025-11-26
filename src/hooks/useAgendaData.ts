@@ -6,6 +6,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { Booking, Staff, StaffBlocking, StaffSchedule, ViewMode } from '@/types/agenda';
 import { toTenantLocalDate } from '@/lib/timezone';
 import { calculateStaffUtilization } from '@/lib/agenda-insights';
+import { getAgendaRange } from '@/lib/agenda-data';
 
 interface UseAgendaDataProps {
   tenantId: string | null;
@@ -21,6 +22,7 @@ interface UseAgendaDataProps {
     bookings?: Booking[];
     blockings?: StaffBlocking[];
     schedules?: StaffSchedule[];
+    range?: { startISO: string; endISO: string; viewMode: ViewMode; anchorDate: string };
   };
 }
 
@@ -129,11 +131,13 @@ export function useAgendaData({
       if (!tenantId) return;
 
       try {
-        const start = startOfDay(parseISO(selectedDate));
-        const end = endOfDay(parseISO(selectedDate));
+        const range = getAgendaRange(selectedDate, viewMode);
 
-        // If initial data provided for the current selectedDate, use it to avoid an extra fetch
-        if (initialData?.bookings || initialData?.blockings || initialData?.schedules) {
+        if (
+          initialData?.range &&
+          initialData.range.viewMode === viewMode &&
+          initialData.range.anchorDate === selectedDate
+        ) {
           if (initialData.bookings) setBookings(initialData.bookings);
           if (initialData.blockings) setStaffBlockings(initialData.blockings);
           if (initialData.schedules) setStaffSchedules(initialData.schedules);
@@ -151,15 +155,15 @@ export function useAgendaData({
               staff:staff(id, name)
             `)
             .eq("tenant_id", tenantId)
-            .gte("starts_at", start.toISOString())
-            .lte("starts_at", end.toISOString())
+            .gte("starts_at", range.startISO)
+            .lte("starts_at", range.endISO)
             .order("starts_at"),
           supabase
             .from("staff_blockings")
             .select("*")
             .eq("tenant_id", tenantId)
-            .gte("start_at", start.toISOString())
-            .lte("end_at", end.toISOString())
+            .gte("start_at", range.startISO)
+            .lte("end_at", range.endISO)
             .order("start_at"),
           supabase
             .from("staff_schedules")
@@ -181,7 +185,7 @@ export function useAgendaData({
     };
 
     loadBookingsAndBlockings();
-  }, [tenantId, selectedDate, supabase]);
+  }, [tenantId, selectedDate, viewMode, supabase, initialData]);
 
   // Debounce del término de búsqueda
   useEffect(() => {
