@@ -1,6 +1,6 @@
 "use client";
 
-import { DashboardDataset, fetchDashboardDataset } from "@/lib/dashboard-data";
+import { DashboardDataset, createEmptyDashboardKpis, fetchDashboardDataset } from "@/lib/dashboard-data";
 import { fetchAgendaDataset, getAgendaRange } from "@/lib/agenda-data";
 import { getCurrentTenant } from "@/lib/panel-tenant";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
@@ -38,23 +38,9 @@ export function useDashboardData(
     { enabled: true, initialData: options?.initialData || undefined, persist: true } // Siempre habilitado, la lógica de tenant está dentro
   );
 
-  const emptyKpis: DashboardDataset["kpis"] = {
-    bookingsToday: 0,
-    bookingsLast7Days: Array(7).fill(0),
-    activeServices: 0,
-    activeStaff: 0,
-    totalBookingsLast7Days: 0,
-    totalBookingsLast30Days: 0,
-    revenueToday: 0,
-    revenueLast7Days: 0,
-    revenueLast30Days: 0,
-    noShowsLast7Days: 0,
-    avgTicketLast7Days: 0,
-  };
-
   return {
     tenant: data?.tenant || null,
-    kpis: data?.kpis || emptyKpis,
+    kpis: data?.kpis || createEmptyDashboardKpis(),
     upcomingBookings: data?.upcomingBookings || [],
     isLoading,
   };
