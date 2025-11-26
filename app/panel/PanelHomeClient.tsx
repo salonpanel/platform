@@ -78,17 +78,26 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
   const dashboardData = useDashboardData(currentImpersonation, {
     tenantId: ctxTenantId,
     initialData,
-    timezone: initialData?.tenant.timezone,
+    timezone: initialData?.tenant?.timezone,
+    enabled: !!ctxTenantId, // Solo ejecutar cuando tenemos tenantId válido
   });
 
-  // Extraer datos del hook
-  const { tenant, kpis, upcomingBookings: rawBookings, isLoading: isLoadingStats } = dashboardData;
+  // Extraer datos del hook o usar initialData si está disponible
+  const { tenant: hookTenant, kpis, upcomingBookings: rawBookings, isLoading: isLoadingStats } = dashboardData;
+
+  // Si tenemos initialData, usarlo inmediatamente; sino usar datos del hook
+  const hasInitialData = !!initialData;
+  const tenant = hasInitialData ? initialData.tenant : hookTenant;
+  const currentKpis = hasInitialData ? initialData.kpis : kpis;
+  const currentUpcomingBookings = hasInitialData ? initialData.upcomingBookings : rawBookings;
+  const isLoading = hasInitialData ? false : isLoadingStats;
+
   const tenantId = tenant?.id || null;
   const tenantTimezone = tenant?.timezone || "Europe/Madrid";
   const tenantName = tenant?.name || "Tu barbería";
 
   // Normalizar KPIs → use a defensive cast to support both legacy & full shapes
-  const kp = kpis as any;
+  const kp = currentKpis as any;
   const stats = {
     bookingsToday: kp?.bookingsToday ?? 0,
     bookingsLast7Days: kp?.bookingsLast7Days ?? Array(7).fill(0),
@@ -104,7 +113,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
   };
   
   // Transformar datos de reservas para compatibilidad con el componente
-  const upcomingBookings = (rawBookings || []).map((booking: any) => ({
+  const upcomingBookings = (currentUpcomingBookings || []).map((booking: any) => ({
     id: booking.id,
     starts_at: booking.starts_at,
     ends_at: booking.ends_at,
@@ -248,7 +257,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
   const bookingsKPI = getBookingsKPI();
   const revenueKPI = getRevenueKPI();
 
-  if (isLoadingStats) {
+  if (isLoading) {
     return <DashboardSkeleton />;
   }
 

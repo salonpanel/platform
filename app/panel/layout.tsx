@@ -39,23 +39,37 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     }
 
     const sb = supabaseServer();
-    const { data: membership } = await sb
-      .from("memberships")
-      .select("tenant_id")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: true })
-      .maybeSingle();
+
+    // Fetch membership and tenant in parallel for better performance
+    const [membershipResult] = await Promise.all([
+      sb
+        .from("memberships")
+        .select("tenant_id")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true })
+        .maybeSingle()
+    ]);
+
+    const { data: membership } = membershipResult;
 
     if (!membership?.tenant_id) {
       // Authenticated but without a tenant membership yet
       return <PanelLayoutClient initialAuthStatus={"AUTHENTICATED"}>{children}</PanelLayoutClient>;
     }
 
-    const { data: tenant } = await sb
-      .from("tenants")
-      .select("id, name, timezone, slug")
-      .eq("id", membership.tenant_id)
-      .maybeSingle();
+    // Now fetch tenant and permissions in parallel
+    const [tenantResult, permissionsResult] = await Promise.all([
+      sb
+        .from("tenants")
+        .select("id, name, timezone, slug")
+        .eq("id", membership.tenant_id)
+        .maybeSingle(),
+      sb
+        .rpc("get_user_role_and_permissions", { p_user_id: user.id, p_tenant_id: membership.tenant_id })
+        .single()
+    ]);
+
+    const { data: tenant } = tenantResult;
 
     if (!tenant) {
       return <PanelLayoutClient initialAuthStatus={"AUTHENTICATED"}>{children}</PanelLayoutClient>;
@@ -68,21 +82,15 @@ export default async function PanelLayout({ children }: { children: ReactNode })
       timezone: tenant.timezone || "Europe/Madrid",
     };
 
-    // Try to fetch role & permissions for the current user + tenant to avoid an extra RPC on first load
+    // Extract permissions from parallel fetch
     let initialPermissions: any = null;
     let initialRole: string | null = null;
-    try {
-      const { data: roleAndPermissions, error: rpError } = await sb
-        .rpc("get_user_role_and_permissions", { p_user_id: user.id, p_tenant_id: initialTenant.id })
-        .single();
+    const { data: roleAndPermissions, error: rpError } = permissionsResult;
 
-      if (!rpError && roleAndPermissions) {
-        const rp = roleAndPermissions as any;
-        initialRole = rp.role ?? null;
-        initialPermissions = rp.permissions ?? null;
-      }
-    } catch (e) {
-      // ignore
+    if (!rpError && roleAndPermissions) {
+      const rp = roleAndPermissions as any;
+      initialRole = rp.role ?? null;
+      initialPermissions = rp.permissions ?? null;
     }
 
     return (

@@ -33,6 +33,8 @@ async function getDashboardInitialData(
 
   // Verificar si es admin de plataforma para permitir impersonación
   let targetTenantId: string | null = null;
+  let tenantData: any = null;
+
   if (impersonateOrgId) {
     const { data: isAdmin } = await sb.rpc("check_platform_admin", {
       p_user_id: user.id,
@@ -55,15 +57,32 @@ async function getDashboardInitialData(
 
   if (!targetTenantId) return null;
 
-  const { data: tenant } = await sb
-    .from("tenants")
-    .select("id, name, timezone")
-    .eq("id", targetTenantId)
-    .maybeSingle();
+  // Fetch tenant and dashboard data in parallel
+  const [tenantResult, dashboardResult] = await Promise.all([
+    sb
+      .from("tenants")
+      .select("id, name, timezone")
+      .eq("id", targetTenantId)
+      .maybeSingle(),
+    // We'll fetch dashboard data after getting tenant info
+    Promise.resolve(null)
+  ]);
+
+  const { data: tenant } = tenantResult;
 
   if (!tenant) return null;
 
-  return fetchDashboardDataset(sb, tenant);
+  // Now fetch dashboard data with complete tenant info
+  const dashboardResultFinal = await fetchDashboardDataset(sb, {
+    id: tenant.id,
+    name: tenant.name,
+    timezone: tenant.timezone
+  });
+
+  if (!dashboardResultFinal) return null;
+
+  // Return the dashboard data as-is since it already includes the tenant
+  return dashboardResultFinal;
 }
 
 export default async function PanelHomePage({

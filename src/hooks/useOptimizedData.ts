@@ -12,12 +12,14 @@ import { ViewMode } from "@/types/agenda";
  */
 export function useDashboardData(
   impersonateOrgId: string | null,
-  options?: { tenantId?: string | null; timezone?: string | null; initialData?: DashboardDataset | null }
+  options?: { tenantId?: string | null; tenant?: any; timezone?: string | null; initialData?: DashboardDataset | null; enabled?: boolean }
 ) {
   const supabase = getSupabaseBrowser();
 
+  const enabled = options?.enabled ?? true;
+
   // Obtener tenant + datos en UNA SOLA llamada con caché
-  const cacheKey = options?.tenantId ? `dashboard-full-tenant-${options.tenantId}` : `dashboard-full-${impersonateOrgId || 'default'}`;
+  const cacheKey = options?.tenantId ? `dashboard-full-tenant-${options?.tenantId}` : `dashboard-full-${impersonateOrgId || 'default'}`;
 
   const { data, isLoading } = useStaleWhileRevalidate(
     cacheKey,
@@ -25,7 +27,10 @@ export function useDashboardData(
       // 1. Obtener tenant primero (si se pasó por opciones, no llamamos a getCurrentTenant)
       let tenant = null as any;
 
-      if (options?.tenantId) {
+      if (options?.tenant) {
+        // Si ya tenemos tenant completo desde contexto, usarlo directamente
+        tenant = options.tenant;
+      } else if (options?.tenantId) {
         tenant = { id: options.tenantId, name: "Tu barbería", timezone: options.timezone || "Europe/Madrid" };
       } else {
         const result = await getCurrentTenant(impersonateOrgId);
@@ -35,7 +40,7 @@ export function useDashboardData(
 
       return fetchDashboardDataset(supabase, tenant);
     },
-    { enabled: true, initialData: options?.initialData || undefined, persist: true } // Siempre habilitado, la lógica de tenant está dentro
+    { enabled: enabled && !!options?.tenantId, initialData: options?.initialData || undefined, persist: true } // Solo ejecutar cuando tenemos tenantId y está habilitado
   );
 
   return {

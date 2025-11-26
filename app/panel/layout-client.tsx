@@ -14,7 +14,7 @@ import { getCurrentTenant } from "@/lib/panel-tenant";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { NotificationProvider } from "@/components/agenda/NotificationSystem";
 import { PermissionsProvider, usePermissions } from "@/contexts/PermissionsContext";
-import { usePrefetchRoutes, usePrefetchData } from "@/hooks/usePrefetch";
+import { usePrefetchRoutes, useSmartPrefetchData } from "@/hooks/usePrefetch";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
 
 type TenantInfo = {
@@ -52,8 +52,8 @@ function PanelLayoutContent({ children, initialTenant, initialAuthStatus }: { ch
     return searchParams?.get("impersonate") || null;
   }, [searchParams?.toString()]);
 
-  // Prefetch data (dashboard, etc.) using tenant + impersonate info
-  usePrefetchData(tenant?.id || null, impersonateOrgId);
+  // Prefetch inteligente: espera a que la página esté cargada y precarga herramientas críticas
+  useSmartPrefetchData(tenant?.id || null, impersonateOrgId);
 
   // Cargar estado del sidebar desde localStorage
   useEffect(() => {
@@ -108,6 +108,16 @@ function PanelLayoutContent({ children, initialTenant, initialAuthStatus }: { ch
   useEffect(() => {
     let mounted = true;
     const loadTenant = async () => {
+      // Si tenemos initialTenant del servidor, usarlo directamente
+      if (initialTenant && initialAuthStatus === "AUTHENTICATED") {
+        setTenant(initialTenant);
+        setPermissionsTenantId(initialTenant.id);
+        setAuthStatus("AUTHENTICATED");
+        setSessionLoading(false);
+        setLoading(false);
+        return;
+      }
+
       // Esperar a que la sesión esté verificada antes de cargar el tenant
       if (sessionLoading || authStatus === "UNKNOWN") {
         return;
@@ -210,7 +220,7 @@ function PanelLayoutContent({ children, initialTenant, initialAuthStatus }: { ch
     return () => {
       mounted = false;
     };
-  }, [impersonateOrgId, sessionLoading, authStatus]);
+  }, [impersonateOrgId, sessionLoading, authStatus, initialTenant, initialAuthStatus]);
 
   useEffect(() => {
     if (authStatus !== "UNAUTHENTICATED" || authRedirectTriggered) {
