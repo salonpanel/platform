@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -20,8 +20,7 @@ import {
   Wallet,
   Target
 } from "lucide-react";
-import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { getCurrentTenant } from "@/lib/panel-tenant";
+import { usePermissions } from "@/contexts/PermissionsContext";
 
 interface NavItem {
   href: string;
@@ -36,7 +35,7 @@ interface SidebarNavProps {
   isCollapsed?: boolean;
   onClose?: () => void;
   onToggleCollapse?: () => void;
-  autoCollapseOnClick?: boolean; // Nueva prop para auto-colapsar al hacer click
+  autoCollapseOnClick?: boolean;
 }
 
 export function SidebarNav({
@@ -46,23 +45,14 @@ export function SidebarNav({
   isCollapsed = false,
   onClose,
   onToggleCollapse,
-  autoCollapseOnClick = true, // Por defecto, auto-colapsar al hacer click
+  autoCollapseOnClick = true,
 }: SidebarNavProps) {
   const pathname = usePathname();
   const [isHovered, setIsHovered] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const leaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [tenantId, setTenantId] = useState<string | null>(null);
-  const { permissions, role, loading } = useUserPermissions(tenantId);
-
-  useEffect(() => {
-    getCurrentTenant().then((result) => {
-      if (result.tenant) {
-        setTenantId(result.tenant.id);
-      }
-    });
-  }, []);
+  const { permissions, role } = usePermissions();
 
   // Mapeo de rutas a permisos
   const routePermissionMap: Record<string, keyof typeof permissions> = {
@@ -72,14 +62,14 @@ export function SidebarNav({
     "/panel/servicios": "servicios",
     "/panel/staff": "staff",
     "/panel/marketing": "marketing",
-    "/panel/monedero": "reportes", // monedero está dentro de reportes
+    "/panel/monedero": "reportes",
     "/panel/ajustes": "ajustes",
   };
 
-  // Filtrar items según permisos
+  // Filtrar items según permisos (sin loading, instantáneo desde el contexto)
   const filteredItems = useMemo(() => {
-    // Si está cargando, no hay tenantId, o es owner/admin, mostrar todo
-    if (loading || !tenantId || role === "owner" || role === "admin") {
+    // Si es owner/admin, mostrar todo
+    if (role === "owner" || role === "admin") {
       return items;
     }
 
@@ -88,7 +78,7 @@ export function SidebarNav({
       if (!permissionKey) return true; // Si no está mapeado, mostrar por defecto
       return permissions[permissionKey]; // Mostrar solo si tiene permiso
     });
-  }, [items, permissions, role, loading, tenantId]);
+  }, [items, permissions, role]);
 
   const getNavIcon = useCallback((href: string): React.ReactNode => {
     const iconClass = "h-5 w-5";

@@ -1,32 +1,23 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { getCurrentTenant } from "@/lib/panel-tenant";
+import { usePermissions } from "@/contexts/PermissionsContext";
+import type { UserPermissions } from "@/hooks/useUserPermissions";
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredPermission?: keyof ReturnType<typeof useUserPermissions>["permissions"];
+  requiredPermission?: keyof UserPermissions;
 }
 
 export function ProtectedRoute({ children, requiredPermission }: ProtectedRouteProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [tenantId, setTenantId] = useState<string | null>(null);
-  const { permissions, role, loading } = useUserPermissions(tenantId);
+  const { permissions, role, loading } = usePermissions();
 
   useEffect(() => {
-    getCurrentTenant().then((result) => {
-      if (result.tenant) {
-        setTenantId(result.tenant.id);
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    // Esperar a que cargue y que haya tenantId
-    if (loading || !tenantId) return;
+    // Esperar a que cargue
+    if (loading) return;
 
     // Si no hay permiso requerido, permitir acceso
     if (!requiredPermission) return;
@@ -39,11 +30,11 @@ export function ProtectedRoute({ children, requiredPermission }: ProtectedRouteP
       console.warn(`Acceso denegado a ${pathname}: falta permiso ${requiredPermission}`);
       router.push("/panel/sin-permisos");
     }
-  }, [loading, role, permissions, requiredPermission, pathname, router, tenantId]);
+  }, [loading, role, permissions, requiredPermission, pathname, router]);
 
   // NO mostrar loader aquí - el layout global ya lo maneja
-  // Esto evita loaders anidados y mejora la UX
-  if (loading || !tenantId) {
+  // Renderizar inmediatamente sin esperar (el contexto ya tiene los permisos cacheados)
+  if (loading) {
     return null;
   }
 
