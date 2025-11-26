@@ -146,6 +146,14 @@ function VerifyCodeContent() {
       console.log("[VerifyCode] Redirigiendo a:", redirectPath);
       
       // Pequeño delay para asegurar que las cookies se establezcan
+      // Hacer un prefetch ligero al destino para calentar cachés/SSR y reducir la latencia de la primera carga
+      try {
+        // Llamada no bloqueante con credenciales para que el server pueda leer las cookies recién escritas
+        fetch(redirectPath, { method: "GET", credentials: "include", cache: "no-store" }).catch(() => {});
+      } catch (e) {
+        /* ignore */
+      }
+
       setTimeout(() => {
         window.location.href = redirectPath;
       }, 200);

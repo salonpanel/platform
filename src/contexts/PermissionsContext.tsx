@@ -24,15 +24,21 @@ function isRpcUserRoleAndPermissions(obj: any): obj is RpcUserRoleAndPermissions
   return obj && typeof obj.role === "string" && typeof obj.permissions === "object";
 }
 
-export function PermissionsProvider({ children }: { children: ReactNode }) {
-  const [permissions, setPermissions] = useState<UserPermissions>(FULL_PERMISSIONS);
-  const [role, setRole] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [tenantId, setTenantId] = useState<string | null>(null);
+export function PermissionsProvider({ children, initialPermissions, initialRole, initialTenantId }: { children: ReactNode; initialPermissions?: UserPermissions | null; initialRole?: string | null; initialTenantId?: string | null }) {
+  const [permissions, setPermissions] = useState<UserPermissions>(initialPermissions ?? FULL_PERMISSIONS);
+  const [role, setRole] = useState<string | null>(initialRole ?? null);
+  const [loading, setLoading] = useState(initialPermissions ? false : true);
+  const [tenantId, setTenantId] = useState<string | null>(initialTenantId ?? null);
   const supabase = getSupabaseBrowser();
 
   const loadPermissions = useCallback(async () => {
+    // If initialPermissions were provided and tenantId matches, don't reload
     if (!tenantId) {
+      setLoading(false);
+      return;
+    }
+    if (initialPermissions && initialTenantId && tenantId === initialTenantId) {
+      // already initialized from server
       setLoading(false);
       return;
     }
@@ -77,7 +83,7 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
       setRole(null);
       setLoading(false);
     }
-  }, [supabase, tenantId]);
+  }, [supabase, tenantId, initialPermissions, initialTenantId]);
 
   useEffect(() => {
     loadPermissions();

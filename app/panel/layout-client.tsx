@@ -24,21 +24,21 @@ type TenantInfo = {
   timezone: string;
 };
 
-function PanelLayoutContent({ children }: { children: ReactNode }) {
+function PanelLayoutContent({ children, initialTenant, initialAuthStatus }: { children: ReactNode; initialTenant?: TenantInfo | null; initialAuthStatus?: "UNKNOWN" | "AUTHENTICATED" | "UNAUTHENTICATED" }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [tenant, setTenant] = useState<TenantInfo | null>(null);
+  const [tenant, setTenant] = useState<TenantInfo | null>(initialTenant ?? null);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(initialTenant ? false : true);
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [panelError, setPanelError] = useState<{ title: string; description?: string } | null>(null);
   const [noMembership, setNoMembership] = useState(false);
-  const [authStatus, setAuthStatus] = useState<"UNKNOWN" | "AUTHENTICATED" | "UNAUTHENTICATED">("UNKNOWN");
+  const [authStatus, setAuthStatus] = useState<"UNKNOWN" | "AUTHENTICATED" | "UNAUTHENTICATED">(initialAuthStatus ?? "UNKNOWN");
   const [authRedirectTriggered, setAuthRedirectTriggered] = useState(false);
-  const [sessionLoading, setSessionLoading] = useState(true);
+  const [sessionLoading, setSessionLoading] = useState(initialAuthStatus ? initialAuthStatus === "UNKNOWN" : true);
   
   // Obtener el contexto de permisos para setear el tenantId
   const { setTenantId: setPermissionsTenantId } = usePermissions();
@@ -67,18 +67,18 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
 
   // Verificar sesión inicial antes de cargar el tenant
   useEffect(() => {
+    // Si ya tenemos authStatus proporcionado por el servidor, no hacemos la comprobación client-side
+    if (initialAuthStatus && initialAuthStatus !== "UNKNOWN") {
+      setSessionLoading(false);
+      setAuthStatus(initialAuthStatus);
+      return;
+    }
+
     let mounted = true;
     const checkSession = async () => {
       try {
         const supabase = getSupabaseBrowser();
         const { data: { session }, error } = await supabase.auth.getSession();
-        
-        console.log("[PanelLayoutClient] Initial session check:", {
-          hasSession: !!session,
-          userId: session?.user?.id,
-          hasError: !!error,
-          errorMessage: error?.message,
-        });
 
         if (!mounted) return;
 
@@ -103,7 +103,7 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [initialAuthStatus]);
 
   useEffect(() => {
     let mounted = true;
@@ -120,6 +120,14 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
       setLoading(true);
       setPanelError(null);
       setNoMembership(false);
+
+      // If initial tenant has been provided server-side, skip fetching again and set permissions
+      if (initialTenant && authStatus === "AUTHENTICATED") {
+        setTenant(initialTenant);
+        setPermissionsTenantId(initialTenant.id);
+        setLoading(false);
+        return;
+      }
 
       try {
         const result = await getCurrentTenant(impersonateOrgId);
@@ -372,11 +380,11 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
   );
 }
 
-export default function PanelLayoutClient({ children }: { children: ReactNode }) {
+export default function PanelLayoutClient({ children, initialTenant, initialAuthStatus, initialPermissions, initialRole }: { children: ReactNode; initialTenant?: TenantInfo | null; initialAuthStatus?: "UNKNOWN" | "AUTHENTICATED" | "UNAUTHENTICATED"; initialPermissions?: any; initialRole?: string | null }) {
   return (
     <ToastProvider>
       <NotificationProvider>
-        <PermissionsProvider>
+        <PermissionsProvider initialPermissions={initialPermissions} initialRole={initialRole} initialTenantId={initialTenant?.id}>
           <Suspense
             fallback={
               <div className="flex min-h-screen items-center justify-center bg-slate-950">
@@ -387,7 +395,7 @@ export default function PanelLayoutClient({ children }: { children: ReactNode })
               </div>
             }
           >
-            <PanelLayoutContent>{children}</PanelLayoutContent>
+            <PanelLayoutContent initialTenant={initialTenant} initialAuthStatus={initialAuthStatus}>{children}</PanelLayoutContent>
           </Suspense>
         </PermissionsProvider>
       </NotificationProvider>
