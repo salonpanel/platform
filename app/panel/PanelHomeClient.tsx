@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense, useMemo } from "react";
+import { useState, Suspense, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { MiniKPI } from "@/components/panel/MiniKPI";
@@ -66,6 +66,7 @@ type PanelHomeClientProps = {
 function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProps) {
   const searchParams = useSearchParams();
   const [period, setPeriod] = useState<"today" | "week" | "month">("today");
+  const [prefetchedData, setPrefetchedData] = useState<DashboardDataset | null>(null);
 
   const currentImpersonation = useMemo(() => {
     return searchParams?.get("impersonate") || impersonateOrgId || null;
@@ -74,11 +75,45 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
   // Preferir tenantId del contexto (ya cargado por el layout) para evitar volver a resolver tenant
   const { tenantId: ctxTenantId } = usePermissions();
 
+  // 🔥 DETECTAR DATOS PREFETCHED POST-AUTENTICACIÓN
+  useEffect(() => {
+    // Si ya tenemos initialData del servidor, no necesitamos prefetch adicional
+    if (initialData) return;
+
+    // Si no tenemos tenantId aún, esperar
+    if (!ctxTenantId) return;
+
+    console.log('[PanelHome] 🔄 No hay initialData, intentando prefetch desde API...');
+
+    // Hacer petición al prefetch API para obtener datos frescos
+    fetch('/api/prefetch/panel-data', {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store'
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.ok && data.data) {
+          console.log('[PanelHome] ✅ Datos prefetched obtenidos del API');
+          // Guardar en sessionStorage para uso inmediato
+          sessionStorage.setItem('prefetched-panel-data', JSON.stringify({
+            data: data.data,
+            timestamp: data.timestamp
+          }));
+          // Forzar re-render con los nuevos datos
+          setPrefetchedData(data.data);
+        }
+      })
+      .catch(error => {
+        console.warn('[PanelHome] Error en prefetch desde API:', error);
+      });
+  }, [initialData, ctxTenantId]);
+
   // Hook optimizado: obtiene tenant + datos en UNA llamada con caché
   const dashboardData = useDashboardData(currentImpersonation, {
     tenantId: ctxTenantId,
-    initialData,
-    timezone: initialData?.tenant?.timezone,
+    initialData: prefetchedData || initialData, // 🔥 Usar datos prefetched si disponibles
+    timezone: (prefetchedData?.tenant?.timezone) || initialData?.tenant?.timezone,
     enabled: !!ctxTenantId, // Solo ejecutar cuando tenemos tenantId válido
   });
 

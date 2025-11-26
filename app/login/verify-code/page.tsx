@@ -139,24 +139,53 @@ function VerifyCodeContent() {
       setVerifying(false);
       setSuccess(true);
       
-      // Redirigir usando window.location.href para asegurar que las cookies se envíen
-      const redirectParam = searchParams?.get("redirect");
-      const redirectPath = redirectParam || "/panel";
-      
-      console.log("[VerifyCode] Redirigiendo a:", redirectPath);
-      
-      // Pequeño delay para asegurar que las cookies se establezcan
-      // Hacer un prefetch ligero al destino para calentar cachés/SSR y reducir la latencia de la primera carga
+      // 🔥 OPTIMIZACIÓN: Después de verificación exitosa, hacer prefetch inteligente
+      // para calentar datos críticos antes de redirigir
       try {
-        // Llamada no bloqueante con credenciales para que el server pueda leer las cookies recién escritas
-        fetch(redirectPath, { method: "GET", credentials: "include", cache: "no-store" }).catch(() => {});
-      } catch (e) {
-        /* ignore */
+        console.log('[VerifyCode] 🔥 Iniciando prefetch inteligente post-verificación...');
+        
+        // 1. Prefetch de la ruta del panel (ya existe)
+        const redirectParam = searchParams?.get("redirect");
+        const redirectPath = redirectParam || "/panel";
+        
+        // 2. 🔥 NUEVO: Prefetch inteligente de datos críticos usando las cookies recién creadas
+        // Esto permite que el servidor lea la sesión y prepare datos iniciales
+        const prefetchPromises = [
+          // Prefetch básico de ruta (ya existe)
+          fetch(redirectPath, { method: "GET", credentials: "include", cache: "no-store" }).catch(() => {}),
+          
+          // 🔥 Prefetch de datos del panel con credenciales (nuevo)
+          // El servidor ahora puede leer las cookies de sesión y hacer SSR optimizado
+          fetch("/api/prefetch/panel-data", { 
+            method: "GET", 
+            credentials: "include", 
+            cache: "no-store" 
+          }).catch(() => {}),
+        ];
+        
+        // Ejecutar prefetches en paralelo sin bloquear
+        Promise.all(prefetchPromises).then(() => {
+          console.log('[VerifyCode] ✅ Prefetch inteligente completado');
+        }).catch(() => {
+          // Silenciar errores - es prefetch, no crítico
+        });
+        
+        console.log("[VerifyCode] Redirigiendo a:", redirectPath);
+        
+        // Redirigir después de un pequeño delay para dar tiempo al prefetch
+        setTimeout(() => {
+          window.location.href = redirectPath;
+        }, 300); // Aumentado de 200ms a 300ms para dar tiempo al prefetch
+        
+      } catch (prefetchError) {
+        console.warn('[VerifyCode] Error en prefetch, continuando con redirección normal:', prefetchError);
+        // Si el prefetch falla, redirigir normalmente
+        const redirectParam = searchParams?.get("redirect");
+        const redirectPath = redirectParam || "/panel";
+        setTimeout(() => {
+          window.location.href = redirectPath;
+        }, 200);
       }
-
-      setTimeout(() => {
-        window.location.href = redirectPath;
-      }, 200);
     } catch (err: any) {
       console.error("[VerifyCode] Error inesperado:", err);
       setError("Ha ocurrido un error inesperado. Inténtalo de nuevo.");
