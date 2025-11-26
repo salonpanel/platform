@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, Suspense, useMemo } from "react";
+import { useState, Suspense, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { getCurrentTenant } from "@/lib/panel-tenant";
 import { MiniKPI } from "@/components/panel/MiniKPI";
 import { UpcomingAppointments } from "@/components/panel/UpcomingAppointments";
 import { MessagesWidget } from "@/components/panel/MessagesWidget";
@@ -59,21 +60,32 @@ type OperationalAlert = {
 function PanelHomeContent() {
   const searchParams = useSearchParams();
   const [period, setPeriod] = useState<"today" | "week" | "month">("today");
-  const [tenantTimezone] = useState<string>("Europe/Madrid");
+  const [tenantId, setTenantId] = useState<string | null>(null);
+  const [tenantTimezone, setTenantTimezone] = useState<string>("Europe/Madrid");
+  const [tenantName, setTenantName] = useState<string>("Tu barbería");
 
   const impersonateOrgId = useMemo(() => {
     return searchParams?.get("impersonate") || null;
   }, [searchParams?.toString()]);
 
-  // Usar hook optimizado con caché instantáneo
-  const dashboardData = useDashboardData(impersonateOrgId, tenantTimezone);
+  // Obtener tenant info primero
+  useEffect(() => {
+    let mounted = true;
+    getCurrentTenant(impersonateOrgId).then(({ tenant }) => {
+      if (mounted && tenant) {
+        setTenantId(tenant.id);
+        setTenantTimezone(tenant.timezone || "Europe/Madrid");
+        setTenantName(tenant.name || "Tu barbería");
+      }
+    });
+    return () => { mounted = false; };
+  }, [impersonateOrgId]);
 
-  // Estado de carga
-  const isLoadingStats = dashboardData.isLoading;
+  // Usar hook optimizado con caché instantáneo SOLO cuando tenemos tenantId
+  const dashboardData = useDashboardData(tenantId, tenantTimezone);
 
-  // Extraer datos del hook con valores por defecto
-  const tenantId = impersonateOrgId;
-  const tenantName = "Tu barbería"; // TODO: obtener del tenant
+  // Estado de carga: mostrar skeleton hasta tener tenantId Y datos
+  const isLoadingStats = !tenantId || dashboardData.isLoading;
   const stats = {
     bookingsToday: dashboardData.kpis?.bookingsToday || 0,
     bookingsLast7Days: [] as number[],
