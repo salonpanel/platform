@@ -294,6 +294,7 @@ export function SidebarNav({
                 >
                   <Link
                     href={item.href}
+                    prefetch={true}
                     onClick={() => {
                       // En mobile, cerrar el sidebar completamente
                       if (typeof window !== "undefined" && window.innerWidth < 768) {

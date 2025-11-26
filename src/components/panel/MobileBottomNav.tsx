@@ -100,6 +100,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
               >
                 <Link
                   href={item.href}
+                  prefetch={true}
                   className={cn(
                     "flex flex-col items-center justify-center gap-0.5 py-1.5 px-2 rounded-xl transition-all duration-200 relative min-w-[56px]",
                     active
@@ -231,6 +232,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
                     >
                       <Link
                         href={item.href}
+                        prefetch={true}
                         onClick={() => setShowMoreMenu(false)}
                         className={cn(
                           "flex flex-col items-center justify-center gap-2 p-3 rounded-xl transition-all duration-200 min-h-[80px]",
