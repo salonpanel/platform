@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { supabaseServer } from "@/lib/supabase";
+import { hasTenantPermission } from "@/lib/permissions/server";
 
 export const runtime = "nodejs";
 
@@ -66,6 +68,32 @@ export async function GET(req: Request) {
       }
 
       tenantId = membership.tenant_id;
+    }
+
+    // Enforcement: owner/admin o permiso granular "clientes"
+    const adminSb = supabaseServer();
+    const { data: memRole } = await adminSb
+      .from("memberships")
+      .select("role")
+      .eq("tenant_id", tenantId)
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+
+    if (!memRole) {
+      return NextResponse.json(
+        { error: "No tienes acceso a este tenant" },
+        { status: 403 }
+      );
+    }
+
+    if (memRole.role !== "owner" && memRole.role !== "admin") {
+      const allowed = await hasTenantPermission(adminSb, session.user.id, tenantId as string, "clientes");
+      if (!allowed) {
+        return NextResponse.json(
+          { error: "No tienes permiso para exportar clientes" },
+          { status: 403 }
+        );
+      }
     }
 
     // Construir query base
