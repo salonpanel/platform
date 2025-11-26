@@ -186,7 +186,7 @@ export function BookingDetailPanel({
                 "border-amber-500/30"
               )}>
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-base">🤖</span>
+                  <span className="text-base text-amber-400">AI</span>
                   <h4 className={cn(
                     "text-sm font-semibold text-amber-300",
                     "font-[var(--font-heading)]"
@@ -200,12 +200,9 @@ export function BookingDetailPanel({
                 )}>
                   {booking.customer.internal_notes}
                 </p>
-                <p className={cn(
-                  "mt-2 text-xs",
-                  "text-amber-300/70 font-[var(--font-body)]"
-                )}>
-                  💡 La IA de voz usa estas notas para personalizar las llamadas
-                </p>
+                  <span className="text-xs text-amber-300/70 font-[var(--font-body)]">
+                    [TIP] La IA de voz usa estas notas para personalizar las llamadas
+                  </span>
               </div>
             )}
           </div>

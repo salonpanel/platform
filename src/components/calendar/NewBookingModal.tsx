@@ -447,6 +447,7 @@ export function NewBookingModal({
                     </div>
                   )}
                 </div>
+              </div>
             </TabsContent>
 
             <TabsContent value="notes">
