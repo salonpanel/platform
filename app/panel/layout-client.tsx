@@ -12,7 +12,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { ToastProvider } from "@/components/ui";
 import { getCurrentTenant } from "@/lib/panel-tenant";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
-import { NotificationProvider } from "@/components/agenda/NotificationSystem";
+import { PermissionsProvider, usePermissions } from "@/contexts/PermissionsContext";
 
 type TenantInfo = {
   id: string;
@@ -36,6 +36,9 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
   const [authStatus, setAuthStatus] = useState<"UNKNOWN" | "AUTHENTICATED" | "UNAUTHENTICATED">("UNKNOWN");
   const [authRedirectTriggered, setAuthRedirectTriggered] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(true);
+  
+  // Obtener el contexto de permisos para setear el tenantId
+  const { setTenantId: setPermissionsTenantId } = usePermissions();
 
   // Extraer el valor de impersonate una sola vez para evitar re-renders
   const impersonateOrgId = useMemo(() => {
@@ -153,6 +156,8 @@ function PanelLayoutContent({ children }: { children: ReactNode }) {
           setTenant(result.tenant);
           setUserRole(result.role);
           setIsImpersonating(result.isImpersonating);
+          // Setear el tenantId en el contexto de permisos para que se carguen una sola vez
+          setPermissionsTenantId(result.tenant.id);
         } else {
           // Caso defensivo: status OK pero sin tenant
           setPanelError({
@@ -361,18 +366,20 @@ export default function PanelLayoutClient({ children }: { children: ReactNode })
   return (
     <ToastProvider>
       <NotificationProvider>
-        <Suspense
-          fallback={
-            <div className="flex min-h-screen items-center justify-center bg-slate-950">
-              <div className="text-center">
-                <Spinner size="lg" />
-                <p className="mt-4 text-slate-400">Cargando panel...</p>
+        <PermissionsProvider>
+          <Suspense
+            fallback={
+              <div className="flex min-h-screen items-center justify-center bg-slate-950">
+                <div className="text-center">
+                  <Spinner size="lg" />
+                  <p className="mt-4 text-slate-400">Cargando panel...</p>
+                </div>
               </div>
-            </div>
-          }
-        >
-          <PanelLayoutContent>{children}</PanelLayoutContent>
-        </Suspense>
+            }
+          >
+            <PanelLayoutContent>{children}</PanelLayoutContent>
+          </Suspense>
+        </PermissionsProvider>
       </NotificationProvider>
     </ToastProvider>
   );
