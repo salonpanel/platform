@@ -297,202 +297,127 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-6 lg:py-10">
+    <div className="min-h-screen flex flex-col">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
-        className="space-y-6 lg:space-y-8"
+        className="flex-1 p-4 sm:p-6 lg:p-8"
       >
-        {/* Cabecera ejecutiva */}
+        {/* Header minimalista - solo selector de periodo */}
         <motion.div
           initial="hidden"
           animate="visible"
           variants={sectionVariants}
           transition={{ duration: 0.22, ease: "easeOut", delay: 0 }}
+          className="flex items-center justify-between mb-6"
         >
-          <PageHeader
-            title="Visión general de hoy"
-            subtitle={`${(tenantName || "Tu barbería")} · ${todayLabel}`}
-            description="Revisa de un vistazo reservas, ingresos y actividad de tu barbería."
-            size="md"
-            className="mb-6"
-          />
-          {shouldShowTimezone && (
-            <p className="text-xs text-[var(--color-text-secondary)] mt-2 mb-4">
-              Zona horaria del negocio: <span className="font-semibold text-[var(--color-text-primary)]">{tenantTimezone}</span>
-            </p>
-          )}
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-semibold text-[var(--color-text-primary)] font-satoshi">
+              Dashboard
+            </h1>
+            {shouldShowTimezone && (
+              <span className="text-xs text-[var(--color-text-secondary)] px-2 py-1 rounded-full bg-white/5 border border-white/5">
+                {tenantTimezone}
+              </span>
+            )}
+          </div>
+
+          {/* Selector de periodo minimalista */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[var(--text-secondary)] hidden sm:inline">Periodo:</span>
+            <div className="inline-flex items-center rounded-full bg-white/5 p-1 text-[11px] font-satoshi border border-white/5">
+              {[
+                { id: "today", label: "Hoy" },
+                { id: "week", label: "Semana" },
+                { id: "month", label: "Mes" },
+              ].map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setPeriod(option.id as "today" | "week" | "month")}
+                  className={cn(
+                    "px-3 py-1 rounded-full transition-all duration-200",
+                    period === option.id
+                      ? "bg-white text-slate-900 shadow-sm font-semibold"
+                      : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </motion.div>
 
-        {/* Alertas operativas */}
-        {operationalAlerts.length > 0 && (
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={sectionVariants}
-            transition={{ duration: 0.22, ease: "easeOut", delay: 0.05 }}
-            className="grid gap-4 md:gap-6 md:grid-cols-2"
-          >
-            {operationalAlerts.slice(0, 2).map((alert: OperationalAlert, idx: number) => (
-              <div
-                key={idx}
-                className={cn(
-                  cardBaseClass,
-                  alert.type === "info" && "border-sky-500/40",
-                  alert.type === "warning" && "border-amber-500/40",
-                  alert.type === "danger" && "border-red-500/40"
-                )}
-              >
-                <p className="text-sm font-medium text-[var(--text-primary)] mb-1">
-                  {alert.title}
-                </p>
-                <p className="text-xs sm:text-[13px] text-[var(--text-secondary)]">
-                  {alert.description}
-                </p>
-              </div>
-            ))}
-          </motion.div>
-        )}
-
-        {/* Selector de periodo */}
+        {/* Layout Masonry - Grid responsive sin huecos */}
         <motion.div
           initial="hidden"
           animate="visible"
           variants={sectionVariants}
           transition={{ duration: 0.22, ease: "easeOut", delay: 0.1 }}
-          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 auto-rows-min"
+          style={{
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gridAutoRows: 'minmax(120px, auto)'
+          }}
         >
-          <p className="text-xs text-[var(--text-secondary)]">
-            Ajusta la vista para analizar tu negocio por periodo.
-          </p>
-          <div className="inline-flex items-center rounded-full bg-white/5 p-1 text-[11px] font-satoshi border border-white/5">
-          {[
-            { id: "today", label: "Hoy" },
-            { id: "week", label: "Semana" },
-            { id: "month", label: "Mes" },
-          ].map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => setPeriod(option.id as "today" | "week" | "month")}
-              className={cn(
-                "px-3 py-1 rounded-full transition-all duration-200",
-                period === option.id
-                  ? "bg-white text-slate-900 shadow-sm font-semibold"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              )}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </motion.div>
+          {/* KPIs principales - tamaño fijo */}
+          <div className="col-span-1">
+            <MiniKPI
+              title={bookingsKPI.label}
+              value={bookingsKPI.value}
+              trend={bookingsKPI.trend}
+              trendValue={bookingsKPI.trendLabel}
+              icon={<Calendar className="h-4 w-4" />}
+              onClick={() => (window.location.href = "/panel/agenda")}
+            />
+          </div>
+          <div className="col-span-1">
+            <MiniKPI
+              title={revenueKPI.label}
+              value={revenueKPI.value}
+              trend={revenueKPI.trend}
+              trendValue={revenueKPI.trendLabel}
+              icon={<Euro className="h-4 w-4" />}
+              onClick={() => (window.location.href = "/panel/monedero")}
+            />
+          </div>
+          <div className="col-span-1">
+            <MiniKPI
+              title="Servicios activos"
+              value={stats.activeServices}
+              icon={<Scissors className="h-4 w-4" />}
+              onClick={() => (window.location.href = "/panel/servicios")}
+            />
+          </div>
+          <div className="col-span-1">
+            <MiniKPI
+              title="Staff activo"
+              value={stats.activeStaff}
+              icon={<Users className="h-4 w-4" />}
+              onClick={() => (window.location.href = "/panel/staff")}
+            />
+          </div>
 
-        {/* KPIs principales */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={sectionVariants}
-          transition={{ duration: 0.22, ease: "easeOut", delay: 0.15 }}
-          className="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6 md:grid-cols-4"
-        >
-          <MiniKPI
-            title={bookingsKPI.label}
-            value={bookingsKPI.value}
-            trend={bookingsKPI.trend}
-            trendValue={bookingsKPI.trendLabel}
-            icon={<Calendar className="h-4 w-4" />}
-            onClick={() => (window.location.href = "/panel/agenda")}
-          />
-          <MiniKPI
-            title={revenueKPI.label}
-            value={revenueKPI.value}
-            trend={revenueKPI.trend}
-            trendValue={revenueKPI.trendLabel}
-            icon={<Euro className="h-4 w-4" />}
-            onClick={() => (window.location.href = "/panel/monedero")}
-          />
-          <MiniKPI
-            title="Servicios activos"
-            value={stats.activeServices}
-            icon={<Scissors className="h-4 w-4" />}
-            onClick={() => (window.location.href = "/panel/servicios")}
-          />
-          <MiniKPI
-            title="Staff activo"
-            value={stats.activeStaff}
-            icon={<Users className="h-4 w-4" />}
-            onClick={() => (window.location.href = "/panel/staff")}
-          />
-        </motion.div>
-
-        {showOnboardingHint && (
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={sectionVariants}
-            transition={{ duration: 0.22, ease: "easeOut", delay: 0.2 }}
-            className={cn(cardBaseClass, "text-center")}
-          >
-            <p className="text-sm font-medium text-[var(--text-primary)] font-satoshi mb-2">
-              Todavía no hay actividad registrada hoy.
-            </p>
-            <p className="text-xs sm:text-[13px] text-[var(--text-secondary)] mb-4 max-w-2xl mx-auto">
-              Configura tus servicios, horarios y equipo para empezar a recibir reservas. Usa los
-              accesos rápidos para ir directo a cada sección.
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              {QUICK_LINKS.map((link) => {
-                const Icon = link.icon;
-                return (
-                  <Link
-                    key={`hint-${link.href}`}
-                    href={link.href}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/5 px-3 py-1.5 text-xs text-[var(--text-primary)] bg-white/5 hover:bg-white/10 transition-colors"
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    {link.label}
-                  </Link>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Widget de mensajes, gráfico y alertas en grid */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={sectionVariants}
-          transition={{ duration: 0.22, ease: "easeOut", delay: 0.25 }}
-          className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-12"
-        >
-          {/* Widget de mensajes */}
-          {tenantId && (
-            <div className="lg:col-span-3 h-full">
-              <MessagesWidget tenantId={tenantId} />
-            </div>
-          )}
-
-          {/* Gráfico de reservas */}
+          {/* Gráfico de reservas - ocupa más espacio */}
           <div
             className={cn(
               cardBaseClass,
-              "flex flex-col gap-4",
-              tenantId ? "lg:col-span-7" : "lg:col-span-8"
+              "flex flex-col gap-4 col-span-1 sm:col-span-2 lg:col-span-2 xl:col-span-3",
+              "row-span-2" // Ocupa 2 filas de altura
             )}
           >
-            <div className="mb-6">
+            <div className="mb-2">
               <h3 className="text-sm font-medium text-[var(--text-primary)] font-satoshi mb-1">
                 Reservas últimos 7 días
               </h3>
               <p className="text-xs text-[var(--text-secondary)]">
-                Tendencia de reservas diarias
+                Tendencia diaria • {totalLast7Days} total • {avgLast7Days.toFixed(1)} promedio
               </p>
             </div>
             {showChartBars ? (
-              <div className="h-40 flex items-end gap-1.5 sm:gap-2 relative">
+              <div className="flex-1 flex items-end gap-1.5 sm:gap-2 relative min-h-[140px]">
                 {bookingValues.map((count: number, index: number) => {
                   const height = chartMax > 0 ? (count / chartMax) * 100 : 0;
                   return (
@@ -555,66 +480,52 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                 })}
               </div>
             ) : (
-              <div className="h-40 flex flex-col items-center justify-center text-center gap-2 text-[var(--text-secondary)]">
+              <div className="flex-1 flex flex-col items-center justify-center text-center gap-2 text-[var(--text-secondary)] min-h-[140px]">
                 <p className="text-sm font-medium text-[var(--text-primary)]">
-                  Todavía no hay reservas en los últimos 7 días.
+                  No hay reservas recientes
                 </p>
-                <p className="text-xs text-[var(--text-secondary)] max-w-md">
-                  Cuando empieces a recibir reservas, verás aquí la evolución diaria, el total semanal, la media diaria, el ticket medio y la tasa de no-show.
+                <p className="text-xs text-[var(--text-secondary)] max-w-xs">
+                  Las reservas aparecerán aquí cuando empieces a recibirlas
                 </p>
               </div>
             )}
+
+            {/* Métricas compactas */}
             {showChartBars && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2 text-xs sm:text-[13px] text-[var(--text-secondary)]">
-                <p>
-                  Últimos 7 días:{" "}
-                  <span className="font-semibold text-[var(--text-primary)]">{totalLast7Days}</span>{" "}
-                  reservas · Media diaria:{" "}
-                  <span className="font-semibold text-[var(--text-primary)]">{avgLast7Days.toFixed(1)}</span>
-                </p>
-                <p>
-                  Ticket medio semana:{" "}
-                  <span className="font-semibold text-[var(--text-primary)]">{formatCurrency(avgTicketLast7Days)}</span>{" "}
-                  · No-shows:{" "}
-                  <span className="font-semibold text-[var(--text-primary)]">{stats.noShowsLast7Days}</span>{" "}
-                  (
-                  <span className="font-semibold text-[var(--text-primary)]">
-                    {(noShowRateLast7Days * 100).toFixed(1)}%
-                  </span>
-                  )
-                </p>
-              </div>
-            )}
-            {/* Top 3 servicios */}
-            {topServices.length > 0 && (
-              <div className="mt-6 rounded-xl bg-white/5 border border-white/5 p-4">
-                <h3 className="text-xs font-semibold text-[var(--text-primary)] font-satoshi mb-3 uppercase tracking-[0.14em]">
-                  Top servicios últimos 7 días
-                </h3>
-                <ul className="space-y-2">
-                  {topServices.map((service: TopService, index: number) => (
-                    <li key={service.serviceId} className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-[10px] font-semibold text-[var(--text-primary)]">
-                          {index + 1}
-                        </span>
-                        <span className="text-[var(--text-primary)]">{service.name}</span>
-                      </div>
-                      <span className="text-[var(--text-secondary)]">
-                        {service.count} reserva{service.count !== 1 ? "s" : ""}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+              <div className="grid grid-cols-2 gap-3 text-xs text-[var(--text-secondary)]">
+                <div>
+                  <span className="font-semibold text-[var(--text-primary)]">{formatCurrency(avgTicketLast7Days)}</span>
+                  <span className="ml-1">ticket medio</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-[var(--text-primary)]">{stats.noShowsLast7Days}</span>
+                  <span className="ml-1">no-shows ({(noShowRateLast7Days * 100).toFixed(0)}%)</span>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Card de alertas operativas */}
-          <div className={cn(cardBaseClass, "lg:col-span-2 flex flex-col gap-3 h-full", !tenantId && "lg:col-span-4")}>
+          {/* Widget de mensajes - tamaño mediano */}
+          {tenantId && (
+            <div className="col-span-1 sm:col-span-1 lg:col-span-1 xl:col-span-2">
+              <MessagesWidget tenantId={tenantId} />
+            </div>
+          )}
+
+          {/* Próximas reservas - ocupa espacio flexible */}
+          <div className="col-span-1 sm:col-span-2 lg:col-span-2 xl:col-span-3">
+            <UpcomingAppointments
+              bookings={upcomingBookings}
+              limit={4}
+              timezone={tenantTimezone}
+            />
+          </div>
+
+          {/* Alertas operativas - tamaño compacto */}
+          <div className={cn(cardBaseClass, "col-span-1 sm:col-span-1 lg:col-span-1 xl:col-span-2 flex flex-col gap-3")}>
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-medium text-[var(--text-primary)] font-satoshi">
-                Alertas operativas
+                Alertas
               </h3>
               <span className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                 HOY
@@ -622,13 +533,13 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             </div>
 
             {operationalAlerts.length === 0 ? (
-              <p className="text-xs text-[var(--text-secondary)] flex items-center gap-1.5">
+              <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
                 <Sparkles className="h-3 w-3" />
-                Todo en orden por ahora. Sigue así
-              </p>
+                <span>Todo en orden</span>
+              </div>
             ) : (
               <ul className="space-y-2">
-                {operationalAlerts.map((alert: OperationalAlert, idx: number) => (
+                {operationalAlerts.slice(0, 3).map((alert: OperationalAlert, idx: number) => (
                   <li
                     key={idx}
                     className={cn(
@@ -641,7 +552,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                     <span className="font-medium text-[var(--text-primary)]">
                       {alert.title}
                     </span>
-                    <span className="text-[var(--text-secondary)]">
+                    <span className="text-[var(--text-secondary)] text-xs">
                       {alert.description}
                     </span>
                   </li>
@@ -649,41 +560,23 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
               </ul>
             )}
           </div>
-        </motion.div>
 
-        {/* Próximas reservas + Accesos rápidos */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={sectionVariants}
-          transition={{ duration: 0.22, ease: "easeOut", delay: 0.3 }}
-          className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-12"
-        >
-          {/* Próximas reservas */}
-          <div className="lg:col-span-7">
-            <UpcomingAppointments
-              bookings={upcomingBookings}
-              limit={3}
-              timezone={tenantTimezone}
-            />
-          </div>
-
-          {/* Accesos rápidos */}
-          <div className={cn(cardBaseClass, "space-y-4", "lg:col-span-5")}>
+          {/* Accesos rápidos - ocupa espacio flexible */}
+          <div className={cn(cardBaseClass, "col-span-1 sm:col-span-1 lg:col-span-1 xl:col-span-2 space-y-4")}>
             <div>
               <h3 className="text-sm font-medium text-[var(--text-primary)] font-satoshi mb-1">
                 Accesos rápidos
               </h3>
-              <p className="text-xs text-[var(--text-secondary)]">Navegación rápida a secciones principales</p>
+              <p className="text-xs text-[var(--text-secondary)]">Ir a secciones principales</p>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               {QUICK_LINKS.map((link, index) => {
                 const Icon = link.icon;
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="flex flex-col items-center justify-center rounded-xl p-4 text-center transition-all duration-150 ease-out group relative overflow-hidden hover:-translate-y-[1px]"
+                    className="flex flex-col items-center justify-center rounded-xl p-3 text-center transition-all duration-150 ease-out group relative overflow-hidden hover:-translate-y-[1px]"
                     style={{
                       background: "rgba(255, 255, 255, 0.03)",
                       border: "1px solid rgba(255, 255, 255, 0.05)",
@@ -695,21 +588,69 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                     <motion.span
                       whileHover={{ scale: 1.1 }}
                       transition={{ duration: 0.2 }}
-                      className="mb-2 relative z-10"
+                      className="mb-1.5 relative z-10"
                     >
-                      <Icon className="h-5 w-5 text-[var(--text-primary)]" />
+                      <Icon className="h-4 w-4 text-[var(--text-primary)]" />
                     </motion.span>
-                    <span className="font-medium text-[var(--text-primary)] font-satoshi text-xs mb-0.5 relative z-10">
+                    <span className="font-medium text-[var(--text-primary)] font-satoshi text-xs relative z-10">
                       {link.label}
-                    </span>
-                    <span className="text-[10px] text-[var(--text-secondary)] relative z-10">
-                      {link.desc}
                     </span>
                   </Link>
                 );
               })}
             </div>
           </div>
+
+          {/* Onboarding hint - solo si no hay actividad */}
+          {showOnboardingHint && (
+            <div className={cn(cardBaseClass, "col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-4 text-center")}>
+              <p className="text-sm font-medium text-[var(--text-primary)] font-satoshi mb-2">
+                ¡Bienvenido! Configura tu barbería
+              </p>
+              <p className="text-xs text-[var(--text-secondary)] mb-4 max-w-2xl mx-auto">
+                Usa los accesos rápidos para configurar servicios, horarios y equipo
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {QUICK_LINKS.slice(0, 4).map((link) => {
+                  const Icon = link.icon;
+                  return (
+                    <Link
+                      key={`hint-${link.href}`}
+                      href={link.href}
+                      className="inline-flex items-center gap-2 rounded-full border border-white/5 px-3 py-1.5 text-xs text-[var(--text-primary)] bg-white/5 hover:bg-white/10 transition-colors"
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      {link.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Top servicios - si hay datos */}
+          {topServices.length > 0 && (
+            <div className={cn(cardBaseClass, "col-span-1 sm:col-span-1 lg:col-span-1 xl:col-span-2")}>
+              <h3 className="text-xs font-semibold text-[var(--text-primary)] font-satoshi mb-3 uppercase tracking-[0.14em]">
+                Top servicios
+              </h3>
+              <ul className="space-y-2">
+                {topServices.slice(0, 4).map((service: TopService, index: number) => (
+                  <li key={service.serviceId} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-white/10 text-[9px] font-semibold text-[var(--text-primary)]">
+                        {index + 1}
+                      </span>
+                      <span className="text-[var(--text-primary)] truncate max-w-[80px]">{service.name}</span>
+                    </div>
+                    <span className="text-[var(--text-secondary)] font-medium">
+                      {service.count}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </motion.div>
       </motion.div>
     </div>

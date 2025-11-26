@@ -222,3 +222,19 @@ export async function prefetchData<T>(key: string, fetcher: () => Promise<T>) {
     console.error(`Error prefetching ${key}:`, error);
   }
 }
+
+/**
+ * Obtener datos del cache (para uso en componentes)
+ */
+export function getCachedData<T>(key: string): T | null {
+  const cached = cache.get(key);
+  if (cached) {
+    return cached.data as T;
+  }
+  return null;
+}
+
+/**
+ * Exportar el cache para uso interno (solo para componentes optimizados)
+ */
+export { cache };

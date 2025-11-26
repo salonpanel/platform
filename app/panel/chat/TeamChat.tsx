@@ -24,6 +24,7 @@ import { MessageComposer } from "./MessageComposer";
 import { MembersModal } from "./MembersModal";
 import { AddMembersModal } from "./AddMembersModal";
 import { UserProfileModal } from "./UserProfileModal";
+import { cache } from "@/hooks/useStaleWhileRevalidate";
 
 type ConversationType = "all" | "direct" | "group";
 
@@ -215,131 +216,103 @@ export function TeamChat() {
 		[supabase, currentUserId]
 	);
 
+	const loadConversationsOptimized = useCallback(
+		async (targetTenantId: string, targetUserId: string): Promise<Conversation[]> => {
+			if (!targetTenantId || !targetUserId) return [];
+
+			if (process.env.NODE_ENV === "development") {
+				console.debug("[TeamChat] Cargando conversaciones optimizadas", { targetTenantId, targetUserId });
+			}
+
+			try {
+				// 🔥 OPTIMIZACIÓN: Primero buscar datos prefetched durante login
+				const prefetchedKey = `chat-conversations-${impersonateOrgId || 'default'}`;
+				const cached = cache.get(prefetchedKey);
+
+				if (cached && (Date.now() - cached.timestamp) < 30000) { // 30 segundos
+					console.log('[TeamChat] 🔥 Usando datos prefetched de login');
+					setConversations(cached.data);
+					if (!selectedConversationId && cached.data.length > 0) {
+						setSelectedConversationId(cached.data[0].id);
+					}
+					return cached.data;
+				}
+
+				// 🔥 OPTIMIZACIÓN: Una sola query con JOIN para obtener todo
+				// Esto reemplaza las múltiples queries N+1 de refreshConversations
+				const { data, error } = await supabase
+					.rpc("get_user_conversations_optimized", {
+						p_user_id: targetUserId,
+						p_tenant_id: targetTenantId,
+					});
+
+				if (error) throw error;
+
+				if (!data || data.length === 0) {
+					setConversations([]);
+					return [];
+				}
+
+				// Transformar datos de la RPC a formato Conversation
+				const conversations: Conversation[] = data.map((conv: any) => ({
+					id: conv.id,
+					tenantId: conv.tenant_id,
+					type: conv.type as ConversationType,
+					name: conv.name,
+					lastMessageBody: conv.last_message_body,
+					lastMessageAt: conv.last_message_at,
+					unreadCount: conv.unread_count || 0,
+					membersCount: conv.members_count || 0,
+					lastReadAt: conv.last_read_at,
+					createdBy: conv.created_by,
+					viewerRole: conv.viewer_role as "member" | "admin",
+				}));
+
+				// Ordenar por última actividad
+				conversations.sort((a, b) => {
+					const aTimestamp = a.lastMessageAt ?? a.lastReadAt ?? MESSAGE_FALLBACK_DATE;
+					const bTimestamp = b.lastMessageAt ?? b.lastReadAt ?? MESSAGE_FALLBACK_DATE;
+					return bTimestamp.localeCompare(aTimestamp);
+				});
+
+				setConversations(conversations);
+
+				// Seleccionar primera conversación si no hay ninguna seleccionada
+				if (!selectedConversationId && conversations.length > 0) {
+					setSelectedConversationId(conversations[0].id);
+				}
+
+				if (process.env.NODE_ENV === "development") {
+					console.debug("[TeamChat] ✅ Conversaciones cargadas:", conversations.length);
+				}
+
+				return conversations;
+
+			} catch (err) {
+				console.error("[TeamChat] Error cargando conversaciones optimizadas", err);
+
+				// Fallback: usar refreshConversations si la RPC falla
+				console.warn("[TeamChat] Usando fallback refreshConversations");
+				await refreshConversations(targetTenantId, targetUserId);
+				return [];
+			}
+		},
+		[supabase, selectedConversationId, impersonateOrgId]
+	);
+
+	// Mantener compatibilidad: refreshConversations ahora usa loadConversationsOptimized
 	const refreshConversations = useCallback(
 		async (tenantIdOverride?: string, userIdOverride?: string) => {
 			const targetTenantId = tenantIdOverride ?? tenantId;
 			const targetUserId = userIdOverride ?? currentUserId;
 			if (!targetTenantId || !targetUserId) return;
 
-			if (process.env.NODE_ENV === "development") {
-				console.debug("[TeamChat] Refrescando conversaciones", { targetTenantId, targetUserId });
-			}
-
-			try {
-				// Primero obtener los miembros del usuario
-				const { data: memberships, error: membersError } = await supabase
-					.from("team_conversation_members")
-					.select("conversation_id, last_read_at, role")
-					.eq("user_id", targetUserId);
-
-				if (membersError) {
-					if (process.env.NODE_ENV === "development") {
-						console.debug("[TeamChat] Error al obtener memberships:", membersError);
-					}
-					console.error("[TeamChat] Error al obtener memberships:", membersError);
-					throw membersError;
-				}
-
-				if (!memberships || memberships.length === 0) {
-					setConversations([]);
-					return;
-				}
-
-				const conversationIds = memberships
-					.map((m) => m.conversation_id)
-					.filter((id): id is string => Boolean(id));
-
-				if (conversationIds.length === 0) {
-					setConversations([]);
-					return;
-				}
-
-				// Luego obtener las conversaciones que pertenecen al tenant y no están archivadas
-				const { data: conversations, error: convError } = await supabase
-					.from("team_conversations")
-					.select("id, tenant_id, name, type, updated_at, created_by")
-					.in("id", conversationIds)
-					.eq("tenant_id", targetTenantId)
-					.is("is_archived", false)
-					.order("updated_at", { ascending: false });
-
-				if (convError) {
-					console.error("[TeamChat] Error al obtener conversaciones:", convError);
-					throw convError;
-				}
-
-				if (!conversations || conversations.length === 0) {
-					setConversations([]);
-					return;
-				}
-
-				// Crear un mapa de memberships por conversation_id
-				const membershipMap = new Map(memberships.map((m) => [m.conversation_id, m]));
-
-				// Procesar cada conversación
-				const summaries = await Promise.all(
-					conversations.map(async (conv) => {
-						const membership = membershipMap.get(conv.id);
-						if (!membership) return null;
-
-						const lastMessage = await fetchLastMessage(conv.id);
-						const unreadCount = await fetchUnreadCount(conv.id, membership.last_read_at);
-
-						// Contar miembros
-						const { count: membersCount } = await supabase
-							.from("team_conversation_members")
-							.select("user_id", { count: "exact", head: true })
-							.eq("conversation_id", conv.id);
-
-						return {
-							id: conv.id,
-							tenantId: conv.tenant_id,
-							type: conv.type as ConversationType,
-							name: conv.name,
-							lastMessageBody: lastMessage?.body ?? null,
-							lastMessageAt: lastMessage?.created_at ?? null,
-							unreadCount,
-							membersCount: membersCount ?? 0,
-							lastReadAt: membership.last_read_at,
-							createdBy: conv.created_by,
-							viewerRole: membership.role as "member" | "admin",
-						} as Conversation;
-					})
-				);
-
-				const filtered = summaries.filter(Boolean) as Conversation[];
-				filtered.sort((a, b) => {
-					const aTimestamp = a.lastMessageAt ?? a.lastReadAt ?? MESSAGE_FALLBACK_DATE;
-					const bTimestamp = b.lastMessageAt ?? b.lastReadAt ?? MESSAGE_FALLBACK_DATE;
-					return bTimestamp.localeCompare(aTimestamp);
-				});
-
-				setConversations(filtered);
-				if (!selectedConversationId && filtered.length > 0) {
-					setSelectedConversationId(filtered[0].id);
-				}
-			} catch (err) {
-				console.error("[TeamChat] Error al refrescar conversaciones", err);
-				console.error("[TeamChat] Error details:", {
-					message: err instanceof Error ? err.message : String(err),
-					error: err,
-					stack: err instanceof Error ? err.stack : undefined,
-				});
-				const errorMessage =
-					err instanceof Error
-						? err.message
-						: err && typeof err === "object" && "message" in err
-							? String(err.message)
-							: err
-								? String(err)
-								: "Error desconocido al cargar conversaciones";
-				setError(errorMessage);
-			}
+			await loadConversationsOptimized(targetTenantId, targetUserId);
 		},
-		[supabase, tenantId, currentUserId, selectedConversationId, fetchLastMessage, fetchUnreadCount]
+		[tenantId, currentUserId, loadConversationsOptimized]
 	);
 
-	// Bootstrap: resolver usuario y tenant
+	// Bootstrap: resolver usuario y tenant de forma optimizada
 	useEffect(() => {
 		let active = true;
 		const bootstrap = async () => {
@@ -347,58 +320,80 @@ export function TeamChat() {
 				setLoading(true);
 				setError(null);
 
-				const {
-					data: { user },
-					error: userError,
-				} = await supabase.auth.getUser();
+				// 🔥 OPTIMIZACIÓN: Resolver usuario Y tenant en paralelo
+				const [userResult, tenantResult] = await Promise.all([
+					supabase.auth.getUser(),
+					// Preparar tenant resolution (se hará en paralelo con user)
+					Promise.resolve(null)
+				]);
+
+				const { data: { user }, error: userError } = userResult;
 
 				if (userError) throw userError;
 				if (!user) throw new Error("No autenticado.");
 
 				if (!active) return;
 				setCurrentUserId(user.id);
+				setCurrentUserEmail(user.email || null);
 
+				// 🔥 OPTIMIZACIÓN: Resolver tenant y memberships en paralelo
 				let targetTenantId: string | null = null;
+				let userMemberships: any[] = [];
 
 				if (impersonateOrgId) {
-					const { data: isAdmin, error: adminError } = await supabase.rpc("check_platform_admin", {
-						p_user_id: user.id,
-					});
-					if (adminError) throw adminError;
+					const [adminResult, membershipResult] = await Promise.all([
+						supabase.rpc("check_platform_admin", { p_user_id: user.id }),
+						supabase
+							.from("memberships")
+							.select("tenant_id")
+							.eq("user_id", user.id)
+							.order("created_at", { ascending: true })
+					]);
+
+					const { data: isAdmin } = adminResult;
+					const { data: memberships } = membershipResult;
+
 					if (isAdmin) {
 						targetTenantId = impersonateOrgId;
+					} else if (memberships && memberships.length > 0) {
+						targetTenantId = memberships[0].tenant_id;
 					}
-				}
-
-				if (!targetTenantId) {
-					const { data: membership, error: membershipError } = await supabase
+					userMemberships = memberships || [];
+				} else {
+					const { data: memberships, error: membershipError } = await supabase
 						.from("memberships")
 						.select("tenant_id")
 						.eq("user_id", user.id)
-						.order("created_at", { ascending: true })
-						.limit(1)
-						.maybeSingle();
+						.order("created_at", { ascending: true });
 
 					if (membershipError) throw membershipError;
-					if (!membership) throw new Error("No perteneces a ninguna barbería.");
-					targetTenantId = membership.tenant_id;
+					if (!memberships || memberships.length === 0) throw new Error("No perteneces a ninguna barbería.");
+					targetTenantId = memberships[0].tenant_id;
+					userMemberships = memberships;
 				}
 
 				if (!active) return;
 				setTenantId(targetTenantId);
 
-				// Asegurar conversación default
-				const { error: rpcError } = await supabase.rpc("ensure_default_team_conversation", {
-					p_tenant_id: targetTenantId,
-				});
-				if (rpcError) {
-					console.warn("[TeamChat] ensure_default_team_conversation", rpcError);
+				if (!targetTenantId) {
+					throw new Error("No se pudo determinar el tenant");
 				}
 
-				if (targetTenantId) {
-					await loadMembersDirectory(targetTenantId);
-					await refreshConversations(targetTenantId, user.id);
+				// 🔥 OPTIMIZACIÓN: Crear conversación default y cargar conversaciones en paralelo
+				const [defaultConvResult, conversationsResult] = await Promise.all([
+					supabase.rpc("ensure_default_team_conversation", { p_tenant_id: targetTenantId }),
+					loadConversationsOptimized(targetTenantId, user.id)
+				]);
+
+				// 🔥 OPTIMIZACIÓN: Lazy load miembros - solo cuando sea necesario
+				// Por ahora solo cargamos miembros si hay conversaciones o se necesita
+				if (conversationsResult && conversationsResult.length > 0) {
+					// Cargar miembros de forma diferida (no bloquea la carga inicial)
+					setTimeout(() => {
+						if (active) loadMembersDirectory(targetTenantId);
+					}, 100);
 				}
+
 			} catch (err) {
 				console.error("[TeamChat] Bootstrap error", err);
 				if (active) setError(err instanceof Error ? err.message : String(err));
@@ -412,7 +407,7 @@ export function TeamChat() {
 		return () => {
 			active = false;
 		};
-	}, [supabase, refreshConversations, loadMembersDirectory, impersonateOrgId]);
+	}, [supabase, impersonateOrgId]);
 
 	// Cargar mensajes cuando se selecciona una conversación
 	useEffect(() => {

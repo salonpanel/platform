@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
 import { motion } from "framer-motion";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
+import { usePermissions } from "@/contexts/PermissionsContext";
 
 function AjustesContent() {
   const supabase = getSupabaseBrowser();
@@ -35,36 +36,73 @@ function AjustesContent() {
   const [webhookUrl, setWebhookUrl] = useState<string>("");
 
   const impersonateOrgId = useMemo(() => searchParams?.get("impersonate") || null, [searchParams?.toString()]);
+  const { tenantId: ctxTenantId, loading: ctxLoading } = usePermissions();
 
   useEffect(() => {
-    const loadTenant = async () => {
+    const loadTenantData = async () => {
       try {
         setLoading(true);
-        const { tenant: tenantData, role } = await getCurrentTenant(impersonateOrgId);
-        
-        if (tenantData) {
-          setTenant(tenantData);
-          setUserRole(role || null);
-          const { data: fullTenant } = await supabase
+        setError(null);
+
+        if (ctxTenantId) {
+          // Obtener tenant del contexto si está disponible, o hacer consulta adicional
+          // Por simplicidad, haremos la consulta adicional ya que el contexto no tiene tenant completo
+          const { data: tenantData } = await supabase
             .from("tenants")
-            .select("*")
-            .eq("id", tenantData.id)
+            .select("id, name, timezone")
+            .eq("id", ctxTenantId)
             .single();
-          
-          if (fullTenant) {
-            setForm({
-              name: fullTenant.name || "",
-              timezone: fullTenant.timezone || "Europe/Madrid",
-              logo_url: fullTenant.logo_url || "",
-              primary_color: fullTenant.primary_color || "#4cb3ff",
-              contact_email: fullTenant.contact_email || "",
-              contact_phone: fullTenant.contact_phone || "",
-              address: fullTenant.address || "",
-              portal_url: fullTenant.portal_url || `/r/${fullTenant.slug || ""}`,
-            });
+
+          if (tenantData) {
+            setTenant(tenantData);
+            setUserRole(null); // TODO: obtener del contexto si está disponible
+
+            const { data: fullTenant } = await supabase
+              .from("tenants")
+              .select("name, timezone, logo_url, primary_color, contact_email, contact_phone, address, slug")
+              .eq("id", ctxTenantId)
+              .single();
+
+            if (fullTenant) {
+              setForm({
+                name: fullTenant.name || "",
+                timezone: fullTenant.timezone || "Europe/Madrid",
+                logo_url: fullTenant.logo_url || "",
+                primary_color: fullTenant.primary_color || "#4cb3ff",
+                contact_email: fullTenant.contact_email || "",
+                contact_phone: fullTenant.contact_phone || "",
+                address: fullTenant.address || "",
+                portal_url: `/r/${fullTenant.slug || ""}`,
+              });
+            }
           }
         } else {
-          setError("No tienes acceso a ninguna barbería");
+          const { tenant: tenantData, role } = await getCurrentTenant(impersonateOrgId);
+
+          if (tenantData) {
+            setTenant(tenantData);
+            setUserRole(role || null);
+            const { data: fullTenant } = await supabase
+              .from("tenants")
+              .select("*")
+              .eq("id", tenantData.id)
+              .single();
+
+            if (fullTenant) {
+              setForm({
+                name: fullTenant.name || "",
+                timezone: fullTenant.timezone || "Europe/Madrid",
+                logo_url: fullTenant.logo_url || "",
+                primary_color: fullTenant.primary_color || "#4cb3ff",
+                contact_email: fullTenant.contact_email || "",
+                contact_phone: fullTenant.contact_phone || "",
+                address: fullTenant.address || "",
+                portal_url: fullTenant.portal_url || `/r/${fullTenant.slug || ""}`,
+              });
+            }
+          } else {
+            setError("No tienes acceso a ninguna barbería");
+          }
         }
       } catch (err: any) {
         setError(err?.message || "Error al cargar información");
@@ -73,11 +111,12 @@ function AjustesContent() {
       }
     };
 
-    loadTenant();
-  }, [impersonateOrgId]);
+    if (!ctxLoading) {
+      loadTenantData();
+    }
+  }, [impersonateOrgId, ctxTenantId, ctxLoading, supabase]);
 
   useEffect(() => {
-    // Cargar estado de Stripe si hay tenant
     const loadStripeStatus = async () => {
       try {
         const res = await fetch("/api/payments/stripe/status");
@@ -165,17 +204,17 @@ function AjustesContent() {
   }
 
   if (error && !tenant) {
+    return (
+      <Alert type="error" title="Error">
+        {error}
+      </Alert>
+    );
+  }
 
   if (userRole && userRole !== "owner" && userRole !== "admin") {
     return (
       <Alert type="warning" title="Permisos insuficientes">
         Solo los administradores pueden modificar los ajustes del tenant.
-      </Alert>
-    );
-  }
-    return (
-      <Alert type="error" title="Error">
-        {error}
       </Alert>
     );
   }

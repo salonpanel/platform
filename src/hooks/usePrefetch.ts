@@ -167,6 +167,26 @@ export function useSmartPrefetchData(tenantId: string | null, impersonateOrgId: 
           console.warn('[SmartPrefetch] Error precargando agenda:', error);
         }
 
+        // 🔥 PRIORIDAD 1.5: CHAT - Precargar conversaciones optimizadas
+        if (!isUserActive()) {
+          console.log('[SmartPrefetch] 🔥 Precargando datos de CHAT...');
+          try {
+            // Usar la misma RPC que el componente optimizado
+            const { data: conversationsData, error } = await supabase
+              .rpc("get_user_conversations_optimized", {
+                p_user_id: tenantId,
+                p_tenant_id: tenant.id,
+              });
+
+            if (!error && conversationsData) {
+              prefetchData(`chat-conversations-${impersonateOrgId || 'default'}`, async () => conversationsData);
+              console.log('[SmartPrefetch] ✅ Chat precargado');
+            }
+          } catch (error) {
+            console.warn('[SmartPrefetch] Error precargando chat:', error);
+          }
+        }
+
         // Esperar un poco entre precargas pesadas
         await new Promise(resolve => setTimeout(resolve, 200));
 
