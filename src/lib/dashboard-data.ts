@@ -37,6 +37,28 @@ export type DashboardDataset = {
   upcomingBookings: any[];
 };
 
+export const EMPTY_DASHBOARD_KPIS: DashboardDataset["kpis"] = {
+  bookingsToday: 0,
+  bookingsLast7Days: Array(7).fill(0),
+  activeServices: 0,
+  activeStaff: 0,
+  totalBookingsLast7Days: 0,
+  totalBookingsLast30Days: 0,
+  revenueToday: 0,
+  revenueLast7Days: 0,
+  revenueLast30Days: 0,
+  noShowsLast7Days: 0,
+  avgTicketLast7Days: 0,
+};
+
+export function createEmptyDashboardKpis(): DashboardDataset["kpis"] {
+  return {
+    ...EMPTY_DASHBOARD_KPIS,
+    // Duplicar array para evitar mutaciones compartidas
+    bookingsLast7Days: Array(7).fill(0),
+  };
+}
+
 export async function fetchDashboardDataset(
   supabase: SupabaseClient,
   tenant: TenantInfo
@@ -48,23 +70,7 @@ export async function fetchDashboardDataset(
   const todayEnd = new Date(now.setHours(23, 59, 59, 999)).toISOString();
   const todayKey = new Date().toISOString().slice(0, 10);
 
-  const [bookingsRes, servicesRes, staffRes, upcomingRes, metricsRes] = await Promise.all([
-    supabase
-      .from("bookings")
-      .select("id", { head: true, count: "planned" })
-      .eq("tenant_id", tenant.id)
-      .gte("starts_at", todayStart)
-      .lte("starts_at", todayEnd),
-    supabase
-      .from("services")
-      .select("id", { head: true, count: "planned" })
-      .eq("tenant_id", tenant.id)
-      .eq("active", true),
-    supabase
-      .from("staff")
-      .select("id", { head: true, count: "planned" })
-      .eq("tenant_id", tenant.id)
-      .eq("active", true),
+  const [upcomingRes, metricsRes] = await Promise.all([
     supabase
       .from("bookings")
       .select(`
@@ -140,6 +146,35 @@ export async function fetchDashboardDataset(
   const totalRevenueLast7Days = revenueLast7Days;
   const avgTicketLast7Days = totalBookingsLast7Days > 0 ? totalRevenueLast7Days / totalBookingsLast7Days : 0;
 
+  let bookingsToday = todayMetrics?.confirmed_bookings;
+  let activeServices = todayMetrics?.active_services;
+  let activeStaff = todayMetrics?.active_staff;
+
+  if (bookingsToday === undefined || activeServices === undefined || activeStaff === undefined) {
+    const [bookingsRes, servicesRes, staffRes] = await Promise.all([
+      supabase
+        .from("bookings")
+        .select("id", { head: true, count: "planned" })
+        .eq("tenant_id", tenant.id)
+        .gte("starts_at", todayStart)
+        .lte("starts_at", todayEnd),
+      supabase
+        .from("services")
+        .select("id", { head: true, count: "planned" })
+        .eq("tenant_id", tenant.id)
+        .eq("active", true),
+      supabase
+        .from("staff")
+        .select("id", { head: true, count: "planned" })
+        .eq("tenant_id", tenant.id)
+        .eq("active", true),
+    ]);
+
+    bookingsToday = bookingsToday ?? bookingsRes.count ?? 0;
+    activeServices = activeServices ?? servicesRes.count ?? 0;
+    activeStaff = activeStaff ?? staffRes.count ?? 0;
+  }
+
   return {
     tenant: {
       id: tenant.id,
@@ -147,9 +182,9 @@ export async function fetchDashboardDataset(
       timezone: tenant.timezone || "Europe/Madrid",
     },
     kpis: {
-      bookingsToday: todayMetrics?.confirmed_bookings ?? bookingsRes.count ?? 0,
-      activeServices: todayMetrics?.active_services ?? servicesRes.count ?? 0,
-      activeStaff: todayMetrics?.active_staff ?? staffRes.count ?? 0,
+      bookingsToday: bookingsToday ?? 0,
+      activeServices: activeServices ?? 0,
+      activeStaff: activeStaff ?? 0,
       bookingsLast7Days,
       totalBookingsLast7Days,
       totalBookingsLast30Days: bookingsLast30Days.reduce((sum, value) => sum + value, 0),
