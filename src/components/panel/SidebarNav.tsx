@@ -21,6 +21,7 @@ import {
   Target
 } from "lucide-react";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { getCurrentTenant } from "@/lib/panel-tenant";
 
 interface NavItem {
   href: string;
@@ -52,7 +53,16 @@ export function SidebarNav({
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const leaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { permissions, role, loading } = useUserPermissions();
+  const [tenantId, setTenantId] = useState<string | null>(null);
+  const { permissions, role, loading } = useUserPermissions(tenantId);
+
+  useEffect(() => {
+    getCurrentTenant().then((result) => {
+      if (result.tenant) {
+        setTenantId(result.tenant.id);
+      }
+    });
+  }, []);
 
   // Mapeo de rutas a permisos
   const routePermissionMap: Record<string, keyof typeof permissions> = {
