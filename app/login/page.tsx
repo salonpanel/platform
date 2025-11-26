@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, AlertCircle, Loader2, Sparkles } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
+import { useProgressivePreload } from "@/hooks/useProgressivePreload";
 
 function LoginContent() {
   const supabase = getSupabaseBrowser();
@@ -14,6 +15,9 @@ function LoginContent() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [cooldown, setCooldown] = useState(0); // Cooldown en segundos
+
+  // 🔥 PRECARGA PROGRESIVA: Componentes mientras login, datos después de email
+  const { preloadUserData } = useProgressivePreload();
 
   // Efecto para ir bajando el cooldown
   useEffect(() => {
@@ -65,7 +69,18 @@ function LoginContent() {
       setSent(true);
       setLoading(false);
       setCooldown(60); // Establecer cooldown después de envío exitoso
-      
+
+      // 🔥 PRECARGA DE DATOS: Una vez sabemos el email, preparamos la sesión
+      try {
+        preloadUserData(email).catch((err) => {
+          console.warn('[Login] Error en precarga de datos:', err);
+          // No es crítico, continuar normalmente
+        });
+      } catch (preloadError) {
+        console.warn('[Login] Error iniciando precarga:', preloadError);
+        // Continuar sin precarga si falla
+      }
+
       // Redirigir a la página de verificación con el email como parámetro
       router.push(`/login/verify-code?email=${encodeURIComponent(email)}`);
     } catch (err: any) {

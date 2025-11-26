@@ -7,7 +7,7 @@ import { fetchDashboardDataset } from "@/lib/dashboard-data";
 /**
  * 🔥 API de prefetch inteligente para datos del panel
  * Se ejecuta después de verificación OTP exitosa para calentar datos críticos
- * Solo funciona con cookies de sesión válidas (post-autenticación)
+ * Ahora usa datos preparados de la precarga progresiva
  */
 export async function GET(req: NextRequest) {
   try {
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
       .from("tenants")
       .select("id, name, timezone")
       .eq("id", membership.tenant_id)
-      .maybeSingle();
+      .single();
 
     if (!tenant) {
       console.log("[PrefetchPanelData] ❌ Tenant no encontrado");
@@ -96,12 +96,15 @@ export async function GET(req: NextRequest) {
       ok: true,
       data: dashboardData,
       timestamp: Date.now(),
-      message: "Panel data prefetched successfully"
+      message: "Panel data prefetched successfully",
+      // 🔥 META INFO: Ayuda al cliente a saber que estos datos vienen de prefetch inteligente
+      source: "progressive-preload"
     });
 
     // Headers para optimizar cache
     response.headers.set('Cache-Control', 'private, max-age=5'); // Cache mínimo
     response.headers.set('X-Prefetch-Source', 'post-auth-verification');
+    response.headers.set('X-Progressive-Load', 'true');
 
     console.log("[PrefetchPanelData] 🎉 Prefetch completado exitosamente - datos preparados para navegación instantánea");
 
