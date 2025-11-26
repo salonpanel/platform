@@ -1,13 +1,17 @@
 "use client";
 
-import { useStaleWhileRevalidate } from "./useStaleWhileRevalidate";
-import { getSupabaseBrowser } from "@/lib/supabase/browser";
+import { DashboardDataset, fetchDashboardDataset } from "@/lib/dashboard-data";
 import { getCurrentTenant } from "@/lib/panel-tenant";
+import { getSupabaseBrowser } from "@/lib/supabase/browser";
+import { useStaleWhileRevalidate } from "./useStaleWhileRevalidate";
 
 /**
  * Hook optimizado para Dashboard - obtiene tenant y datos en paralelo
  */
-export function useDashboardData(impersonateOrgId: string | null, options?: { tenantId?: string | null; timezone?: string | null }) {
+export function useDashboardData(
+  impersonateOrgId: string | null,
+  options?: { tenantId?: string | null; timezone?: string | null; initialData?: DashboardDataset | null }
+) {
   const supabase = getSupabaseBrowser();
 
   // Obtener tenant + datos en UNA SOLA llamada con caché
@@ -18,72 +22,18 @@ export function useDashboardData(impersonateOrgId: string | null, options?: { te
     async () => {
       // 1. Obtener tenant primero (si se pasó por opciones, no llamamos a getCurrentTenant)
       let tenant = null as any;
-      let tenantId: string | null = null;
 
       if (options?.tenantId) {
-        tenantId = options.tenantId;
         tenant = { id: options.tenantId, name: "Tu barbería", timezone: options.timezone || "Europe/Madrid" };
       } else {
         const result = await getCurrentTenant(impersonateOrgId);
         if (!result?.tenant) return null;
         tenant = result.tenant;
-        tenantId = tenant.id;
       }
-      const now = new Date();
-      const todayStart = new Date(now.setHours(0, 0, 0, 0)).toISOString();
-      const todayEnd = new Date(now.setHours(23, 59, 59, 999)).toISOString();
 
-      // 2. Todas las queries en paralelo
-      const [bookingsRes, servicesRes, staffRes, upcomingRes] = await Promise.all([
-        supabase
-          .from("bookings")
-          // Use planner/estimated count (faster) and head:true to avoid fetching rows here
-          .select("id", { head: true, count: "planned" })
-          .eq("tenant_id", tenantId)
-          .gte("starts_at", todayStart)
-          .lte("starts_at", todayEnd),
-        supabase
-          .from("services")
-          .select("id", { head: true, count: "planned" })
-          .eq("tenant_id", tenantId)
-          .eq("active", true),
-        supabase
-          .from("staff")
-          .select("id", { head: true, count: "planned" })
-          .eq("tenant_id", tenantId)
-          .eq("active", true),
-        supabase
-          .from("bookings")
-          .select(`
-            id,
-            starts_at,
-            ends_at,
-            status,
-            customer:customers(name, email),
-            service:services(name),
-            staff:staff(name)
-          `)
-          .eq("tenant_id", tenantId)
-          .gte("starts_at", new Date().toISOString())
-          .order("starts_at", { ascending: true })
-          .limit(5),
-      ]);
-
-      return {
-        tenant: {
-          id: tenant.id,
-          name: tenant.name || "Tu barbería",
-          timezone: tenant.timezone || "Europe/Madrid",
-        },
-        kpis: {
-          bookingsToday: bookingsRes.count || 0,
-          activeServices: servicesRes.count || 0,
-          activeStaff: staffRes.count || 0,
-        },
-        upcomingBookings: upcomingRes.data || [],
-      };
+      return fetchDashboardDataset(supabase, tenant);
     },
-    { enabled: true } // Siempre habilitado, la lógica de tenant está dentro
+    { enabled: true, initialData: options?.initialData || undefined, persist: true } // Siempre habilitado, la lógica de tenant está dentro
   );
 
   return {
