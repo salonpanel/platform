@@ -25,7 +25,7 @@ export function ProtectedRoute({ children, requiredPermission }: ProtectedRouteP
   }, []);
 
   useEffect(() => {
-    // Esperar a que cargue
+    // Esperar a que cargue y que haya tenantId
     if (loading || !tenantId) return;
 
     // Si no hay permiso requerido, permitir acceso

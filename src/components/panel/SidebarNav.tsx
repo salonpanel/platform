@@ -78,8 +78,8 @@ export function SidebarNav({
 
   // Filtrar items según permisos
   const filteredItems = useMemo(() => {
-    // Si está cargando o es owner/admin, mostrar todo
-    if (loading || role === "owner" || role === "admin") {
+    // Si está cargando, no hay tenantId, o es owner/admin, mostrar todo
+    if (loading || !tenantId || role === "owner" || role === "admin") {
       return items;
     }
 
@@ -88,7 +88,7 @@ export function SidebarNav({
       if (!permissionKey) return true; // Si no está mapeado, mostrar por defecto
       return permissions[permissionKey]; // Mostrar solo si tiene permiso
     });
-  }, [items, permissions, role, loading]);
+  }, [items, permissions, role, loading, tenantId]);
 
   const getNavIcon = useCallback((href: string): React.ReactNode => {
     const iconClass = "h-5 w-5";
