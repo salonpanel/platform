@@ -195,7 +195,7 @@ export async function fetchDashboardDataset(
       activeStaff: activeStaff ?? 0,
       bookingsLast7Days,
       totalBookingsLast7Days,
-      totalBookingsLast30Days: bookingsLast30Days.reduce((sum, value) => sum + value, 0),
+      totalBookingsLast30Days: bookingsLast30Days.reduce((sum: number, value: number) => sum + value, 0),
       revenueToday: todayMetrics?.revenue_cents ?? 0,
       revenueLast7Days,
       revenueLast30Days,

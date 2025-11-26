@@ -4,6 +4,9 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { prefetchData } from "@/hooks/useStaleWhileRevalidate";
+import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -51,8 +54,11 @@ export function SidebarNav({
   const [isHovered, setIsHovered] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prefetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const leaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { permissions, role } = usePermissions();
+  const { permissions, role, tenantId } = usePermissions();
+  const router = useRouter();
+  const prefetchedKeysRef = useRef<Set<string>>(new Set());
 
   // Mapeo de rutas a permisos
   const routePermissionMap: Record<string, keyof typeof permissions> = {
@@ -154,6 +160,135 @@ export function SidebarNav({
       if (leaveTimeoutRef.current) clearTimeout(leaveTimeoutRef.current);
     };
   }, []);
+
+  // Prefetch assets + light data when user hovers a nav item
+  useEffect(() => {
+    if (!hoveredItem) return;
+
+    // Clear any pending prefetch timer
+    if (prefetchTimeoutRef.current) {
+      clearTimeout(prefetchTimeoutRef.current);
+      prefetchTimeoutRef.current = null;
+    }
+
+    // Debounce short hover before actually prefetching to avoid noisy requests
+    prefetchTimeoutRef.current = setTimeout(async () => {
+      try {
+        // Prefetch Next route chunk (component bundles)
+        router.prefetch(hoveredItem);
+
+        // Lightweight data prefetch: only when tenant context is available
+        const supabase = getSupabaseBrowser();
+        const tId = tenantId || null;
+
+        // Keep a small helper to avoid duplicate prefetches
+        const doPrefetch = async (key: string, fetcher: () => Promise<any>) => {
+          // deduplicate
+          const set = prefetchedKeysRef.current;
+          if (set.has(key)) return;
+          set.add(key);
+          try {
+            await prefetchData(key, fetcher);
+          } catch (err) {
+            // ignore errors
+          }
+        };
+
+        // For performance, only prefetch lightweight datasets per route
+        if (hoveredItem === "/panel" && tId) {
+          const key = `dashboard-full-tenant-${tId}`;
+          await doPrefetch(key, async () => {
+            const now = new Date();
+            const todayStart = new Date(now.setHours(0, 0, 0, 0)).toISOString();
+            const todayEnd = new Date(now.setHours(23, 59, 59, 999)).toISOString();
+
+            const [bookingsRes, servicesRes, staffRes, upcomingRes] = await Promise.all([
+              supabase
+                .from("bookings")
+                .select("id", { head: true, count: "planned" })
+                .eq("tenant_id", tId)
+                .gte("starts_at", todayStart)
+                .lte("starts_at", todayEnd),
+              supabase
+                .from("services")
+                .select("id", { head: true, count: "planned" })
+                .eq("tenant_id", tId)
+                .eq("active", true),
+              supabase
+                .from("staff")
+                .select("id", { head: true, count: "planned" })
+                .eq("tenant_id", tId)
+                .eq("active", true),
+              supabase
+                .from("bookings")
+                .select(`
+                  id,
+                  starts_at,
+                  ends_at,
+                  status,
+                  customer:customers(name, email),
+                  service:services(name),
+                  staff:staff(name)
+                `)
+                .eq("tenant_id", tId)
+                .gte("starts_at", new Date().toISOString())
+                .order("starts_at", { ascending: true })
+                .limit(5),
+            ]);
+
+            return {
+              tenant: { id: tId, name: "Tu barbería", timezone: "Europe/Madrid" },
+              kpis: { bookingsToday: bookingsRes.count || 0, activeServices: servicesRes.count || 0, activeStaff: staffRes.count || 0 },
+              upcomingBookings: upcomingRes.data || [],
+            };
+          });
+        }
+
+        if (hoveredItem === "/panel/clientes" && tId) {
+          await doPrefetch(`customers-page-default`, async () => {
+            const { data } = await supabase
+              .from("customers")
+              .select("*")
+              .eq("tenant_id", tId)
+              .order("created_at", { ascending: false })
+              .limit(50);
+            return { customers: data || [] };
+          });
+        }
+
+        if (hoveredItem === "/panel/servicios" && tId) {
+          await doPrefetch(`services-page-default`, async () => {
+            const { data } = await supabase
+              .from("services")
+              .select("*")
+              .eq("tenant_id", tId)
+              .order("name", { ascending: true });
+            return { services: data || [] };
+          });
+        }
+
+        if (hoveredItem === "/panel/staff" && tId) {
+          await doPrefetch(`staff-page-default`, async () => {
+            const { data } = await supabase
+              .from("staff")
+              .select(`*, bookings:bookings(count)`)
+              .eq("tenant_id", tId)
+              .order("name");
+            return { staff: data || [] };
+          });
+        }
+      } catch (err) {
+        // ignore prefetch failures
+      }
+    }, 160) as any;
+
+    return () => {
+      if (prefetchTimeoutRef.current) {
+        clearTimeout(prefetchTimeoutRef.current);
+        prefetchTimeoutRef.current = null;
+      }
+    };
+  }, [hoveredItem, router, tenantId]);
 
   // Resetear hover cuando cambia el estado de colapsado
   useEffect(() => {

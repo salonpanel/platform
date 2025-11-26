@@ -87,18 +87,20 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
   const tenantTimezone = tenant?.timezone || "Europe/Madrid";
   const tenantName = tenant?.name || "Tu barbería";
 
+  // Normalizar KPIs → use a defensive cast to support both legacy & full shapes
+  const kp = kpis as any;
   const stats = {
-    bookingsToday: kpis?.bookingsToday ?? 0,
-    bookingsLast7Days: kpis?.bookingsLast7Days ?? Array(7).fill(0),
-    activeServices: kpis?.activeServices ?? 0,
-    activeStaff: kpis?.activeStaff ?? 0,
-    revenueToday: kpis?.revenueToday ?? 0,
-    totalBookingsLast7Days: kpis?.totalBookingsLast7Days ?? 0,
-    revenueLast7Days: kpis?.revenueLast7Days ?? 0,
-    totalBookingsLast30Days: kpis?.totalBookingsLast30Days ?? 0,
-    revenueLast30Days: kpis?.revenueLast30Days ?? 0,
-    noShowsLast7Days: kpis?.noShowsLast7Days ?? 0,
-    avgTicketLast7Days: kpis?.avgTicketLast7Days ?? 0,
+    bookingsToday: kp?.bookingsToday ?? 0,
+    bookingsLast7Days: kp?.bookingsLast7Days ?? Array(7).fill(0),
+    activeServices: kp?.activeServices ?? 0,
+    activeStaff: kp?.activeStaff ?? 0,
+    revenueToday: kp?.revenueToday ?? 0,
+    totalBookingsLast7Days: kp?.totalBookingsLast7Days ?? 0,
+    revenueLast7Days: kp?.revenueLast7Days ?? 0,
+    totalBookingsLast30Days: kp?.totalBookingsLast30Days ?? 0,
+    revenueLast30Days: kp?.revenueLast30Days ?? 0,
+    noShowsLast7Days: kp?.noShowsLast7Days ?? 0,
+    avgTicketLast7Days: kp?.avgTicketLast7Days ?? 0,
   };
   
   // Transformar datos de reservas para compatibilidad con el componente
