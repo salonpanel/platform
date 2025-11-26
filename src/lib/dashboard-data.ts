@@ -76,127 +76,164 @@ export async function fetchDashboardDataset(
 ): Promise<DashboardDataset | null> {
   if (!tenant?.id) return null;
 
+  // Calcular fechas con timezone correcto
   const now = new Date();
-  const todayStart = new Date(now.setHours(0, 0, 0, 0)).toISOString();
-  const todayEnd = new Date(now.setHours(23, 59, 59, 999)).toISOString();
-  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0).toISOString();
+  const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).toISOString();
+  
+  // Fecha hace 7 días
+  const sevenDaysAgo = new Date(now);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  sevenDaysAgo.setHours(0, 0, 0, 0);
+  const sevenDaysAgoISO = sevenDaysAgo.toISOString();
 
-  const [upcomingRes, metricsRes, staffRes, staffBookingsRes] = await Promise.all([
+  // Fecha hace 30 días
+  const thirtyDaysAgo = new Date(now);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  thirtyDaysAgo.setHours(0, 0, 0, 0);
+  const thirtyDaysAgoISO = thirtyDaysAgo.toISOString();
+
+  // Estados válidos para contar reservas e ingresos
+  // Los ingresos se cuentan de reservas confirmadas, completadas o pagadas
+  const completedStatuses = ['confirmed', 'completed', 'paid'];
+
+  const [
+    upcomingRes,
+    staffRes,
+    bookingsTodayRes,
+    bookingsLast7DaysRes,
+    bookingsLast30DaysRes,
+    servicesRes,
+    staffBookingsTodayRes,
+  ] = await Promise.all([
+    // 1. Próximas reservas (no canceladas)
     supabase
       .from("bookings")
-      .select(
-        `id, starts_at, ends_at, status, customer:customers(name, email), service:services(name), staff:staff(name)`
-      )
+      .select(`
+        id, starts_at, ends_at, status, price,
+        customer:customers(name, email),
+        service:services(name, price),
+        staff:staff(name)
+      `)
       .eq("tenant_id", tenant.id)
       .gte("starts_at", new Date().toISOString())
+      .not("status", "eq", "cancelled")
       .order("starts_at", { ascending: true })
-      .limit(5),
-    supabase
-      .from("org_metrics_daily")
-      .select(
-        "metric_date, confirmed_bookings, revenue_cents, active_services, active_staff, no_show_bookings"
-      )
-      .eq("tenant_id", tenant.id)
-      .order("metric_date", { ascending: false })
-      .limit(31),
-    // 🔥 Obtener staff activo
+      .limit(10),
+
+    // 2. Staff activo
     supabase
       .from("staff")
       .select("id, name, color, avatar_url, active")
       .eq("tenant_id", tenant.id)
       .eq("active", true)
       .order("name"),
-    // 🔥 Obtener citas de hoy por staff para calcular ocupación
+
+    // 3. Reservas de HOY (todas las del día, no canceladas) - con precio del servicio
+    supabase
+      .from("bookings")
+      .select("id, status, staff_id, service:services(price_cents)")
+      .eq("tenant_id", tenant.id)
+      .gte("starts_at", todayStart)
+      .lte("starts_at", todayEnd)
+      .not("status", "eq", "cancelled"),
+
+    // 4. Reservas últimos 7 días (con fecha para agrupar) - con precio del servicio
+    supabase
+      .from("bookings")
+      .select("id, starts_at, status, service:services(price_cents)")
+      .eq("tenant_id", tenant.id)
+      .gte("starts_at", sevenDaysAgoISO)
+      .not("status", "eq", "cancelled"),
+
+    // 5. Reservas últimos 30 días - con precio del servicio
+    supabase
+      .from("bookings")
+      .select("id, status, service:services(price_cents)")
+      .eq("tenant_id", tenant.id)
+      .gte("starts_at", thirtyDaysAgoISO)
+      .not("status", "eq", "cancelled"),
+
+    // 6. Servicios activos
+    supabase
+      .from("services")
+      .select("id", { head: true, count: "exact" })
+      .eq("tenant_id", tenant.id)
+      .eq("active", true),
+
+    // 7. Citas de hoy por staff (para ocupación)
     supabase
       .from("bookings")
       .select("staff_id")
       .eq("tenant_id", tenant.id)
       .gte("starts_at", todayStart)
       .lte("starts_at", todayEnd)
-      .in("status", ["confirmed", "completed", "paid"]),
+      .not("status", "eq", "cancelled"),
   ]);
 
-  if (upcomingRes.error) throw upcomingRes.error;
-  if (metricsRes.error) throw metricsRes.error;
+  // Procesar datos
+  const bookingsTodayData = bookingsTodayRes.data || [];
+  const bookingsLast7DaysData = bookingsLast7DaysRes.data || [];
+  const bookingsLast30DaysData = bookingsLast30DaysRes.data || [];
 
-  const metrics: MetricRow[] = metricsRes.data || [];
-  const metricsByDay = metrics.reduce<Record<string, MetricRow>>((acc, row) => {
-    acc[row.metric_date] = row;
-    return acc;
-  }, {});
+  // Helper para extraer precio del servicio (puede ser array o objeto)
+  const getServicePrice = (booking: any): number => {
+    const service = Array.isArray(booking.service) ? booking.service[0] : booking.service;
+    return service?.price_cents || 0;
+  };
 
-  const ensureDaysArray = (days: number) =>
-    Array.from({ length: days }).map((_, idx) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (days - 1 - idx));
-      const key = date.toISOString().slice(0, 10);
-      return metricsByDay[key]?.confirmed_bookings || 0;
-    });
+  // === KPI: Reservas de hoy ===
+  const bookingsToday = bookingsTodayData.length;
 
-  const bookingsLast7Days = ensureDaysArray(7);
-  const todayMetrics = metricsByDay[todayKey];
+  // === KPI: Ingresos de hoy (solo completed/paid) - en centavos
+  const revenueToday = bookingsTodayData
+    .filter(b => completedStatuses.includes(b.status))
+    .reduce((sum, b) => sum + getServicePrice(b), 0);
 
-  const totalBookingsLast7Days = bookingsLast7Days.reduce((sum, value) => sum + value, 0);
-  const bookingsLast30Days = Array.from({ length: 30 }).map((_, idx) => {
+  // === KPI: Reservas últimos 7 días (por día) ===
+  const bookingsByDay: Record<string, number> = {};
+  for (let i = 0; i < 7; i++) {
     const date = new Date();
-    date.setDate(date.getDate() - (29 - idx));
+    date.setDate(date.getDate() - (6 - i));
     const key = date.toISOString().slice(0, 10);
-    return metricsByDay[key]?.confirmed_bookings || 0;
-  });
-
-  const revenueLast7Days = Array.from({ length: 7 }).reduce<number>((sum, _, idx) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (6 - idx));
-    const key = date.toISOString().slice(0, 10);
-    return sum + (metricsByDay[key]?.revenue_cents || 0);
-  }, 0);
-
-  const revenueLast30Days = Array.from({ length: 30 }).reduce<number>((sum, _, idx) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (29 - idx));
-    const key = date.toISOString().slice(0, 10);
-    return sum + (metricsByDay[key]?.revenue_cents || 0);
-  }, 0);
-
-  const noShowsLast7Days = Array.from({ length: 7 }).reduce<number>((sum, _, idx) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (6 - idx));
-    const key = date.toISOString().slice(0, 10);
-    return sum + (metricsByDay[key]?.no_show_bookings || 0);
-  }, 0);
-
-  const totalRevenueLast7Days = revenueLast7Days;
-  const avgTicketLast7Days = totalBookingsLast7Days > 0 ? totalRevenueLast7Days / totalBookingsLast7Days : 0;
-
-  let bookingsToday = todayMetrics?.confirmed_bookings;
-  let activeServices = todayMetrics?.active_services;
-  let activeStaff = todayMetrics?.active_staff;
-
-  if (bookingsToday === undefined || activeServices === undefined || activeStaff === undefined) {
-    const [bookingsRes, servicesRes, staffRes] = await Promise.all([
-      supabase
-        .from("bookings")
-        .select("id", { head: true, count: "planned" })
-        .eq("tenant_id", tenant.id)
-        .gte("starts_at", todayStart)
-        .lte("starts_at", todayEnd),
-      supabase
-        .from("services")
-        .select("id", { head: true, count: "planned" })
-        .eq("tenant_id", tenant.id)
-        .eq("active", true),
-      supabase
-        .from("staff")
-        .select("id", { head: true, count: "planned" })
-        .eq("tenant_id", tenant.id)
-        .eq("active", true),
-    ]);
-
-    bookingsToday = bookingsToday ?? bookingsRes.count ?? 0;
-    activeServices = activeServices ?? servicesRes.count ?? 0;
-    activeStaff = activeStaff ?? staffRes.count ?? 0;
+    bookingsByDay[key] = 0;
   }
+  
+  for (const booking of bookingsLast7DaysData) {
+    const dateKey = booking.starts_at.slice(0, 10);
+    if (bookingsByDay[dateKey] !== undefined) {
+      bookingsByDay[dateKey]++;
+    }
+  }
+  
+  const bookingsLast7Days = Object.values(bookingsByDay);
+  const totalBookingsLast7Days = bookingsLast7DaysData.length;
 
+  // === KPI: Ingresos últimos 7 días (solo completed/paid) - en centavos
+  const revenueLast7Days = bookingsLast7DaysData
+    .filter(b => completedStatuses.includes(b.status))
+    .reduce((sum, b) => sum + getServicePrice(b), 0);
+
+  // === KPI: Reservas y revenue últimos 30 días - en centavos
+  const totalBookingsLast30Days = bookingsLast30DaysData.length;
+  const revenueLast30Days = bookingsLast30DaysData
+    .filter(b => completedStatuses.includes(b.status))
+    .reduce((sum, b) => sum + getServicePrice(b), 0);
+
+  // === KPI: No-shows últimos 7 días ===
+  const noShowsLast7Days = bookingsLast7DaysData
+    .filter(b => b.status === 'no_show')
+    .length;
+
+  // === KPI: Ticket medio (ingresos / reservas completadas) ===
+  const completedBookings7Days = bookingsLast7DaysData.filter(b => completedStatuses.includes(b.status)).length;
+  const avgTicketLast7Days = completedBookings7Days > 0 ? revenueLast7Days / completedBookings7Days : 0;
+
+  // === Staff activo ===
+  const activeStaff = staffRes.data?.length || 0;
+  const activeServices = servicesRes.count || 0;
+
+  // === Próximas reservas ===
   const upcomingBookings: UpcomingBooking[] = (upcomingRes.data || []).map((row: any) => {
     const customer = Array.isArray(row.customer) ? row.customer[0] : row.customer;
     const service = Array.isArray(row.service) ? row.service[0] : row.service;
@@ -213,15 +250,14 @@ export async function fetchDashboardDataset(
     };
   });
 
-  // 🔥 Procesar staff con ocupación real
+  // === Staff con ocupación real ===
   const staffBookingCounts: Record<string, number> = {};
-  for (const booking of staffBookingsRes.data || []) {
+  for (const booking of staffBookingsTodayRes.data || []) {
     if (booking.staff_id) {
       staffBookingCounts[booking.staff_id] = (staffBookingCounts[booking.staff_id] || 0) + 1;
     }
   }
 
-  // Calcular ocupación: asumimos 8 citas máx por día = 100%
   const MAX_BOOKINGS_PER_DAY = 8;
   const staffMembers: StaffMember[] = (staffRes.data || []).map((staff: any) => {
     const bookingsCount = staffBookingCounts[staff.id] || 0;
@@ -241,13 +277,13 @@ export async function fetchDashboardDataset(
   return {
     tenant: { id: tenant.id, name: tenant.name || "Tu barbería", timezone: tenant.timezone || "Europe/Madrid" },
     kpis: {
-      bookingsToday: bookingsToday ?? 0,
-      activeServices: activeServices ?? 0,
-      activeStaff: activeStaff ?? 0,
+      bookingsToday,
+      activeServices,
+      activeStaff,
       bookingsLast7Days,
       totalBookingsLast7Days,
-      totalBookingsLast30Days: bookingsLast30Days.reduce((sum: number, value: number) => sum + value, 0),
-      revenueToday: todayMetrics?.revenue_cents ?? 0,
+      totalBookingsLast30Days,
+      revenueToday,
       revenueLast7Days,
       revenueLast30Days,
       noShowsLast7Days,
