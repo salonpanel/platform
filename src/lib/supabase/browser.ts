@@ -20,7 +20,7 @@ let browserClient: SupabaseClient | null = null;
  */
 export function getSupabaseBrowser(): SupabaseClient {
   if (!browserClient) {
-    let url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!url || !key) {
@@ -29,41 +29,30 @@ export function getSupabaseBrowser(): SupabaseClient {
 
     const isDevelopment = process.env.NODE_ENV === 'development';
 
-    // CRÍTICO: En producción, usar proxy para evitar CORS
-    if (!isDevelopment && typeof window !== 'undefined') {
-      const hostname = window.location.hostname;
-      if (hostname === 'pro.bookfast.es') {
-        // Reemplazar URL de Supabase con proxy local
-        url = window.location.origin;
-      }
-    }
-
     // CRÍTICO: createBrowserClient de @supabase/ssr establece cookies HTTP automáticamente
     // que el servidor puede leer usando createServerClient
     const clientOptions: any = {};
-    
-    // En producción, configurar custom fetch para usar proxy
+
+    // En producción, cuando estamos detrás de pro.bookfast.es, usar proxy HTTP
     if (!isDevelopment && typeof window !== 'undefined' && window.location.hostname === 'pro.bookfast.es') {
       clientOptions.global = {
-        fetch: (url: string, options?: RequestInit) => {
-          // Extraer el path relativo de la URL de Supabase
-          const urlObj = new URL(url);
+        fetch: (requestUrl: string, options?: RequestInit) => {
+          const urlObj = new URL(requestUrl);
           const pathWithQuery = `${urlObj.pathname}${urlObj.search}`;
           return fetch(`${window.location.origin}/api/auth-proxy?path=${encodeURIComponent(pathWithQuery)}`, {
             ...options,
           });
         },
-        // Configurar Realtime para usar la URL correcta de Supabase
-        realtime: {
-          params: {
-            eventsPerSecond: 10,
-          },
-          // Forzar la URL de Realtime a Supabase en lugar del dominio personalizado
-          url: 'wss://jsqminbgggwhvkfgeibz.supabase.co/realtime/v1',
+      };
+
+      // Realtime puede usar directamente la URL de Supabase; no necesitamos pasar por el dominio custom
+      clientOptions.realtime = {
+        params: {
+          eventsPerSecond: 10,
         },
       };
     }
-    
+
     browserClient = createBrowserClient(url, key, {
       ...clientOptions,
       cookies: {

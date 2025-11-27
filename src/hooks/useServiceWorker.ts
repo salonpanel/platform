@@ -2,11 +2,19 @@
 
 import { useEffect } from "react";
 
+const ENABLE_SERVICE_WORKER =
+  process.env.NEXT_PUBLIC_ENABLE_SERVICE_WORKER === "true" ||
+  process.env.NEXT_PUBLIC_ENABLE_SERVICE_WORKER === "1";
+
 /**
  * Hook para registrar el Service Worker y habilitar caché de assets
  */
 export function useServiceWorker() {
   useEffect(() => {
+    if (!ENABLE_SERVICE_WORKER) {
+      return;
+    }
+
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       // Registrar el Service Worker después de que la página cargue
       window.addEventListener("load", () => {
