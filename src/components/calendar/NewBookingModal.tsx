@@ -470,18 +470,24 @@ export function NewBookingModal({
                         />
                         {/* Dropdown de sugerencias */}
                         {showSuggestions && customerSuggestions.length > 0 && (
-                          <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-[12px] border border-white/10 bg-[var(--glass-bg)] shadow-[var(--shadow-premium)] backdrop-blur-md">
+                          <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-48 overflow-y-auto rounded-[12px] border border-white/10 bg-[var(--glass-bg)] shadow-[var(--shadow-premium)] backdrop-blur-md">
                             {customerSuggestions.map((customer) => (
                               <button
                                 key={customer.id}
                                 type="button"
+                                onMouseDown={(e) => {
+                                  // Prevent blur event when clicking suggestions
+                                  e.preventDefault();
+                                }}
                                 onClick={() => {
+                                  // Clear any pending blur timeout
                                   if (customerBlurTimeoutRef.current) {
                                     clearTimeout(customerBlurTimeoutRef.current);
+                                    customerBlurTimeoutRef.current = null;
                                   }
                                   selectCustomerSuggestion(customer);
                                 }}
-                                className="w-full px-4 py-3 text-left hover:bg-white/5 focus:bg-white/5 transition-colors first:rounded-t-[12px] last:rounded-b-[12px]"
+                                className="w-full px-4 py-3 text-left hover:bg-white/5 focus:bg-white/5 transition-colors first:rounded-t-[12px] last:rounded-b-[12px] touch-manipulation"
                               >
                                 <div className="flex flex-col gap-1">
                                   <span className="text-sm font-medium text-white font-[var(--font-heading)]">
@@ -552,13 +558,15 @@ export function NewBookingModal({
                     <label className="text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
                       Servicios <span className="text-[#EF4444]">*</span>
                     </label>
-                    <button
-                      onClick={handleAddOrEditService}
-                      className="px-3 py-1.5 text-xs font-semibold text-white bg-white/5 hover:bg-white/8 border border-white/10 rounded-[8px] flex items-center gap-1.5"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      Añadir servicio
-                    </button>
+                    {bookingServices.length === 0 && (
+                      <button
+                        onClick={handleAddOrEditService}
+                        className="px-3 py-1.5 text-xs font-semibold text-white bg-white/5 hover:bg-white/8 border border-white/10 rounded-[8px] flex items-center gap-1.5"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        Añadir servicio
+                      </button>
+                    )}
                   </div>
 
                   {bookingServices.length === 0 ? (
@@ -568,7 +576,7 @@ export function NewBookingModal({
                       </p>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-3 -mb-2">
                       {/* Lista de servicios */}
                       {bookingServices.map((service) => (
                         <div key={service.id} className="p-4 bg-white/3 border border-white/5 rounded-[14px] space-y-4">
@@ -681,7 +689,7 @@ export function NewBookingModal({
                 <div>
                   <p className="text-xs uppercase tracking-wider text-[#9ca3af] font-[var(--font-heading)]">Fecha y hora</p>
                   <p className="text-base font-semibold text-white font-[var(--font-heading)]">
-                    {format(new Date(`${bookingDate}T${bookingTime}`), "EEEE, d 'de' MMMM", { locale: undefined })}
+                    {format(new Date(`${bookingDate}T${bookingTime}`), "EEEE, d 'de' MMMM")}
                   </p>
                   <p className="text-sm text-[var(--text-secondary)] font-[var(--font-body)]">
                     {bookingTime}

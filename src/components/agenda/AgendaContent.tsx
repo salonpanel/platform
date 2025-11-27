@@ -221,6 +221,8 @@ export function AgendaContent({
                         selectedDate={selectedDate}
                         timezone={tenantTimezone}
                         onBookingClick={onBookingClick}
+                        onPopoverShow={onPopoverShow}
+                        onBookingContextMenu={onBookingContextMenu}
                       />
                     )}
 
