@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, RefObject } from "react";
 import { Booking } from "@/types/agenda";
+import type { StaffWindowsMap, TimeWindow } from "../utils/timeWindows";
 import { SLOT_HEIGHT_PX, SLOT_DURATION_MINUTES } from "../constants/layout";
 
 interface DragDropManagerProps {
@@ -9,12 +10,18 @@ interface DragDropManagerProps {
   onBookingMove?: (bookingId: string, newStaffId: string, newStartTime: string, newEndTime: string) => void;
   onBookingResize?: (bookingId: string, newStartTime: string, newEndTime: string) => void;
   timezone?: string;
+  scrollContainerRef?: RefObject<HTMLElement | null>;
+  dayStartHour?: number;
+  dayEndHour?: number;
+  staffWindows?: StaffWindowsMap;
 }
 
-interface DragState {
+export interface DragState {
   bookingId: string;
+  bookingSnapshot: Booking;
   originalStaffId: string;
   originalTop: number;
+  initialScrollTop: number;
   dragOffset: { x: number; y: number };
   currentTop: number;
   currentStaffId: string;
@@ -34,6 +41,10 @@ export function useDragDropManager({
   onBookingMove,
   onBookingResize,
   timezone = "Europe/Madrid",
+  scrollContainerRef,
+  dayStartHour,
+  dayEndHour,
+  staffWindows,
 }: DragDropManagerProps = {}) {
   const [draggingBooking, setDraggingBooking] = useState<DragState | null>(null);
   const [resizingBooking, setResizingBooking] = useState<ResizeState | null>(null);
@@ -44,11 +55,108 @@ export function useDragDropManager({
   const justFinishedDragRef = useRef(false);
   const justFinishedResizeRef = useRef(false);
 
+  // Estado para auto-scroll continuo mientras el cursor está en el borde
+  const scrollDirectionRef = useRef<0 | 1 | -1>(0);
+  const scrollAnimationFrameRef = useRef<number | null>(null);
+
+  const START_HOUR = dayStartHour ?? 8;
+  const END_HOUR = dayEndHour ?? 22;
+
   // Utility functions
   const pixelsToMinutes = (pixels: number): number => {
     const slots = Math.round(Math.max(0, pixels) / SLOT_HEIGHT_PX); // Use shared constants
     const relativeMinutes = slots * SLOT_DURATION_MINUTES;
-    return 8 * 60 + relativeMinutes; // Start from 8:00
+    return START_HOUR * 60 + relativeMinutes;
+  };
+  const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60;
+  const TOTAL_SLOTS = TOTAL_MINUTES / SLOT_DURATION_MINUTES;
+  const TOTAL_HEIGHT_PX = TOTAL_SLOTS * SLOT_HEIGHT_PX;
+
+  const snapToValidWindow = (rawStartMinutes: number, durationMinutes: number, staffId: string): number | null => {
+    const windowsForStaff: TimeWindow[] | undefined = staffWindows ? staffWindows[staffId] : undefined;
+
+    if (!windowsForStaff || windowsForStaff.length === 0) {
+      return null;
+    }
+
+    const validWindows = windowsForStaff.filter((w) => w.endMinutes - w.startMinutes >= durationMinutes);
+    if (validWindows.length === 0) return null;
+
+    const insideWindow = validWindows.find((w) => rawStartMinutes >= w.startMinutes && rawStartMinutes <= w.endMinutes - durationMinutes);
+    if (insideWindow) {
+      return Math.min(Math.max(rawStartMinutes, insideWindow.startMinutes), insideWindow.endMinutes - durationMinutes);
+    }
+
+    const sorted = [...validWindows].sort((a, b) => a.startMinutes - b.startMinutes);
+
+    if (rawStartMinutes < sorted[0].startMinutes) {
+      return sorted[0].startMinutes;
+    }
+
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const current = sorted[i];
+      const next = sorted[i + 1];
+      if (rawStartMinutes > current.endMinutes && rawStartMinutes < next.startMinutes) {
+        return next.startMinutes;
+      }
+    }
+
+    const last = sorted[sorted.length - 1];
+    const latestStart = last.endMinutes - durationMinutes;
+    if (rawStartMinutes <= last.endMinutes && latestStart >= last.startMinutes) {
+      return latestStart;
+    }
+
+    return null;
+  };
+
+  const stopAutoScroll = () => {
+    scrollDirectionRef.current = 0;
+    if (scrollAnimationFrameRef.current !== null) {
+      cancelAnimationFrame(scrollAnimationFrameRef.current);
+      scrollAnimationFrameRef.current = null;
+    }
+  };
+
+  const startAutoScrollLoop = () => {
+    if (scrollAnimationFrameRef.current !== null) return;
+
+    const step = () => {
+      const dir = scrollDirectionRef.current;
+      const container = scrollContainerRef?.current;
+      const currentDrag = draggingRef.current;
+
+      if (!dir || !container || !currentDrag) {
+        scrollAnimationFrameRef.current = null;
+        return;
+      }
+
+      const maxScrollTop = Math.max(0, TOTAL_HEIGHT_PX - container.clientHeight);
+      const prevScrollTop = container.scrollTop;
+      const scrollStep = 12; // velocidad de scroll por frame
+
+      const nextScrollTop = Math.min(maxScrollTop, Math.max(0, prevScrollTop + dir * scrollStep));
+      container.scrollTop = nextScrollTop;
+
+      const scrollDelta = nextScrollTop - currentDrag.initialScrollTop;
+      const newTopRaw = currentDrag.originalTop + scrollDelta;
+
+      const slotIndex = Math.round(newTopRaw / SLOT_HEIGHT_PX);
+      const clampedSlotIndex = Math.max(0, Math.min(TOTAL_SLOTS - 1, slotIndex));
+      const clampedY = clampedSlotIndex * SLOT_HEIGHT_PX;
+
+      const updatedDrag: DragState = {
+        ...currentDrag,
+        currentTop: clampedY,
+      };
+
+      draggingRef.current = updatedDrag;
+      setDraggingBooking(updatedDrag);
+
+      scrollAnimationFrameRef.current = requestAnimationFrame(step);
+    };
+
+    scrollAnimationFrameRef.current = requestAnimationFrame(step);
   };
 
   const minutesToTime = (minutes: number): string => {
@@ -88,10 +196,14 @@ export function useDragDropManager({
         y: e.clientY - bookingRect.top,
       };
 
+      const initialScrollTop = scrollContainerRef?.current?.scrollTop ?? 0;
+
       const dragState: DragState = {
         bookingId: booking.id,
+        bookingSnapshot: booking,
         originalStaffId: booking.staff_id || "",
         originalTop: top,
+        initialScrollTop,
         dragOffset,
         currentTop: top,
         currentStaffId: booking.staff_id || "",
@@ -107,10 +219,31 @@ export function useDragDropManager({
         const elementUnderMouse = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY) as HTMLElement;
         const newStaffId = getStaffIdFromElement(elementUnderMouse) || currentDrag.originalStaffId;
 
-        const relativeY = moveEvent.clientY - bookingRect.top + currentDrag.dragOffset.y;
-        const slotIndex = Math.round(relativeY / SLOT_HEIGHT_PX);
-        const snappedY = slotIndex * SLOT_HEIGHT_PX;
-        const clampedY = Math.max(0, snappedY);
+        // Desplazamiento vertical relativo al punto inicial del drag
+        const deltaY = moveEvent.clientY - e.clientY;
+
+        // Determinar dirección de auto-scroll según posición del ratón
+        const container = scrollContainerRef?.current;
+        if (container) {
+          const rect = container.getBoundingClientRect();
+          const threshold = 60; // px desde el borde
+          if (moveEvent.clientY < rect.top + threshold) {
+            scrollDirectionRef.current = -1;
+            startAutoScrollLoop();
+          } else if (moveEvent.clientY > rect.bottom - threshold) {
+            scrollDirectionRef.current = 1;
+            startAutoScrollLoop();
+          } else {
+            scrollDirectionRef.current = 0;
+          }
+        }
+
+        const scrollDelta = container ? container.scrollTop - currentDrag.initialScrollTop : 0;
+        const newTopRaw = currentDrag.originalTop + deltaY + scrollDelta;
+
+        const slotIndex = Math.round(newTopRaw / SLOT_HEIGHT_PX);
+        const clampedSlotIndex = Math.max(0, Math.min(TOTAL_SLOTS - 1, slotIndex));
+        const clampedY = clampedSlotIndex * SLOT_HEIGHT_PX;
 
         const updatedDrag = {
           ...currentDrag,
@@ -146,9 +279,8 @@ export function useDragDropManager({
           justFinishedDragRef.current = false;
         }, 100);
 
-        // Calculate new time
-        const newMinutes = pixelsToMinutes(currentDrag.currentTop);
-        const newTime = minutesToTime(newMinutes);
+        // Calculate new time based on position
+        const rawMinutes = pixelsToMinutes(currentDrag.currentTop);
 
         const bookingToMove = bookings?.find((b) => b.id === currentDrag.bookingId);
         if (bookingToMove && onBookingMove) {
@@ -157,16 +289,33 @@ export function useDragDropManager({
           const durationMs = originalEnd.getTime() - originalStart.getTime();
           const durationMinutes = durationMs / (1000 * 60);
 
-          const newEndMinutes = newMinutes + durationMinutes;
+          const snappedStartMinutes = currentDrag.currentStaffId
+            ? snapToValidWindow(rawMinutes, durationMinutes, currentDrag.currentStaffId)
+            : null;
+
+          if (snappedStartMinutes === null) {
+            setDraggingBooking(null);
+            draggingRef.current = null;
+            stopAutoScroll();
+            document.removeEventListener("mousemove", handleMouseMove);
+            document.removeEventListener("mouseup", handleMouseUp);
+            return;
+          }
+
+          const newEndMinutes = snappedStartMinutes + durationMinutes;
+
+          const newTime = minutesToTime(snappedStartMinutes);
           const newEndTime = minutesToTime(Math.floor(newEndMinutes));
 
-          // Create new dates
-          const selectedDate = ""; // This should come from props
+          // Derive new dates from the original start date, adjusting only time
           const [startHour, startMinute] = newTime.split(":").map(Number);
           const [endHour, endMinute] = newEndTime.split(":").map(Number);
 
-          const newStartsAt = new Date(`${selectedDate}T${newTime}:00`);
-          const newEndsAt = new Date(`${selectedDate}T${newEndTime}:00`);
+          const newStartsAt = new Date(originalStart);
+          newStartsAt.setHours(startHour, startMinute, 0, 0);
+
+          const newEndsAt = new Date(originalStart);
+          newEndsAt.setHours(endHour, endMinute, 0, 0);
 
           onBookingMove(
             currentDrag.bookingId,
@@ -178,6 +327,7 @@ export function useDragDropManager({
 
         setDraggingBooking(null);
         draggingRef.current = null;
+        stopAutoScroll();
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
       };
@@ -255,23 +405,102 @@ export function useDragDropManager({
           const originalEnd = new Date(bookingToResize.ends_at);
 
           if (currentResize.resizeType === "end") {
-            // Resize end time
-            const newEndMinutes = pixelsToMinutes(currentResize.originalTop + currentResize.currentHeight);
-            const newEndTime = minutesToTime(newEndMinutes);
+            // Resize end time, clamped to availability windows for this staff
+            const rawEndMinutes = pixelsToMinutes(currentResize.originalTop + currentResize.currentHeight);
+
+            // Base start minutes from visual position
+            const startMinutes = pixelsToMinutes(currentResize.originalTop);
+
+            let finalEndMinutes = rawEndMinutes;
+
+            const windowsForStaff = staffWindows ? staffWindows[currentResize.staffId] : undefined;
+            if (windowsForStaff && windowsForStaff.length > 0) {
+              const window = windowsForStaff.find(
+                (w) => startMinutes >= w.startMinutes && startMinutes < w.endMinutes
+              );
+
+              if (window) {
+                const minEnd = Math.max(startMinutes + SLOT_DURATION_MINUTES, window.startMinutes + SLOT_DURATION_MINUTES);
+                const maxEnd = window.endMinutes;
+                finalEndMinutes = Math.min(Math.max(rawEndMinutes, minEnd), maxEnd);
+              }
+            }
+
+            const newEndTime = minutesToTime(finalEndMinutes);
             const newEndDate = new Date(originalStart);
             const [endHour, endMinute] = newEndTime.split(":").map(Number);
             newEndDate.setHours(endHour, endMinute);
 
             onBookingResize(currentResize.bookingId, originalStart.toISOString(), newEndDate.toISOString());
           } else {
-            // Resize start time
-            const newStartMinutes = pixelsToMinutes(currentResize.originalTop);
-            const newStartTime = minutesToTime(newStartMinutes);
+            // Resize start time, clamped to availability windows for this staff
+            // Keep the original end fixed and adjust the start within the containing window
+
+            // Compute original end minutes in tenant timezone so it aligns with staffWindows
+            const originalEndTenant = new Date(
+              originalEnd.toLocaleString("en-US", { timeZone: timezone })
+            );
+            const originalEndMinutes =
+              originalEndTenant.getHours() * 60 + originalEndTenant.getMinutes();
+
+            // Derive a raw new start from the current height (duration) anchored at the fixed end
+            const slots = Math.max(1, Math.round(currentResize.currentHeight / SLOT_HEIGHT_PX));
+            const newDurationMinutes = slots * SLOT_DURATION_MINUTES;
+            let rawStartMinutes = originalEndMinutes - newDurationMinutes;
+
+            const windowsForStaff = staffWindows ? staffWindows[currentResize.staffId] : undefined;
+
+            if (!windowsForStaff || windowsForStaff.length === 0) {
+              // No availability windows for this staff/day -> cancel resize
+              setResizingBooking(null);
+              resizingRef.current = null;
+              document.removeEventListener("mousemove", handleMouseMove);
+              document.removeEventListener("mouseup", handleMouseUp);
+              return;
+            }
+
+            // Find the window that contains the (fixed) booking end
+            const containingWindow = windowsForStaff.find(
+              (w) => originalEndMinutes > w.startMinutes && originalEndMinutes <= w.endMinutes
+            );
+
+            if (!containingWindow) {
+              // End is not inside any availability window -> cancel resize
+              setResizingBooking(null);
+              resizingRef.current = null;
+              document.removeEventListener("mousemove", handleMouseMove);
+              document.removeEventListener("mouseup", handleMouseUp);
+              return;
+            }
+
+            // Clamp start so that it stays within the containing window and leaves at least one slot
+            const maxStart = originalEndMinutes - SLOT_DURATION_MINUTES;
+            const minStart = containingWindow.startMinutes;
+
+            if (maxStart <= minStart) {
+              // Not enough room to keep at least one slot -> cancel resize
+              setResizingBooking(null);
+              resizingRef.current = null;
+              document.removeEventListener("mousemove", handleMouseMove);
+              document.removeEventListener("mouseup", handleMouseUp);
+              return;
+            }
+
+            const clampedStartMinutes = Math.min(
+              Math.max(rawStartMinutes, minStart),
+              maxStart
+            );
+
+            const newStartTime = minutesToTime(clampedStartMinutes);
             const newStartDate = new Date(originalEnd);
             const [startHour, startMinute] = newStartTime.split(":").map(Number);
-            newStartDate.setHours(startHour, startMinute);
+            newStartDate.setHours(startHour, startMinute, 0, 0);
 
-            onBookingResize(currentResize.bookingId, newStartDate.toISOString(), originalEnd.toISOString());
+            onBookingResize(
+              currentResize.bookingId,
+              newStartDate.toISOString(),
+              originalEnd.toISOString()
+            );
           }
         }
 

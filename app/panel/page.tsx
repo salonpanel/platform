@@ -88,9 +88,10 @@ async function getDashboardInitialData(
 export default async function PanelHomePage({
   searchParams,
 }: {
-  searchParams?: { [key: string]: string | string[] | undefined };
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const impersonateOrgId = (searchParams?.impersonate as string) || null;
+  const resolvedSearchParams = await searchParams;
+  const impersonateOrgId = (resolvedSearchParams?.impersonate as string) || null;
   const initialData = await getDashboardInitialData(impersonateOrgId);
 
   return <PanelHomeClient initialData={initialData} impersonateOrgId={impersonateOrgId} />;

@@ -108,16 +108,18 @@ export async function POST(req: Request) {
       );
     }
 
-    // Obtener datos del servicio para calcular ends_at
+    // Validar que el servicio existe y está activo
     const { data: service, error: serviceError } = await supabase
       .from("services")
-      .select("duration_min")
+      .select("id, tenant_id, duration_min, active, staff_only_ids")
       .eq("id", paymentIntent.service_id)
+      .eq("tenant_id", paymentIntent.tenant_id)
+      .eq("active", true)
       .single();
 
     if (serviceError || !service) {
       return NextResponse.json(
-        { error: "Servicio no encontrado" },
+        { error: "Servicio no encontrado o inactivo" },
         { status: 404 }
       );
     }
@@ -149,6 +151,16 @@ export async function POST(req: Request) {
       } else {
         return NextResponse.json(
           { error: "No hay staff disponible" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validar staff_only_ids: si existe restricción, verificar que el staff está permitido
+    if (service.staff_only_ids && service.staff_only_ids.length > 0) {
+      if (!finalStaffId || !service.staff_only_ids.includes(finalStaffId)) {
+        return NextResponse.json(
+          { error: "El staff seleccionado no puede prestar este servicio" },
           { status: 400 }
         );
       }

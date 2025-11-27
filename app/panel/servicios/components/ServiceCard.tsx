@@ -13,6 +13,7 @@ type Props = {
   onEdit: (service: Service) => void;
   onDuplicate: (service: Service) => void;
   onToggleActive: (id: string, currentActive: boolean) => void;
+  onDelete: (service: Service) => void;
   isToggling: boolean;
 };
 
@@ -25,6 +26,7 @@ export const ServiceCard = memo(function ServiceCard({
   onEdit,
   onDuplicate,
   onToggleActive,
+  onDelete,
   isToggling,
 }: Props) {
   const stripeSynced = Boolean(
@@ -127,6 +129,20 @@ export const ServiceCard = memo(function ServiceCard({
               onClick={() => onToggleActive(service.id, service.active)}
             >
               {service.active ? "Desactivar" : "Activar"}
+            </Button>
+          </span>
+          <span
+            className="contents"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Button
+              variant="danger"
+              size="sm"
+              isLoading={isToggling}
+              disabled={isToggling}
+              onClick={() => onDelete(service)}
+            >
+              {service.active ? "Archivar" : "Eliminar definitivamente"}
             </Button>
           </span>
         </div>

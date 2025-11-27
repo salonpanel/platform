@@ -17,7 +17,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:rls": "ts-node tests/rls-validation.ts",
-    "test:concurrency": "jest tests/concurrency-overlap.test.ts tests/concurrency-rate-limit.test.ts"
+    "test:concurrency": "jest tests/concurrency-overlap.test.ts tests/concurrency-rate-limit.test.ts",
+    "test:integration": "jest --runTestsByPath tests/rls-executable.test.ts tests/overlap-constraint.test.ts"
   },
   "dependencies": {
     "@supabase/auth-helpers-nextjs": "^0.10.0",

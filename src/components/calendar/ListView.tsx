@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import React from "react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { BookingCard } from "@/components/agenda/BookingCard";
+import { AppointmentCard } from "@/components/agenda/AppointmentCard";
 import { motion } from "framer-motion";
 import { toTenantLocalDate, formatInTenantTz } from "@/lib/timezone";
 import { Booking, ViewMode } from "@/types/agenda";
@@ -17,15 +17,17 @@ interface ListViewProps {
   viewMode: ViewMode;
   timezone: string;
   onBookingClick: (booking: Booking) => void;
+  onBookingContextMenu?: (e: React.MouseEvent, booking: Booking) => void;
   searchTerm?: string;
 }
 
-export function ListView({
+export const ListView = React.memo(function ListView({
   bookings,
   selectedDate,
   viewMode,
   timezone,
   onBookingClick,
+  onBookingContextMenu,
   searchTerm = "",
 }: ListViewProps) {
   // Ordenar bookings por hora de inicio (por defecto: ascendente)
@@ -256,11 +258,12 @@ export function ListView({
                             </td>
                             <td className="px-6 py-4" role="cell">
                               <div className="w-fit">
-                                <BookingCard
+                                <AppointmentCard
                                   booking={booking}
                                   timezone={timezone}
                                   variant="list"
                                   onClick={() => onBookingClick(booking)}
+                                  onContextMenu={(e) => onBookingContextMenu?.(e, booking)}
                                 />
                               </div>
                             </td>
@@ -314,11 +317,12 @@ export function ListView({
                         transition: { delay: index * 0.02, duration: 0.15, ease: "easeOut" },
                       })}
                     >
-                      <BookingCard
+                      <AppointmentCard
                         booking={booking}
                         timezone={timezone}
                         variant="list"
                         onClick={() => onBookingClick(booking)}
+                        onContextMenu={(e) => onBookingContextMenu?.(e, booking)}
                       />
                     </motion.div>
                   ))}
@@ -329,5 +333,16 @@ export function ListView({
       </div>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison function for React.memo
+  return (
+    prevProps.bookings.length === nextProps.bookings.length &&
+    prevProps.selectedDate === nextProps.selectedDate &&
+    prevProps.viewMode === nextProps.viewMode &&
+    prevProps.timezone === nextProps.timezone &&
+    prevProps.searchTerm === nextProps.searchTerm &&
+    prevProps.onBookingClick === nextProps.onBookingClick &&
+    prevProps.onBookingContextMenu === nextProps.onBookingContextMenu
+  );
+});
 

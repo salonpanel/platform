@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
 import { stripe } from "@/lib/stripe";
 import { supabaseServer } from "@/lib/supabase";
 import { hasTenantPermission } from "@/lib/permissions/server";
@@ -49,7 +49,28 @@ export async function PATCH(req: Request, { params }: RouteParams) {
 
     const payload = (await req.json()) as UpdateServiceRequest;
 
-    const supabaseAuth = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabaseAuth = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach((cookie) => {
+              cookieStore.set(cookie.name, cookie.value, cookie.options);
+            });
+          },
+        },
+        // Importante: usar el mismo nombre de cookie que el cliente de navegador (sb-panel-auth)
+        cookieOptions: {
+          name: "sb-panel-auth",
+          path: "/",
+        },
+      }
+    );
     const {
       data: { session },
     } = await supabaseAuth.auth.getSession();
@@ -190,14 +211,35 @@ export async function PATCH(req: Request, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(_: Request, { params }: RouteParams) {
+export async function DELETE(req: Request, { params }: RouteParams) {
   try {
     const { id } = await params;
     if (!id) {
       return NextResponse.json({ error: "ID requerido." }, { status: 400 });
     }
 
-    const supabaseAuth = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabaseAuth = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach((cookie) => {
+              cookieStore.set(cookie.name, cookie.value, cookie.options);
+            });
+          },
+        },
+        // Usar mismo nombre de cookie que el cliente (sb-panel-auth)
+        cookieOptions: {
+          name: "sb-panel-auth",
+          path: "/",
+        },
+      }
+    );
     const {
       data: { session },
     } = await supabaseAuth.auth.getSession();
@@ -248,6 +290,65 @@ export async function DELETE(_: Request, { params }: RouteParams) {
           { status: 403 }
         );
       }
+    }
+
+    const url = new URL(req.url);
+    const hardDelete = url.searchParams.get("hard") === "true";
+
+    if (hardDelete) {
+      if (service.active) {
+        return NextResponse.json(
+          { error: "Solo puedes eliminar definitivamente servicios archivados." },
+          { status: 400 }
+        );
+      }
+
+      // Comprobar si existen reservas FUTURAS asociadas a este servicio
+      const nowIso = new Date().toISOString();
+      const { count: bookingsCount, error: bookingsError } = await supabase
+        .from("bookings")
+        .select("id", { head: true, count: "exact" })
+        .eq("service_id", id)
+        .gte("starts_at", nowIso);
+
+      if (bookingsError) {
+        return NextResponse.json(
+          {
+            error:
+              bookingsError.message ||
+              "No se pudo comprobar si el servicio tiene reservas futuras asociadas.",
+          },
+          { status: 500 }
+        );
+      }
+
+      if ((bookingsCount || 0) > 0) {
+        return NextResponse.json(
+          {
+            error:
+              "No puedes eliminar definitivamente este servicio porque tiene reservas futuras programadas. Mantén el servicio archivado hasta que no queden citas pendientes.",
+          },
+          { status: 400 }
+        );
+      }
+
+      const { error: deleteError } = await supabase
+        .from("services")
+        .delete()
+        .eq("id", id);
+
+      if (deleteError) {
+        return NextResponse.json(
+          {
+            error:
+              deleteError.message ||
+              "Error al eliminar definitivamente el servicio.",
+          },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({ success: true });
     }
 
     const { data: updated, error: updateError } = await supabase

@@ -36,6 +36,10 @@ export function Modal({
   const previousActiveElement = useRef<HTMLElement | null>(null);
   const titleId = useRef(`modal-title-${Math.random().toString(36).substr(2, 9)}`);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Helper para manejar cierre con preventClose
   const handleClose = () => {
     if (preventClose) {

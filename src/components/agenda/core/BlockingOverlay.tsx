@@ -9,6 +9,7 @@ import { SLOT_HEIGHT_PX, SLOT_DURATION_MINUTES, MIN_BOOKING_HEIGHT_PX } from "..
 interface BlockingOverlayProps {
   blockings: StaffBlocking[];
   timezone: string;
+  dayStartHour?: number;
 }
 
 const blockingColors = {
@@ -17,7 +18,7 @@ const blockingColors = {
   vacation: "bg-blue-500/[0.05] border-l-[3px] border-blue-500/40 text-blue-400 backdrop-blur-[2px]",
 };
 
-export function BlockingOverlay({ blockings, timezone }: BlockingOverlayProps) {
+export function BlockingOverlay({ blockings, timezone, dayStartHour = 8 }: BlockingOverlayProps) {
   const getBlockingPosition = (blocking: StaffBlocking) => {
     const startsAt = new Date(blocking.start_at);
     const endsAt = new Date(blocking.end_at);
@@ -32,9 +33,15 @@ export function BlockingOverlay({ blockings, timezone }: BlockingOverlayProps) {
     const startMinutesFromMidnight = localStartsAt.getHours() * 60 + localStartsAt.getMinutes();
     const endMinutesFromMidnight = localEndsAt.getHours() * 60 + localEndsAt.getMinutes();
 
-    // Position in pixels using shared constants
-    const top = Math.max(0, Math.round(startMinutesFromMidnight / SLOT_DURATION_MINUTES) * SLOT_HEIGHT_PX);
-    const height = Math.max(MIN_BOOKING_HEIGHT_PX, Math.round((endMinutesFromMidnight - startMinutesFromMidnight) / SLOT_DURATION_MINUTES) * SLOT_HEIGHT_PX);
+    const dayStartMinutes = dayStartHour * 60;
+    const relativeStartMinutes = startMinutesFromMidnight - dayStartMinutes;
+
+    // Position in pixels using shared constants, aligned with dynamic day start
+    const top = Math.max(0, Math.round(relativeStartMinutes / SLOT_DURATION_MINUTES) * SLOT_HEIGHT_PX);
+    const height = Math.max(
+      MIN_BOOKING_HEIGHT_PX,
+      Math.round((endMinutesFromMidnight - Math.max(startMinutesFromMidnight, dayStartMinutes)) / SLOT_DURATION_MINUTES) * SLOT_HEIGHT_PX
+    );
 
     return { top, height, startMinutes: startMinutesFromMidnight, endMinutes: endMinutesFromMidnight };
   };

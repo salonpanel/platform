@@ -17,19 +17,22 @@ interface FreeSlotOverlayProps {
   onSlotClick?: (slot: { staffId: string; time: string; endTime: string; date: string }) => void;
   staffId: string;
   selectedDate: string;
+  dayStartHour?: number;
 }
 
 export function FreeSlotOverlay({
   freeSlots,
   onSlotClick,
   staffId,
-  selectedDate
+  selectedDate,
+  dayStartHour = 8,
 }: FreeSlotOverlayProps) {
   return (
     <>
       {freeSlots.map((gap, gapIndex) => {
-        const relativeStartMinutes = gap.startMinutes;
-        const relativeEndMinutes = gap.endMinutes;
+        const dayStartMinutes = dayStartHour * 60;
+        const relativeStartMinutes = gap.startMinutes - dayStartMinutes;
+        const relativeEndMinutes = gap.endMinutes - dayStartMinutes;
 
         // Calculate position using shared constants
         const slotIndexStart = Math.round(relativeStartMinutes / SLOT_DURATION_MINUTES);

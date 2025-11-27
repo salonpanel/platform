@@ -149,6 +149,8 @@ export async function getCurrentTenant(
 
     // Si no hay impersonación, obtener desde memberships
     if (!targetTenantId) {
+      console.log("[getCurrentTenant] Buscando membership para user_id:", user.id);
+      
       const { data: membership, error: membershipError } = await supabase
         .from("memberships")
         .select("tenant_id, role")
@@ -156,6 +158,8 @@ export async function getCurrentTenant(
         .order("created_at", { ascending: true })
         .limit(1)
         .maybeSingle();
+
+      console.log("[getCurrentTenant] Membership result:", { membership, membershipError });
 
       if (membershipError) {
         console.error("[getCurrentTenant] Error membership:", membershipError);

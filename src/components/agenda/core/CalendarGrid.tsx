@@ -4,15 +4,17 @@ import { useMemo } from "react";
 import { theme } from "@/theme/ui";
 import { cn } from "@/lib/utils";
 import { SLOT_HEIGHT_PX, SLOT_DURATION_MINUTES } from "../constants/layout";
+import type { TimeWindow } from "../utils/timeWindows";
 
 interface CalendarGridProps {
   startHour: number;
   endHour: number;
   onSlotClick?: (e: React.MouseEvent, staffId: string, timeSlot: string) => void;
   staffId: string;
+  availabilityWindows?: TimeWindow[];
 }
 
-export function CalendarGrid({ startHour, endHour, onSlotClick, staffId }: CalendarGridProps) {
+export function CalendarGrid({ startHour, endHour, onSlotClick, staffId, availabilityWindows }: CalendarGridProps) {
   const timeSlots = useMemo(() => {
     const slots = [];
     for (let hour = startHour; hour < endHour; hour++) {
@@ -23,10 +25,20 @@ export function CalendarGrid({ startHour, endHour, onSlotClick, staffId }: Calen
     return slots;
   }, [startHour, endHour]);
 
-  const hasBookingAtPosition = (timeSlot: string) => {
-    // This will be passed from parent component
-    // For now, return false - will be implemented when integrated
-    return false;
+  const isSlotDisabled = (timeSlot: string) => {
+    if (!availabilityWindows || availabilityWindows.length === 0) return true;
+
+    const [h, m] = timeSlot.split(":").map(Number);
+    if (isNaN(h) || isNaN(m)) return false;
+
+    const startMinutes = h * 60 + m;
+    const endMinutes = startMinutes + SLOT_DURATION_MINUTES;
+
+    const hasOverlap = availabilityWindows.some((w) => {
+      return endMinutes > w.startMinutes && startMinutes < w.endMinutes;
+    });
+
+    return !hasOverlap;
   };
 
   return (
@@ -34,10 +46,7 @@ export function CalendarGrid({ startHour, endHour, onSlotClick, staffId }: Calen
       {/* Grid slots */}
       {timeSlots.map((time, index) => {
         const isHour = time.endsWith(":00");
-        const hasBooking = hasBookingAtPosition(time);
-
-        const borderColor = isHour ? theme.colors.borderHover : theme.colors.borderDefault;
-        const borderStyle = isHour ? "solid" : "dashed";
+        const disabled = isSlotDisabled(time);
 
         return (
           <div
@@ -45,7 +54,9 @@ export function CalendarGrid({ startHour, endHour, onSlotClick, staffId }: Calen
             onClick={(e) => onSlotClick?.(e, staffId, time)}
             className={cn(
               "absolute inset-x-0 cursor-pointer transition-colors duration-150",
-              "hover:bg-white/[0.02]"
+              disabled
+                ? "bg-black/40 pointer-events-none bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.03)_0,rgba(255,255,255,0.03)_1px,transparent_1px,transparent_4px)]"
+                : "hover:bg-white/[0.02]"
             )}
             style={{
               top: index * SLOT_HEIGHT_PX,

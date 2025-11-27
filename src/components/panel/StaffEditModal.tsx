@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { UserPermissions, DEFAULT_PERMISSIONS } from "@/hooks/useUserPermissions";
+import { updateStaffServices, getStaffServices } from "@/lib/staff/staffServicesRelations";
 
 type Staff = {
   id: string;
@@ -48,6 +49,8 @@ interface StaffEditModalProps {
     // Permisos
     permissions?: UserPermissions;
     provides_services?: boolean;
+    // Servicios asignados (IDs)
+    serviceIds?: string[];
   }) => Promise<void>;
   staff: Staff | null;
   tenantId: string;
@@ -71,7 +74,7 @@ export function StaffEditModal({
   staff,
   tenantId,
   supabase,
-}: StaffEditModalProps) {
+}: StaffEditModalProps): React.ReactElement {
   const [form, setForm] = useState({
     name: "",
     skills: "",
@@ -89,6 +92,7 @@ export function StaffEditModal({
   const [loadingPermissions, setLoadingPermissions] = useState(false);
   const [availableServices, setAvailableServices] = useState<Array<{id: string, name: string}>>([]);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Función para cargar horarios
   const loadSchedules = useCallback(async () => {
@@ -166,7 +170,21 @@ export function StaffEditModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [staff?.user_id, tenantId]);
 
-  // Cargar servicios disponibles de la barbería
+  // Función para cargar servicios actuales del staff
+  const loadStaffServices = useCallback(async () => {
+    if (!staff || !tenantId) {
+      setSelectedServices([]);
+      return;
+    }
+
+    try {
+      const serviceIds = await getStaffServices(staff.id, tenantId);
+      setSelectedServices(serviceIds);
+    } catch (err: any) {
+      console.error("Error al cargar servicios del staff:", err);
+      setSelectedServices([]);
+    }
+  }, [staff?.id, tenantId]);
   useEffect(() => {
     if (!isOpen || !tenantId) return;
 
@@ -227,7 +245,7 @@ export function StaffEditModal({
       });
 
       // Cargar servicios seleccionados
-      setSelectedServices(staff.skills || []);
+      loadStaffServices();
 
       // Cargar horarios y permisos
       loadSchedules();
@@ -247,7 +265,7 @@ export function StaffEditModal({
       })));
       setSelectedServices([]);
     }
-  }, [isOpen, staff?.id, tenantId, loadSchedules, loadPermissions]);
+  }, [isOpen, staff?.id, tenantId, loadSchedules, loadPermissions, loadStaffServices]);
 
   const handleScheduleChange = (day: number, field: "startTime" | "endTime" | "isActive", value: string | boolean) => {
     setSchedules((prev) =>
@@ -260,6 +278,7 @@ export function StaffEditModal({
   };
 
   const handleSave = async () => {
+    setSaveError(null);
     setLoading(true);
     try {
       // Usar selectedServices en lugar de parsear form.skills
@@ -286,9 +305,15 @@ export function StaffEditModal({
         provides_services: form.providesServices,
         userRole: !staff ? form.userRole : undefined,
         permissions: staff?.user_id ? permissions : undefined, // Solo enviar permisos si el staff tiene user_id
+        serviceIds: selectedServices, // Pasar IDs de servicios asignados
       });
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error al guardar:", err);
+      const message =
+        err && typeof err === "object" && "message" in err && typeof (err as any).message === "string"
+          ? (err as any).message
+          : "No se pudo guardar el miembro del equipo. Inténtalo de nuevo.";
+      setSaveError(message);
     } finally {
       setLoading(false);
     }
@@ -313,6 +338,11 @@ export function StaffEditModal({
         </div>
       }
     >
+      {saveError && (
+        <div className="mb-4 rounded-[12px] border border-red-400/40 bg-red-500/10 p-3 text-sm text-red-200">
+          {saveError}
+        </div>
+      )}
       <Tabs defaultValue="info" className="w-full">
         <TabsList>
           <TabsTrigger value="info">Información</TabsTrigger>
@@ -434,12 +464,12 @@ export function StaffEditModal({
                   >
                     <input
                       type="checkbox"
-                      checked={selectedServices.includes(service.name)}
+                      checked={selectedServices.includes(service.id)}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedServices([...selectedServices, service.name]);
+                          setSelectedServices([...selectedServices, service.id]);
                         } else {
-                          setSelectedServices(selectedServices.filter(s => s !== service.name));
+                          setSelectedServices(selectedServices.filter(s => s !== service.id));
                         }
                       }}
                       className="w-4 h-4 rounded border-[var(--glass-border)] text-[var(--accent-aqua)] focus:ring-2 focus:ring-[var(--accent-aqua)]"

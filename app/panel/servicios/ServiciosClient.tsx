@@ -1,12 +1,9 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { fetchTenantStaffOptions } from "@/lib/staff/fetchTenantStaffOptions";
+import { getSupabaseBrowser } from "@/lib/supabase/browser";
+import { updateServiceStaff } from "@/lib/staff/staffServicesRelations";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
@@ -37,7 +34,7 @@ const STATUS_OPTIONS: Array<{ value: ServiceFilters["status"]; label: string }> 
   [
     { value: "all", label: "Todos" },
     { value: "active", label: "Activos" },
-    { value: "inactive", label: "Inactivos" },
+    { value: "inactive", label: "Archivados" },
   ];
 
 const STRIPE_OPTIONS: Array<{ value: ServiceFilters["stripe"]; label: string }> =
@@ -66,7 +63,7 @@ export function ServiciosClient({
   tenantId,
   initialServices,
 }: ServiciosClientProps) {
-  const supabase = createClientComponentClient();
+  const supabase = getSupabaseBrowser();
   const [services, setServices] = useState<Service[]>(() =>
     (initialServices || []).map(normalizeService)
   );
@@ -86,9 +83,14 @@ export function ServiciosClient({
   const [syncingStripe, setSyncingStripe] = useState(false);
   const [syncingServiceId, setSyncingServiceId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [servicePendingArchive, setServicePendingArchive] =
+    useState<Service | null>(null);
+  const [servicePendingHardDelete, setServicePendingHardDelete] =
+    useState<Service | null>(null);
+  const [staffOptions, setStaffOptions] = useState<Array<{ id: string; name: string }>>([]);
 
   const [filterStatus, setFilterStatus] =
-    useState<ServiceFilters["status"]>("all");
+    useState<ServiceFilters["status"]>("active");
   const [filterStripe, setFilterStripe] =
     useState<ServiceFilters["stripe"]>("all");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -146,7 +148,7 @@ export function ServiciosClient({
   );
 
   const loadServices = useCallback(
-    async (options?: { showLoader?: boolean }) => {
+    async (options?: { showLoader?: boolean; allowEmpty?: boolean }) => {
       if (!tenantId) return;
       if (options?.showLoader) {
         setLoading(true);
@@ -162,6 +164,16 @@ export function ServiciosClient({
           throw new Error(error.message);
         }
         const normalized = ((data as Service[]) || []).map(normalizeService);
+
+        // Si ya teníamos servicios y la recarga devuelve 0 inesperadamente,
+        // preservar la lista actual cuando allowEmpty es false (p.ej. en Reintentar).
+        if (!options?.allowEmpty && services.length > 0 && normalized.length === 0) {
+          setPageError(
+            "No se pudieron recargar los servicios. Inténtalo de nuevo o recarga la página."
+          );
+          return;
+        }
+
         setServices(normalized);
       } catch (err: any) {
         setPageError(err?.message || "Error al cargar servicios");
@@ -171,7 +183,7 @@ export function ServiciosClient({
         }
       }
     },
-    [supabase, tenantId]
+    [supabase, tenantId, services.length]
   );
 
   const openNewModal = useCallback(
@@ -211,9 +223,7 @@ export function ServiciosClient({
             ? service.combo_service_ids
             : base.combo_service_ids,
         staff_only_ids:
-          service.staff_only_ids && service.staff_only_ids.length > 0
-            ? service.staff_only_ids
-            : base.staff_only_ids,
+          [], // Will be loaded from relations table in ServiceForm
         duration_variants: service.duration_variants ?? base.duration_variants,
         ...overrides,
       };
@@ -292,6 +302,7 @@ export function ServiciosClient({
       active: form.active,
       category: form.category.trim() || DEFAULT_CATEGORY,
       pricing_levels: form.pricing_levels,
+      // Remove staff_only_ids - handled separately via relations table
     };
 
     try {
@@ -318,7 +329,30 @@ export function ServiciosClient({
         throw new Error(data.error || "Error al guardar servicio");
       }
 
-      await loadServices();
+      // Handle service-staff assignments
+      if (editingService) {
+        // For existing services, update staff assignments
+        await updateServiceStaff(tenantId, editingService.id, form.staff_only_ids || []);
+      } else {
+        // For new services, assign staff after creation
+        await updateServiceStaff(tenantId, data.id, form.staff_only_ids || []);
+      }
+
+      // Update lista local sin depender de recarga completa
+      if (editingService) {
+        setServices((prev) =>
+          prev.map((service) =>
+            service.id === editingService.id
+              ? normalizeService(data as Service)
+              : service
+          )
+        );
+      } else {
+        setServices((prev) => [
+          ...prev,
+          normalizeService(data as Service),
+        ]);
+      }
       closeModal();
       setSuccessMessage(
         editingService
@@ -424,39 +458,99 @@ export function ServiciosClient({
     [syncingServiceId]
   );
 
-  const handleDeleteService = useCallback(
-    async (service: Service) => {
-      if (
-        !window.confirm(
-          "Esta acción marcará el servicio como inactivo. ¿Deseas continuar?"
+  const handleRequestArchiveService = useCallback((service: Service) => {
+    if (service.active) {
+      setServicePendingArchive(service);
+    } else {
+      setServicePendingHardDelete(service);
+    }
+  }, []);
+
+  const handleCancelArchiveService = useCallback(() => {
+    setServicePendingArchive(null);
+  }, []);
+
+  const handleConfirmArchiveService = useCallback(async () => {
+    if (!servicePendingArchive) return;
+
+    const service = servicePendingArchive;
+    setDeletingId(service.id);
+    setPageError(null);
+
+    try {
+      const response = await fetch(`/api/services/${service.id}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "No se pudo archivar el servicio");
+      }
+
+      setServices((prev) =>
+        prev.map((item) =>
+          item.id === service.id ? normalizeService(data as Service) : item
         )
-      ) {
-        return;
+      );
+
+      setPreviewService((prev) =>
+        prev && prev.id === service.id
+          ? (normalizeService(data as Service) as Service)
+          : prev
+      );
+
+      setSuccessMessage("Servicio archivado correctamente.");
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err: any) {
+      setPageError(err?.message || "No se pudo archivar el servicio");
+    } finally {
+      setDeletingId(null);
+      setServicePendingArchive(null);
+    }
+  }, [servicePendingArchive]);
+
+  const handleCancelHardDeleteService = useCallback(() => {
+    setServicePendingHardDelete(null);
+  }, []);
+
+  const handleConfirmHardDeleteService = useCallback(async () => {
+    if (!servicePendingHardDelete) return;
+
+    const service = servicePendingHardDelete;
+    setDeletingId(service.id);
+    setPageError(null);
+
+    try {
+      const response = await fetch(`/api/services/${service.id}?hard=true`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(
+          data.error || "No se pudo eliminar el servicio de forma definitiva"
+        );
       }
-      setDeletingId(service.id);
-      try {
-        const response = await fetch(`/api/services/${service.id}`, {
-          method: "DELETE",
-        });
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error || "No se pudo eliminar el servicio");
-        }
-        await loadServices();
-        setPreviewService(null);
-        setSuccessMessage("Servicio marcado como inactivo.");
-        setTimeout(() => setSuccessMessage(null), 3000);
-      } catch (err: any) {
-        setPageError(err?.message || "No se pudo eliminar el servicio");
-      } finally {
-        setDeletingId(null);
-      }
-    },
-    [loadServices]
-  );
+
+      setServices((prev) => prev.filter((item) => item.id !== service.id));
+      setPreviewService((prev) =>
+        prev && prev.id === service.id ? null : prev
+      );
+
+      setSuccessMessage("Servicio eliminado definitivamente.");
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err: any) {
+      setPageError(
+        err?.message || "No se pudo eliminar el servicio de forma definitiva"
+      );
+    } finally {
+      setDeletingId(null);
+      setServicePendingHardDelete(null);
+    }
+  }, [servicePendingHardDelete]);
 
   const handleRetry = useCallback(() => {
-    loadServices({ showLoader: true });
+    // En reintentos, no vaciar la lista actual si la recarga devuelve 0
+    // de forma inesperada. Solo aceptar vacío cuando allowEmpty es true.
+    loadServices({ showLoader: true, allowEmpty: false });
   }, [loadServices]);
 
   const clearFilters = useCallback(() => {
@@ -489,7 +583,8 @@ export function ServiciosClient({
   useEffect(() => {
     if (!tenantId) return;
     if (!initialServices.length) {
-      loadServices({ showLoader: true });
+      // En la carga inicial sí permitimos que la lista sea realmente vacía
+      loadServices({ showLoader: true, allowEmpty: true });
     } else {
       setLoading(false);
     }
@@ -540,11 +635,15 @@ export function ServiciosClient({
   }, [priceBounds.min, priceBounds.max, services.length]);
 
   useEffect(() => {
-    if (!services.length) return;
-    setGridLoading(true);
-    const timeout = setTimeout(() => setGridLoading(false), 180);
-    return () => clearTimeout(timeout);
-  }, [filters, searchTerm, pageSize, currentPage, services.length]);
+    if (!showModal || !tenantId) return;
+
+    const loadStaffOptions = async () => {
+      const options = await fetchTenantStaffOptions(tenantId);
+      setStaffOptions(options);
+    };
+
+    loadStaffOptions();
+  }, [showModal, tenantId]);
 
   const hasServices = services.length > 0;
   const hasFiltersApplied =
@@ -631,7 +730,9 @@ export function ServiciosClient({
           setFilterStripe((prev) => (prev === "pending" ? "all" : "pending"));
           break;
         case "noBuffer":
-          setBufferFilter((prev) => (prev === "no_buffer" ? "all" : "no_buffer"));
+          setBufferFilter((prev) =>
+            prev === "no_buffer" ? "all" : "no_buffer"
+          );
           break;
         default:
           break;
@@ -672,6 +773,28 @@ export function ServiciosClient({
           <Button variant="ghost" size="sm" onClick={clearFilters}>
             Reiniciar filtros
           </Button>
+        </div>
+      </Card>
+
+      <Card className="rounded-[14px] border border-white/10 bg-white/5 p-4 shadow-glass">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <p className="text-sm font-medium text-white">Estado de servicios</p>
+          <div className="inline-flex rounded-full bg-white/5 p-1">
+            {STATUS_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setFilterStatus(option.value)}
+                className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                  filterStatus === option.value
+                    ? "bg-white text-black"
+                    : "text-white/70 hover:bg-white/10"
+                }`}
+                aria-pressed={filterStatus === option.value}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
       </Card>
 
@@ -846,6 +969,7 @@ export function ServiciosClient({
                   onEdit={openEditModal}
                   onDuplicate={duplicateService}
                   onToggleActive={toggleActive}
+                  onDelete={handleRequestArchiveService}
                   isToggling={
                     togglingId === service.id || deletingId === service.id
                   }
@@ -916,6 +1040,13 @@ export function ServiciosClient({
           form={form}
           onChange={handleFormChange}
           categoryOptions={categoryOptions}
+          staffOptions={staffOptions}
+          tenantId={tenantId}
+          serviceId={editingService?.id}
+          onStaffChange={(staffIds) => {
+            // Update form state with selected staff IDs for compatibility
+            handleFormChange({ staff_only_ids: staffIds });
+          }}
         />
         {editingService && (
           <div className="mt-4 rounded-[12px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80">
@@ -936,9 +1067,80 @@ export function ServiciosClient({
         onToggleActive={toggleActive}
         onSyncStripe={handleSyncService}
         syncingServiceId={syncingServiceId}
-        onDelete={handleDeleteService}
+        onDelete={handleRequestArchiveService}
       />
+
+      {servicePendingArchive && (
+        <Modal
+          isOpen={!!servicePendingArchive}
+          onClose={handleCancelArchiveService}
+          title="Archivar servicio"
+          footer={
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={handleCancelArchiveService}
+                disabled={!!deletingId}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleConfirmArchiveService}
+                isLoading={!!deletingId}
+                disabled={!!deletingId}
+              >
+                Archivar
+              </Button>
+            </div>
+          }
+        >
+          <p className="text-sm text-white/80">
+            Este servicio se marcará como inactivo y pasará a la sección de
+            servicios archivados. No se usará en nuevas reservas, pero
+            mantendremos su histórico para estadísticas.
+          </p>
+          <p className="mt-3 text-sm font-medium text-white">
+            {servicePendingArchive.name}
+          </p>
+        </Modal>
+      )}
+      {servicePendingHardDelete && (
+        <Modal
+          isOpen={!!servicePendingHardDelete}
+          onClose={handleCancelHardDeleteService}
+          title="Eliminar servicio definitivamente"
+          footer={
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={handleCancelHardDeleteService}
+                disabled={!!deletingId}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleConfirmHardDeleteService}
+                isLoading={!!deletingId}
+                disabled={!!deletingId}
+              >
+                Eliminar definitivamente
+              </Button>
+            </div>
+          }
+        >
+          <p className="text-sm text-white/80">
+            Este servicio se borrará de la base de datos y no será posible
+            recuperarlo. Tampoco podremos mantener sus estadísticas históricas,
+            lo que puede afectar a métricas como ticket medio o informes
+            anteriores.
+          </p>
+          <p className="mt-3 text-sm font-medium text-white">
+            {servicePendingHardDelete.name}
+          </p>
+        </Modal>
+      )}
     </div>
   );
 }
-

@@ -5,7 +5,8 @@ import React from "react";
 import { format, startOfWeek, addDays, parseISO, isSameDay, startOfToday } from "date-fns";
 import { AppointmentCard } from "@/components/agenda/AppointmentCard";
 import { toTenantLocalDate, formatInTenantTz } from "@/lib/timezone";
-import { Booking } from "@/types/agenda";
+import { Booking, StaffBlocking, StaffSchedule } from "@/types/agenda";
+import { buildStaffWindowsForDay, type TimeWindow } from "@/components/agenda/utils/timeWindows";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 
@@ -17,6 +18,8 @@ interface WeekViewProps {
   onBookingClick: (booking: Booking) => void;
   onPopoverShow?: (position: { x: number; y: number }, slot?: { staffId: string; date: string; time: string }, booking?: Booking) => void;
   onBookingContextMenu?: (e: React.MouseEvent, booking: Booking) => void;
+  staffSchedules?: StaffSchedule[];
+  staffBlockings?: StaffBlocking[];
 }
 
 export const WeekView = React.memo(function WeekView({
@@ -27,12 +30,44 @@ export const WeekView = React.memo(function WeekView({
   onBookingClick,
   onPopoverShow,
   onBookingContextMenu,
+  staffSchedules,
+  staffBlockings,
 }: WeekViewProps) {
   const weekStart = startOfWeek(parseISO(selectedDate), { weekStartsOn: 1 }); // Lunes
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
   const hours = Array.from({ length: 14 }, (_, i) => i + 8); // 8:00 - 21:00
   const today = startOfToday();
   const isMobile = useMediaQuery("(max-width: 768px)");
+
+  // Availability windows per day (union of all staff windows for that date)
+  const availabilityByDay = useMemo(() => {
+    const map = new Map<string, TimeWindow[]>();
+
+    if (!staffSchedules || staffSchedules.length === 0) {
+      return map;
+    }
+
+    const blockings = staffBlockings || [];
+
+    weekDays.forEach((day) => {
+      const dateKey = format(day, "yyyy-MM-dd");
+      const windowsByStaff = buildStaffWindowsForDay(staffSchedules, blockings, dateKey, timezone);
+
+      const allWindows: TimeWindow[] = [];
+      Object.values(windowsByStaff).forEach((wins) => {
+        if (wins && wins.length) {
+          allWindows.push(...wins);
+        }
+      });
+
+      if (allWindows.length > 0) {
+        allWindows.sort((a, b) => a.startMinutes - b.startMinutes);
+        map.set(dateKey, allWindows);
+      }
+    });
+
+    return map;
+  }, [weekDays, staffSchedules, staffBlockings, timezone]);
 
   // Agrupar bookings por día usando useMemo para mejor performance
   const bookingsByDay = useMemo(() => {
@@ -60,14 +95,28 @@ export const WeekView = React.memo(function WeekView({
   };
 
   const handleSlotClick = (e: React.MouseEvent, day: Date, hour: number) => {
-    if (onPopoverShow) {
-      const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
-      const date = format(day, "yyyy-MM-dd");
-      onPopoverShow(
-        { x: e.clientX, y: e.clientY },
-        { staffId: "", date, time: timeSlot }
+    if (!onPopoverShow) return;
+
+    const date = format(day, "yyyy-MM-dd");
+    const windows = availabilityByDay.get(date);
+
+    if (windows && windows.length > 0) {
+      const startMinutes = hour * 60;
+      const isInside = windows.some(
+        (w) => startMinutes >= w.startMinutes && startMinutes < w.endMinutes
       );
+
+      // If the clicked slot is outside any availability window, do not allow creating a booking
+      if (!isInside) {
+        return;
+      }
     }
+
+    const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+    onPopoverShow(
+      { x: e.clientX, y: e.clientY },
+      { staffId: "", date, time: timeSlot }
+    );
   };
 
   const getBookingPosition = (booking: Booking) => {

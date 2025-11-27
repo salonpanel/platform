@@ -87,6 +87,7 @@ export function createEmptyDashboardKpis(): DashboardDataset["kpis"] {
 // Runtime validation helper for dashboard KPIs - development only
 export function validateDashboardKpis(kpis: DashboardKpis) {
   if (process.env.NODE_ENV !== "development") return;
+  if (!kpis) return; // Guard against undefined kpis
 
   if (kpis.bookingsToday < 0 || kpis.revenueToday < 0) {
     console.warn("[Dashboard KPIs] Detected negative values", kpis);
@@ -105,12 +106,12 @@ export function validateDashboardKpis(kpis: DashboardKpis) {
     console.warn("[Dashboard KPIs] occupancyLast30DaysPercent out of range:", kpis.occupancyLast30DaysPercent);
   }
 
-  // Check array lengths
-  if (kpis.bookingsLast7Days.length !== 7) {
+  // Check array lengths (with null-safe access)
+  if (kpis.bookingsLast7Days?.length !== 7) {
     console.warn("[Dashboard KPIs] bookingsLast7Days should be 7 elements:", kpis.bookingsLast7Days);
   }
 
-  if (kpis.bookingsLast30DaysByDay.length !== 30) {
+  if (kpis.bookingsLast30DaysByDay?.length !== 30) {
     console.warn("[Dashboard KPIs] bookingsLast30DaysByDay should be 30 elements:", kpis.bookingsLast30DaysByDay);
   }
 }

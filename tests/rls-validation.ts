@@ -339,10 +339,11 @@ async function main() {
   }
 }
 
-// Ejecutar si se llama directamente
-if (require.main === module) {
-  main().catch(console.error);
-}
+// Ejecutar directamente cuando se invoque como script (npm run test:rls)
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
 
 export { validateRLSPolicies };
 export type { TestResult };

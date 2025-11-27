@@ -263,7 +263,11 @@ export function PremiumSkeleton({
 
   return (
     <div className={cn(spacing, className)}>
-      {Array.from({ length: count }).map((_, i) => renderSkeleton(type, i))}
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={`premium-skeleton-${type}-${i}`}>
+          {renderSkeleton(type, i)}
+        </div>
+      ))}
     </div>
   );
 }

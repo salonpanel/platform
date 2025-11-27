@@ -39,6 +39,15 @@ interface AgendaContentProps {
   showConflicts?: boolean;
   onPopoverShow?: (position: { x: number; y: number }, slot?: { staffId: string; date: string; time: string }, booking?: Booking) => void;
   onBookingContextMenu?: (e: React.MouseEvent, booking: Booking) => void;
+  slotPopover?: {
+    open: boolean;
+    position: { x: number; y: number };
+    slot: { staffId: string; date: string; time: string };
+  } | null;
+  onSlotPopoverClose?: () => void;
+  onSlotNewBooking?: (slot: { staffId: string; date: string; time: string }) => void;
+  onSlotBlock?: (slot: { staffId: string; date: string; time: string }) => void;
+  onSlotAbsence?: (slot: { staffId: string; date: string; time: string }) => void;
 }
 
 /**
@@ -66,6 +75,11 @@ export function AgendaContent({
   showConflicts = true,
   onPopoverShow,
   onBookingContextMenu,
+  slotPopover,
+  onSlotPopoverClose,
+  onSlotNewBooking,
+  onSlotBlock,
+  onSlotAbsence,
 }: AgendaContentProps) {
   // Phase 2: Mobile-first responsive viewport detection
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -111,45 +125,6 @@ export function AgendaContent({
                   className="w-full max-w-4xl"
                 />
               </div>
-            ) : bookings.length === 0 ? (
-              <div className="h-full flex items-center justify-center p-8">
-                <div className="text-center max-w-md mx-auto">
-                  <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                    <motion.div
-                      animate={{
-                        rotate: [0, 10, -10, 0],
-                        scale: [1, 1.1, 1]
-                      }}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                    >
-                      📅
-                    </motion.div>
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">
-                    No hay reservas
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-400 mb-6">
-                    {viewMode === "day"
-                      ? "No hay citas programadas para este día."
-                      : "No hay citas en este período."
-                    }
-                  </p>
-                  {viewMode === "day" && (
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={onNewBooking}
-                      className="px-6 py-3 rounded-lg font-semibold transition-all duration-200 bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl"
-                    >
-                      Nueva Reserva
-                    </motion.button>
-                  )}
-                </div>
-              </div>
             ) : (
               <div className="h-full flex flex-col">
                 <AnimatePresence mode="wait">
@@ -179,7 +154,8 @@ export function AgendaContent({
                           </motion.div>
                         )}
 
-                        {!isMobile && (
+                        {/* Siempre mostramos DayView para que se vean horas y franjas, también en móvil */}
+                        <div className="flex-1 min-h-0">
                           <DayView
                             bookings={bookings}
                             staffBlockings={staffBlockings}
@@ -188,16 +164,25 @@ export function AgendaContent({
                             selectedDate={selectedDate}
                             timezone={tenantTimezone}
                             onBookingClick={onBookingClick}
-                            onSlotClick={(e, staffId, timeSlot) => onNewBooking()}
+                            // Importante: no abrir directamente NewBookingModal al hacer clic en un slot vacío.
+                            // Dejamos que useCalendarInteractions dispare solo el popover (onPopoverShow),
+                            // y desde ese popover el usuario elegirá "Nueva cita" o "Bloqueo/Ausencia".
+                            onSlotClick={undefined}
                             onBookingMove={onBookingDrag ? (bookingId, newStaffId, newStartTime, newEndTime) => onBookingDrag(bookingId, newStartTime, newStaffId) : undefined}
                             onBookingResize={onBookingResize}
                             onPopoverShow={onPopoverShow}
                             onBookingContextMenu={onBookingContextMenu}
+                            slotPopover={slotPopover}
+                            onSlotPopoverClose={onSlotPopoverClose}
+                            onSlotNewBooking={onSlotNewBooking}
+                            onSlotBlock={onSlotBlock}
+                            onSlotAbsence={onSlotAbsence}
                           />
-                        )}
+                        </div>
 
-                        {isMobile && (
-                          <div className="flex-1 min-h-0" role="region" aria-label="Lista de reservas del día">
+                        {/* En móvil mantenemos la lista como vista complementaria bajo el timeline */}
+                        {isMobile && bookings.length > 0 && (
+                          <div className="flex-shrink-0 border-t border-white/5 bg-[#0B0C10]" role="region" aria-label="Lista de reservas del día">
                             <div className="space-y-3 p-4">
                               {bookings.map((booking) => (
                                 <AppointmentCard
@@ -223,6 +208,8 @@ export function AgendaContent({
                         onBookingClick={onBookingClick}
                         onPopoverShow={onPopoverShow}
                         onBookingContextMenu={onBookingContextMenu}
+                        staffSchedules={staffSchedules}
+                        staffBlockings={staffBlockings}
                       />
                     )}
 
@@ -232,6 +219,7 @@ export function AgendaContent({
                         selectedDate={selectedDate}
                         onDateSelect={onDateChange}
                         onBookingClick={onBookingClick}
+                        onBookingContextMenu={onBookingContextMenu}
                         timezone={tenantTimezone}
                       />
                     )}
@@ -243,6 +231,7 @@ export function AgendaContent({
                         viewMode="list"
                         timezone={tenantTimezone}
                         onBookingClick={onBookingClick}
+                        onBookingContextMenu={onBookingContextMenu}
                       />
                     )}
                   </motion.div>

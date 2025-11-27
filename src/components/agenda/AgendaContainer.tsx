@@ -78,10 +78,19 @@ interface AgendaContainerProps {
   density?: "default" | "compact" | "ultra-compact";
   enableDragDrop?: boolean;
   showConflicts?: boolean;
-  
+
   // Interaction layer
   onPopoverShow?: (position: { x: number; y: number }, slot?: { staffId: string; date: string; time: string }, booking?: Booking) => void;
   onBookingContextMenu?: (e: React.MouseEvent, booking: Booking) => void;
+  slotPopover?: {
+    open: boolean;
+    position: { x: number; y: number };
+    slot: { staffId: string; date: string; time: string };
+  } | null;
+  onSlotPopoverClose?: () => void;
+  onSlotNewBooking?: (slot: { staffId: string; date: string; time: string }) => void;
+  onSlotBlock?: (slot: { staffId: string; date: string; time: string }) => void;
+  onSlotAbsence?: (slot: { staffId: string; date: string; time: string }) => void;
 }
 
 /**
@@ -131,6 +140,11 @@ export function AgendaContainer({
   showConflicts = true,
   onPopoverShow,
   onBookingContextMenu,
+  slotPopover,
+  onSlotPopoverClose,
+  onSlotNewBooking,
+  onSlotBlock,
+  onSlotAbsence,
 }: AgendaContainerProps) {
   const { success, error: showError, warning, info, achievement } = useNotificationActions();
 
@@ -292,6 +306,11 @@ export function AgendaContainer({
                 showConflicts={showConflicts}
                 onPopoverShow={onPopoverShow}
                 onBookingContextMenu={onBookingContextMenu}
+                slotPopover={slotPopover}
+                onSlotPopoverClose={onSlotPopoverClose}
+                onSlotNewBooking={onSlotNewBooking}
+                onSlotBlock={onSlotBlock}
+                onSlotAbsence={onSlotAbsence}
               />
             </div>
           </motion.div>

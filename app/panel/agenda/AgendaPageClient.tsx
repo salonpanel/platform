@@ -20,7 +20,6 @@ import { BookingDetailPanel } from "@/components/calendar/BookingDetailPanel";
 import { StaffBlockingModal } from "@/components/calendar/StaffBlockingModal";
 import { ConflictResolutionModal } from "@/components/calendar/ConflictResolutionModal";
 import { NotificationsPanel } from "@/components/calendar/NotificationsPanel";
-import { AgendaActionPopover } from "@/components/calendar/AgendaActionPopover";
 import { BookingActionPopover } from "@/components/calendar/BookingActionPopover";
 import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
 import { AgendaDataset } from "@/lib/agenda-data";
@@ -32,6 +31,7 @@ type AgendaPageClientProps = {
   initialDate: string;
   initialViewMode: ViewMode;
 };
+
 type AgendaNotification = {
   id: string;
   type: "success" | "error" | "warning" | "info";
@@ -71,7 +71,7 @@ export default function AgendaPage({
   const [tenantId, setTenantId] = useState<string | null>(initialData?.tenant.id || null);
   const [tenantTimezone, setTenantTimezone] = useState<string>(initialData?.tenant.timezone || "Europe/Madrid");
   const [userRole, setUserRole] = useState<string | null>(initialData?.userRole || null);
-  
+
   // Cargar preferencias desde localStorage
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     if (typeof window !== "undefined") {
@@ -127,20 +127,20 @@ export default function AgendaPage({
       read: true,
     },
   ]);
-  
+
   // Popover states for interaction layer
   const [slotPopover, setSlotPopover] = useState<{
     open: boolean;
     position: { x: number; y: number };
     slot: { staffId: string; date: string; time: string };
   } | null>(null);
-  
+
   const [bookingPopover, setBookingPopover] = useState<{
     open: boolean;
     position: { x: number; y: number };
     booking: Booking;
   } | null>(null);
-  
+
   const { showToast, ToastComponent } = useToast();
 
   // Hook optimizado que obtiene tenant + datos iniciales en UNA llamada
@@ -316,7 +316,7 @@ export default function AgendaPage({
       // Solo actualizar si hay cambios (excluyendo tenant_id que siempre está)
       const payloadKeys = Object.keys(bookingPayload).filter(key => key !== "tenant_id");
       const hasChanges = payloadKeys.length > 0;
-      
+
       if (hasChanges) {
         result = await supabase
           .from("bookings")
@@ -381,7 +381,7 @@ export default function AgendaPage({
       if (updatedBooking?.starts_at) {
         const newBookingDate = format(parseISO(updatedBooking.starts_at), "yyyy-MM-dd");
         const oldBookingDate = format(parseISO(selectedDate), "yyyy-MM-dd");
-        
+
         // Si la cita se movió a otro día, actualizar ambos días
         if (newBookingDate !== oldBookingDate) {
           // Actualizar el día nuevo (donde está ahora la cita)
@@ -455,7 +455,7 @@ export default function AgendaPage({
 
     const checkAndUpdateStatuses = async () => {
       const updates = getBookingsNeedingStatusUpdate(bookings);
-      
+
       if (updates.length === 0) return;
 
       // Actualizar cada booking que necesita cambio de estado
@@ -643,6 +643,17 @@ export default function AgendaPage({
     setSlotPopover(null);
   };
 
+  const onSlotAbsence = (slot: { staffId: string; date: string; time: string }) => {
+    const calendarSlot: CalendarSlot = {
+      staffId: slot.staffId,
+      time: slot.time,
+      date: slot.date,
+      endTime: addMinutes(parseISO(`${slot.date}T${slot.time}`), 30).toISOString().split('T')[1].slice(0, 5),
+    };
+    modals.openBlockingModal(calendarSlot, 'absence');
+    setSlotPopover(null);
+  };
+
   // Booking context menu callback
   const onBookingContextMenu = useCallback((e: React.MouseEvent, booking: Booking) => {
     setBookingPopover({ 
@@ -689,7 +700,7 @@ export default function AgendaPage({
       }
 
       const targetStaffId = newStaffId || bookingToUpdate.staff_id;
-      
+
       if (!targetStaffId) {
         showToast("Debe seleccionar un profesional para la cita", "error");
         return;
@@ -718,7 +729,7 @@ export default function AgendaPage({
       };
 
       const result = await saveBooking(updatedBooking, false, "Cita reprogramada correctamente.");
-      
+
       if (!result.ok) {
         notifyError(new Error(result.error), "Error al mover la cita");
       }
@@ -785,10 +796,10 @@ export default function AgendaPage({
     // For drag operations, we need to calculate the end time based on original booking duration
     const originalBooking = bookings.find(b => b.id === bookingId);
     if (!originalBooking) return;
-    
+
     const originalDuration = new Date(originalBooking.ends_at).getTime() - new Date(originalBooking.starts_at).getTime();
     const newEndsAt = new Date(new Date(newTime).getTime() + originalDuration).toISOString();
-    
+
     await onBookingMove(bookingId, newStaffId || originalBooking.staff_id || '', newTime, newEndsAt);
   };
 
@@ -796,12 +807,12 @@ export default function AgendaPage({
     // For resize operations, we keep the original start time and only change the end time
     const originalBooking = bookings.find(b => b.id === bookingId);
     if (!originalBooking) return;
-    
+
     await onBookingResize(bookingId, originalBooking.starts_at, newEndTime);
   };
 
   // Función auxiliar para guardar un bloqueo
-const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false) => {
+  const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false) => {
     if (!tenantId) return;
 
     // Si no se fuerza el solape, verificar conflictos nuevamente (solo contra citas)
@@ -838,17 +849,6 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
     setSelectedSlot(null);
     conflictsHook.clearConflicts();
   };
-
-  if (error && !tenantId) {
-    return (
-      <>
-        <div className="p-8 rounded-[var(--radius-lg)] bg-[rgba(239,68,68,0.1)] border border-red-500/30">
-          <p className="text-red-400 font-satoshi">{error}</p>
-        </div>
-        {ToastComponent}
-      </>
-    );
-  }
 
   // Los datos filtrados y stats ahora vienen del hook useAgendaData
 
@@ -890,7 +890,6 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
       }
     };
   }, []);
-
 
   // Handler para filtrar por staff desde chips de utilización
   const handleStaffFilterChange = (staffId: string) => {
@@ -1039,6 +1038,19 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
     [notifications]
   );
 
+  // Early return for error state - MUST be after all hooks
+  if (error && !tenantId) {
+    return (
+      <ProtectedRoute requiredPermission="agenda">
+        <div className="p-8 rounded-[var(--radius-lg)] bg-[rgba(239,68,68,0.1)] border border-red-500/30">
+          <h3 className="text-red-400 font-semibold mb-2">Error de Configuración</h3>
+          <p className="text-red-400 font-satoshi mb-4">{error}</p>
+        </div>
+        {ToastComponent}
+      </ProtectedRoute>
+    );
+  }
+
   return (
     <ProtectedRoute requiredPermission="agenda">
       <div className="h-full flex flex-col">
@@ -1060,14 +1072,14 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
           quickStats={quickStats}
           staffUtilization={staffUtilization}
           refreshDaySnapshots={refreshDaySnapshots}
-          
+
           // Core state from page.tsx
           tenantId={tenantId}
           tenantTimezone={tenantTimezone}
           selectedDate={selectedDate}
           selectedStaffId={filters.staff.includes("all") ? null : filters.staff[0] || null}
           viewMode={viewMode}
-          
+
           // Callbacks from page.tsx
           onDateChange={setSelectedDate}
           onViewModeChange={setViewMode}
@@ -1103,10 +1115,15 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
           density="default"
           enableDragDrop={true}
           showConflicts={true}
-          
+
           // Interaction layer callbacks
           onPopoverShow={onPopoverShow}
           onBookingContextMenu={onBookingContextMenu}
+          slotPopover={slotPopover}
+          onSlotPopoverClose={closeSlotPopover}
+          onSlotNewBooking={onSlotNewBooking}
+          onSlotBlock={onSlotBlock}
+          onSlotAbsence={onSlotAbsence}
         />
       </div>
 
@@ -1128,6 +1145,21 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
           isLoading={loading}
           editingBooking={modals.editingBooking}
           tenantId={tenantId || undefined}
+        />
+      )}
+
+      {modals.showBlockingModal && modals.selectedSlot && (
+        <StaffBlockingModal
+          isOpen={modals.showBlockingModal}
+          onClose={() => {
+            modals.closeBlockingModal();
+          }}
+          onSave={async (blocking) => {
+            await saveBlocking(blocking as BlockingFormPayload, false);
+          }}
+          staff={staffList}
+          slot={modals.selectedSlot}
+          isLoading={loading}
         />
       )}
 
@@ -1182,7 +1214,11 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
           onClose={() => {
             modals.closeBookingDetail();
           }}
-          onEdit={() => onBookingEdit(modals.selectedBooking!)}
+          onEdit={(booking) => {
+            // Cerrar el panel de detalle antes de abrir el modal de edición
+            modals.closeBookingDetail();
+            onBookingEdit(booking);
+          }}
           onDelete={onBookingCancel}
           timezone={tenantTimezone}
         />
@@ -1209,26 +1245,6 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
       )}
 
       {/* Popovers for DayView interactions */}
-      {slotPopover && (
-        <AgendaActionPopover
-          isOpen={slotPopover.open}
-          position={slotPopover.position}
-          onClose={closeSlotPopover}
-          onNewBooking={() => onSlotNewBooking(slotPopover.slot)}
-          onUnavailability={() => onSlotBlock(slotPopover.slot)}
-          onAbsence={() => {
-            const calendarSlot: CalendarSlot = {
-              staffId: slotPopover.slot.staffId,
-              time: slotPopover.slot.time,
-              date: slotPopover.slot.date,
-              endTime: addMinutes(parseISO(`${slotPopover.slot.date}T${slotPopover.slot.time}`), 30).toISOString().split('T')[1].slice(0, 5),
-            };
-            modals.openBlockingModal(calendarSlot, 'absence');
-            setSlotPopover(null);
-          }}
-        />
-      )}
-
       {bookingPopover && (
         <BookingActionPopover
           isOpen={bookingPopover.open}

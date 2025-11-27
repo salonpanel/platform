@@ -10,6 +10,7 @@ import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { User, UserPlus, Scissors, Calendar, Edit, Power } from "lucide-react";
 import { UserPermissions } from "@/hooks/useUserPermissions";
 import { useStaffPageData } from "@/hooks/useOptimizedData";
+import { updateStaffServices } from "@/lib/staff/staffServicesRelations";
 
 type Staff = {
   id: string;
@@ -33,7 +34,7 @@ function StaffContent() {
   const impersonateOrgId = useMemo(() => searchParams?.get("impersonate") || null, [searchParams?.toString()]);
 
   // Hook optimizado: obtiene tenant + staff en UNA llamada con caché
-  const { data: pageData, isLoading, error } = useStaffPageData(impersonateOrgId);
+  const { data: pageData, isLoading, error, revalidate } = useStaffPageData(impersonateOrgId);
 
   // Extraer datos del hook
   const tenantId = pageData?.tenant?.id || null;
@@ -68,6 +69,7 @@ function StaffContent() {
     weekly_hours?: number;
     permissions?: UserPermissions;
     provides_services?: boolean;
+    serviceIds?: string[]; // IDs de servicios asignados
   }) => {
     if (!tenantId) return;
 
@@ -178,20 +180,17 @@ function StaffContent() {
           }
         }
 
-        // El hook optimizado se actualizará automáticamente con las suscripciones en tiempo real
-        // setStaffList((prev) =>
-        //   prev.map((s) =>
-        //     s.id === editingStaff.id
-        //       ? { ...data, display_name: data.display_name || data.name, bookings_count: s.bookings_count }
-        //       : s
-        //   )
-        // );
+        // Actualizar asignaciones de servicios si se proporcionaron
+        if (staffData.serviceIds !== undefined) {
+          await updateStaffServices(tenantId, editingStaff.id, staffData.serviceIds);
+        }
 
         toast.showToast({
           type: "success",
           title: "Staff actualizado",
           message: "El miembro del staff se ha actualizado correctamente",
         });
+        await revalidate();
       } else {
         // Crear nuevo staff
         const { data, error: insertError } = await supabase
@@ -251,14 +250,17 @@ function StaffContent() {
           }
         }
 
-        // El hook optimizado se actualizará automáticamente con las suscripciones en tiempo real
-        // setStaffList((prev) => [...prev, { ...data, display_name: data.display_name || data.name, bookings_count: 0 }]);
+        // Asignar servicios al nuevo staff si se proporcionaron
+        if (staffData.serviceIds && staffData.serviceIds.length > 0) {
+          await updateStaffServices(tenantId, data.id, staffData.serviceIds);
+        }
 
         toast.showToast({
           type: "success",
           title: "Staff creado",
           message: `${data.display_name || data.name} se ha añadido al equipo${userId ? " con cuenta de usuario" : ""}`,
         });
+        await revalidate();
       }
 
       setShowEditModal(false);
@@ -289,10 +291,7 @@ function StaffContent() {
         throw new Error(updateError.message);
       }
 
-      // El hook optimizado se actualizará automáticamente con las suscripciones en tiempo real
-      // setStaffList((prev) =>
-      //   prev.map((s) => (s.id === id ? { ...s, active: data.active } : s))
-      // );
+      await revalidate();
       toast.showToast({
         type: "success",
         title: data.active ? "Staff activado" : "Staff desactivado",

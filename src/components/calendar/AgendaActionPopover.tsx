@@ -57,8 +57,14 @@ export function AgendaActionPopover({
       const popoverHeight = popover.offsetHeight || 150;
       const padding = 10;
 
+      // Usar el contenedor scroll (offsetParent) como referencia para mantener
+      // el popover dentro de sus límites, en lugar de la ventana completa.
+      const parent = popover.offsetParent as HTMLElement | null;
+      const containerWidth = parent?.clientWidth ?? window.innerWidth;
+      const containerHeight = parent?.clientHeight ?? window.innerHeight;
+
       // Ajustar horizontalmente si se sale por la derecha
-      if (x + popoverWidth + padding > window.innerWidth) {
+      if (x + popoverWidth + padding > containerWidth) {
         x = position.x - popoverWidth - offset;
       }
       // Ajustar horizontalmente si se sale por la izquierda
@@ -67,7 +73,7 @@ export function AgendaActionPopover({
       }
 
       // Ajustar verticalmente si se sale por abajo
-      if (y + popoverHeight + padding > window.innerHeight) {
+      if (y + popoverHeight + padding > containerHeight) {
         y = position.y - popoverHeight - offset;
       }
       // Ajustar verticalmente si se sale por arriba
@@ -89,13 +95,21 @@ export function AgendaActionPopover({
     return () => cancelAnimationFrame(rafId);
   }, [isOpen, position]);
 
-  // Cerrar al hacer clic fuera
+  // Cerrar al hacer clic fuera (en fase de captura para evitar que llegue al slot)
   useEffect(() => {
     if (!isOpen) return;
 
-    const handleClickOutside = (event: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
-        onClose();
+    const handleMouseDown = (event: MouseEvent) => {
+      if (!popoverRef.current) return;
+
+      const target = event.target as Node | null;
+      const isInside = target && popoverRef.current.contains(target);
+
+      if (!isInside) {
+        // Evitar que el click llegue a los handlers de los slots y vuelva a abrir el popover
+        event.stopPropagation();
+        event.preventDefault();
+        onClose?.();
       }
     };
 
@@ -105,11 +119,11 @@ export function AgendaActionPopover({
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleMouseDown, true);
     document.addEventListener("keydown", handleEscape);
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("mousedown", handleMouseDown, true);
       document.removeEventListener("keydown", handleEscape);
     };
   }, [isOpen, onClose]);
@@ -118,12 +132,13 @@ export function AgendaActionPopover({
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          ref={popoverRef}
           initial={{ opacity: 0, scale: 0.96, y: 8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 8 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
           style={{
-            position: 'fixed',
+            position: "absolute",
             left: `${adjustedPosition.x}px`,
             top: `${adjustedPosition.y}px`,
             zIndex: 9999,

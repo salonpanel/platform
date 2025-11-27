@@ -68,11 +68,12 @@ async function getInitialAgendaData(impersonateOrgId: string | null, selectedDat
 export default async function AgendaPage({
   searchParams,
 }: {
-  searchParams?: { [key: string]: string | string[] | undefined };
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const impersonateOrgId = (searchParams?.impersonate as string) || null;
-  const initialDate = (searchParams?.date as string) || new Date().toISOString().slice(0, 10);
-  const initialViewMode = ((searchParams?.view as ViewMode) || "day") as ViewMode;
+  const resolvedSearchParams = await searchParams;
+  const impersonateOrgId = (resolvedSearchParams?.impersonate as string) || null;
+  const initialDate = (resolvedSearchParams?.date as string) || new Date().toISOString().slice(0, 10);
+  const initialViewMode = ((resolvedSearchParams?.view as ViewMode) || "day") as ViewMode;
 
   const initialData = await getInitialAgendaData(impersonateOrgId, initialDate, initialViewMode);
 

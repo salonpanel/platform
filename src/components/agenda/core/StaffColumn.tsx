@@ -10,7 +10,9 @@ import { AppointmentCard } from "../AppointmentCard";
 import { BlockingOverlay } from "./BlockingOverlay";
 import { FreeSlotOverlay } from "./FreeSlotOverlay";
 import { CurrentTimeIndicator } from "./CurrentTimeIndicator";
+import type { DragState } from "../interactions/DragDropManager";
 import { CalendarGrid } from "./CalendarGrid";
+import type { StaffWindowsMap } from "../utils/timeWindows";
 import { STAFF_COLUMN_MIN_WIDTH_DESKTOP, STAFF_COLUMN_MIN_WIDTH_MOBILE, SLOT_HEIGHT_PX, SLOT_DURATION_MINUTES, MIN_BOOKING_HEIGHT_PX } from "../constants/layout";
 
 interface StaffColumnProps {
@@ -21,12 +23,16 @@ interface StaffColumnProps {
   timezone: string;
   showFreeSlots?: boolean;
   staffSchedules?: StaffSchedule[];
+  staffWindows?: StaffWindowsMap;
+  dayStartHour: number;
+  dayEndHour: number;
   onBookingClick?: (booking: Booking) => void;
   onBookingMouseDown?: (e: React.MouseEvent, booking: Booking, top: number) => void;
   onBookingContextMenu?: (e: React.MouseEvent, booking: Booking) => void;
   onSlotClick?: (e: React.MouseEvent, staffId: string, timeSlot: string) => void;
   onFreeSlotClick?: (slot: { staffId: string; time: string; endTime: string; date: string }) => void;
   ref?: React.Ref<HTMLDivElement>;
+  draggingBooking?: DragState | null;
 }
 
 interface FreeSlot {
@@ -43,12 +49,16 @@ export const StaffColumn = React.memo(function StaffColumn({
   timezone,
   showFreeSlots = false,
   staffSchedules = [],
+  staffWindows,
+  dayStartHour,
+  dayEndHour,
   onBookingClick,
   onBookingMouseDown,
   onBookingContextMenu,
   onSlotClick,
   onFreeSlotClick,
   ref,
+  draggingBooking,
 }: StaffColumnProps) {
   const columnRef = useRef<HTMLDivElement>(null);
 
@@ -162,26 +172,41 @@ export const StaffColumn = React.memo(function StaffColumn({
     return freeSlots;
   }, [showFreeSlots, staff.id, staffSchedules, bookings, blockings, timezone]);
 
-  // Calculate current time position
+  // Calculate current time position in tenant timezone
   const currentMinutes = useMemo(() => {
     const now = new Date();
-    const today = new Date();
+
+    // Convert "now" to tenant local time
+    const tenantNow = new Date(
+      now.toLocaleString("en-US", { timeZone: timezone })
+    );
+
+    const tenantToday = new Date(
+      tenantNow.getFullYear(),
+      tenantNow.getMonth(),
+      tenantNow.getDate(),
+      0,
+      0,
+      0,
+      0
+    );
+
     const selectedDateObj = new Date(selectedDate + "T00:00:00");
 
     if (
-      selectedDateObj.getFullYear() !== today.getFullYear() ||
-      selectedDateObj.getMonth() !== today.getMonth() ||
-      selectedDateObj.getDate() !== today.getDate()
+      selectedDateObj.getFullYear() !== tenantToday.getFullYear() ||
+      selectedDateObj.getMonth() !== tenantToday.getMonth() ||
+      selectedDateObj.getDate() !== tenantToday.getDate()
     ) {
       return null;
     }
 
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
+    const hours = tenantNow.getHours();
+    const minutes = tenantNow.getMinutes();
     const totalMinutes = hours * 60 + minutes;
 
     return totalMinutes;
-  }, [selectedDate]);
+  }, [selectedDate, timezone]);
 
   // Calculate booking positions
   const getBookingPosition = (booking: Booking) => {
@@ -197,10 +222,9 @@ export const StaffColumn = React.memo(function StaffColumn({
     const startMinutesFromMidnight = localStartsAt.getHours() * 60 + localStartsAt.getMinutes();
     const endMinutesFromMidnight = localEndsAt.getHours() * 60 + localEndsAt.getMinutes();
 
-    const startHour = 8; // This should come from props
-    const startMinutes = startHour * 60;
-    const relativeStartMinutes = startMinutesFromMidnight - startMinutes;
-    const relativeEndMinutes = endMinutesFromMidnight - startMinutes;
+    const dayStartMinutes = dayStartHour * 60;
+    const relativeStartMinutes = startMinutesFromMidnight - dayStartMinutes;
+    const relativeEndMinutes = endMinutesFromMidnight - dayStartMinutes;
     const duration = relativeEndMinutes - relativeStartMinutes;
 
     // Use shared constants for consistent positioning
@@ -247,23 +271,27 @@ export const StaffColumn = React.memo(function StaffColumn({
         </div>
       </div>
 
-      {/* Content area */}
+      {/* Content area: scroll handled by shared timeline container in DayView */}
       <div
         ref={ref || columnRef}
         data-staff-column={staff.id}
-        className="relative flex-1 overflow-y-auto scrollbar-hide bg-transparent"
-        style={{ height: `calc(100% - 72px)` }}
+        className="relative flex-1 bg-transparent pt-4 pb-8"
       >
         {/* Grid */}
         <CalendarGrid
-          startHour={8}
-          endHour={22}
+          startHour={dayStartHour}
+          endHour={dayEndHour}
           onSlotClick={onSlotClick}
           staffId={staff.id}
+          availabilityWindows={staffWindows ? staffWindows[staff.id] : undefined}
         />
 
-        {/* Current time indicator */}
-        <CurrentTimeIndicator currentMinutes={currentMinutes} />
+        {/* Current time indicator (aligned with dynamic day grid) */}
+        <CurrentTimeIndicator
+          currentMinutes={currentMinutes}
+          startHour={dayStartHour}
+          endHour={dayEndHour}
+        />
 
         {/* Free slots */}
         <FreeSlotOverlay
@@ -271,12 +299,14 @@ export const StaffColumn = React.memo(function StaffColumn({
           onSlotClick={onFreeSlotClick}
           staffId={staff.id}
           selectedDate={selectedDate}
+          dayStartHour={dayStartHour}
         />
 
         {/* Blockings */}
         <BlockingOverlay
           blockings={blockings}
           timezone={timezone}
+          dayStartHour={dayStartHour}
         />
 
         {/* Bookings */}
@@ -286,7 +316,11 @@ export const StaffColumn = React.memo(function StaffColumn({
           return (
             <div
               key={booking.id}
-              className="absolute left-2 right-2"
+              data-booking
+              className={cn(
+                "absolute left-2 right-2 z-20",
+                draggingBooking?.bookingId === booking.id ? "opacity-40" : ""
+              )}
               style={{
                 top: `${position.top}px`,
                 minHeight: `${position.height}px`,
@@ -303,20 +337,94 @@ export const StaffColumn = React.memo(function StaffColumn({
             </div>
           );
         })}
+
+        {/* Visual drag ghost following the mouse within this staff column */}
+        {draggingBooking && draggingBooking.currentStaffId === staff.id && (
+          <div
+            className="absolute left-2 right-2 pointer-events-none z-40"
+            style={{ top: `${draggingBooking.currentTop}px` }}
+          >
+            <AppointmentCard
+              booking={draggingBooking.bookingSnapshot}
+              timezone={timezone}
+              variant="timeline"
+              className="opacity-90 scale-[1.02]"
+            />
+          </div>
+        )}
       </div>
     </motion.div>
   );
 }, (prevProps, nextProps) => {
   // Custom comparison function for React.memo
-  return (
-    prevProps.staff.id === nextProps.staff.id &&
-    prevProps.bookings.length === nextProps.bookings.length &&
-    prevProps.bookings.every((b, i) => b.id === nextProps.bookings[i]?.id) &&
-    prevProps.blockings.length === nextProps.blockings.length &&
-    prevProps.blockings.every((b, i) => b.id === nextProps.blockings[i]?.id) &&
-    prevProps.selectedDate === nextProps.selectedDate &&
-    prevProps.timezone === nextProps.timezone &&
-    prevProps.showFreeSlots === nextProps.showFreeSlots &&
-    prevProps.staffSchedules?.length === nextProps.staffSchedules?.length
-  );
+  // Importante: si cambia draggingBooking debemos re-renderizar para actualizar el ghost visual
+  const draggingChanged = prevProps.draggingBooking !== nextProps.draggingBooking;
+
+  if (draggingChanged) {
+    return false;
+  }
+
+  // Re-render if core props that affect layout change
+  if (
+    prevProps.staff.id !== nextProps.staff.id ||
+    prevProps.selectedDate !== nextProps.selectedDate ||
+    prevProps.timezone !== nextProps.timezone ||
+    prevProps.showFreeSlots !== nextProps.showFreeSlots ||
+    prevProps.dayStartHour !== nextProps.dayStartHour ||
+    prevProps.dayEndHour !== nextProps.dayEndHour ||
+    prevProps.staffWindows !== nextProps.staffWindows
+  ) {
+    return false;
+  }
+
+  // Re-render if bookings for this staff change in length or in any key field
+  if (prevProps.bookings.length !== nextProps.bookings.length) {
+    return false;
+  }
+
+  const bookingsChanged = prevProps.bookings.some((prevBooking, index) => {
+    const nextBooking = nextProps.bookings[index];
+    if (!nextBooking) return true;
+
+    return (
+      prevBooking.id !== nextBooking.id ||
+      prevBooking.starts_at !== nextBooking.starts_at ||
+      prevBooking.ends_at !== nextBooking.ends_at ||
+      prevBooking.status !== nextBooking.status ||
+      prevBooking.staff_id !== nextBooking.staff_id
+    );
+  });
+
+  if (bookingsChanged) {
+    return false;
+  }
+
+  // Re-render if blockings for this staff change
+  if (prevProps.blockings.length !== nextProps.blockings.length) {
+    return false;
+  }
+
+  const blockingsChanged = prevProps.blockings.some((prevBlocking, index) => {
+    const nextBlocking = nextProps.blockings[index];
+    if (!nextBlocking) return true;
+
+    return (
+      prevBlocking.id !== nextBlocking.id ||
+      prevBlocking.start_at !== nextBlocking.start_at ||
+      prevBlocking.end_at !== nextBlocking.end_at ||
+      prevBlocking.type !== nextBlocking.type
+    );
+  });
+
+  if (blockingsChanged) {
+    return false;
+  }
+
+  // Re-render if staff schedules length changes (detailed comparison is not necessary here)
+  if (prevProps.staffSchedules?.length !== nextProps.staffSchedules?.length) {
+    return false;
+  }
+
+  // No relevant changes detected -> skip re-render
+  return true;
 });

@@ -277,7 +277,17 @@ export function SidebarNav({
               .select("*")
               .eq("tenant_id", tId)
               .order("name", { ascending: true });
-            return { services: data || [] };
+
+            // Importante: devolver misma forma que useServicesPageData
+            // para que la página de Servicios reciba también tenant.id
+            return {
+              tenant: {
+                id: tId,
+                name: tenantName || "Tu barbería",
+                timezone: "Europe/Madrid",
+              },
+              services: data || [],
+            };
           });
         }
 
@@ -540,13 +550,13 @@ export function SidebarNav({
                     <motion.span
                       animate={{
                         scale: active ? 1.1 : isItemHovered ? 1.05 : 1,
-                        rotate: active ? [0, -5, 5, 0] : 0,
+                        rotate: active ? -5 : 0,
                       }}
                       transition={{
                         type: "spring",
                         stiffness: 400,
                         damping: 25,
-                        duration: active ? 0.5 : 0.2
+                        duration: 0.2
                       }}
                       className={cn(
                         "flex-shrink-0 relative z-10 flex items-center justify-center",
@@ -559,8 +569,8 @@ export function SidebarNav({
                         <motion.div
                           className="absolute inset-0 bg-white/30 rounded-full blur-sm"
                           animate={{
-                            opacity: [0.3, 0.6, 0.3],
-                            scale: [1, 1.2, 1]
+                            opacity: 0.5,
+                            scale: 1.1
                           }}
                           transition={{
                             duration: 2,
@@ -596,14 +606,14 @@ export function SidebarNav({
                         className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white shadow-[0px_0px_12px_rgba(255,255,255,0.8)] ring-2 ring-white/30"
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{
-                          scale: [0, 1.2, 1],
-                          opacity: [0, 1, 1]
+                          scale: 1,
+                          opacity: 1
                         }}
                         transition={{
                           type: "spring",
                           stiffness: 400,
                           damping: 25,
-                          duration: 0.5
+                          duration: 0.3
                         }}
                       />
                     )}

@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
+import React from "react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, startOfToday } from "date-fns";
 import { parseISO } from "date-fns";
-import { BookingCard } from "@/components/agenda/BookingCard";
+import { AppointmentCard } from "@/components/agenda/AppointmentCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { toTenantLocalDate, formatInTenantTz } from "@/lib/timezone";
@@ -16,14 +17,16 @@ interface MonthViewProps {
   selectedDate: string;
   onDateSelect: (date: string) => void;
   onBookingClick: (booking: Booking) => void;
+  onBookingContextMenu?: (e: React.MouseEvent, booking: Booking) => void;
   timezone?: string;
 }
 
-export function MonthView({
+export const MonthView = React.memo(function MonthView({
   bookings,
   selectedDate,
   onDateSelect,
   onBookingClick,
+  onBookingContextMenu,
   timezone = "Europe/Madrid",
 }: MonthViewProps) {
   const currentDate = parseISO(selectedDate);
@@ -111,11 +114,8 @@ export function MonthView({
         <div className="bg-[var(--glass-bg-default)] border border-[var(--glass-border)] backdrop-blur-md rounded-[var(--radius-xl)] p-4 shadow-[var(--shadow-premium)]">
           <div className="flex items-center justify-between">
             <motion.button
-              {...getMotionSafeProps({
-                whileHover: interactionPresets.button.hover,
-                whileTap: interactionPresets.button.tap,
-                transition: interactionPresets.button.transition,
-              })}
+              whileHover={{ opacity: 0.8 }}
+              whileTap={{ opacity: 0.9 }}
               onClick={() => navigateMonth("prev")}
               className={cn(
                 "p-2 rounded-[var(--radius-lg)] transition-all duration-200",
@@ -131,11 +131,8 @@ export function MonthView({
               {new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric" }).format(currentDate)}
             </h3>
             <motion.button
-              {...getMotionSafeProps({
-                whileHover: interactionPresets.button.hover,
-                whileTap: interactionPresets.button.tap,
-                transition: interactionPresets.button.transition,
-              })}
+              whileHover={{ opacity: 0.8 }}
+              whileTap={{ opacity: 0.9 }}
               onClick={() => navigateMonth("next")}
               className={cn(
                 "p-2 rounded-[var(--radius-lg)] transition-all duration-200",
@@ -224,18 +221,22 @@ export function MonthView({
                       e.stopPropagation();
                       onBookingClick(booking);
                     }}>
-                      <BookingCard
+                      <AppointmentCard
                         booking={booking}
                         timezone={timezone}
                         variant="grid"
                         onClick={() => onBookingClick(booking)}
+                        onContextMenu={(e) => {
+                          e.stopPropagation();
+                          onBookingContextMenu?.(e, booking);
+                        }}
                       />
                     </div>
                   ))}
                   {dayBookings.length > 2 && (
                     <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ opacity: 0.8 }}
+                      whileTap={{ opacity: 0.9 }}
                       onClick={(e) => {
                         e.stopPropagation();
                       }}
@@ -257,5 +258,15 @@ export function MonthView({
       </div>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison function for React.memo
+  return (
+    prevProps.bookings.length === nextProps.bookings.length &&
+    prevProps.selectedDate === nextProps.selectedDate &&
+    prevProps.timezone === nextProps.timezone &&
+    prevProps.onBookingClick === nextProps.onBookingClick &&
+    prevProps.onBookingContextMenu === nextProps.onBookingContextMenu &&
+    prevProps.onDateSelect === nextProps.onDateSelect
+  );
+});
 

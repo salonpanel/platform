@@ -1,17 +1,24 @@
 "use client";
 
-import { useMemo } from "react";
-import { theme } from "@/theme/ui";
 import { SLOT_HEIGHT_PX, SLOT_DURATION_MINUTES } from "../constants/layout";
 
 interface CurrentTimeIndicatorProps {
   currentMinutes: number | null;
+  startHour?: number;
+  endHour?: number;
 }
 
-export function CurrentTimeIndicator({ currentMinutes }: CurrentTimeIndicatorProps) {
+export function CurrentTimeIndicator({ currentMinutes, startHour = 8, endHour = 22 }: CurrentTimeIndicatorProps) {
   if (currentMinutes === null) return null;
 
-  const top = (currentMinutes / SLOT_DURATION_MINUTES) * SLOT_HEIGHT_PX; // Use shared constants
+  const dayStartMinutes = startHour * 60;
+  const dayEndMinutes = endHour * 60;
+
+  // Si la hora actual está fuera del rango del día, no mostramos el indicador
+  if (currentMinutes < dayStartMinutes || currentMinutes > dayEndMinutes) return null;
+
+  const relativeMinutes = currentMinutes - dayStartMinutes;
+  const top = (relativeMinutes / SLOT_DURATION_MINUTES) * SLOT_HEIGHT_PX;
 
   return (
     <div

@@ -62,10 +62,11 @@ declare
   v_tenant_tz text;
   v_date_start date;
   v_date_end date;
+  v_staff_only_ids uuid[];
 begin
-  -- Obtener duración del servicio y timezone del tenant
-  select s.duration_min, coalesce(t.timezone, 'Europe/Madrid')
-  into v_service_duration, v_tenant_tz
+  -- Obtener duración del servicio, timezone del tenant y staff_only_ids
+  select s.duration_min, coalesce(t.timezone, 'Europe/Madrid'), s.staff_only_ids
+  into v_service_duration, v_tenant_tz, v_staff_only_ids
   from public.services s
   join public.tenants t on t.id = s.tenant_id
   where s.id = p_service_id
@@ -92,6 +93,7 @@ begin
   ),
   staff_schedules as (
     -- Horarios del staff para los días solicitados
+    -- FILTRAR por staff_only_ids si existe restricción
     select 
       s.staff_id,
       s.weekday,
@@ -103,7 +105,10 @@ begin
     where s.tenant_id = p_tenant_id
       and st.tenant_id = p_tenant_id
       and st.active = true
+      and st.provides_services = true
       and (p_staff_id is null or s.staff_id = p_staff_id)
+      -- Si staff_only_ids no es NULL y tiene elementos, filtrar por ellos
+      and (v_staff_only_ids is null or array_length(v_staff_only_ids, 1) is null or s.staff_id = any(v_staff_only_ids))
   ),
   existing_bookings as (
     -- Reservas existentes (pagadas, completadas o pendientes no expiradas)

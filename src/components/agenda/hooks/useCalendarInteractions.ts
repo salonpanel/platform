@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, type RefObject } from "react";
 import { Booking, CalendarSlot } from "@/types/agenda";
 import { SLOT_HEIGHT_PX, SLOT_DURATION_MINUTES } from "../constants/layout";
 
@@ -14,6 +14,7 @@ interface UseCalendarInteractionsProps {
   tenantId?: string;
   selectedDate?: string;
   timezone?: string;
+  scrollContainerRef?: RefObject<HTMLElement | null>;
 }
 
 export function useCalendarInteractions({
@@ -26,6 +27,7 @@ export function useCalendarInteractions({
   tenantId,
   selectedDate,
   timezone = "Europe/Madrid",
+  scrollContainerRef,
 }: UseCalendarInteractionsProps = {}) {
   // Utility functions
   const pixelsToMinutes = (pixels: number): number => {
@@ -67,17 +69,32 @@ export function useCalendarInteractions({
 
       // Show popover if handler exists
       if (onPopoverShow) {
-        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-        const x = e.clientX;
-        const y = e.clientY;
-        onPopoverShow({ x, y }, slot);
+        // Si tenemos contenedor de scroll, calcular coordenadas relativas a él
+        if (scrollContainerRef?.current) {
+          const container = scrollContainerRef.current;
+          const containerRect = container.getBoundingClientRect();
+          const x = e.clientX - containerRect.left + container.scrollLeft;
+          const y = e.clientY - containerRect.top + container.scrollTop;
+          onPopoverShow({ x, y }, slot);
+        } else {
+          // Fallback seguro: usar coordenadas absolutas de viewport
+          const x = e.clientX;
+          const y = e.clientY;
+          onPopoverShow({ x, y }, slot);
+        }
       }
     },
-    [onSlotClick, onPopoverShow, selectedDate]
+    [onSlotClick, onPopoverShow, selectedDate, scrollContainerRef]
   );
 
   const handleBookingClick = useCallback(
-    (e: React.MouseEvent, booking: Booking) => {
+    (e: React.MouseEvent | null, booking: Booking) => {
+      // Caso sin evento real (p.ej. llamado desde DayView): delegar directamente en onBookingClick
+      if (!e) {
+        onBookingClick?.(booking);
+        return;
+      }
+
       // Prevent default behavior if it was a drag
       const wasDragged = (e as any).wasDragged;
       if (wasDragged) {
@@ -88,7 +105,6 @@ export function useCalendarInteractions({
 
       // Show booking details or popover
       if (onPopoverShow) {
-        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
         const x = e.clientX;
         const y = e.clientY;
         onPopoverShow({ x, y }, undefined, booking);
