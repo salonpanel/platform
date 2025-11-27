@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useCallback } from "react";
 import { Staff, Booking, StaffBlocking, StaffSchedule } from "@/types/agenda";
 import { TimeColumn } from "../core/TimeColumn";
 import { StaffColumn } from "../core/StaffColumn";
@@ -29,6 +29,7 @@ interface DayViewProps {
   onBookingMove?: (bookingId: string, newStaffId: string, newStartTime: string, newEndTime: string) => void;
   onBookingResize?: (bookingId: string, newStartTime: string, newEndTime: string) => void;
   onPopoverShow?: (position: { x: number; y: number }, slot?: any, booking?: Booking) => void;
+  onBookingContextMenu?: (e: React.MouseEvent, booking: Booking) => void;
 }
 
 export function DayView({
@@ -46,6 +47,7 @@ export function DayView({
   onBookingMove,
   onBookingResize,
   onPopoverShow,
+  onBookingContextMenu,
 }: DayViewProps) {
   const timelineRef = useRef<HTMLDivElement>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -71,9 +73,17 @@ export function DayView({
 
   // Scroll synchronization
   const columnRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const setColumnRef = useCallback((staffId: string) => (element: HTMLElement | null) => {
+    if (element) {
+      columnRefs.current.set(staffId, element);
+    } else {
+      columnRefs.current.delete(staffId);
+    }
+  }, []);
+
   const columnElements = useMemo(() => {
     return Array.from(columnRefs.current.values());
-  }, [staffList.length]);
+  }, [staffList.length]); // Recompute when staff list changes
 
   useScrollSyncManager({
     columns: columnElements,
@@ -174,8 +184,10 @@ export function DayView({
                     staffSchedules={staffSchedules}
                     onBookingClick={(booking) => interactions.handleBookingClick({} as React.MouseEvent, booking)}
                     onBookingMouseDown={dragDrop.handleBookingMouseDown}
+                    onBookingContextMenu={onBookingContextMenu}
                     onSlotClick={interactions.handleSlotClick}
                     onFreeSlotClick={onFreeSlotClick}
+                    ref={setColumnRef(staff.id)}
                   />
                 </motion.div>
               );

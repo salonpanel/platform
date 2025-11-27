@@ -6,7 +6,7 @@ import { Staff, Booking, StaffBlocking, StaffSchedule } from "@/types/agenda";
 import { GlassCard } from "@/components/agenda/primitives/GlassCard";
 import { theme } from "@/theme/ui";
 import { cn } from "@/lib/utils";
-import { AppointmentCard } from "./AppointmentCard";
+import { AppointmentCard } from "../AppointmentCard";
 import { BlockingOverlay } from "./BlockingOverlay";
 import { FreeSlotOverlay } from "./FreeSlotOverlay";
 import { CurrentTimeIndicator } from "./CurrentTimeIndicator";
@@ -23,8 +23,10 @@ interface StaffColumnProps {
   staffSchedules?: StaffSchedule[];
   onBookingClick?: (booking: Booking) => void;
   onBookingMouseDown?: (e: React.MouseEvent, booking: Booking, top: number) => void;
+  onBookingContextMenu?: (e: React.MouseEvent, booking: Booking) => void;
   onSlotClick?: (e: React.MouseEvent, staffId: string, timeSlot: string) => void;
   onFreeSlotClick?: (slot: { staffId: string; time: string; endTime: string; date: string }) => void;
+  ref?: React.Ref<HTMLDivElement>;
 }
 
 interface FreeSlot {
@@ -43,8 +45,10 @@ export const StaffColumn = React.memo(function StaffColumn({
   staffSchedules = [],
   onBookingClick,
   onBookingMouseDown,
+  onBookingContextMenu,
   onSlotClick,
   onFreeSlotClick,
+  ref,
 }: StaffColumnProps) {
   const columnRef = useRef<HTMLDivElement>(null);
 
@@ -245,7 +249,7 @@ export const StaffColumn = React.memo(function StaffColumn({
 
       {/* Content area */}
       <div
-        ref={columnRef}
+        ref={ref || columnRef}
         data-staff-column={staff.id}
         className="relative flex-1 overflow-y-auto scrollbar-hide bg-transparent"
         style={{ height: `calc(100% - 72px)` }}
@@ -280,13 +284,23 @@ export const StaffColumn = React.memo(function StaffColumn({
           const position = getBookingPosition(booking);
 
           return (
-            <AppointmentCard
+            <div
               key={booking.id}
-              booking={booking}
-              position={position}
-              onClick={onBookingClick}
-              onMouseDown={onBookingMouseDown}
-            />
+              className="absolute left-2 right-2"
+              style={{
+                top: `${position.top}px`,
+                minHeight: `${position.height}px`,
+              }}
+              onMouseDown={(e) => onBookingMouseDown?.(e, booking, position.top)}
+            >
+              <AppointmentCard
+                booking={booking}
+                timezone={timezone}
+                variant="timeline"
+                onClick={() => onBookingClick?.(booking)}
+                onContextMenu={(e) => onBookingContextMenu?.(e, booking)}
+              />
+            </div>
           );
         })}
       </div>

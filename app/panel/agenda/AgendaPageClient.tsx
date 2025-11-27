@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { format, parseISO, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { format, parseISO, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addMinutes } from "date-fns";
 import { useSearchParams } from "next/navigation";
 import { getCurrentTenant } from "@/lib/panel-tenant";
 import { useToast } from "@/components/ui/Toast";
@@ -20,6 +20,8 @@ import { BookingDetailPanel } from "@/components/calendar/BookingDetailPanel";
 import { StaffBlockingModal } from "@/components/calendar/StaffBlockingModal";
 import { ConflictResolutionModal } from "@/components/calendar/ConflictResolutionModal";
 import { NotificationsPanel } from "@/components/calendar/NotificationsPanel";
+import { AgendaActionPopover } from "@/components/calendar/AgendaActionPopover";
+import { BookingActionPopover } from "@/components/calendar/BookingActionPopover";
 import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
 import { AgendaDataset } from "@/lib/agenda-data";
 import { useAgendaModals } from "@/hooks/useAgendaModals";
@@ -125,6 +127,19 @@ export default function AgendaPage({
       read: true,
     },
   ]);
+  
+  // Popover states for interaction layer
+  const [slotPopover, setSlotPopover] = useState<{
+    open: boolean;
+    position: { x: number; y: number };
+    slot: { staffId: string; date: string; time: string };
+  } | null>(null);
+  
+  const [bookingPopover, setBookingPopover] = useState<{
+    open: boolean;
+    position: { x: number; y: number };
+    booking: Booking;
+  } | null>(null);
   
   const { showToast, ToastComponent } = useToast();
 
@@ -605,6 +620,50 @@ export default function AgendaPage({
     }
   };
 
+  // Slot action callbacks for popover
+  const onSlotNewBooking = (slot: { staffId: string; date: string; time: string }) => {
+    const calendarSlot: CalendarSlot = {
+      staffId: slot.staffId,
+      time: slot.time,
+      date: slot.date,
+      endTime: addMinutes(parseISO(`${slot.date}T${slot.time}`), 30).toISOString().split('T')[1].slice(0, 5), // 30 min default
+    };
+    modals.openNewBookingModal(calendarSlot);
+    setSlotPopover(null);
+  };
+
+  const onSlotBlock = (slot: { staffId: string; date: string; time: string }) => {
+    const calendarSlot: CalendarSlot = {
+      staffId: slot.staffId,
+      time: slot.time,
+      date: slot.date,
+      endTime: addMinutes(parseISO(`${slot.date}T${slot.time}`), 30).toISOString().split('T')[1].slice(0, 5),
+    };
+    modals.openBlockingModal(calendarSlot, 'block');
+    setSlotPopover(null);
+  };
+
+  // Booking context menu callback
+  const onBookingContextMenu = useCallback((e: React.MouseEvent, booking: Booking) => {
+    setBookingPopover({ 
+      open: true, 
+      position: { x: e.clientX, y: e.clientY }, 
+      booking 
+    });
+  }, []);
+
+  const closeSlotPopover = () => setSlotPopover(null);
+  const closeBookingPopover = () => setBookingPopover(null);
+
+  // Popover show callback for DayView interactions
+  const onPopoverShow = (position: { x: number; y: number }, slot?: { staffId: string; date: string; time: string }, booking?: Booking) => {
+    if (slot) {
+      setSlotPopover({ open: true, position, slot });
+    } else if (booking) {
+      setBookingPopover({ open: true, position, booking });
+    }
+  };
+
   const onBookingMove = async (bookingId: string, newStaffId: string, newStartsAt: string, newEndsAt: string) => {
     if (!tenantId) return;
 
@@ -989,6 +1048,8 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
           error={error}
           staffList={staffList}
           bookings={bookings}
+          staffBlockings={staffBlockings}
+          staffSchedules={staffSchedules}
           searchTerm={searchTerm}
           setSearchTerm={setAgendaSearchTerm}
           filters={filters}
@@ -1042,6 +1103,10 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
           density="default"
           enableDragDrop={true}
           showConflicts={true}
+          
+          // Interaction layer callbacks
+          onPopoverShow={onPopoverShow}
+          onBookingContextMenu={onBookingContextMenu}
         />
       </div>
 
@@ -1142,6 +1207,42 @@ const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false)
           notifications={notifications}
         />
       )}
+
+      {/* Popovers for DayView interactions */}
+      {slotPopover && (
+        <AgendaActionPopover
+          isOpen={slotPopover.open}
+          position={slotPopover.position}
+          onClose={closeSlotPopover}
+          onNewBooking={() => onSlotNewBooking(slotPopover.slot)}
+          onUnavailability={() => onSlotBlock(slotPopover.slot)}
+          onAbsence={() => {
+            const calendarSlot: CalendarSlot = {
+              staffId: slotPopover.slot.staffId,
+              time: slotPopover.slot.time,
+              date: slotPopover.slot.date,
+              endTime: addMinutes(parseISO(`${slotPopover.slot.date}T${slotPopover.slot.time}`), 30).toISOString().split('T')[1].slice(0, 5),
+            };
+            modals.openBlockingModal(calendarSlot, 'absence');
+            setSlotPopover(null);
+          }}
+        />
+      )}
+
+      {bookingPopover && (
+        <BookingActionPopover
+          isOpen={bookingPopover.open}
+          position={bookingPopover.position}
+          onClose={closeBookingPopover}
+          onEdit={() => onBookingEdit(bookingPopover.booking)}
+          onCancel={() => onBookingCancel(bookingPopover.booking.id)}
+          onSendMessage={() => onBookingSendMessage(bookingPopover.booking)}
+          onStatusChange={(newStatus) => onBookingStatusChange(bookingPopover.booking.id, newStatus)}
+          currentStatus={bookingPopover.booking.status}
+          canCancel={bookingPopover.booking.status !== "paid" && bookingPopover.booking.status !== "completed"}
+        />
+      )}
+
       {ToastComponent}
     </ProtectedRoute>
   );

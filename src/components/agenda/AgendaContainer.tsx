@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { format, parseISO } from "date-fns";
 import { motion } from "framer-motion";
-import { Booking, Staff } from "@/types/agenda";
+import { Booking, Staff, StaffBlocking, StaffSchedule } from "@/types/agenda";
 import { AgendaTopBar } from "@/components/agenda/AgendaTopBar";
 import { AgendaContextBar } from "@/components/agenda/AgendaContextBar";
 import { AgendaContent } from "@/components/agenda/AgendaContent";
@@ -36,6 +36,8 @@ interface AgendaContainerProps {
   error: string | null;
   staffList: Staff[];
   bookings: Booking[];
+  staffBlockings: StaffBlocking[];
+  staffSchedules: StaffSchedule[];
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   filters: any;
@@ -76,6 +78,10 @@ interface AgendaContainerProps {
   density?: "default" | "compact" | "ultra-compact";
   enableDragDrop?: boolean;
   showConflicts?: boolean;
+  
+  // Interaction layer
+  onPopoverShow?: (position: { x: number; y: number }, slot?: { staffId: string; date: string; time: string }, booking?: Booking) => void;
+  onBookingContextMenu?: (e: React.MouseEvent, booking: Booking) => void;
 }
 
 /**
@@ -89,6 +95,8 @@ export function AgendaContainer({
   error,
   staffList,
   bookings,
+  staffBlockings,
+  staffSchedules,
   searchTerm,
   setSearchTerm,
   filters,
@@ -121,6 +129,8 @@ export function AgendaContainer({
   density = "default",
   enableDragDrop = true,
   showConflicts = true,
+  onPopoverShow,
+  onBookingContextMenu,
 }: AgendaContainerProps) {
   const { success, error: showError, warning, info, achievement } = useNotificationActions();
 
@@ -139,8 +149,7 @@ export function AgendaContainer({
   const handleResetFilters = useCallback(() => {
     onDateChange(format(new Date(), "yyyy-MM-dd"));
     onStaffChange(null);
-    setSearchTerm("");
-  }, [onDateChange, onStaffChange, setSearchTerm]);
+  }, [onDateChange, onStaffChange]);
 
   // Handlers para drag & drop premium (using props from page.tsx)
   const handleBookingDrag = useCallback(async (bookingId: string, newTime: string, newStaffId?: string) => {
@@ -270,18 +279,19 @@ export function AgendaContainer({
                 onDateChange={onDateChange}
                 bookings={filteredBookings}
                 staffList={visibleStaff}
+                staffBlockings={staffBlockings}
+                staffSchedules={staffSchedules}
                 loading={loading}
                 error={error}
                 tenantTimezone={tenantTimezone}
                 onBookingClick={onBookingClick}
                 onNewBooking={onNewBooking}
                 density={density}
-                timeFormatter={timeFormatter}
                 onBookingDrag={handleBookingDrag}
                 onBookingResize={handleBookingResize}
-                enableDragDrop={enableDragDrop}
                 showConflicts={showConflicts}
-                notificationActions={{ info, warning }}
+                onPopoverShow={onPopoverShow}
+                onBookingContextMenu={onBookingContextMenu}
               />
             </div>
           </motion.div>

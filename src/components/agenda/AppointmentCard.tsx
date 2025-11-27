@@ -12,6 +12,7 @@ interface AppointmentCardProps {
   timezone: string;
   compact?: boolean;
   onClick?: () => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
   variant?: "timeline" | "list" | "grid";
   showStatus?: boolean;
   showPrice?: boolean;
@@ -27,6 +28,7 @@ export function AppointmentCard({
   timezone,
   compact = false,
   onClick,
+  onContextMenu,
   variant = "timeline",
   showStatus = true,
   showPrice = false,
@@ -73,6 +75,10 @@ export function AppointmentCard({
           whileTap: interactionPresets.appointmentCard.tap,
         })}
         onClick={onClick}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          onContextMenu?.(e);
+        }}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
@@ -149,6 +155,10 @@ export function AppointmentCard({
           whileTap: interactionPresets.appointmentCard.tap,
         })}
         onClick={onClick}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          onContextMenu?.(e);
+        }}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
@@ -232,6 +242,10 @@ export function AppointmentCard({
           whileTap: interactionPresets.appointmentCard.tap,
         })}
         onClick={onClick}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          onContextMenu?.(e);
+        }}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();

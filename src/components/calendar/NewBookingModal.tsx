@@ -89,7 +89,7 @@ export function NewBookingModal({
   const { showToast, ToastComponent } = useToast();
   const modalActions = useModalActions();
 
-  // Estados del componente
+  // Estados del componente - Agregar ref para timeout de blur y estado de focus del input de cliente
   const [customerId, setCustomerId] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -97,6 +97,8 @@ export function NewBookingModal({
   const [customerSuggestions, setCustomerSuggestions] = useState<Customer[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const customerInputRef = useRef<HTMLDivElement>(null);
+  const customerBlurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [customerInputFocused, setCustomerInputFocused] = useState(false);
   const [bookingServices, setBookingServices] = useState<BookingService[]>([]);
   const [bookingDate, setBookingDate] = useState(selectedDate);
   const [bookingTime, setBookingTime] = useState(selectedTime || "09:00");
@@ -321,6 +323,101 @@ export function NewBookingModal({
     }
   }, [editingBooking, isOpen, customers, selectedDate, selectedTime]);
 
+  // Función para filtrar sugerencias de cliente
+  const updateCustomerSuggestions = useMemo(() => {
+    return (searchText: string) => {
+      if (searchText.length < 2) {
+        setCustomerSuggestions([]);
+        setShowSuggestions(false);
+        return;
+      }
+
+      const filtered = customers.filter(customer => {
+        const searchLower = searchText.toLowerCase();
+        return (
+          customer.name.toLowerCase().includes(searchLower) ||
+          (customer.email && customer.email.toLowerCase().includes(searchLower)) ||
+          (customer.phone && customer.phone.includes(searchText))
+        );
+      }).slice(0, 5); // Limitar a 5 sugerencias
+
+      setCustomerSuggestions(filtered);
+      setShowSuggestions(filtered.length > 0);
+    };
+  }, [customers]);
+
+  // Función para seleccionar una sugerencia
+  const selectCustomerSuggestion = (customer: Customer) => {
+    setCustomerId(customer.id);
+    setCustomerName(customer.name);
+    setCustomerPhone(customer.phone || "");
+    setCustomerEmail(customer.email || "");
+    setCustomerNotes(customer.notes || "");
+    setCustomerInternalNotes(customer.internal_notes || "");
+    setShowSuggestions(false);
+  };
+
+  // Función para manejar focus del input de cliente
+  const handleCustomerInputFocus = () => {
+    setCustomerInputFocused(true);
+    if (customerSuggestions.length > 0) {
+      setShowSuggestions(true);
+    }
+  };
+
+  // Función para manejar blur del input de cliente con delay
+  const handleCustomerInputBlur = () => {
+    setCustomerInputFocused(false);
+    // Delay para permitir clicks en sugerencias
+    customerBlurTimeoutRef.current = setTimeout(() => {
+      setShowSuggestions(false);
+    }, 150);
+  };
+
+  // Función para agregar/editar servicio
+  const handleAddOrEditService = () => {
+    if (bookingServices.length === 0) {
+      const defaultService = services[0];
+      const defaultStaff = selectedStaffId || staff[0]?.id;
+
+      if (!defaultService || !defaultStaff) {
+        showToast("No hay servicios o staff disponibles", "error");
+        return;
+      }
+
+      setBookingServices([{
+        id: `svc-${Date.now()}`,
+        service_id: defaultService.id,
+        staff_id: defaultStaff,
+        start_time: bookingTime,
+        end_time: format(
+          addMinutes(new Date(`${bookingDate}T${bookingTime}`), defaultService.duration_min),
+          "HH:mm"
+        ),
+      }]);
+    }
+    // If there is already one service, just keep it editable in the list below.
+  };
+
+  // Función para actualizar servicio
+  const updateService = (serviceId: string, updates: Partial<BookingService>) => {
+    setBookingServices(prev => prev.map(svc =>
+      svc.id === serviceId ? { ...svc, ...updates } : svc
+    ));
+  };
+
+  // Función para recalcular tiempo de fin cuando cambia servicio o hora
+  const recalculateServiceEndTime = useMemo(() => {
+    return (serviceId: string, startTime: string) => {
+      const service = services.find(s => s.id === serviceId);
+      if (!service) return startTime;
+      return format(
+        addMinutes(new Date(`${bookingDate}T${startTime}`), service.duration_min),
+        "HH:mm"
+      );
+    };
+  }, [services, bookingDate]);
+
   const selectedCustomer = customers.find((c) => c.id === customerId);
 
   return (
@@ -331,12 +428,16 @@ export function NewBookingModal({
         title={editingBooking ? "Editar cita" : "Nueva cita"}
         size="lg"
         context={{ type: "booking" }}
+        variant="modal"
+        showMobileDrawer={true}
+        drawerPosition="bottom"
         actions={footerActions}
         actionsConfig={{
           layout: "end",
+          size: "md",
           showCancel: true,
           onCancel: onClose,
-          cancelLabel: "Descartar",
+          cancelLabel: "Cancelar",
         }}
       >
         {/* Contenido del modal */}
@@ -358,18 +459,49 @@ export function NewBookingModal({
                         <Input
                           value={customerName}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            setCustomerName(e.target.value);
+                            const value = e.target.value;
+                            setCustomerName(value);
                             setCustomerId("");
+                            updateCustomerSuggestions(value);
                           }}
+                          onFocus={handleCustomerInputFocus}
+                          onBlur={handleCustomerInputBlur}
                           placeholder="Escribe el nombre del cliente..."
                         />
+                        {/* Dropdown de sugerencias */}
+                        {showSuggestions && customerSuggestions.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-[12px] border border-white/10 bg-[var(--glass-bg)] shadow-[var(--shadow-premium)] backdrop-blur-md">
+                            {customerSuggestions.map((customer) => (
+                              <button
+                                key={customer.id}
+                                type="button"
+                                onClick={() => {
+                                  if (customerBlurTimeoutRef.current) {
+                                    clearTimeout(customerBlurTimeoutRef.current);
+                                  }
+                                  selectCustomerSuggestion(customer);
+                                }}
+                                className="w-full px-4 py-3 text-left hover:bg-white/5 focus:bg-white/5 transition-colors first:rounded-t-[12px] last:rounded-b-[12px]"
+                              >
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-sm font-medium text-white font-[var(--font-heading)]">
+                                    {customer.name}
+                                  </span>
+                                  <span className="text-xs text-[var(--text-secondary)] font-[var(--font-body)]">
+                                    {[customer.phone, customer.email].filter(Boolean).join(" · ") || "Sin contacto"}
+                                  </span>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </FormField>
                   </div>
 
                   {/* Teléfono y Email */}
                   <div className="grid grid-cols-2 gap-4">
-                    <FormField label="Teléfono" required helperText="Necesario para enviar notificaciones SMS">
+                    <FormField label="Teléfono" helperText="Úsalo para enviar notificaciones SMS si lo tienes.">
                       <Input
                         type="tel"
                         value={customerPhone}
@@ -377,7 +509,7 @@ export function NewBookingModal({
                         placeholder="Ej: 612345678"
                       />
                     </FormField>
-                    <FormField label="Email" required helperText="Necesario para enviar confirmaciones por email">
+                    <FormField label="Email" helperText="Úsalo para enviar confirmaciones por email si lo tienes.">
                       <Input
                         type="email"
                         value={customerEmail}
@@ -421,10 +553,7 @@ export function NewBookingModal({
                       Servicios <span className="text-[#EF4444]">*</span>
                     </label>
                     <button
-                      onClick={() => {
-                        // Agregar servicio
-                        showToast("Funcionalidad pendiente", "info");
-                      }}
+                      onClick={handleAddOrEditService}
                       className="px-3 py-1.5 text-xs font-semibold text-white bg-white/5 hover:bg-white/8 border border-white/10 rounded-[8px] flex items-center gap-1.5"
                     >
                       <Plus className="h-3.5 w-3.5" />
@@ -441,9 +570,85 @@ export function NewBookingModal({
                   ) : (
                     <div className="space-y-3">
                       {/* Lista de servicios */}
-                      <div className="p-4 bg-white/3 border border-white/5 rounded-[14px]">
-                        <p className="text-sm text-white">Servicio agregado</p>
-                      </div>
+                      {bookingServices.map((service) => (
+                        <div key={service.id} className="p-4 bg-white/3 border border-white/5 rounded-[14px] space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-semibold text-white font-[var(--font-heading)]">
+                              Servicio
+                            </h4>
+                            <button
+                              onClick={() => setBookingServices([])}
+                              className="p-1.5 text-[var(--text-secondary)] hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                              title="Eliminar servicio"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+
+                          {/* Select de servicio */}
+                          <div>
+                            <label className="mb-2 block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider font-[var(--font-heading)]">
+                              Servicio
+                            </label>
+                            <select
+                              value={service.service_id}
+                              onChange={(e) => {
+                                const newServiceId = e.target.value;
+                                const newEndTime = recalculateServiceEndTime(newServiceId, bookingTime);
+                                updateService(service.id, {
+                                  service_id: newServiceId,
+                                  end_time: newEndTime
+                                });
+                              }}
+                              className="w-full rounded-[10px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white"
+                            >
+                              {services.map((svc) => (
+                                <option key={svc.id} value={svc.id}>
+                                  {svc.name} ({svc.duration_min} min - {(svc.price_cents / 100).toFixed(2)} €)
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* Select de staff */}
+                          <div>
+                            <label className="mb-2 block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider font-[var(--font-heading)]">
+                              Profesional
+                            </label>
+                            <select
+                              value={service.staff_id}
+                              onChange={(e) => updateService(service.id, { staff_id: e.target.value })}
+                              className="w-full rounded-[10px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white"
+                            >
+                              {staff.map((stf) => (
+                                <option key={stf.id} value={stf.id}>
+                                  {stf.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* Tiempos (solo lectura) */}
+                          <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/5">
+                            <div>
+                              <label className="mb-1 block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider font-[var(--font-heading)]">
+                                Inicio
+                              </label>
+                              <div className="text-sm text-white font-mono bg-white/5 px-3 py-2 rounded-lg">
+                                {bookingTime}
+                              </div>
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider font-[var(--font-heading)]">
+                                Fin
+                              </label>
+                              <div className="text-sm text-white font-mono bg-white/5 px-3 py-2 rounded-lg">
+                                {service.end_time}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -471,15 +676,36 @@ export function NewBookingModal({
           {/* Panel lateral */}
           <div className="space-y-4">
             <div className="p-4 rounded-[16px] border border-white/5 bg-white/3">
-              <div className="flex items-center justify-between gap-4">
+              <div className="space-y-3">
+                {/* Fecha y hora formateada */}
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-[#9ca3af]">Fecha seleccionada</p>
-                  <p className="text-base font-semibold text-white">{bookingDate || "Sin fecha"}</p>
+                  <p className="text-xs uppercase tracking-wider text-[#9ca3af] font-[var(--font-heading)]">Fecha y hora</p>
+                  <p className="text-base font-semibold text-white font-[var(--font-heading)]">
+                    {format(new Date(`${bookingDate}T${bookingTime}`), "EEEE, d 'de' MMMM", { locale: undefined })}
+                  </p>
+                  <p className="text-sm text-[var(--text-secondary)] font-[var(--font-body)]">
+                    {bookingTime}
+                    {bookingServices.length > 0 && ` - ${bookingServices[0].end_time}`}
+                  </p>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs uppercase tracking-wider text-[#9ca3af]">Horario</p>
-                  <p className="text-base font-semibold text-white">{bookingTime || "Sin hora"}</p>
-                </div>
+
+                {/* Información del servicio si existe */}
+                {bookingServices.length > 0 && (
+                  <div className="pt-3 border-t border-white/5">
+                    <p className="text-xs uppercase tracking-wider text-[#9ca3af] font-[var(--font-heading)] mb-2">Servicio</p>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-white font-[var(--font-heading)]">
+                        {services.find(s => s.id === bookingServices[0].service_id)?.name}
+                      </p>
+                      <p className="text-xs text-[var(--text-secondary)] font-[var(--font-body)]">
+                        {services.find(s => s.id === bookingServices[0].service_id)?.duration_min} min · {(services.find(s => s.id === bookingServices[0].service_id)?.price_cents || 0) / 100} €
+                      </p>
+                      <p className="text-xs text-[var(--text-secondary)] font-[var(--font-body)]">
+                        con {staff.find(s => s.id === bookingServices[0].staff_id)?.name}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

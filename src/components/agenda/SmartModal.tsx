@@ -303,12 +303,14 @@ export function SmartModal({
             </div>
 
             <div className="flex gap-2">
-              {actions}
-
-              {variant !== "guided" && (
-                <Button variant="ghost" onClick={onClose}>
-                  Cancelar
-                </Button>
+              {actions ? (
+                actions
+              ) : (
+                variant !== "guided" && (
+                  <Button variant="ghost" onClick={onClose}>
+                    Cancelar
+                  </Button>
+                )
               )}
 
               {variant === "guided" && localStep === steps.length - 1 && (
