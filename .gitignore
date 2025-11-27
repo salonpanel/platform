@@ -45,6 +45,12 @@ next-env.d.ts
 supabase/.branches
 supabase/.temp
 
+# Large binary downloads (installers, CLI tools)
+*.exe
+supabase.tar.gz
+DockerDesktopInstaller.exe
+supabase.exe
+
 # Editor folders
 .vscode/
 .idea/
