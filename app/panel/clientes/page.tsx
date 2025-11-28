@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useCustomersPageData } from "@/hooks/useOptimizedData";
-// import type { Customer } from "@/types/customers";
+import { invalidateCache } from "@/hooks/useStaleWhileRevalidate";
 
 interface Customer {
   id: string;
@@ -205,8 +205,58 @@ export default function ClientesPage() {
   }, [selectedCustomers]);
 
   const handleBulkDelete = useCallback(async () => {
-    console.log("Eliminando clientes seleccionados");
-  }, [selectedCustomers]);
+    if (selectedCustomers.length === 0) return;
+
+    const confirmed = confirm(
+      `¿Estás seguro de que quieres eliminar ${selectedCustomers.length} ${selectedCustomers.length === 1 ? 'cliente' : 'clientes'}? Esta acción no se puede deshacer.`
+    );
+
+    if (!confirmed) return;
+
+    setBulkActionLoading(true);
+    try {
+      console.log("Eliminando clientes seleccionados:", selectedCustomers);
+
+      // Eliminar clientes uno por uno (podríamos optimizar esto con una query batch si Supabase lo soporta)
+      const deletePromises = selectedCustomers.map(customerId =>
+        supabase
+          .from("customers")
+          .delete()
+          .eq("id", customerId)
+      );
+
+      const results = await Promise.all(deletePromises);
+
+      // Verificar si alguna eliminación falló
+      const errors = results.filter(result => result.error);
+      if (errors.length > 0) {
+        console.error("Errores al eliminar clientes:", errors);
+        throw new Error(`Error al eliminar ${errors.length} cliente(s)`);
+      }
+
+      console.log(`✅ Eliminados ${selectedCustomers.length} clientes exitosamente`);
+
+      // Invalidar el cache para forzar recarga de datos
+      invalidateCache(`customers-page-${impersonateOrgId || 'default'}`);
+
+      // Limpiar selección
+      setSelectedCustomers([]);
+      setSelectionActive(false);
+
+      // Mostrar mensaje de éxito
+      setToastMessage(`${selectedCustomers.length} ${selectedCustomers.length === 1 ? 'cliente eliminado' : 'clientes eliminados'} exitosamente`);
+      setToastType("success");
+      setShowToast(true);
+
+    } catch (err) {
+      console.error("Error en eliminación masiva:", err);
+      setToastMessage("Error al eliminar los clientes seleccionados");
+      setToastType("error");
+      setShowToast(true);
+    } finally {
+      setBulkActionLoading(false);
+    }
+  }, [selectedCustomers, supabase, impersonateOrgId]);
 
   const handleExportCsv = useCallback(() => {
     console.log("Exportando todos los clientes a CSV");
@@ -256,6 +306,9 @@ export default function ClientesPage() {
         phone: "",
         segment: "normal"
       });
+
+      // Invalidar cache después de la operación
+      invalidateCache(`customers-page-${impersonateOrgId || 'default'}`);
     } catch (err) {
       console.error("Error saving customer:", err);
       setToastMessage("Error al guardar el cliente");
@@ -264,7 +317,7 @@ export default function ClientesPage() {
     } finally {
       setLoading(false);
     }
-  }, [newCustomer, tenantId, supabase, editingCustomer]);
+  }, [newCustomer, tenantId, supabase, editingCustomer, impersonateOrgId]);
 
   const handleEditCustomer = useCallback((customer: Customer) => {
     setEditingCustomer(customer);
@@ -282,6 +335,9 @@ export default function ClientesPage() {
       
       if (error) throw error;
       
+      // Invalidar el cache para forzar recarga de datos
+      invalidateCache(`customers-page-${impersonateOrgId || 'default'}`);
+      
       // La lista se actualizará automáticamente cuando el hook invalide el caché
       setToastMessage("Cliente eliminado exitosamente");
       setToastType("success");
@@ -292,7 +348,7 @@ export default function ClientesPage() {
       setToastType("error");
       setShowToast(true);
     }
-  }, [supabase]);
+  }, [supabase, impersonateOrgId]);
 
   const handleViewHistory = useCallback((customerId: string) => {
     setShowHistory(customerId);

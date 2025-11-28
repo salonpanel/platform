@@ -116,6 +116,7 @@ export async function updateServiceStaff(
 
   // Remove old relations
   if (toRemove.length > 0) {
+    console.log("[updateServiceStaff] Removing relations:", { tenantId, serviceId, toRemove });
     const { error: deleteError } = await supabase
       .from("staff_provides_services")
       .delete()
@@ -124,9 +125,16 @@ export async function updateServiceStaff(
       .in("staff_id", toRemove);
 
     if (deleteError) {
-      console.error("❌ updateServiceStaff: Error removing relations:", deleteError);
+      console.error("[updateServiceStaff] Delete error:", {
+        error: deleteError,
+        code: deleteError.code,
+        message: deleteError.message,
+        details: deleteError.details,
+        hint: deleteError.hint
+      });
       throw new Error(`Error removing relations: ${deleteError.message}`);
     }
+    console.log("[updateServiceStaff] Relations removed successfully");
   }
 
   // Add new relations

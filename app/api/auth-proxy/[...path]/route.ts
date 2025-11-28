@@ -44,8 +44,10 @@ async function handleProxy(req: NextRequest, path: string) {
   // Para métodos con body, parseamos como JSON para asegurar formato correcto
   let body: string | undefined;
   if (req.method !== "GET" && req.method !== "HEAD") {
+    console.log(`[AuthProxy] Processing ${req.method} body...`);
     try {
       const jsonBody = await req.json();
+      console.log(`[AuthProxy] Raw body:`, jsonBody);
       body = JSON.stringify(jsonBody);
       headers.set("content-type", "application/json");
       console.log(`[AuthProxy] Parsed JSON body for ${req.method}`);

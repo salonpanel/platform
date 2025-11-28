@@ -73,6 +73,13 @@ function StaffContent() {
   }) => {
     if (!tenantId) return;
 
+    console.log("[StaffPage] Starting save operation:", {
+      editingStaffId: editingStaff?.id,
+      staffData,
+      tenantId,
+      userRole
+    });
+
     setSaving(true);
 
     try {

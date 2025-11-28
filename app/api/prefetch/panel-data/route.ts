@@ -97,7 +97,12 @@ export async function GET(req: NextRequest) {
     return response;
 
   } catch (error: any) {
-    console.error("[PrefetchPanelData] ❌ Error en prefetch:", error);
+    console.error("[PrefetchPanelData] ❌ Error en prefetch:", {
+      error: error?.message,
+      stack: error?.stack,
+      code: error?.code,
+      name: error?.name
+    });
 
     return NextResponse.json(
       {
