@@ -46,6 +46,14 @@ export function getSupabaseBrowser(): SupabaseClient {
       clientOptions.global = {
         fetch: (requestUrl: string, options?: RequestInit) => {
           const urlObj = new URL(requestUrl);
+          
+          // CRÍTICO: Auth endpoints deben ir directamente a Supabase, NO a través del proxy
+          // Los endpoints de auth (/auth/v1/*) fallan cuando pasan por el proxy
+          if (urlObj.pathname.startsWith('/auth/')) {
+            // Hacer la petición directamente a Supabase para auth
+            return fetch(requestUrl, options);
+          }
+          
           const pathWithQuery = `${urlObj.pathname}${urlObj.search}`;
           return fetch(`${window.location.origin}/api/auth-proxy?path=${encodeURIComponent(pathWithQuery)}`, {
             ...options,

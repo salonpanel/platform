@@ -67,6 +67,10 @@ export async function POST(req: NextRequest) {
   return handleProxy(req);
 }
 
+export async function GET(req: NextRequest) {
+  return handleProxy(req);
+}
+
 export async function PATCH(req: NextRequest) {
   return handleProxy(req);
 }
@@ -76,5 +80,13 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  return handleProxy(req);
+}
+
+export async function HEAD(req: NextRequest) {
+  return handleProxy(req);
+}
+
+export async function OPTIONS(req: NextRequest) {
   return handleProxy(req);
 }
