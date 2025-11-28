@@ -20,11 +20,6 @@ async function handleProxy(req: NextRequest) {
     ? path
     : `${SUPABASE_URL}${path}`;
 
-  // Consumimos el body del request original
-  const body = req.method === "GET" || req.method === "HEAD"
-    ? undefined
-    : await req.text();
-
   // Preparamos headers a reenviar
   const headers = new Headers(req.headers);
   headers.set("apikey", SUPABASE_ANON_KEY || "");
@@ -36,7 +31,7 @@ async function handleProxy(req: NextRequest) {
   const upstreamResponse = await fetch(targetUrl, {
     method: req.method,
     headers,
-    body,
+    body: req.method === "GET" || req.method === "HEAD" ? undefined : req.body,
     redirect: "manual",
   });
 
