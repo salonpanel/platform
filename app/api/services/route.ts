@@ -162,7 +162,10 @@ export async function POST(req: Request) {
           pricing_levels: pricing_levels ?? null,
         }
       });
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json(
+        { error: "Supabase error", details: error },
+        { status: 500 }
+      );
     }
 
     console.log("[ServicesAPI] Service created successfully:", data.id);

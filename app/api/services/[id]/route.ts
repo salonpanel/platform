@@ -91,7 +91,18 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       .maybeSingle();
 
     if (fetchError) {
-      return NextResponse.json({ error: fetchError.message }, { status: 500 });
+      console.error("[ServicesAPI] Error fetching service for PATCH:", {
+        error: fetchError,
+        code: fetchError.code,
+        message: fetchError.message,
+        details: fetchError.details,
+        hint: fetchError.hint,
+        serviceId: id,
+      });
+      return NextResponse.json(
+        { error: "Supabase error", details: fetchError },
+        { status: 500 }
+      );
     }
 
     if (!service) {
@@ -199,7 +210,18 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       .single();
 
     if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
+      console.error("[ServicesAPI] Error updating service:", {
+        error: updateError,
+        code: updateError.code,
+        message: updateError.message,
+        details: updateError.details,
+        hint: updateError.hint,
+        serviceId: id,
+      });
+      return NextResponse.json(
+        { error: "Supabase error", details: updateError },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json(updated);
@@ -312,11 +334,18 @@ export async function DELETE(req: Request, { params }: RouteParams) {
         .gte("starts_at", nowIso);
 
       if (bookingsError) {
+        console.error("[ServicesAPI] Error checking future bookings before hard delete:", {
+          error: bookingsError,
+          code: bookingsError.code,
+          message: bookingsError.message,
+          details: bookingsError.details,
+          hint: bookingsError.hint,
+          serviceId: id,
+        });
         return NextResponse.json(
           {
-            error:
-              bookingsError.message ||
-              "No se pudo comprobar si el servicio tiene reservas futuras asociadas.",
+            error: "Supabase error",
+            details: bookingsError,
           },
           { status: 500 }
         );
@@ -338,11 +367,18 @@ export async function DELETE(req: Request, { params }: RouteParams) {
         .eq("id", id);
 
       if (deleteError) {
+        console.error("[ServicesAPI] Error hard-deleting service:", {
+          error: deleteError,
+          code: deleteError.code,
+          message: deleteError.message,
+          details: deleteError.details,
+          hint: deleteError.hint,
+          serviceId: id,
+        });
         return NextResponse.json(
           {
-            error:
-              deleteError.message ||
-              "Error al eliminar definitivamente el servicio.",
+            error: "Supabase error",
+            details: deleteError,
           },
           { status: 500 }
         );

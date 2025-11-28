@@ -26,7 +26,7 @@ async function handleProxy(req: NextRequest, path: string) {
 
   console.log(`[AuthProxy] ✅ Path validation passed: ${path}`);
 
-  // Si te llega solo /auth/v1/otp, completamos con SUPABASE_URL
+  // Construimos la URL final hacia Supabase
   const targetUrl = path.startsWith("http")
     ? path
     : `${SUPABASE_URL}${path}`;
@@ -122,44 +122,70 @@ async function handleProxy(req: NextRequest, path: string) {
   }
 }
 
+function resolvePathFromRequest(req: NextRequest, pathSegments: string[] | undefined): string {
+  const searchParams = req.nextUrl.searchParams;
+  const encodedPath = searchParams.get("path");
+
+  if (encodedPath) {
+    try {
+      const decoded = decodeURIComponent(encodedPath);
+      return decoded;
+    } catch (e) {
+      // Si falla la decodificación, usar el valor tal cual para evitar 400 genéricos
+      return encodedPath;
+    }
+  }
+
+  const basePath = pathSegments && pathSegments.length > 0
+    ? "/" + pathSegments.join("/")
+    : "";
+
+  const search = req.nextUrl.search;
+  if (search && !search.startsWith("?path=")) {
+    return `${basePath}${search}`;
+  }
+
+  return basePath;
+}
+
 export async function GET(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const resolvedParams = await params;
-  const path = "/" + resolvedParams.path.join("/");
+  const path = resolvePathFromRequest(req, resolvedParams.path);
   return handleProxy(req, path);
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const resolvedParams = await params;
-  const path = "/" + resolvedParams.path.join("/");
+  const path = resolvePathFromRequest(req, resolvedParams.path);
   return handleProxy(req, path);
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const resolvedParams = await params;
-  const path = "/" + resolvedParams.path.join("/");
+  const path = resolvePathFromRequest(req, resolvedParams.path);
   return handleProxy(req, path);
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const resolvedParams = await params;
-  const path = "/" + resolvedParams.path.join("/");
+  const path = resolvePathFromRequest(req, resolvedParams.path);
   return handleProxy(req, path);
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const resolvedParams = await params;
-  const path = "/" + resolvedParams.path.join("/");
+  const path = resolvePathFromRequest(req, resolvedParams.path);
   return handleProxy(req, path);
 }
 
 export async function HEAD(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const resolvedParams = await params;
-  const path = "/" + resolvedParams.path.join("/");
+  const path = resolvePathFromRequest(req, resolvedParams.path);
   return handleProxy(req, path);
 }
 
 export async function OPTIONS(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const resolvedParams = await params;
-  const path = "/" + resolvedParams.path.join("/");
+  const path = resolvePathFromRequest(req, resolvedParams.path);
   return handleProxy(req, path);
 }
