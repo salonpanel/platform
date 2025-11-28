@@ -55,7 +55,7 @@ export function getSupabaseBrowser(): SupabaseClient {
           }
           
           const pathWithQuery = `${urlObj.pathname}${urlObj.search}`;
-          return fetch(`${window.location.origin}/api/auth-proxy?path=${encodeURIComponent(pathWithQuery)}`, {
+          return fetch(`${window.location.origin}/api/auth-proxy${pathWithQuery}`, {
             ...options,
           });
         },

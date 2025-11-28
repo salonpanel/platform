@@ -145,9 +145,27 @@ export async function POST(req: Request) {
       .single();
 
     if (error) {
+      console.error("[ServicesAPI] Error creating service:", {
+        error,
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        payload: {
+          tenant_id,
+          name: trimmedName,
+          duration_min,
+          buffer_min: buffer_min ?? 0,
+          price_cents,
+          active: typeof active === "boolean" ? active : true,
+          category: category ?? "Otros",
+          pricing_levels: pricing_levels ?? null,
+        }
+      });
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    console.log("[ServicesAPI] Service created successfully:", data.id);
     return NextResponse.json(data, { status: 201 });
   } catch (error: any) {
     return NextResponse.json(
