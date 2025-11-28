@@ -16,22 +16,37 @@ export function useServiceWorker() {
     }
 
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-      // Registrar el Service Worker después de que la página cargue
-      window.addEventListener("load", () => {
-        navigator.serviceWorker
-          .register("/sw.js")
-          .then((registration) => {
-            console.log("✅ Service Worker registrado:", registration.scope);
+      // Verificar que el service worker existe antes de intentar registrarlo
+      fetch("/sw.js", { method: "HEAD" })
+        .then((response) => {
+          if (!response.ok) {
+            console.warn("[ServiceWorker] sw.js no encontrado (404), saltando registro");
+            return;
+          }
 
-            // Verificar actualizaciones periódicamente
-            setInterval(() => {
-              registration.update();
-            }, 60000); // Cada 60 segundos
-          })
-          .catch((error) => {
-            console.error("❌ Error al registrar Service Worker:", error);
+          // Registrar el Service Worker después de que la página cargue
+          window.addEventListener("load", () => {
+            navigator.serviceWorker
+              .register("/sw.js")
+              .then((registration) => {
+                console.log("✅ Service Worker registrado:", registration.scope);
+
+                // Verificar actualizaciones periódicamente
+                setInterval(() => {
+                  registration.update();
+                }, 60000); // Cada 60 segundos
+              })
+              .catch((error) => {
+                // Solo loggear errores que no sean 404 (ya verificamos que existe)
+                if (!error.message?.includes("404")) {
+                  console.error("❌ Error al registrar Service Worker:", error);
+                }
+              });
           });
-      });
+        })
+        .catch(() => {
+          // Silenciar errores de fetch para sw.js - no existe, no hay problema
+        });
 
       // Escuchar cambios en el Service Worker
       navigator.serviceWorker.addEventListener("controllerchange", () => {

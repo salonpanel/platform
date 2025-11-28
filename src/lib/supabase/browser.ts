@@ -27,6 +27,14 @@ export function getSupabaseBrowser(): SupabaseClient {
       throw new Error("NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY no definidos");
     }
 
+    // CRÍTICO: La URL de Supabase DEBE ser la URL oficial del proyecto Supabase
+    // (ej: https://abcdefghijklmnop.supabase.co), NO la URL del dominio custom (pro.bookfast.es)
+    // Si NEXT_PUBLIC_SUPABASE_URL apunta a pro.bookfast.es, realtime fallará
+    // porque intentará conectarse a wss://pro.bookfast.es/realtime/v1/websocket
+    if (url.includes('bookfast.es') || url.includes('vercel.app')) {
+      console.warn("[SupabaseBrowser] ⚠️ WARNING: NEXT_PUBLIC_SUPABASE_URL parece apuntar a un dominio custom. Realtime no funcionará correctamente. Debe ser la URL oficial de Supabase.");
+    }
+
     const isDevelopment = process.env.NODE_ENV === 'development';
 
     // CRÍTICO: createBrowserClient de @supabase/ssr establece cookies HTTP automáticamente
@@ -45,7 +53,7 @@ export function getSupabaseBrowser(): SupabaseClient {
         },
       };
 
-      // Realtime puede usar directamente la URL de Supabase; no necesitamos pasar por el dominio custom
+      // Realtime DEBE usar la URL de Supabase directamente, NO pasar por el proxy del dominio custom
       clientOptions.realtime = {
         params: {
           eventsPerSecond: 10,

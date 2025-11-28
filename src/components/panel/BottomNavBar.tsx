@@ -49,6 +49,10 @@ export function BottomNavBar({ className }: BottomNavBarProps) {
     if (mainContent) {
       mainContent.addEventListener("scroll", handleScroll, { passive: true });
       return () => mainContent.removeEventListener("scroll", handleScroll);
+    } else {
+      // Fallback: escuchar scroll en window si no hay main
+      window.addEventListener("scroll", handleScroll, { passive: true });
+      return () => window.removeEventListener("scroll", handleScroll);
     }
   }, [lastScrollY]);
 

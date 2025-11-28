@@ -67,11 +67,14 @@ export async function POST(req: NextRequest) {
   return handleProxy(req);
 }
 
-export async function GET(req: NextRequest) {
+export async function PATCH(req: NextRequest) {
   return handleProxy(req);
 }
 
-// Opcional: para CORS / preflight si lo necesitas
-export async function OPTIONS() {
-  return NextResponse.json({}, { status: 200 });
+export async function PUT(req: NextRequest) {
+  return handleProxy(req);
+}
+
+export async function DELETE(req: NextRequest) {
+  return handleProxy(req);
 }
