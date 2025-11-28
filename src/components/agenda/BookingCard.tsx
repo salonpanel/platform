@@ -40,6 +40,11 @@ export function BookingCard({
   const endTime = formatInTenantTz(booking.ends_at, timezone, "HH:mm");
   const statusConfig = BOOKING_STATUS_CONFIG[booking.status] || BOOKING_STATUS_CONFIG.pending;
 
+  // Evitar mostrar citas fantasma sin cliente ni servicio asociado
+  if (!booking.customer && !booking.service) {
+    return null;
+  }
+
   const durationMinutes = Math.max(
     5,
     Math.round(
