@@ -15,6 +15,14 @@ async function handleProxy(req: NextRequest) {
     );
   }
 
+  // CRÍTICO: Solo permitir paths de REST API o RPC para evitar proxying accidental de auth
+  if (!path.startsWith("/rest/") && !path.startsWith("/rpc/")) {
+    return NextResponse.json(
+      { error: "Invalid path: only /rest/ and /rpc/ endpoints are allowed through proxy" },
+      { status: 400 },
+    );
+  }
+
   // Si te llega solo /auth/v1/otp, completamos con SUPABASE_URL
   const targetUrl = path.startsWith("http")
     ? path
@@ -28,10 +36,23 @@ async function handleProxy(req: NextRequest) {
   headers.delete("host");
   headers.delete("content-length");
 
+  // Para métodos con body, parseamos como JSON para asegurar formato correcto
+  let body: string | undefined;
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    try {
+      const jsonBody = await req.json();
+      body = JSON.stringify(jsonBody);
+      headers.set("content-type", "application/json");
+    } catch (error) {
+      // Si no es JSON válido, usar el body raw
+      body = await req.text();
+    }
+  }
+
   const upstreamResponse = await fetch(targetUrl, {
     method: req.method,
     headers,
-    body: req.method === "GET" || req.method === "HEAD" ? undefined : req.body,
+    body,
     redirect: "manual",
   });
 
@@ -50,6 +71,26 @@ async function handleProxy(req: NextRequest) {
     setCookieHeaders.forEach(cookie => {
       responseHeaders.append("set-cookie", cookie);
     });
+  }
+
+  // Manejo especial para respuestas 204 (No Content) - no intentar parsear JSON
+  if (upstreamResponse.status === 204) {
+    return new NextResponse(null, {
+      status: 204,
+      headers: responseHeaders,
+    });
+  }
+
+  // Si es un error, devolver JSON estructurado
+  if (!upstreamResponse.ok) {
+    return NextResponse.json(
+      {
+        error: "Upstream Supabase error",
+        status: upstreamResponse.status,
+        details: text || "No details provided"
+      },
+      { status: upstreamResponse.status }
+    );
   }
 
   return new NextResponse(text, {
