@@ -257,6 +257,37 @@ export async function fetchDashboardDataset(
       .in("status", completedStatuses),
   ]);
 
+  // Check for Supabase errors in any of the parallel queries
+  const resultsWithLabels = [
+    { label: "upcomingRes", res: upcomingRes },
+    { label: "staffRes", res: staffRes },
+    { label: "bookingsTodayRes", res: bookingsTodayRes },
+    { label: "bookingsLast7DaysRes", res: bookingsLast7DaysRes },
+    { label: "bookingsLast30DaysRes", res: bookingsLast30DaysRes },
+    { label: "servicesRes", res: servicesRes },
+    { label: "staffBookingsTodayRes", res: staffBookingsTodayRes },
+    { label: "staffSchedulesRes", res: staffSchedulesRes },
+    { label: "completedBookingsTodayRes", res: completedBookingsTodayRes },
+    { label: "completedBookingsLast7DaysRes", res: completedBookingsLast7DaysRes },
+    { label: "completedBookingsLast30DaysRes", res: completedBookingsLast30DaysRes },
+  ];
+
+  for (const { label, res } of resultsWithLabels) {
+    if (res?.error) {
+      console.error("[DashboardData] Supabase error in query", {
+        query: label,
+        error: res.error,
+        code: res.error.code,
+        message: res.error.message,
+        details: res.error.details,
+        hint: res.error.hint,
+      });
+      throw new Error(
+        `DashboardData query failed in ${label}: ${res.error.message || res.error.code || "unknown error"}`,
+      );
+    }
+  }
+
   // Procesar datos
   const bookingsTodayData = bookingsTodayRes.data || [];
   const bookingsLast7DaysData = bookingsLast7DaysRes.data || [];
