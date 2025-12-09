@@ -78,7 +78,12 @@ BEGIN
 END$$;
 
 -- 4) Marcar tablas legacy con comentarios
-COMMENT ON TABLE public.org_members IS 'LEGACY: preferir public.memberships (user_id -> auth.users) para pertenencia y roles multi-tenant.';
+DO $$
+BEGIN
+  IF to_regclass('public.org_members') IS NOT NULL THEN
+    COMMENT ON TABLE public.org_members IS 'LEGACY: preferir public.memberships (user_id -> auth.users) para pertenencia y roles multi-tenant.';
+  END IF;
+END $$;
 COMMENT ON TABLE public.users IS 'LEGACY: evitar su uso. Emplear auth.users + public.profiles + public.memberships.';
 
 

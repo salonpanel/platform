@@ -33,6 +33,7 @@ ALTER TABLE public.staff_schedules ENABLE ROW LEVEL SECURITY;
 
 -- Políticas RLS para staff_schedules
 -- Los miembros del tenant pueden leer horarios de su organización
+DROP POLICY IF EXISTS "Members can view staff schedules" ON public.staff_schedules;
 CREATE POLICY "Members can view staff schedules"
 ON public.staff_schedules
 FOR SELECT
@@ -46,6 +47,7 @@ USING (
 );
 
 -- Solo admins, owners y managers pueden crear/actualizar/eliminar horarios
+DROP POLICY IF EXISTS "Admins can manage staff schedules" ON public.staff_schedules;
 CREATE POLICY "Admins can manage staff schedules"
 ON public.staff_schedules
 FOR ALL

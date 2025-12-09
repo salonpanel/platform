@@ -169,8 +169,9 @@ export function ServicePreviewModal({
             </div>
             <div>
               <span className="font-semibold">Staff específico:</span>{" "}
-              {service.staff_only_ids && service.staff_only_ids.length > 0
-                ? service.staff_only_ids.join(", ")
+              {/* Mostrar info canónica: staff asignado vía staff_provides_services */}
+              {service.assignedStaffIds && service.assignedStaffIds.length > 0
+                ? service.assignedStaffIds.join(", ")
                 : "cualquiera"}
             </div>
           </div>

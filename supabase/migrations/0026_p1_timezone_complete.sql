@@ -6,13 +6,23 @@ alter table public.tenants
   add column if not exists timezone text default 'Europe/Madrid';
 
 -- Validar que timezone es válido (timezone de PostgreSQL)
-alter table public.tenants 
-  add constraint if not exists tenants_timezone_check 
-  check (
-    timezone is null 
-    or timezone ~ '^[A-Za-z_]+/[A-Za-z_]+$' 
-    or timezone = 'UTC'
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE table_schema = 'public'
+      AND table_name = 'tenants'
+      AND constraint_name = 'tenants_timezone_check'
+  ) THEN
+    ALTER TABLE public.tenants
+      ADD CONSTRAINT tenants_timezone_check
+      CHECK (
+        timezone IS NULL
+        OR timezone ~ '^[A-Za-z_]+/[A-Za-z_]+$'
+        OR timezone = 'UTC'
+      );
+  END IF;
+END $$;
 
 -- Actualizar tenants existentes sin timezone
 update public.tenants 

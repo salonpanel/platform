@@ -46,16 +46,21 @@ BEGIN
 END $$;
 
 -- Eliminar políticas RLS de schedules
-DROP POLICY IF EXISTS "tenant_read_schedules" ON public.schedules;
-DROP POLICY IF EXISTS "tenant_crud_schedules" ON public.schedules;
-DROP POLICY IF EXISTS "public_read_schedules" ON public.schedules;
-DROP POLICY IF EXISTS "public_read_schedules_active" ON public.schedules;
-DROP POLICY IF EXISTS "tenant_write_schedules" ON public.schedules;
-DROP POLICY IF EXISTS "tenant_update_schedules" ON public.schedules;
-DROP POLICY IF EXISTS "tenant_delete_schedules" ON public.schedules;
 
--- Eliminar índices de schedules
-DROP INDEX IF EXISTS public.schedules_tenant_id_staff_id_weekday_idx;
+-- Proteger todos los DROP POLICY y DROP INDEX sobre public.schedules
+DO $$
+BEGIN
+  IF to_regclass('public.schedules') IS NOT NULL THEN
+    DROP POLICY IF EXISTS "tenant_read_schedules" ON public.schedules;
+    DROP POLICY IF EXISTS "tenant_crud_schedules" ON public.schedules;
+    DROP POLICY IF EXISTS "public_read_schedules" ON public.schedules;
+    DROP POLICY IF EXISTS "public_read_schedules_active" ON public.schedules;
+    DROP POLICY IF EXISTS "tenant_write_schedules" ON public.schedules;
+    DROP POLICY IF EXISTS "tenant_update_schedules" ON public.schedules;
+    DROP POLICY IF EXISTS "tenant_delete_schedules" ON public.schedules;
+    DROP INDEX IF EXISTS public.schedules_tenant_id_staff_id_weekday_idx;
+  END IF;
+END $$;
 
 -- Eliminar vista que usa schedules (si existe)
 DROP VIEW IF EXISTS public.vw_staff_availability;
@@ -77,7 +82,12 @@ COMMENT ON VIEW public.vw_staff_availability IS
   'Vista de disponibilidad del staff basada en staff_schedules (unificada desde schedules)';
 
 -- Eliminar tabla schedules (ya migrada a staff_schedules)
-DROP TABLE IF EXISTS public.schedules CASCADE;
+DO $$
+BEGIN
+  IF to_regclass('public.schedules') IS NOT NULL THEN
+    DROP TABLE IF EXISTS public.schedules CASCADE;
+  END IF;
+END $$;
 
 -- ============================================================================
 -- 2. ACTUALIZAR FUNCIÓN current_tenant_id: ELIMINAR REFERENCIA A public.users

@@ -4,6 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import { stripe } from "@/lib/stripe";
 import { supabaseServer } from "@/lib/supabase";
 import { hasTenantPermission } from "@/lib/permissions/server";
+import { assertMembership } from "@/lib/server/assertMembership";
 
 export const runtime = "nodejs";
 
@@ -109,21 +110,10 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Servicio no encontrado." }, { status: 404 });
     }
 
-    // Verificar permisos
-    const { data: membership, error: membershipError } = await supabase
-      .from("memberships")
-      .select("role")
-      .eq("tenant_id", service.tenant_id)
-      .eq("user_id", session.user.id)
-      .maybeSingle();
+    // Llamar a assertMembership con tenant_id del servicio
+    const membership = await assertMembership(supabaseServer(), session.user.id, service.tenant_id);
 
-    if (membershipError || !membership) {
-      return NextResponse.json(
-        { error: "No tienes acceso a este tenant." },
-        { status: 403 }
-      );
-    }
-
+    // Verificar permisos adicionales
     if (membership.role !== "owner" && membership.role !== "admin") {
       const allowed = await hasTenantPermission(
         supabase,

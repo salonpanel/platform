@@ -185,23 +185,20 @@ create table if not exists public.schedules (
   check (start_time < end_time)
 );
 
-create index on public.schedules(tenant_id, staff_id, weekday);
 
--- 7) Bookings (reservas)
-create table if not exists public.bookings (
-  id uuid primary key default gen_random_uuid(),
-  tenant_id uuid not null references public.tenants(id) on delete cascade,
-  customer_id uuid not null references public.customers(id) on delete restrict,
-  staff_id uuid not null references public.staff(id) on delete restrict,
-  service_id uuid not null references public.services(id) on delete restrict,
-  starts_at timestamptz not null,
-  ends_at timestamptz not null,
-  status text not null default 'pending' check (status in ('pending','paid','cancelled','no_show','completed')),
-  payment_intent_id text, -- para Stripe u otro PSP
-  created_at timestamptz default now(),
-  unique(tenant_id, staff_id, starts_at),
-  check (starts_at < ends_at)
-);
+-- Proteger todas las sentencias sobre public.schedules
+do $$
+begin
+  if to_regclass('public.schedules') is not null then
+    create index if not exists on public.schedules(tenant_id, staff_id, weekday);
+    alter table public.schedules enable row level security;
+    create policy if not exists "tenant_read_schedules" on public.schedules
+      for select using (tenant_id = app.current_tenant_id());
+    create policy if not exists "tenant_crud_schedules" on public.schedules
+      for all using (tenant_id = app.current_tenant_id())
+      with check (tenant_id = app.current_tenant_id());
+  end if;
+end $$;
 
 create index on public.bookings(tenant_id, starts_at, status);
 create index on public.bookings(tenant_id, customer_id);
@@ -228,7 +225,6 @@ alter table public.users enable row level security;
 alter table public.customers enable row level security;
 alter table public.staff enable row level security;
 alter table public.services enable row level security;
-alter table public.schedules enable row level security;
 alter table public.bookings enable row level security;
 
 -- 10) Políticas: solo datos de tu tenant
@@ -270,12 +266,6 @@ for all using (tenant_id = app.current_tenant_id())
 with check (tenant_id = app.current_tenant_id());
 
 -- Schedules
-create policy "tenant_read_schedules" on public.schedules
-for select using (tenant_id = app.current_tenant_id());
-
-create policy "tenant_crud_schedules" on public.schedules
-for all using (tenant_id = app.current_tenant_id()) 
-with check (tenant_id = app.current_tenant_id());
 
 -- Bookings
 create policy "tenant_read_bookings" on public.bookings
@@ -285,18 +275,26 @@ create policy "tenant_crud_bookings" on public.bookings
 for all using (tenant_id = app.current_tenant_id()) 
 with check (tenant_id = app.current_tenant_id());
 
--- 11) Vista de disponibilidad (placeholder, se optimizará en tarea de disponibilidad)
-create or replace view public.vw_staff_availability as
-select 
-  s.tenant_id, 
-  s.id as staff_id,
-  s.display_name,
-  sch.weekday, 
-  sch.start_time, 
-  sch.end_time
-from public.staff s
-join public.schedules sch on sch.staff_id = s.id and sch.tenant_id = s.tenant_id
-where s.active = true;
+
+-- 11) Vista de disponibilidad (solo si existe schedules)
+do $$
+begin
+  if to_regclass('public.schedules') is not null then
+    execute $$
+      create or replace view public.vw_staff_availability as
+      select 
+        s.tenant_id, 
+        s.id as staff_id,
+        s.display_name,
+        sch.weekday, 
+        sch.start_time, 
+        sch.end_time
+      from public.staff s
+      join public.schedules sch on sch.staff_id = s.id and sch.tenant_id = s.tenant_id
+      where s.active = true;
+    $$;
+  end if;
+end $$;
 
 -- 12) Seeds mínimos (tenant demo + datos de ejemplo)
 -- Nota: El usuario debe crearse manualmente vinculando auth.users.id con public.users.id
@@ -321,14 +319,20 @@ values
   ('dddddddd-dddd-dddd-dddd-dddddddddddd', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Barba', 20, 1000, true)
 on conflict (id) do nothing;
 
--- Horario demo (Lunes a Viernes, 9:00-18:00)
-insert into public.schedules (tenant_id, staff_id, weekday, start_time, end_time)
-select 
-  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-  'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
-  weekday,
-  '09:00'::time,
-  '18:00'::time
-from generate_series(0, 4) as weekday
-on conflict do nothing;
+
+-- Horario demo (Lunes a Viernes, 9:00-18:00) solo si existe schedules
+do $$
+begin
+  if to_regclass('public.schedules') is not null then
+    insert into public.schedules (tenant_id, staff_id, weekday, start_time, end_time)
+    select 
+      'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      weekday,
+      '09:00'::time,
+      '18:00'::time
+    from generate_series(0, 4) as weekday
+    on conflict do nothing;
+  end if;
+end $$;
 

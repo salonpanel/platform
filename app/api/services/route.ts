@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { supabaseServer } from "@/lib/supabase";
 import { hasTenantPermission } from "@/lib/permissions/server";
+import { assertMembership } from "@/lib/server/assertMembership";
 
 export const runtime = "nodejs";
 
@@ -94,26 +95,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No autenticado." }, { status: 401 });
     }
 
-    const supabase = supabaseServer();
+    // Llamar a assertMembership
+    const membership = await assertMembership(supabaseServer(), session.user.id, tenant_id);
 
-    // Verificar que el usuario tiene acceso al tenant y es owner/admin/manager
-    const { data: membership, error: membershipError } = await supabase
-      .from("memberships")
-      .select("role")
-      .eq("tenant_id", tenant_id)
-      .eq("user_id", session.user.id)
-      .maybeSingle();
-
-    if (membershipError || !membership) {
-      return NextResponse.json(
-        { error: "No tienes acceso a este tenant." },
-        { status: 403 }
-      );
-    }
-
+    // Verificar permisos adicionales
     if (membership.role !== "owner" && membership.role !== "admin") {
       const allowed = await hasTenantPermission(
-        supabase,
+        supabaseServer(),
         session.user.id,
         tenant_id,
         "servicios"
@@ -127,6 +115,7 @@ export async function POST(req: Request) {
     }
 
     // Crear servicio sin sincronizar con Stripe (se puede hacer después)
+    const supabase = supabaseServer();
     const { data, error } = await supabase
       .from("services")
       .insert([

@@ -88,6 +88,7 @@ export function ServiciosClient({
   const [servicePendingHardDelete, setServicePendingHardDelete] =
     useState<Service | null>(null);
   const [staffOptions, setStaffOptions] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
 
   const [filterStatus, setFilterStatus] =
     useState<ServiceFilters["status"]>("active");
@@ -222,8 +223,6 @@ export function ServiciosClient({
           service.combo_service_ids && service.combo_service_ids.length > 0
             ? service.combo_service_ids
             : base.combo_service_ids,
-        staff_only_ids:
-          [], // Will be loaded from relations table in ServiceForm
         duration_variants: service.duration_variants ?? base.duration_variants,
         ...overrides,
       };
@@ -232,14 +231,25 @@ export function ServiciosClient({
   );
 
   const openEditModal = useCallback(
-    (service: Service) => {
+    async (service: Service) => {
       setEditingService(service);
       setSuccessMessage(null);
       setForm(mapServiceToForm(service));
       setModalError(null);
+
+      // Load current staff assignments
+      try {
+        const { getServiceStaff } = await import("@/lib/staff/staffServicesRelations");
+        const staffIds = await getServiceStaff(service.id, tenantId);
+        setSelectedStaffIds(staffIds);
+      } catch (error) {
+        console.error("Error loading staff assignments:", error);
+        setSelectedStaffIds([]);
+      }
+
       setShowModal(true);
     },
-    [mapServiceToForm]
+    [mapServiceToForm, tenantId]
   );
 
   const duplicateService = useCallback(
@@ -261,6 +271,7 @@ export function ServiciosClient({
   const closeModal = useCallback(() => {
     setShowModal(false);
     setEditingService(null);
+    setSelectedStaffIds([]);
     setModalError(null);
     setForm(buildDefaultFormState());
   }, []);
@@ -302,7 +313,7 @@ export function ServiciosClient({
       active: form.active,
       category: form.category.trim() || DEFAULT_CATEGORY,
       pricing_levels: form.pricing_levels,
-      // Remove staff_only_ids - handled separately via relations table
+      // ...existing code...
     };
 
     try {
@@ -332,10 +343,10 @@ export function ServiciosClient({
       // Handle service-staff assignments
       if (editingService) {
         // For existing services, update staff assignments
-        await updateServiceStaff(tenantId, editingService.id, form.staff_only_ids || []);
+        await updateServiceStaff(tenantId, editingService.id, selectedStaffIds);
       } else {
         // For new services, assign staff after creation
-        await updateServiceStaff(tenantId, data.id, form.staff_only_ids || []);
+        await updateServiceStaff(tenantId, data.id, selectedStaffIds);
       }
 
       // Update lista local sin depender de recarga completa
@@ -1044,8 +1055,7 @@ export function ServiciosClient({
           tenantId={tenantId}
           serviceId={editingService?.id}
           onStaffChange={(staffIds) => {
-            // Update form state with selected staff IDs for compatibility
-            handleFormChange({ staff_only_ids: staffIds });
+            setSelectedStaffIds(staffIds);
           }}
         />
         {editingService && (

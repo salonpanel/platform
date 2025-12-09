@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
 import { supabaseServer } from "@/lib/supabase";
+import { assertMembership } from "@/lib/server/assertMembership";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,15 +14,13 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(req: Request) {
   try {
-    const sb = supabaseServer();
-    
-    // Verificar sesión
+    // Obtener sesión vía createRouteHandlerClient
+    const supabase = createRouteHandlerClient({ cookies });
     const {
-      data: { user },
-      error: authError,
-    } = await sb.auth.getUser();
+      data: { session },
+    } = await supabase.auth.getSession();
 
-    if (authError || !user) {
+    if (!session) {
       return NextResponse.json(
         { error: "No autenticado" },
         { status: 401 }
@@ -37,21 +38,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // Validar que el usuario actual sea owner o admin del tenant
-    const { data: membership, error: membershipError } = await sb
-      .from("memberships")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("tenant_id", tenant_id)
-      .single();
+    // Llamar a assertMembership
+    const membership = await assertMembership(supabaseServer(), session.user.id, tenant_id);
 
-    if (membershipError || !membership) {
-      return NextResponse.json(
-        { error: "No tienes acceso a este tenant" },
-        { status: 403 }
-      );
-    }
-
+    // Verificar que sea owner o admin
     if (membership.role !== "owner" && membership.role !== "admin") {
       return NextResponse.json(
         { error: "Solo owners y admins pueden crear usuarios" },
@@ -102,6 +92,8 @@ export async function POST(req: Request) {
       
       // Si el usuario ya existe, intentar obtener su ID
       if (errorData.error_code === "email_exists" || errorData.msg?.includes("already been registered")) {
+        // Usar supabaseServer() para consultas directas
+        const sb = supabaseServer();
         const { data: existingUser, error: findError } = await sb
           .from("auth.users")
           .select("id")
@@ -168,6 +160,8 @@ export async function POST(req: Request) {
     const userData = await createUserResponse.json();
     const newUserId = userData.id;
 
+    // Crear instancia de Supabase para la consulta
+    const sb = supabaseServer();
     // Crear membership
     const { data: newMembership, error: membershipCreateError } = await sb
       .from("memberships")

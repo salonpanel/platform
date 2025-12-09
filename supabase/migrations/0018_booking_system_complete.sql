@@ -187,16 +187,23 @@ drop policy if exists "public_read_services" on public.services;
 create policy "public_read_services" on public.services
 for select using (active = true); -- Lectura pública de servicios activos
 
--- Schedules: lectura pública para endpoints de disponibilidad
-drop policy if exists "public_read_schedules" on public.schedules;
-create policy "public_read_schedules" on public.schedules
-for select using (
-  exists (
-    select 1 from public.staff s
-    where s.id = schedules.staff_id
-      and s.active = true
-  )
-);
+
+-- LEGACY DEFENSE: Solo ejecutar si la tabla existe
+do $$
+begin
+  if to_regclass('public.schedules') is not null then
+    drop policy if exists "public_read_schedules" on public.schedules;
+    create policy "public_read_schedules" on public.schedules
+    for select using (
+      exists (
+        select 1 from public.staff s
+        where s.id = schedules.staff_id
+          and s.active = true
+      )
+    );
+  end if;
+end $$;
+
 
 -- Staff: lectura pública de staff activo (solo para disponibilidad)
 drop policy if exists "public_read_staff" on public.staff;

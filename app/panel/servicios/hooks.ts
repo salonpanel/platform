@@ -28,7 +28,6 @@ export const DEFAULT_FORM_STATE: ServiceFormState = {
   media_url: "",
   vip_tier: "standard",
   combo_service_ids: [],
-  staff_only_ids: [],
   duration_variants: null,
 };
 
@@ -61,7 +60,6 @@ export function normalizeService(service: Service): Service {
     media_url: service.media_url ?? "",
     vip_tier: service.vip_tier ?? "standard",
     combo_service_ids: service.combo_service_ids ?? [],
-    staff_only_ids: service.staff_only_ids ?? [],
     duration_variants: service.duration_variants ?? null,
   };
 }

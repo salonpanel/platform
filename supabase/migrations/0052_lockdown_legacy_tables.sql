@@ -3,11 +3,21 @@
 -- Objetivo: evitar su uso accidental desde clientes autenticados (RLS deny-all)
 
 -- Marcar comentarios de LEGACY (por si faltaba)
-COMMENT ON TABLE public.org_members IS 'LEGACY: usar public.memberships (user_id -> auth.users) para pertenencia multi-tenant. Bloqueado por RLS.';
+DO $$
+BEGIN
+  IF to_regclass('public.org_members') IS NOT NULL THEN
+    COMMENT ON TABLE public.org_members IS 'LEGACY: usar public.memberships (user_id -> auth.users) para pertenencia multi-tenant. Bloqueado por RLS.';
+  END IF;
+END $$;
 COMMENT ON TABLE public.users IS 'LEGACY: evitar uso. Emplear auth.users + public.profiles + public.memberships. Bloqueado por RLS.';
 
 -- Activar RLS
-ALTER TABLE public.org_members ENABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF to_regclass('public.org_members') IS NOT NULL THEN
+    ALTER TABLE public.org_members ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
 -- Eliminar políticas existentes (si las hubiera) para dejar deny-all

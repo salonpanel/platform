@@ -1,4 +1,6 @@
 # Testing Staff ⇄ Services Module
+# [!NOTE]
+# **Actualización diciembre 2025:** El campo legacy `staff_only_ids` ha sido eliminado definitivamente del sistema. El modelo canónico y único para asignación staff-servicio es `public.staff_provides_services`. Toda la lógica y tests deben basarse en esta relación.
 
 This document explains how to test the Staff ⇄ Services relation system, including unit-level checks and full integration tests with Supabase.
 

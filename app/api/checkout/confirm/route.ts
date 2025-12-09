@@ -111,7 +111,7 @@ export async function POST(req: Request) {
     // Validar que el servicio existe y está activo
     const { data: service, error: serviceError } = await supabase
       .from("services")
-      .select("id, tenant_id, duration_min, active, staff_only_ids")
+      .select("id, tenant_id, duration_min, active")
       .eq("id", paymentIntent.service_id)
       .eq("tenant_id", paymentIntent.tenant_id)
       .eq("active", true)
@@ -156,14 +156,19 @@ export async function POST(req: Request) {
       }
     }
 
-    // Validar staff_only_ids: si existe restricción, verificar que el staff está permitido
-    if (service.staff_only_ids && service.staff_only_ids.length > 0) {
-      if (!finalStaffId || !service.staff_only_ids.includes(finalStaffId)) {
-        return NextResponse.json(
-          { error: "El staff seleccionado no puede prestar este servicio" },
-          { status: 400 }
-        );
-      }
+    // Validar que el staff puede prestar este servicio
+    const { data: canProvideService, error: relationError } = await supabase
+      .from("staff_provides_services")
+      .select("staff_id")
+      .eq("staff_id", finalStaffId)
+      .eq("service_id", service.id)
+      .single();
+
+    if (relationError || !canProvideService) {
+      return NextResponse.json(
+        { error: "El staff seleccionado no puede prestar este servicio" },
+        { status: 400 }
+      );
     }
 
     // Verificar disponibilidad (opcional, la constraint de BD lo evitará)

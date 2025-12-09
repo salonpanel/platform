@@ -23,7 +23,6 @@ export type ServiceFormState = {
   media_url: string;
   vip_tier: "standard" | "vip" | "premium";
   combo_service_ids: string[];
-  staff_only_ids: string[];
   duration_variants: {
     min: number;
     max: number;

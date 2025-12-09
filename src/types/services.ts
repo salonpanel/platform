@@ -16,11 +16,12 @@ export type Service = {
   media_url?: string | null;
   vip_tier?: "standard" | "vip" | "premium" | null;
   combo_service_ids?: string[] | null;
-  staff_only_ids?: string[] | null;
   duration_variants?: {
     min: number;
     max: number;
   } | null;
+  // Campo solo para UI, no existe en BD
+  assignedStaffIds?: string[];
 };
 
 export const DEFAULT_CATEGORY = "Otros";

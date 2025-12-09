@@ -55,9 +55,9 @@ begin
       generated always as (tstzrange(starts_at, ends_at, '[)')) stored;
     
     -- Índice GIST para appointments
-    -- Incluir org_id (equivalente a tenant_id) para optimizar búsquedas multi-tenant
+    -- Incluir tenant_id para optimizar búsquedas multi-tenant
     create index if not exists idx_appointments_staff_slot_gist
-      on public.appointments using gist (org_id, staff_id, slot);
+      on public.appointments using gist (tenant_id, staff_id, slot);
     
     -- Constraint EXCLUDE para appointments
     if exists (
@@ -68,11 +68,11 @@ begin
     end if;
     
     -- Crear constraint EXCLUDE para appointments
-    -- Incluir org_id (equivalente a tenant_id) para asegurar aislamiento multi-tenant
+    -- Incluir tenant_id para asegurar aislamiento multi-tenant
     alter table public.appointments
       add constraint excl_staff_overlap_appointments
       exclude using gist (
-        org_id with =,
+        tenant_id with =,
         staff_id with =,
         slot with &&
       )

@@ -26,8 +26,8 @@ CREATE TABLE IF NOT EXISTS public.staff_blockings (
   CHECK (start_at < end_at)
 );
 
-CREATE INDEX idx_staff_blockings_tenant_staff_date ON public.staff_blockings(tenant_id, staff_id, start_at);
-CREATE INDEX idx_staff_blockings_date_range ON public.staff_blockings(start_at, end_at);
+CREATE INDEX IF NOT EXISTS idx_staff_blockings_tenant_staff_date ON public.staff_blockings(tenant_id, staff_id, start_at);
+CREATE INDEX IF NOT EXISTS idx_staff_blockings_date_range ON public.staff_blockings(start_at, end_at);
 
 -- RLS: Habilitar RLS en staff_blockings
 ALTER TABLE public.staff_blockings ENABLE ROW LEVEL SECURITY;

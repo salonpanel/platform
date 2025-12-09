@@ -4,6 +4,7 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { supabaseServer } from "@/lib/supabase";
 import { hasTenantPermission } from "@/lib/permissions/server";
 import { stripe } from "@/lib/stripe";
+import { assertMembership } from "@/lib/server/assertMembership";
 
 const CURRENCY = process.env.STRIPE_DEFAULT_CURRENCY ?? "eur";
 
@@ -47,19 +48,8 @@ export async function POST(_: Request, { params }: RouteParams) {
       );
     }
 
-    const { data: membership, error: membershipError } = await supabase
-      .from("memberships")
-      .select("role")
-      .eq("tenant_id", service.tenant_id)
-      .eq("user_id", session.user.id)
-      .maybeSingle();
-
-    if (membershipError || !membership) {
-      return NextResponse.json(
-        { error: "No tienes acceso a este tenant." },
-        { status: 403 }
-      );
-    }
+    // Llamar a assertMembership
+    const membership = await assertMembership(supabaseServer(), session.user.id, service.tenant_id);
 
     // Owners/Admins siempre permitidos; resto requiere permiso granular "servicios"
     if (membership.role !== "owner" && membership.role !== "admin") {

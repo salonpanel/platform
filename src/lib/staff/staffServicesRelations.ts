@@ -73,9 +73,6 @@ export async function updateStaffServices(
     }
   }
 
-  // Sync legacy staff_only_ids field
-  await syncStaffOnlyIds(tenantId);
-
   console.log("✅ updateStaffServices: Completed successfully");
 }
 
@@ -155,31 +152,7 @@ export async function updateServiceStaff(
     }
   }
 
-  // Sync legacy staff_only_ids field
-  await syncStaffOnlyIds(tenantId);
-
   console.log("✅ updateServiceStaff: Completed successfully");
-}
-
-/**
- * Syncs the legacy staff_only_ids field in services table from staff_provides_services
- */
-async function syncStaffOnlyIds(tenantId: string): Promise<void> {
-  const supabase = getSupabaseBrowser();
-
-  try {
-    // Call the helper function we created in the migration
-    const { error } = await supabase.rpc("sync_staff_only_ids_from_relations");
-
-    if (error) {
-      console.warn("⚠️ syncStaffOnlyIds: Error syncing legacy field:", error);
-      // Don't throw here - legacy sync is not critical
-    } else {
-      console.log("✅ syncStaffOnlyIds: Legacy field synced");
-    }
-  } catch (err) {
-    console.warn("⚠️ syncStaffOnlyIds: Failed to sync legacy field:", err);
-  }
 }
 
 /**

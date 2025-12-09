@@ -53,8 +53,17 @@ $$;
 comment on function public.release_expired_holds is 
   'Libera holds expirados cambiándolos a cancelled. Retorna el número de holds liberados.';
 
--- P0.3: Mejorar función de verificación de disponibilidad
--- Añadir tenant_id para asegurar aislamiento multi-tenant
+
+
+
+-- Eliminar todas las variantes posibles de la función check_staff_availability
+drop function if exists public.check_staff_availability(uuid, timestamp with time zone, timestamp with time zone);
+drop function if exists public.check_staff_availability(uuid, uuid, timestamptz, timestamptz);
+drop function if exists public.check_staff_availability(uuid, uuid, timestamp with time zone, timestamp with time zone);
+drop function if exists public.check_staff_availability(uuid, uuid, timestamp, timestamp);
+drop function if exists public.check_staff_availability(uuid, uuid, pg_catalog.timestamptz, pg_catalog.timestamptz);
+drop function if exists public.check_staff_availability(uuid, uuid, pg_catalog.timestamp, pg_catalog.timestamp);
+
 create or replace function public.check_staff_availability(
   p_tenant_id uuid,
   p_staff_id uuid,

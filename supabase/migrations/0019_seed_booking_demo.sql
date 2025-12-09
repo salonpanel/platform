@@ -38,30 +38,36 @@ set
   display_name = excluded.display_name,
   active = excluded.active;
 
--- 4) Horarios semanales (Lunes a Viernes, 9:00-18:00 para ambos barberos)
--- Eliminar horarios antiguos del tenant demo
-delete from public.schedules 
-where tenant_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 
--- Barbero 1: Lunes a Viernes, 9:00-18:00
-insert into public.schedules (tenant_id, staff_id, weekday, start_time, end_time)
-select 
-  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-  'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
-  weekday,
-  '09:00'::time,
-  '18:00'::time
-from generate_series(0, 4) as weekday;
+-- LEGACY DEFENSE: Solo ejecutar si la tabla existe
+do $$
+begin
+  if to_regclass('public.schedules') is not null then
+    -- Eliminar horarios antiguos del tenant demo
+    delete from public.schedules 
+    where tenant_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 
--- Barbero 2: Lunes a Viernes, 9:00-18:00
-insert into public.schedules (tenant_id, staff_id, weekday, start_time, end_time)
-select 
-  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-  'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
-  weekday,
-  '09:00'::time,
-  '18:00'::time
-from generate_series(0, 4) as weekday;
+    -- Barbero 1: Lunes a Viernes, 9:00-18:00
+    insert into public.schedules (tenant_id, staff_id, weekday, start_time, end_time)
+    select 
+      'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      weekday,
+      '09:00'::time,
+      '18:00'::time
+    from generate_series(0, 4) as weekday;
+
+    -- Barbero 2: Lunes a Viernes, 9:00-18:00
+    insert into public.schedules (tenant_id, staff_id, weekday, start_time, end_time)
+    select 
+      'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+      weekday,
+      '09:00'::time,
+      '18:00'::time
+    from generate_series(0, 4) as weekday;
+  end if;
+end $$;
 
 -- 5) Usuario owner (requiere que el usuario exista en auth.users)
 -- Nota: El usuario debe crearse primero en auth.users
@@ -90,49 +96,57 @@ set
   name = excluded.name,
   phone = excluded.phone;
 
--- 7) Verificación de seeds
-do $$
-declare
-  v_tenant_count int;
-  v_service_count int;
-  v_staff_count int;
-  v_schedule_count int;
-begin
-  select count(*) into v_tenant_count
-  from public.tenants
-  where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
-  
-  select count(*) into v_service_count
-  from public.services
-  where tenant_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
-  
-  select count(*) into v_staff_count
-  from public.staff
-  where tenant_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
-  
-  select count(*) into v_schedule_count
-  from public.schedules
-  where tenant_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
-  
-  if v_tenant_count = 0 then
-    raise exception 'Tenant demo no encontrado';
-  end if;
-  
-  if v_service_count < 2 then
-    raise exception 'Se esperaban 2 servicios, se encontraron %', v_service_count;
-  end if;
-  
-  if v_staff_count < 2 then
-    raise exception 'Se esperaban 2 barberos, se encontraron %', v_staff_count;
-  end if;
-  
-  if v_schedule_count < 10 then
-    raise exception 'Se esperaban al menos 10 horarios, se encontraron %', v_schedule_count;
-  end if;
-  
-  raise notice 'Seeds verificados correctamente: tenant=%, services=%, staff=%, schedules=%', 
-    v_tenant_count, v_service_count, v_staff_count, v_schedule_count;
-end $$;
+
+-- 7) Verificación de seeds (migrado a bloque seguro más abajo)
+
+
+-- LEGACY DEFENSE: Solo verificar schedules si la tabla existe
+DO $$
+BEGIN
+  IF to_regclass('public.schedules') IS NOT NULL THEN
+    DECLARE
+      v_tenant_count int;
+      v_service_count int;
+      v_staff_count int;
+      v_schedule_count int;
+    BEGIN
+      SELECT count(*) INTO v_tenant_count
+      FROM public.tenants
+      WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+
+      SELECT count(*) INTO v_service_count
+      FROM public.services
+      WHERE tenant_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+
+      SELECT count(*) INTO v_staff_count
+      FROM public.staff
+      WHERE tenant_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+
+      SELECT count(*) INTO v_schedule_count
+      FROM public.schedules
+      WHERE tenant_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+
+      IF v_tenant_count = 0 THEN
+        RAISE EXCEPTION 'Tenant demo no encontrado';
+      END IF;
+
+      IF v_service_count < 2 THEN
+        RAISE EXCEPTION 'Se esperaban 2 servicios, se encontraron %', v_service_count;
+      END IF;
+
+      IF v_staff_count < 2 THEN
+        RAISE EXCEPTION 'Se esperaban 2 barberos, se encontraron %', v_staff_count;
+      END IF;
+
+      IF v_schedule_count < 10 THEN
+        RAISE EXCEPTION 'Se esperaban al menos 10 horarios, se encontraron %', v_schedule_count;
+      END IF;
+
+      RAISE NOTICE 'Seeds verificados correctamente: tenant=%, services=%, staff=%, schedules=%', 
+        v_tenant_count, v_service_count, v_staff_count, v_schedule_count;
+    END;
+  END IF;
+END $$;
 
 -- 8) Comentarios para documentación
 comment on table public.tenants is 
@@ -144,6 +158,10 @@ comment on table public.services is
 comment on table public.staff is 
   'Staff (barberos) de cada tenant. Pueden tener horarios y reservas.';
 
-comment on table public.schedules is 
-  'Horarios de trabajo del staff. Define días de la semana y horas de trabajo.';
+DO $$
+BEGIN
+  IF to_regclass('public.schedules') IS NOT NULL THEN
+    COMMENT ON TABLE public.schedules IS 'Horarios de trabajo del staff. Define días de la semana y horas de trabajo.';
+  END IF;
+END $$;
 

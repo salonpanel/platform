@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { supabaseServer } from "@/lib/supabase";
+import { assertMembership } from "@/lib/server/assertMembership";
 
 // Sincroniza memberships -> users(staging) -> staff
 // Asegura que todos los miembros (owner/admin/staff/viewer) tengan fila en public.users y staff (si corresponde)
@@ -19,23 +21,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "Missing tenantId" }, { status: 400 });
     }
 
-    // 1) Verificar que el usuario que llama es owner/admin del tenant
+    // 1) Verificar sesión y membership
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     const {
-      data: { user },
-    } = await supabase.auth.getUser();
+      data: { session },
+    } = await supabase.auth.getSession();
 
-    if (!user) return NextResponse.json({ ok: false, error: "Unauthenticated" }, { status: 401 });
+    if (!session) return NextResponse.json({ ok: false, error: "Unauthenticated" }, { status: 401 });
 
-    const { data: membership, error: memErr } = await supabase
-      .from("memberships")
-      .select("role")
-      .eq("tenant_id", tenantId)
-      .eq("user_id", user.id)
-      .single();
+    // Llamar a assertMembership
+    const membership = await assertMembership(supabaseServer(), session.user.id, tenantId);
 
-    if (memErr || !membership || !["owner", "admin"].includes(membership.role)) {
+    if (!["owner", "admin"].includes(membership.role)) {
       return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
     }
 

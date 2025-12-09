@@ -267,69 +267,133 @@ for delete using (
   )
 );
 
--- 8) Refinar políticas RLS para schedules
--- Lectura: usuarios del tenant pueden leer + lectura pública de schedules de staff activo
--- Escritura: solo owner/admin pueden escribir
-drop policy if exists "tenant_read_schedules" on public.schedules;
-drop policy if exists "tenant_crud_schedules" on public.schedules;
-drop policy if exists "public_read_schedules" on public.schedules;
-drop policy if exists "public_read_schedules_active" on public.schedules;
 
--- Lectura pública de schedules de staff activo (para disponibilidad)
-create policy "public_read_schedules_active" on public.schedules
-for select using (
-  exists (
-    select 1 from public.staff s
-    where s.id = schedules.staff_id
-      and s.active = true
-  )
-);
+-- Proteger todos los DROP/CREATE POLICY sobre public.schedules
+do $$
+begin
+  if to_regclass('public.schedules') is not null then
+    drop policy if exists "tenant_crud_schedules" on public.schedules;
+    drop policy if exists "public_read_schedules" on public.schedules;
+    drop policy if exists "public_read_schedules_active" on public.schedules;
 
--- Lectura de tenant (sobrescribe la pública para miembros del tenant)
-create policy "tenant_read_schedules" on public.schedules
-for select using (
-  exists (
-    select 1 from public.memberships
-    where user_id = auth.uid()
-      and tenant_id = schedules.tenant_id
-  )
-  or exists (
-    select 1 from public.users
-    where id = auth.uid()
-      and tenant_id = schedules.tenant_id
-  )
-);
+    create policy "public_read_schedules_active" on public.schedules
+    for select using (
+      exists (
+        select 1 from public.staff s
+        where s.id = schedules.staff_id
+          and s.active = true
+      )
+    );
 
--- Escritura: solo owner/admin
-create policy "tenant_write_schedules" on public.schedules
-for insert with check (
-  exists (
-    select 1 from public.memberships
-    where user_id = auth.uid()
-      and tenant_id = schedules.tenant_id
-      and role in ('owner', 'admin')
-  )
-);
+    create policy "tenant_read_schedules" on public.schedules
+    for select using (
+      exists (
+        select 1 from public.memberships
+        where user_id = auth.uid()
+          and tenant_id = schedules.tenant_id
+      )
+      or exists (
+        select 1 from public.users
+        where id = auth.uid()
+          and tenant_id = schedules.tenant_id
+      )
+    );
 
-create policy "tenant_update_schedules" on public.schedules
-for update using (
-  exists (
-    select 1 from public.memberships
-    where user_id = auth.uid()
-      and tenant_id = schedules.tenant_id
-      and role in ('owner', 'admin')
-  )
-);
+    create policy "tenant_write_schedules" on public.schedules
+    for insert with check (
+      exists (
+        select 1 from public.memberships
+        where user_id = auth.uid()
+          and tenant_id = schedules.tenant_id
+          and role in ('owner', 'admin')
+      )
+    );
 
-create policy "tenant_delete_schedules" on public.schedules
-for delete using (
-  exists (
-    select 1 from public.memberships
-    where user_id = auth.uid()
-      and tenant_id = schedules.tenant_id
-      and role in ('owner', 'admin')
-  )
-);
+    create policy "tenant_update_schedules" on public.schedules
+    for update using (
+      exists (
+        select 1 from public.memberships
+        where user_id = auth.uid()
+          and tenant_id = schedules.tenant_id
+          and role in ('owner', 'admin')
+      )
+    );
+
+    create policy "tenant_delete_schedules" on public.schedules
+    for delete using (
+      exists (
+        select 1 from public.memberships
+        where user_id = auth.uid()
+          and tenant_id = schedules.tenant_id
+          and role in ('owner', 'admin')
+      )
+    );
+  end if;
+end $$;
+
+-- LEGACY DEFENSE: Solo ejecutar si la tabla existe
+do $$
+begin
+  if to_regclass('public.schedules') is not null then
+    drop policy if exists "tenant_read_schedules" on public.schedules;
+    drop policy if exists "tenant_crud_schedules" on public.schedules;
+    drop policy if exists "public_read_schedules" on public.schedules;
+    drop policy if exists "public_read_schedules_active" on public.schedules;
+
+    create policy "public_read_schedules_active" on public.schedules
+    for select using (
+      exists (
+        select 1 from public.staff s
+        where s.id = schedules.staff_id
+          and s.active = true
+      )
+    );
+
+    create policy "tenant_read_schedules" on public.schedules
+    for select using (
+      exists (
+        select 1 from public.memberships
+        where user_id = auth.uid()
+          and tenant_id = schedules.tenant_id
+      )
+      or exists (
+        select 1 from public.users
+        where id = auth.uid()
+          and tenant_id = schedules.tenant_id
+      )
+    );
+
+    create policy "tenant_write_schedules" on public.schedules
+    for insert with check (
+      exists (
+        select 1 from public.memberships
+        where user_id = auth.uid()
+          and tenant_id = schedules.tenant_id
+          and role in ('owner', 'admin')
+      )
+    );
+
+    create policy "tenant_update_schedules" on public.schedules
+    for update using (
+      exists (
+        select 1 from public.memberships
+        where user_id = auth.uid()
+          and tenant_id = schedules.tenant_id
+          and role in ('owner', 'admin')
+      )
+    );
+
+    create policy "tenant_delete_schedules" on public.schedules
+    for delete using (
+      exists (
+        select 1 from public.memberships
+        where user_id = auth.uid()
+          and tenant_id = schedules.tenant_id
+          and role in ('owner', 'admin')
+      )
+    );
+  end if;
+end $$;
 
 -- 9) Refinar políticas RLS para bookings
 -- Lectura: usuarios del tenant pueden leer

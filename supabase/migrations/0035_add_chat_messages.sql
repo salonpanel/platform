@@ -22,8 +22,7 @@ CREATE INDEX IF NOT EXISTS idx_chat_messages_tenant_recipient ON public.chat_mes
 -- Habilitar RLS
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 
--- Políticas RLS para chat_messages
--- Los miembros del tenant pueden leer mensajes de su organización
+DROP POLICY IF EXISTS "Members can view chat messages" ON public.chat_messages;
 CREATE POLICY "Members can view chat messages"
 ON public.chat_messages
 FOR SELECT
@@ -43,6 +42,7 @@ USING (
 );
 
 -- Los miembros del tenant pueden enviar mensajes
+DROP POLICY IF EXISTS "Members can send chat messages" ON public.chat_messages;
 CREATE POLICY "Members can send chat messages"
 ON public.chat_messages
 FOR INSERT
@@ -66,6 +66,7 @@ WITH CHECK (
 );
 
 -- Los miembros pueden editar/eliminar sus propios mensajes
+DROP POLICY IF EXISTS "Members can update own messages" ON public.chat_messages;
 CREATE POLICY "Members can update own messages"
 ON public.chat_messages
 FOR UPDATE
@@ -73,6 +74,7 @@ TO authenticated
 USING (sender_id = auth.uid())
 WITH CHECK (sender_id = auth.uid());
 
+DROP POLICY IF EXISTS "Members can delete own messages" ON public.chat_messages;
 CREATE POLICY "Members can delete own messages"
 ON public.chat_messages
 FOR DELETE
@@ -93,8 +95,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER chat_messages_updated_at
-  BEFORE UPDATE ON public.chat_messages
-  FOR EACH ROW
-  EXECUTE FUNCTION update_chat_messages_updated_at();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger WHERE tgname = 'chat_messages_updated_at'
+  ) THEN
+    CREATE TRIGGER chat_messages_updated_at
+      BEFORE UPDATE ON public.chat_messages
+      FOR EACH ROW
+      EXECUTE FUNCTION update_chat_messages_updated_at();
+  END IF;
+END $$;
 
