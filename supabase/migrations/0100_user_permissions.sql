@@ -34,17 +34,35 @@ create index if not exists idx_user_permissions_user_tenant on public.user_permi
 -- RLS Policies
 alter table public.user_permissions enable row level security;
 
+
 -- Los usuarios pueden ver sus propios permisos
-create policy "Users can view their own permissions"
-  on public.user_permissions
-  for select
-  using (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'user_permissions' AND policyname = 'Users can view their own permissions'
+  ) THEN
+    EXECUTE 'DROP POLICY "Users can view their own permissions" ON public.user_permissions';
+  END IF;
+END $$;
 
--- Los owners y admins pueden ver todos los permisos de su tenant
-create policy "Owners and admins can view all permissions in their tenant"
-  on public.user_permissions
-  for select
-  using (
+CREATE POLICY "Users can view their own permissions"
+  ON public.user_permissions
+  FOR SELECT
+  USING (auth.uid() = user_id);
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'user_permissions' AND policyname = 'Owners and admins can view all permissions in their tenant'
+  ) THEN
+    EXECUTE 'DROP POLICY "Owners and admins can view all permissions in their tenant" ON public.user_permissions';
+  END IF;
+END $$;
+
+CREATE POLICY "Owners and admins can view all permissions in their tenant"
+  ON public.user_permissions
+  FOR SELECT
+  USING (
     exists (
       select 1 from memberships
       where memberships.user_id = auth.uid()
@@ -53,20 +71,8 @@ create policy "Owners and admins can view all permissions in their tenant"
     )
   );
 
--- Solo owners y admins pueden crear/actualizar permisos
-create policy "Owners and admins can manage permissions"
-  on public.user_permissions
-  for all
-  using (
-    exists (
-      select 1 from memberships
-      where memberships.user_id = auth.uid()
-        and memberships.tenant_id = user_permissions.tenant_id
-        and memberships.role in ('owner', 'admin')
-    )
-  );
 
--- Trigger para updated_at
+
 create or replace function update_user_permissions_updated_at()
 returns trigger as $$
 begin
@@ -79,6 +85,18 @@ create trigger update_user_permissions_updated_at
   before update on public.user_permissions
   for each row
   execute function update_user_permissions_updated_at();
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger WHERE tgname = 'update_user_permissions_updated_at'
+  ) THEN
+    CREATE TRIGGER update_user_permissions_updated_at
+    BEFORE UPDATE ON public.user_permissions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_user_permissions_updated_at();
+  END IF;
+END $$;
 
 -- Función helper para obtener permisos de un usuario
 create or replace function get_user_permissions(p_user_id uuid, p_tenant_id uuid)

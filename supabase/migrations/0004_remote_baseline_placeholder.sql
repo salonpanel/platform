@@ -1,0 +1,3 @@
+-- Placeholder migration for remote version 0004
+-- Solo existe para alinear el historial local/remoto de Supabase.
+-- NO BORRAR sin actualizar antes el historial de supabase_migrations.schema_migrations.

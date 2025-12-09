@@ -22,12 +22,18 @@ CREATE TABLE IF NOT EXISTS public.payments (
 );
 
 -- Índices para búsquedas rápidas
-CREATE INDEX IF NOT EXISTS idx_payments_barberia ON public.payments(barberia_id);
-CREATE INDEX IF NOT EXISTS idx_payments_service ON public.payments(service_id);
-CREATE INDEX IF NOT EXISTS idx_payments_booking ON public.payments(booking_id);
-CREATE INDEX IF NOT EXISTS idx_payments_stripe_pi ON public.payments(stripe_payment_intent_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger WHERE tgname = 'payments_updated_at'
+  ) THEN
+    CREATE TRIGGER payments_updated_at
+    BEFORE UPDATE ON public.payments
+    FOR EACH ROW
+    EXECUTE FUNCTION update_payments_updated_at();
+  END IF;
+END $$;
 CREATE INDEX IF NOT EXISTS idx_payments_stripe_charge ON public.payments(stripe_charge_id);
-CREATE INDEX IF NOT EXISTS idx_payments_status ON public.payments(status);
 CREATE INDEX IF NOT EXISTS idx_payments_balance_status ON public.payments(balance_status);
 CREATE INDEX IF NOT EXISTS idx_payments_created ON public.payments(created_at);
 
@@ -40,12 +46,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER payments_updated_at
-BEFORE UPDATE ON public.payments
-FOR EACH ROW
-EXECUTE FUNCTION update_payments_updated_at();
 
--- Comentarios para documentación
 COMMENT ON TABLE public.payments IS 'Registro de pagos procesados a través de Stripe Connect';
 COMMENT ON COLUMN public.payments.stripe_payment_intent_id IS 'ID del Payment Intent de Stripe';
 COMMENT ON COLUMN public.payments.stripe_charge_id IS 'ID del Charge de Stripe';
