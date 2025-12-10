@@ -187,8 +187,15 @@ export function ServiciosClient({
         }
       }
     },
-    [supabase, tenantId, services.length, filterStatus, filterCategory, priceRange, bufferFilter, filterStripe, searchTerm, sortBy]
+    [supabase, tenantId, filterStatus, filterCategory, priceRange, bufferFilter, filterStripe, searchTerm, sortBy, services.length]
   );
+
+  // Cargar servicios inicialmente cuando el componente se monta o tenantId cambia
+  useEffect(() => {
+    if (tenantId) {
+      loadServices({ showLoader: true });
+    }
+  }, [tenantId, loadServices]);
 
   // 🔥 Recargar servicios cuando cambien los filtros (debounce para evitar llamadas excesivas)
   useEffect(() => {
@@ -199,7 +206,7 @@ export function ServiciosClient({
     }, 300); // Debounce de 300ms
     
     return () => clearTimeout(timer);
-  }, [filterStatus, filterCategory, priceRange, bufferFilter, filterStripe, searchTerm, sortBy]);
+  }, [filterStatus, filterCategory, priceRange, bufferFilter, filterStripe, searchTerm, sortBy, tenantId, loadServices]);
 
   const openNewModal = useCallback(
     (defaults?: Partial<ServiceFormState>) => {
