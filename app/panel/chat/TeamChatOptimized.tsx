@@ -62,6 +62,14 @@ type TenantMemberProfile = {
 	profilePhotoUrl?: string;
 };
 
+type ConversationMember = {
+	userId: string;
+	displayName: string;
+	role: "member" | "admin";
+	joinedAt: string;
+	profilePhotoUrl?: string;
+};
+
 const MESSAGE_FALLBACK_DATE = "1970-01-01T00:00:00Z";
 
 type ChatPageData = {
@@ -100,6 +108,8 @@ export function TeamChatOptimized({
 	const [messagesByConversation, setMessagesByConversation] = useState<Record<string, TeamMessage[]>>({});
 	const [messagesLoading, setMessagesLoading] = useState(false);
 	const [hasMoreMessages, setHasMoreMessages] = useState<Record<string, boolean>>({}); // 🚀 Rastrear si hay más mensajes
+	const [membersByConversation, setMembersByConversation] = useState<Record<string, ConversationMember[]>>({});
+	const [membersLoading, setMembersLoading] = useState(false);
 	const [showUnreadOnly, setShowUnreadOnly] = useState(false);
 	const [showNewChatModal, setShowNewChatModal] = useState(false);
 	const [showMembersModal, setShowMembersModal] = useState(false);
@@ -211,6 +221,44 @@ export function TeamChatOptimized({
 		},
 		[supabase, currentUserId, messagesByConversation]
 	);
+
+		// 🔥 Cargar miembros de la conversación (para modales y contadores precisos)
+		const loadMembersForConversation = useCallback(
+			async (conversationId: string) => {
+				if (membersByConversation[conversationId]) return membersByConversation[conversationId];
+
+				setMembersLoading(true);
+				try {
+					const { data, error } = await supabase
+						.from("team_conversation_members")
+						.select("user_id, role, created_at")
+						.eq("conversation_id", conversationId);
+
+					if (error) throw error;
+
+					const mapped: ConversationMember[] = (data || []).map((member) => ({
+						userId: member.user_id,
+						displayName: membersDirectory[member.user_id]?.displayName ?? "Usuario",
+						role: (member.role as "member" | "admin") ?? "member",
+						joinedAt: member.created_at,
+						profilePhotoUrl: membersDirectory[member.user_id]?.profilePhotoUrl,
+					}));
+
+					setMembersByConversation((prev) => ({
+						...prev,
+						[conversationId]: mapped,
+					}));
+
+					return mapped;
+				} catch (err) {
+					console.error("[TeamChatOptimized] Error cargando miembros", err);
+					return [];
+				} finally {
+					setMembersLoading(false);
+				}
+			},
+			[supabase, membersDirectory, membersByConversation]
+		);
 
 	// 🚀 FUNCIÓN PARA SCROLL INFINITO: Cargar mensajes más antiguos
 	const handleLoadMoreMessages = useCallback(() => {
@@ -472,6 +520,68 @@ export function TeamChatOptimized({
 		[supabase, selectedConversation, tenantId, refreshConversations]
 	);
 
+	const handleOpenMembersModal = useCallback(async () => {
+		if (!selectedConversation) return;
+		await loadMembersForConversation(selectedConversation.id);
+		setShowMembersModal(true);
+	}, [selectedConversation, loadMembersForConversation]);
+
+	const handleOpenAddMembers = useCallback(async () => {
+		if (!selectedConversation) return;
+		await loadMembersForConversation(selectedConversation.id);
+		setShowAddMemberModal(true);
+	}, [selectedConversation, loadMembersForConversation]);
+
+	const handleCreateNewChat = useCallback(async () => {
+		if (!tenantId || !currentUserId) return;
+		if (creatingChat) return;
+
+		const targetUserId = selectedUserIds[0];
+		if (!targetUserId) return;
+
+		setCreatingChat(true);
+		try {
+			const targetMember = membersDirectory[targetUserId];
+			const targetDisplay = targetMember?.displayName ?? "Chat directo";
+
+			const { data: conv, error: convError } = await supabase
+				.from("team_conversations")
+				.insert({
+					tenant_id: tenantId,
+					type: "direct",
+					name: targetDisplay,
+					created_by: currentUserId,
+				})
+				.select()
+				.single();
+
+			if (convError) throw convError;
+
+			const memberRows = [currentUserId, targetUserId].map((userId) => ({
+				conversation_id: conv.id,
+				user_id: userId,
+				role: "member" as const,
+			}));
+
+			const { error: membersError } = await supabase
+				.from("team_conversation_members")
+				.insert(memberRows);
+
+			if (membersError) throw membersError;
+
+			const updated = await refreshConversations();
+			setSelectedConversationId(conv.id);
+			setShowNewChatModal(false);
+			setSelectedUserIds([]);
+			setGroupName("");
+			return updated;
+		} catch (err) {
+			console.error("[TeamChatOptimized] Error creando chat directo", err);
+		} finally {
+			setCreatingChat(false);
+		}
+	}, [tenantId, currentUserId, creatingChat, selectedUserIds, membersDirectory, supabase, refreshConversations]);
+
 	const availableMembers = useMemo(() => {
 		return Object.values(membersDirectory).filter((member) => member.userId !== currentUserId);
 	}, [membersDirectory, currentUserId]);
@@ -572,8 +682,8 @@ export function TeamChatOptimized({
 						<>
 							<ConversationHeader
 								conversation={selectedConversation}
-								onViewMembers={() => setShowMembersModal(true)}
-								onAddMember={() => setShowAddMemberModal(true)}
+								onViewMembers={handleOpenMembersModal}
+								onAddMember={handleOpenAddMembers}
 							/>
 
 							<div className="flex-1 min-h-0 flex flex-col">
@@ -606,13 +716,61 @@ export function TeamChatOptimized({
 			{showNewChatModal && (
 				<Modal
 					isOpen={showNewChatModal}
-					onClose={() => setShowNewChatModal(false)}
+					onClose={() => {
+						setShowNewChatModal(false);
+						setSelectedUserIds([]);
+						setGroupName("");
+					}}
 					title="Nuevo chat"
 				>
-					<div className="p-4">
-						<p className="text-sm text-[var(--text-secondary)] mb-4">
-							Funcionalidad próximamente disponible
+					<div className="p-4 space-y-4">
+						<p className="text-sm text-[var(--text-secondary)]">
+							Selecciona un miembro para iniciar un chat directo.
 						</p>
+						<div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+							{availableMembers.length === 0 ? (
+								<p className="text-sm text-[var(--text-secondary)] text-center py-6">No hay miembros disponibles</p>
+							) : (
+								availableMembers.map((member) => (
+									<label
+										key={member.userId}
+										className="flex items-center gap-3 rounded-xl border border-white/10 px-3 py-2 cursor-pointer transition-smooth hover:border-white/20"
+									>
+										<input
+											type="radio"
+											name="new-chat-member"
+											checked={selectedUserIds.includes(member.userId)}
+											onChange={() => setSelectedUserIds([member.userId])}
+											className="accent-[#3A6DFF]"
+										/>
+										<Avatar name={member.displayName} size="sm" className="flex-shrink-0" />
+										<div className="flex-1 min-w-0">
+											<p className="text-sm text-white font-medium truncate">{member.displayName}</p>
+											<p className="text-[11px] text-[var(--text-secondary)] capitalize">{member.tenantRole}</p>
+										</div>
+									</label>
+								))
+							)}
+						</div>
+
+						<div className="flex justify-end gap-2 pt-2">
+							<button
+								onClick={() => {
+									setSelectedUserIds([]);
+									setShowNewChatModal(false);
+								}}
+								className="px-4 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:text-white transition-smooth"
+							>
+								Cancelar
+							</button>
+							<button
+								onClick={() => void handleCreateNewChat()}
+								disabled={selectedUserIds.length === 0 || creatingChat}
+								className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#3A6DFF] to-[#7B5CFF] text-sm font-semibold text-white shadow-[0_10px_30px_rgba(66,92,255,0.35)] disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								{creatingChat ? "Creando..." : "Crear chat"}
+							</button>
+						</div>
 					</div>
 				</Modal>
 			)}
@@ -621,7 +779,7 @@ export function TeamChatOptimized({
 				<MembersModal
 					isOpen={showMembersModal}
 					onClose={() => setShowMembersModal(false)}
-					members={[]} // TODO: Implementar carga de miembros
+					members={membersByConversation[selectedConversation.id] ?? []}
 					conversationName={selectedConversation.name}
 					currentUserId={currentUserId}
 					onSetNickname={undefined} // TODO: Implementar funcionalidad de apodos
@@ -633,7 +791,7 @@ export function TeamChatOptimized({
 					isOpen={showAddMemberModal}
 					onClose={() => setShowAddMemberModal(false)}
 					conversationId={selectedConversation.id}
-					existingMemberIds={[]} // TODO: Implementar lista de miembros existentes
+					existingMemberIds={(membersByConversation[selectedConversation.id] ?? []).map((m) => m.userId)}
 					availableMembers={availableMembers}
 					onAddMembers={handleAddMembersToGroup}
 				/>
