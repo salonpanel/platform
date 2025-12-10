@@ -231,6 +231,7 @@ export function useCustomersPageData(impersonateOrgId: string | null) {
 
 /**
  * Hook optimizado para página de Servicios - usa get_services_filtered RPC
+ * Con fallback a query directa si la función no existe
  */
 export function useServicesPageData(
   impersonateOrgId: string | null,
@@ -246,21 +247,62 @@ export function useServicesPageData(
     `services-page-${impersonateOrgId || 'default'}-${options?.status || 'all'}-${options?.offset || 0}`,
     async () => {
       // 1. Obtener tenant
-      const { tenant } = await getCurrentTenant(impersonateOrgId);
-      if (!tenant) return null;
+      const tenantResult = await getCurrentTenant(impersonateOrgId);
+      if (!tenantResult || tenantResult.status !== 'OK' || !tenantResult.tenant) {
+        throw new Error('No se pudo obtener el tenant');
+      }
 
+      const tenant = tenantResult.tenant;
       const tenantId = tenant.id;
 
-      // 🚀 OPTIMIZACIÓN: Usar función RPC get_services_filtered con filtrado y paginación del servidor
-      const { data: services, error } = await supabase.rpc('get_services_filtered', {
+      // 🚀 OPTIMIZACIÓN: Intentar usar función RPC get_services_filtered
+      const { data: servicesRpc, error: rpcError } = await supabase.rpc('get_services_filtered', {
         p_tenant_id: tenantId,
         p_status: options?.status || 'all',
         p_limit: options?.limit || 100,
         p_offset: options?.offset || 0,
       });
 
+      // Si la función RPC existe y funciona, usarla
+      if (!rpcError && servicesRpc) {
+        return {
+          tenant: {
+            id: tenant.id,
+            name: tenant.name || "Tu barbería",
+            timezone: tenant.timezone || "Europe/Madrid",
+          },
+          services: servicesRpc || [],
+        };
+      }
+
+      // 🔄 FALLBACK: Si la función no existe, usar query directa
+      console.warn('[useServicesPageData] RPC not available, using direct query:', rpcError);
+      
+      let query = supabase
+        .from("services")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .order("name", { ascending: true });
+
+      // Aplicar filtro de status si no es 'all'
+      if (options?.status === 'active') {
+        query = query.eq('active', true);
+      } else if (options?.status === 'inactive') {
+        query = query.eq('active', false);
+      }
+
+      // Aplicar paginación
+      if (options?.limit) {
+        query = query.limit(options.limit);
+      }
+      if (options?.offset) {
+        query = query.range(options.offset, options.offset + (options?.limit || 100) - 1);
+      }
+
+      const { data: services, error } = await query;
+
       if (error) {
-        console.error('[useServicesPageData] Error calling get_services_filtered:', error);
+        console.error('[useServicesPageData] Error in direct query:', error);
         throw error;
       }
 
@@ -279,6 +321,7 @@ export function useServicesPageData(
 
 /**
  * Hook optimizado para página de Staff - usa get_staff_with_stats RPC
+ * Con fallback a query directa si la función no existe
  */
 export function useStaffPageData(
   impersonateOrgId: string | null,
@@ -292,19 +335,50 @@ export function useStaffPageData(
     `staff-page-${impersonateOrgId || 'default'}-${options?.includeInactive ? 'all' : 'active'}`,
     async () => {
       // 1. Obtener tenant
-      const { tenant } = await getCurrentTenant(impersonateOrgId);
-      if (!tenant) return null;
+      const tenantResult = await getCurrentTenant(impersonateOrgId);
+      if (!tenantResult || tenantResult.status !== 'OK' || !tenantResult.tenant) {
+        throw new Error('No se pudo obtener el tenant');
+      }
 
+      const tenant = tenantResult.tenant;
       const tenantId = tenant.id;
 
-      // 🚀 OPTIMIZACIÓN: Usar función RPC get_staff_with_stats con estadísticas precalculadas
-      const { data: staff, error } = await supabase.rpc('get_staff_with_stats', {
+      // 🚀 OPTIMIZACIÓN: Intentar usar función RPC get_staff_with_stats
+      const { data: staffRpc, error: rpcError } = await supabase.rpc('get_staff_with_stats', {
         p_tenant_id: tenantId,
         p_include_inactive: options?.includeInactive || false,
       });
 
+      // Si la función RPC existe y funciona, usarla
+      if (!rpcError && staffRpc) {
+        return {
+          tenant: {
+            id: tenant.id,
+            name: tenant.name || "Tu barbería",
+            timezone: tenant.timezone || "Europe/Madrid",
+          },
+          staff: staffRpc || [],
+        };
+      }
+
+      // 🔄 FALLBACK: Si la función no existe, usar query directa
+      console.warn('[useStaffPageData] RPC not available, using direct query:', rpcError);
+
+      let query = supabase
+        .from("staff")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .order("name", { ascending: true });
+
+      // Filtrar por activos si no se incluyen inactivos
+      if (!options?.includeInactive) {
+        query = query.eq('active', true);
+      }
+
+      const { data: staff, error } = await query;
+
       if (error) {
-        console.error('[useStaffPageData] Error calling get_staff_with_stats:', error);
+        console.error('[useStaffPageData] Error in direct query:', error);
         throw error;
       }
 
