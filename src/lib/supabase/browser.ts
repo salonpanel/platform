@@ -43,10 +43,7 @@ export function getSupabaseBrowser(): SupabaseClient {
 
     // En producción, cuando estamos detrás de pro.bookfast.es, usar proxy HTTP
     if (!isDevelopment && typeof window !== 'undefined') {
-      const isNetlifyProd = window.location.hostname.endsWith('bookfast.es');
-      const proxyBase = isNetlifyProd
-        ? `${window.location.origin}/.netlify/functions/next_api`
-        : window.location.origin;
+      const proxyBase = window.location.origin;
 
       clientOptions.global = {
         fetch: (requestUrl: string, options?: RequestInit) => {
