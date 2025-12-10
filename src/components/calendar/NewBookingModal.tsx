@@ -468,7 +468,10 @@ export function NewBookingModal({
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const value = e.target.value;
                             setCustomerName(value);
-                            setCustomerId("");
+                            // Solo borrar customerId si el usuario está modificando el nombre de un cliente ya seleccionado
+                            if (customerId && value !== customers.find(c => c.id === customerId)?.name) {
+                              setCustomerId("");
+                            }
                             updateCustomerSuggestions(value);
                           }}
                           onFocus={handleCustomerInputFocus}
@@ -687,6 +690,7 @@ export function NewBookingModal({
               </div>
             </TabsContent>
           </Tabs>
+          </div>
 
           {/* Panel lateral */}
           <div className="space-y-4">
@@ -743,7 +747,6 @@ export function NewBookingModal({
               </div>
             </div>
           </div>
-        </div>
         </div>
         {ToastComponent}
       </AgendaModal>
