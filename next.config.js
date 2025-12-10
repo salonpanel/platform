@@ -5,11 +5,6 @@ const nextConfig = {
     const SUPABASE_URL = 'https://jsqminbgggwhvkfgeibz.supabase.co';
     
     return [
-      // Proxy para todas las peticiones de Auth de Supabase
-      {
-        source: '/auth-proxy/:path*',
-        destination: `${SUPABASE_URL}/auth/v1/:path*`,
-      },
       // Proxy para peticiones REST de Supabase
       {
         source: '/rest-proxy/:path*',
@@ -26,15 +21,6 @@ const nextConfig = {
   // Configuración de headers CORS para los proxies
   async headers() {
     return [
-      {
-        source: '/auth-proxy/:path*',
-        headers: [
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, DELETE, OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization,apikey' },
-          { key: 'Access-Control-Allow-Credentials', value: 'true' },
-        ],
-      },
       {
         source: '/rest-proxy/:path*',
         headers: [
