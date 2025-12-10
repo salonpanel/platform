@@ -1,60 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { format, addMinutes, parseISO } from "date-fns";
+import { useEffect, useMemo, useState } from "react";
+import { format, addMinutes } from "date-fns";
 import { AgendaModal } from "@/components/calendar/AgendaModal";
-import { ModalActions, useModalActions, type ModalAction } from "@/components/agenda/ModalActions";
-import { Input } from "@/components/ui/Input";
-import { Staff, CalendarSlot } from "@/types/agenda";
 import { useToast } from "@/components/ui/Toast";
+import type { Staff, CalendarSlot } from "@/types/agenda";
+import type { BlockingMutationPayload, SaveBlockingResult } from "@/hooks/useAgendaHandlers";
 
 interface StaffBlockingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (blocking: {
-    staff_id: string;
-    start_at: string;
-    end_at: string;
-    type: "block" | "absence" | "vacation";
-    reason: string;
-    notes?: string;
-  }) => Promise<void>;
+  onSave: (payload: BlockingMutationPayload) => Promise<SaveBlockingResult>;
   staff: Staff[];
   slot?: CalendarSlot | null;
   isLoading?: boolean;
-  tenantId?: string; // Añadir tenantId como prop opcional
 }
 
-const BLOCKING_TYPES: Array<{
-  value: "block" | "absence" | "vacation";
-  title: string;
-  description: string;
-  activeClasses: string;
-}> = [
-  {
-    value: "block",
-    title: "Bloqueo rápido",
-    description: "Huecos puntuales durante el día",
-    activeClasses: "border-[#3A6DFF]/40 bg-[rgba(58,109,255,0.12)] text-[#3A6DFF]",
-  },
-  {
-    value: "absence",
-    title: "Ausencia",
-    description: "Días completos o enfermedad",
-    activeClasses: "border-[#FF6DA3]/40 bg-[rgba(255,109,163,0.12)] text-[#FF6DA3]",
-  },
-  {
-    value: "vacation",
-    title: "Vacaciones",
-    description: "Periodos largos planificados",
-    activeClasses: "border-[#4FE3C1]/40 bg-[rgba(79,227,193,0.12)] text-[#4FE3C1]",
-  },
-];
+const BLOCK_OPTIONS: BlockingMutationPayload["type"][] = ["block", "absence", "vacation"];
 
-/**
- * Modal para crear/editar bloqueos y ausencias de staff
- * Más simple que el modal de nueva cita
- */
 export default function StaffBlockingModal({
   isOpen,
   onClose,
@@ -62,125 +25,75 @@ export default function StaffBlockingModal({
   staff,
   slot,
   isLoading = false,
-  tenantId,
 }: StaffBlockingModalProps) {
-  const [selectedStaffId, setSelectedStaffId] = useState(slot?.staffId || "");
-  const [type, setType] = useState<"block" | "absence" | "vacation">("block");
-  const [date, setDate] = useState(slot?.date || format(new Date(), "yyyy-MM-dd"));
-  const [startTime, setStartTime] = useState(slot?.time || "09:00");
+  const { showToast, ToastComponent } = useToast();
+  const [staffId, setStaffId] = useState("");
+  const [blockingType, setBlockingType] = useState<BlockingMutationPayload["type"]>("block");
+  const [date, setDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
+  const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
   const [reason, setReason] = useState("");
   const [notes, setNotes] = useState("");
-  const { showToast, ToastComponent } = useToast();
-  const modalActions = useModalActions();
-  const selectedStaffMember = staff.find((member) => member.id === selectedStaffId);
-  const summaryTimeLabel = `${startTime} - ${endTime}`;
 
-  // Actualizar cuando cambia el slot
   useEffect(() => {
+    if (!isOpen) return;
+
     if (slot) {
-      setSelectedStaffId(slot.staffId);
+      setStaffId(slot.staffId || "");
       setDate(slot.date);
-      if (slot.type) {
-        setType(slot.type);
-      }
       setStartTime(slot.time);
-      
-      // Validar que slot.date y slot.time sean válidos
-      if (!slot.date || !slot.time) {
-        setEndTime("10:00");
-        return;
+      if (slot.endTime) {
+        setEndTime(slot.endTime);
+      } else {
+        const fallback = addMinutes(new Date(`${slot.date}T${slot.time}`), 60);
+        setEndTime(format(fallback, "HH:mm"));
       }
-
-      try {
-        // Por defecto, 1 hora de duración
-        const [hour, minute] = slot.time.split(":").map(Number);
-        
-        // Validar que hour y minute sean válidos
-        if (isNaN(hour) || isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
-          console.warn("Hora inválida en slot:", slot.time);
-          setEndTime("10:00");
-          return;
-        }
-
-        const startDate = new Date(`${slot.date}T${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}:00`);
-        
-        // Validar que la fecha sea válida
-        if (isNaN(startDate.getTime())) {
-          console.warn("Fecha inválida en slot:", slot.date, slot.time);
-          setEndTime("10:00");
-          return;
-        }
-
-        if (slot.endTime) {
-          setEndTime(slot.endTime);
-          return;
-        }
-
-        const endDate = addMinutes(startDate, 60);
-        if (isNaN(endDate.getTime())) {
-          console.warn("Fecha de fin inválida después de sumar minutos");
-          setEndTime("10:00");
-          return;
-        }
-
-        setEndTime(format(endDate, "HH:mm"));
-      } catch (error) {
-        console.error("Error al calcular hora de fin:", error);
-        setEndTime("10:00");
-      }
+      if (slot.type) setBlockingType(slot.type);
+    } else {
+      setStaffId("");
+      setDate(format(new Date(), "yyyy-MM-dd"));
+      setStartTime("09:00");
+      setEndTime("10:00");
+      setBlockingType("block");
     }
-  }, [slot]);
+    setReason("");
+    setNotes("");
+  }, [isOpen, slot]);
+
+  const selectedStaff = useMemo(() => staff.find((member) => member.id === staffId), [staff, staffId]);
 
   const handleSave = async () => {
-    if (!selectedStaffId || !date || !startTime || !endTime || !reason.trim()) {
-      showToast("Completa todos los campos obligatorios.", "error");
+    if (!staffId.trim()) {
+      showToast("Selecciona un empleado", "error");
+      return;
+    }
+    if (!reason.trim()) {
+      showToast("Añade un motivo", "error");
       return;
     }
 
-    const [startHour, startMinute] = startTime.split(":").map(Number);
-    const [endHour, endMinute] = endTime.split(":").map(Number);
-
-    const startAt = new Date(`${date}T${startHour}:${startMinute}:00`).toISOString();
-    const endAt = new Date(`${date}T${endHour}:${endMinute}:00`).toISOString();
-
-    if (endAt <= startAt) {
-      showToast("La hora de fin debe ser posterior a la hora de inicio.", "error");
+    const start = new Date(`${date}T${startTime}`);
+    const end = new Date(`${date}T${endTime}`);
+    if (end <= start) {
+      showToast("La hora de fin debe ser posterior", "error");
       return;
     }
 
-    if (!tenantId) {
-      showToast("Error: tenant_id no disponible.", "error");
+    const payload: BlockingMutationPayload = {
+      staff_id: staffId,
+      start_at: start.toISOString(),
+      end_at: end.toISOString(),
+      type: blockingType,
+      reason: reason.trim(),
+      notes: notes.trim() || null,
+    };
+
+    const result = await onSave(payload);
+    if (result.ok) {
+      onClose();
       return;
     }
-
-    try {
-      await onSave({
-        staff_id: selectedStaffId,
-        start_at: startAt,
-        end_at: endAt,
-        type,
-        reason: reason.trim(),
-        notes: notes.trim() || undefined,
-      });
-    } catch (error: any) {
-      showToast(error.message || "Error al guardar el bloqueo", "error");
-    }
-  };
-
-  // Crear acciones para el footer
-  const footerActions: ModalAction[] = [
-    modalActions.createSaveAction(handleSave, {
-      label: "Guardar bloqueo",
-      disabled: isLoading || !selectedStaffId || !reason.trim(),
-      loading: isLoading,
-    }),
-  ];
-
-  const reasonSuggestions = {
-    block: ["Descanso", "Reunión", "Pausa", "Otro"],
-    absence: ["Enfermedad", "Permiso", "Personal", "Otro"],
-    vacation: ["Vacaciones", "Día libre", "Fiesta", "Otro"],
+    showToast(result.error, "error");
   };
 
   return (
@@ -188,10 +101,19 @@ export default function StaffBlockingModal({
       <AgendaModal
         isOpen={isOpen}
         onClose={onClose}
-        title="Añadir bloqueo o ausencia"
+        title="Bloquear agenda"
         size="md"
         context={{ type: "staff" }}
-        actions={footerActions}
+        actions={[
+          {
+            id: "save-blocking",
+            label: "Guardar",
+            variant: "primary",
+            onClick: handleSave,
+            loading: isLoading,
+            disabled: !staffId.trim() || !reason.trim() || isLoading,
+          },
+        ]}
         actionsConfig={{
           layout: "end",
           showCancel: true,
@@ -200,159 +122,109 @@ export default function StaffBlockingModal({
         }}
       >
         <div className="space-y-5">
-        <div className="p-4 rounded-[16px] border border-white/5 bg-white/3 backdrop-blur-sm">
-          <div className="flex items-center justify-between gap-4">
+          <div className="p-4 rounded-[16px] border border-white/5 bg-white/5">
+            <p className="text-xs uppercase text-white/60">Resumen</p>
+            <p className="text-lg font-semibold text-white">
+              {format(new Date(`${date}T${startTime}`), "EEEE d 'de' MMMM")}
+            </p>
+            <p className="text-sm text-white/70">
+              {startTime} · {endTime}
+            </p>
+            {selectedStaff && (
+              <p className="text-xs text-white/60 mt-3">{selectedStaff.name}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="text-sm font-semibold text-white mb-2">Empleado</label>
+            <select
+              value={staffId}
+              onChange={(e) => setStaffId(e.target.value)}
+              className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white"
+              disabled={Boolean(slot?.staffId)}
+            >
+              <option value="">Selecciona...</option>
+              {staff.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-[#9ca3af] font-semibold font-['Plus_Jakarta_Sans']">
-                Empleado
-              </p>
-              <p className="text-base font-semibold text-white font-['Plus_Jakarta_Sans']">
-                {selectedStaffMember?.name || "Sin asignar"}
-              </p>
+              <label className="text-sm font-semibold text-white mb-2">Fecha</label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white"
+              />
             </div>
-            <div className="text-right">
-              <p className="text-[10px] uppercase tracking-wider text-[#9ca3af] font-semibold font-['Plus_Jakarta_Sans']">
-                Horario
-              </p>
-              <p className="text-base font-semibold text-white font-['Plus_Jakarta_Sans']">
-                {summaryTimeLabel}
-              </p>
+            <div>
+              <label className="text-sm font-semibold text-white mb-2">Inicio</label>
+              <input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-white mb-2">Fin</label>
+              <input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white"
+              />
             </div>
           </div>
-          <p className="mt-3 text-xs text-[#9ca3af] font-['Plus_Jakarta_Sans']">
-            Ajusta la fecha y la duración si necesitas ampliar o reducir el bloqueo.
-          </p>
-        </div>
-        {/* Empleado */}
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
-            Empleado <span className="text-[#EF4444]">*</span>
-          </label>
-          <select
-            value={selectedStaffId}
-            onChange={(e) => setSelectedStaffId(e.target.value)}
-            className="w-full rounded-[10px] border border-white/5 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-[#9ca3af] focus:border-[#3A6DFF] focus:outline-none focus:ring-2 focus:ring-[#3A6DFF]/30 transition-all duration-150 font-['Plus_Jakarta_Sans']"
-            disabled={!!slot?.staffId}
-          >
-            <option value="">Seleccionar empleado...</option>
-            {staff.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-          {slot?.staffId && (
-            <p className="mt-1 text-xs text-[#9ca3af] font-['Plus_Jakarta_Sans']">
-              Este bloqueo solo aplica a {selectedStaffMember?.name || "este empleado"}.
-            </p>
-          )}
-        </div>
 
-        {/* Tipo */}
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
-            Tipo <span className="text-[#EF4444]">*</span>
-          </label>
-          <div className="grid gap-2 sm:grid-cols-3">
-            {BLOCKING_TYPES.map((option) => {
-              const isActive = type === option.value;
-              return (
+          <div>
+            <label className="text-sm font-semibold text-white mb-2">Tipo</label>
+            <div className="grid grid-cols-3 gap-2">
+              {BLOCK_OPTIONS.map((option) => (
                 <button
-                  key={option.value}
+                  key={option}
                   type="button"
-                  onClick={() => setType(option.value)}
-                  className={`w-full rounded-[12px] border px-3 py-2 text-left transition-all duration-150 ${
-                    isActive
-                      ? option.activeClasses
-                      : "border-white/10 bg-white/5 text-[#d1d4dc] hover:bg-white/8"
+                  onClick={() => setBlockingType(option)}
+                  className={`rounded-[12px] border px-3 py-2 text-sm transition-all ${
+                    blockingType === option ? "border-[#3A6DFF] text-[#3A6DFF] bg-[#3A6DFF]/10" : "border-white/10 text-white/70"
                   }`}
                 >
-                  <p className="text-sm font-semibold font-['Plus_Jakarta_Sans']">{option.title}</p>
-                  <p className="text-[11px] text-[#9ca3af] font-['Plus_Jakarta_Sans']">{option.description}</p>
+                  {option === "block" && "Bloqueo"}
+                  {option === "absence" && "Ausencia"}
+                  {option === "vacation" && "Vacaciones"}
                 </button>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Fecha y hora */}
-        <div className="grid grid-cols-3 gap-3">
           <div>
-            <label className="mb-2 block text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
-              Fecha <span className="text-[#EF4444]">*</span>
-            </label>
+            <label className="text-sm font-semibold text-white mb-2">Motivo</label>
             <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full rounded-[10px] border border-white/5 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-[#9ca3af] focus:border-[#3A6DFF] focus:outline-none focus:ring-2 focus:ring-[#3A6DFF]/30 transition-all duration-150 font-['Plus_Jakarta_Sans']"
+              type="text"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Ej: Vacaciones"
+              className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white"
             />
           </div>
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
-              Hora inicio <span className="text-[#EF4444]">*</span>
-            </label>
-            <input
-              type="time"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              className="w-full rounded-[10px] border border-white/5 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-[#9ca3af] focus:border-[#3A6DFF] focus:outline-none focus:ring-2 focus:ring-[#3A6DFF]/30 transition-all duration-150 font-['Plus_Jakarta_Sans']"
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
-              Hora fin <span className="text-[#EF4444]">*</span>
-            </label>
-            <input
-              type="time"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              className="w-full rounded-[10px] border border-white/5 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-[#9ca3af] focus:border-[#3A6DFF] focus:outline-none focus:ring-2 focus:ring-[#3A6DFF]/30 transition-all duration-150 font-['Plus_Jakarta_Sans']"
-            />
-          </div>
-        </div>
 
-        {/* Motivo */}
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
-            Motivo <span className="text-[#EF4444]">*</span>
-          </label>
-          <input
-            type="text"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Ej: Descanso, Vacaciones, Enfermedad..."
-            className="w-full rounded-[10px] border border-white/5 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-[#9ca3af] focus:border-[#3A6DFF] focus:outline-none focus:ring-2 focus:ring-[#3A6DFF]/30 transition-all duration-150 font-['Plus_Jakarta_Sans']"
-          />
-          <div className="mt-2 flex flex-wrap gap-2">
-            {reasonSuggestions[type].map((suggestion) => (
-              <button
-                key={suggestion}
-                onClick={() => setReason(suggestion)}
-                className="px-3 py-1.5 text-xs rounded-[8px] border border-white/5 bg-white/5 text-white hover:bg-[rgba(58,109,255,0.12)] hover:border-[#3A6DFF]/30 transition-all duration-150 font-['Plus_Jakarta_Sans']"
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Notas */}
           <div>
-            <label className="mb-2 block text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
-              Notas (opcional)
-            </label>
+            <label className="text-sm font-semibold text-white mb-2">Notas (opcional)</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              placeholder="Notas adicionales sobre el bloqueo..."
-              className="w-full rounded-[10px] border border-white/5 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-[#9ca3af] focus:border-[#3A6DFF] focus:outline-none focus:ring-2 focus:ring-[#3A6DFF]/30 transition-all duration-150 resize-none font-['Plus_Jakarta_Sans']"
+              className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white"
             />
           </div>
         </div>
+        {ToastComponent}
       </AgendaModal>
-      {ToastComponent}
     </>
   );
 }

@@ -1,1212 +1,354 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
-import { format, parseISO, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addMinutes } from "date-fns";
-import { useSearchParams } from "next/navigation";
-import { getCurrentTenant } from "@/lib/panel-tenant";
-import { useToast } from "@/components/ui/Toast";
-import { motion, AnimatePresence } from "framer-motion";
-import { Booking, Staff, StaffBlocking, StaffSchedule, ViewMode, CalendarSlot, BookingStatus, BOOKING_STATUS_CONFIG } from "@/types/agenda";
-import { toTenantLocalDate } from "@/lib/timezone";
-import { useAgendaConflicts } from "@/hooks/useAgendaConflicts";
-import { getSupabaseBrowser } from "@/lib/supabase/browser";
-import { getBookingsNeedingStatusUpdate } from "@/lib/booking-status-transitions";
-import { useAgendaData } from "@/hooks/useAgendaData";
-import { useAgendaPageData } from "@/hooks/useOptimizedData";
-import { AgendaContainer } from "@/components/agenda/AgendaContainer";
-import { NewBookingModal } from "@/components/calendar/NewBookingModal";
-import { CustomerQuickView } from "@/components/calendar/CustomerQuickView";
-import { BookingDetailPanel } from "@/components/calendar/BookingDetailPanel";
-import StaffBlockingModal from "@/components/calendar/StaffBlockingModal";
-import { ConflictResolutionModal } from "@/components/calendar/ConflictResolutionModal";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { format } from "date-fns";
+import { AgendaHeader } from "@/components/calendar/AgendaHeader";
+import { AgendaSidebar } from "@/components/calendar/AgendaSidebar";
+import { AgendaContent } from "@/components/agenda/AgendaContent";
+import { SearchPanel } from "@/components/calendar/SearchPanel";
 import { NotificationsPanel } from "@/components/calendar/NotificationsPanel";
 import { BookingActionPopover } from "@/components/calendar/BookingActionPopover";
-import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
-import { AgendaDataset } from "@/lib/agenda-data";
+import { BookingDetailPanel } from "@/components/calendar/BookingDetailPanel";
+import { NewBookingModal } from "@/components/calendar/NewBookingModal";
+import StaffBlockingModal from "@/components/calendar/StaffBlockingModal";
 import { useAgendaModals } from "@/hooks/useAgendaModals";
+import { useAgendaData } from "@/hooks/useAgendaData";
+import {
+  useAgendaHandlers,
+  type BookingMutationPayload,
+  type SaveBookingResult,
+} from "@/hooks/useAgendaHandlers";
+import { useToast } from "@/components/ui/Toast";
+import type { AgendaDataset } from "@/lib/agenda-data";
+import type { Booking, CalendarSlot, ViewMode } from "@/types/agenda";
 
-type AgendaPageClientProps = {
+interface AgendaPageClientProps {
   initialData: AgendaDataset | null;
   impersonateOrgId: string | null;
   initialDate: string;
   initialViewMode: ViewMode;
+}
+
+type AgendaFiltersState = {
+  payment: string[];
+  status: string[];
+  staff: string[];
+  highlighted: boolean | null;
 };
 
-type AgendaNotification = {
-  id: string;
-  type: "success" | "error" | "warning" | "info";
-  title: string;
-  message: string;
-  timestamp: string;
-  read: boolean;
+const DEFAULT_FILTERS: AgendaFiltersState = {
+  payment: [],
+  status: [],
+  staff: ["all"],
+  highlighted: null,
 };
 
-type BookingFormPayload = Booking & {
-  internal_notes?: string | null;
-  client_message?: string | null;
-  is_highlighted?: boolean;
-};
-
-type BlockingFormPayload = {
-  tenant_id: string;
-  staff_id: string;
-  start_at: string;
-  end_at: string;
-  type: "block" | "absence" | "vacation";
-  reason: string;
-  notes?: string | null;
-};
-
-type SaveBookingResult =
-  | { ok: true; booking: Booking }
-  | { ok: false; error: string };
-
-export default function AgendaPage({
+export default function AgendaPageClient({
   initialData,
   impersonateOrgId,
   initialDate,
   initialViewMode,
 }: AgendaPageClientProps) {
-  const supabase = getSupabaseBrowser();
-  const searchParams = useSearchParams();
-  const [tenantId, setTenantId] = useState<string | null>(initialData?.tenant.id || null);
-  const [tenantTimezone, setTenantTimezone] = useState<string>(initialData?.tenant.timezone || "Europe/Madrid");
-  const [userRole, setUserRole] = useState<string | null>(initialData?.userRole || null);
-
-  // Cargar preferencias desde localStorage
-  const [selectedDate, setSelectedDate] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("agenda_selectedDate");
-      return saved || initialDate;
-    }
-    return initialDate;
-  });
-
-  const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("agenda_viewMode") as ViewMode;
-      return saved || initialViewMode;
-    }
-    return initialViewMode;
-  });
-
-  // Estados de UI locales (modales y paneles)
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [showFreeSlots, setShowFreeSlots] = useState(false);
-  const [showNewBookingModal, setShowNewBookingModal] = useState(false);
-  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
-  const [showCustomerView, setShowCustomerView] = useState(false);
-  const [showBookingDetail, setShowBookingDetail] = useState(false);
-  const [showBlockingModal, setShowBlockingModal] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState<CalendarSlot | null>(null);
-  const [notifications, setNotifications] = useState<AgendaNotification[]>([
-    {
-      id: "1",
-      type: "success",
-      title: "Nueva reserva online",
-      message: "Juan Pérez ha realizado una reserva para mañana a las 10:00",
-      timestamp: "Hace 5 minutos",
-      read: false,
-    },
-    {
-      id: "2",
-      type: "warning",
-      title: "Cita cancelada",
-      message: "María García ha cancelado su cita del 15 de noviembre",
-      timestamp: "Hace 1 hora",
-      read: false,
-    },
-    {
-      id: "3",
-      type: "error",
-      title: "Error al procesar pago",
-      message: "No se pudo procesar el pago de la cita #1234",
-      timestamp: "Hace 2 horas",
-      read: true,
-    },
-  ]);
-
-  // Popover states for interaction layer
-  const [slotPopover, setSlotPopover] = useState<{
-    open: boolean;
-    position: { x: number; y: number };
-    slot: { staffId: string; date: string; time: string };
-  } | null>(null);
-
-  const [bookingPopover, setBookingPopover] = useState<{
-    open: boolean;
-    position: { x: number; y: number };
-    booking: Booking;
-  } | null>(null);
-
+  const tenantId = impersonateOrgId ?? initialData?.tenant.id ?? null;
+  const tenantTimezone = initialData?.tenant.timezone ?? "Europe/Madrid";
   const { showToast, ToastComponent } = useToast();
 
-  // Hook optimizado que obtiene tenant + datos iniciales en UNA llamada
-  const impersonateOrgIdFromQuery = searchParams?.get("impersonate") || impersonateOrgId || null;
-  const { data: pageData, isLoading: pageLoading, error: pageError } = useAgendaPageData(
-    impersonateOrgIdFromQuery,
-    { selectedDate, viewMode, initialData }
+  const [selectedDate, setSelectedDate] = useState(initialDate);
+  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState<AgendaFiltersState>(DEFAULT_FILTERS);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [slotPopover, setSlotPopover] = useState<
+    | {
+        open: boolean;
+        position: { x: number; y: number };
+        slot: CalendarSlot;
+      }
+    | null
+  >(null);
+  const [bookingPopover, setBookingPopover] = useState<
+    | {
+        open: boolean;
+        position: { x: number; y: number };
+        booking: Booking;
+      }
+    | null
+  >(null);
+  const [notifications, setNotifications] = useState(
+    () =>
+      initialData
+        ? []
+        : [
+            {
+              id: "1",
+              type: "info" as const,
+              title: "Agenda lista",
+              message: "Las notificaciones llegarán aquí",
+              timestamp: "Hace 1 min",
+              read: false,
+            },
+          ]
   );
 
-  // Si la página optimizada nos devolvió datos, pasarlos como initialData al hook local para evitar refetch
-  const hydratedInitialData = pageData || initialData || undefined;
+  useEffect(() => {
+    if (notificationsOpen) {
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    }
+  }, [notificationsOpen]);
 
-  const agendaData = useAgendaData({
-    tenantId: pageData?.tenant?.id || tenantId,
-    supabase,
-    selectedDate,
-    viewMode,
-    timezone: pageData?.tenant?.timezone || tenantTimezone,
-    userRole: pageData?.userRole ?? userRole,
-    initialData: hydratedInitialData,
-  });
+  const modals = useAgendaModals();
 
-  // Extraer datos del hook para usar en el componente
   const {
     loading,
     error,
     staffList,
+    services,
+    customers,
     bookings,
     staffBlockings,
     staffSchedules,
-    services,
-    customers,
-    searchTerm,
-    setSearchTerm: setAgendaSearchTerm,
-    filters,
-    setFilters,
-    activeFiltersCount,
-    filteredBookings,
-    visibleStaff,
-    quickStats,
-    staffUtilization,
+    stats,
+    rangeLabel,
     refreshDaySnapshots,
-  } = agendaData;
-
-  // Hook para manejo de conflictos
-  const conflictsHook = useAgendaConflicts({
-    bookings,
-    staffBlockings,
-    userRole: (userRole as "owner" | "admin" | "manager" | "staff") || "staff",
-    tenantTimezone,
-  });
-
-  // Función auxiliar para guardar un booking
-  const saveBooking = async (
-    bookingData: BookingFormPayload,
-    forceOverlap = false,
-    successMessage?: string
-  ): Promise<SaveBookingResult> => {
-    if (!tenantId) {
-      return { ok: false, error: "Tenant ID no disponible" };
-    }
-
-    // Si no se fuerza el solape, verificar conflictos nuevamente
-    if (!forceOverlap) {
-      if (!bookingData.staff_id) {
-        return { ok: false, error: "Debe seleccionar un profesional para la cita" };
-      }
-      const detectedConflicts = detectConflictsForBooking(
-        bookingData.starts_at,
-        bookingData.ends_at,
-        bookingData.staff_id,
-        bookingData.id
-      );
-
-      if (detectedConflicts.length > 0) {
-        return { ok: false, error: "Todavía hay conflictos. Por favor, resuélvelos primero." };
-      }
-    }
-
-    let result;
-    if (bookingData.id) {
-      // Update: obtener el booking actual para comparar y respetar restricciones
-      const { data: currentBooking, error: fetchError } = await supabase
-        .from("bookings")
-        .select("status, staff_id, starts_at, ends_at, internal_notes, client_message, is_highlighted, customer_id, service_id")
-        .eq("id", bookingData.id)
-        .eq("tenant_id", tenantId)
-        .single();
-
-      if (fetchError) {
-        return { ok: false, error: `Error al obtener la cita: ${fetchError.message}` };
-      }
-
-      // Construir payload solo con campos que pueden cambiar
-      const bookingPayload: Partial<BookingFormPayload> = {
-        tenant_id: tenantId,
-      };
-
-      // Siempre actualizar campos no críticos si han cambiado
-      const newStatus = bookingData.status || "pending";
-      if (newStatus !== (currentBooking?.status || "pending")) {
-        bookingPayload.status = newStatus;
-      }
-
-      const newInternalNotes = bookingData.internal_notes ?? null;
-      if (newInternalNotes !== (currentBooking?.internal_notes ?? null)) {
-        bookingPayload.internal_notes = newInternalNotes;
-      }
-
-      const newClientMessage = bookingData.client_message ?? null;
-      if (newClientMessage !== (currentBooking?.client_message ?? null)) {
-        bookingPayload.client_message = newClientMessage;
-      }
-
-      const newIsHighlighted = bookingData.is_highlighted ?? false;
-      if (newIsHighlighted !== (currentBooking?.is_highlighted ?? false)) {
-        bookingPayload.is_highlighted = newIsHighlighted;
-      }
-
-      // Si el booking actual NO está en estado protegido (paid/completed), permitir cambios en campos críticos
-      const isProtected = currentBooking?.status === "paid" || currentBooking?.status === "completed";
-
-      if (!isProtected) {
-        // Actualizar todos los campos si realmente han cambiado
-        if (bookingData.customer_id && bookingData.customer_id !== currentBooking?.customer_id) {
-          bookingPayload.customer_id = bookingData.customer_id;
-        }
-        if (bookingData.service_id && bookingData.service_id !== currentBooking?.service_id) {
-          bookingPayload.service_id = bookingData.service_id;
-        }
-        if (bookingData.staff_id && bookingData.staff_id !== currentBooking?.staff_id) {
-          bookingPayload.staff_id = bookingData.staff_id;
-        }
-
-        // Comparar fechas normalizadas para detectar cambios (usar getTime() para comparación precisa)
-        if (bookingData.starts_at) {
-          const currentStartsAt = currentBooking?.starts_at ? new Date(currentBooking.starts_at).getTime() : null;
-          const newStartsAt = new Date(bookingData.starts_at).getTime();
-          if (newStartsAt !== currentStartsAt) {
-            bookingPayload.starts_at = bookingData.starts_at;
-          }
-        }
-
-        if (bookingData.ends_at) {
-          const currentEndsAt = currentBooking?.ends_at ? new Date(currentBooking.ends_at).getTime() : null;
-          const newEndsAt = new Date(bookingData.ends_at).getTime();
-          if (newEndsAt !== currentEndsAt) {
-            bookingPayload.ends_at = bookingData.ends_at;
-          }
-        }
-      } else {
-        // Si está protegido, solo actualizar campos no críticos
-        // Los campos críticos (staff_id, starts_at, ends_at) se mantienen iguales
-        if (bookingData.customer_id && bookingData.customer_id !== currentBooking?.customer_id) {
-          bookingPayload.customer_id = bookingData.customer_id;
-        }
-        if (bookingData.service_id && bookingData.service_id !== currentBooking?.service_id) {
-          bookingPayload.service_id = bookingData.service_id;
-        }
-
-        // Informar al usuario que algunos cambios no se pudieron aplicar
-        const hasCriticalChanges = (
-          (bookingData.staff_id && bookingData.staff_id !== currentBooking?.staff_id) ||
-          (bookingData.starts_at && new Date(bookingData.starts_at).getTime() !== new Date(currentBooking?.starts_at || '').getTime()) ||
-          (bookingData.ends_at && new Date(bookingData.ends_at).getTime() !== new Date(currentBooking?.ends_at || '').getTime())
-        );
-
-        if (hasCriticalChanges) {
-          showToast("La cita ya está pagada/completada. Solo se actualizaron campos no críticos (notas, estado, etc.)", "warning");
-        }
-      }
-
-      // Solo actualizar si hay cambios (excluyendo tenant_id que siempre está)
-      const payloadKeys = Object.keys(bookingPayload).filter(key => key !== "tenant_id");
-      const hasChanges = payloadKeys.length > 0;
-
-      if (hasChanges) {
-        result = await supabase
-          .from("bookings")
-          .update(bookingPayload)
-          .eq("id", bookingData.id)
-          .eq("tenant_id", tenantId);
-      } else {
-        // Si no hay cambios, crear un resultado exitoso simulado pero no actualizar
-        result = { error: null, data: null };
-        // Mostrar mensaje informativo en lugar de cerrar silenciosamente
-        showToast("No se detectaron cambios en la cita", "info");
-        // Cerrar modal después de un breve delay para que el usuario vea el mensaje
-        setTimeout(() => {
-          setShowNewBookingModal(false);
-          setEditingBooking(null);
-          conflictsHook.clearConflicts();
-        }, 1500);
-        return { ok: true, booking: currentBooking as Booking };
-      }
-    } else {
-      // Insert: crear nuevo booking con todos los campos
-      const bookingPayload: Partial<BookingFormPayload> = {
-        tenant_id: tenantId,
-        customer_id: bookingData.customer_id,
-        service_id: bookingData.service_id,
-        staff_id: bookingData.staff_id,
-        starts_at: bookingData.starts_at,
-        ends_at: bookingData.ends_at,
-        status: bookingData.status || "pending",
-        internal_notes: bookingData.internal_notes || null,
-        client_message: bookingData.client_message || null,
-        is_highlighted: bookingData.is_highlighted || false,
-      };
-      result = await supabase.from("bookings").insert(bookingPayload);
-    }
-
-    if (result.error) {
-      // Mejorar el mensaje de error
-      const errorMessage = result.error.message || result.error.hint || "Error al guardar la cita";
-      return { ok: false, error: errorMessage };
-    }
-
-    if (bookingData.id) {
-      // Solo sincronizar appointment_slot si los campos críticos han cambiado
-      // Obtener el booking actualizado para verificar qué cambió
-      const { data: updatedBooking } = await supabase
-        .from("bookings")
-        .select("staff_id, starts_at, ends_at, appointment_id")
-        .eq("id", bookingData.id)
-        .eq("tenant_id", tenantId)
-        .single();
-
-      if (updatedBooking?.appointment_id) {
-        await syncAppointmentSlot(bookingData.id, {
-          staff_id: updatedBooking.staff_id,
-          starts_at: updatedBooking.starts_at,
-          ends_at: updatedBooking.ends_at,
-        });
-      }
-
-      // Si la fecha cambió, actualizar también el día nuevo
-      if (updatedBooking?.starts_at) {
-        const newBookingDate = format(parseISO(updatedBooking.starts_at), "yyyy-MM-dd");
-        const oldBookingDate = format(parseISO(selectedDate), "yyyy-MM-dd");
-
-        // Si la cita se movió a otro día, actualizar ambos días
-        if (newBookingDate !== oldBookingDate) {
-          // Actualizar el día nuevo (donde está ahora la cita)
-          await refreshDaySnapshots(newBookingDate);
-          // Actualizar el día actual (para que desaparezca si se movió)
-          await refreshDaySnapshots(selectedDate);
-        } else {
-          // Si está en el mismo día, solo actualizar el día actual
-          await refreshDaySnapshots(selectedDate);
-        }
-      } else {
-        // Si no hay fecha actualizada, actualizar el día actual
-        await refreshDaySnapshots(selectedDate);
-      }
-    } else {
-      // Para nuevas citas, actualizar el día donde se creó
-      if (bookingData.starts_at) {
-        const newBookingDate = format(parseISO(bookingData.starts_at), "yyyy-MM-dd");
-        await refreshDaySnapshots(newBookingDate);
-      } else {
-        await refreshDaySnapshots(selectedDate);
-      }
-    }
-
-    // Para updates, obtener el booking actualizado
-    if (bookingData.id) {
-      const { data: updatedBooking } = await supabase
-        .from("bookings")
-        .select("*")
-        .eq("id", bookingData.id)
-        .eq("tenant_id", tenantId)
-        .single();
-
-      return { ok: true, booking: updatedBooking as Booking };
-    } else {
-      // Para inserts, obtener el último booking creado
-      const { data: insertedBooking } = await supabase
-        .from("bookings")
-        .select("*")
-        .eq("tenant_id", tenantId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      return { ok: true, booking: insertedBooking as Booking };
-    }
-  };
-
-  // Hook unificado para modales
-  const modals = useAgendaModals();
-
-  // Crear función onSave estructurada para NewBookingModal
-  const onBookingSave = modals.createOnSave(saveBooking);
-
-  // Cargar rol del usuario y sincronizar tenantId/timezone desde la carga optimizada
-  useEffect(() => {
-    if (pageData?.tenant) {
-      setTenantId(pageData.tenant.id);
-      setTenantTimezone(pageData.tenant.timezone || "Europe/Madrid");
-    }
-
-    if (pageData?.userRole) {
-      setUserRole(pageData.userRole);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageData]);
-
-  // Transiciones automáticas de estado (paid -> completed cuando pasa la hora)
-  useEffect(() => {
-    if (!tenantId || bookings.length === 0) return;
-
-    const checkAndUpdateStatuses = async () => {
-      const updates = getBookingsNeedingStatusUpdate(bookings);
-
-      if (updates.length === 0) return;
-
-      // Actualizar cada booking que necesita cambio de estado
-      const updatePromises = updates.map(async ({ bookingId, newStatus }) => {
-        const { error } = await supabase
-          .from("bookings")
-          .update({ status: newStatus })
-          .eq("id", bookingId)
-          .eq("tenant_id", tenantId);
-
-        if (error) {
-          console.error(`Error al actualizar estado de booking ${bookingId}:`, error);
-          return null;
-        }
-        return { bookingId, newStatus };
-      });
-
-      const results = await Promise.all(updatePromises);
-      const successful = results.filter((r): r is { bookingId: string; newStatus: BookingStatus } => r !== null);
-
-      if (successful.length > 0) {
-        // Refrescar datos para obtener los cambios
-        await refreshDaySnapshots();
-
-        // Mostrar toast solo si hay actualizaciones visibles
-        if (successful.length === 1) {
-          const statusLabel = BOOKING_STATUS_CONFIG[successful[0].newStatus]?.label || successful[0].newStatus;
-          showToast(`Cita actualizada a "${statusLabel}"`, "success");
-        } else if (successful.length > 1) {
-          showToast(`${successful.length} citas actualizadas automáticamente`, "success");
-        }
-      }
-    };
-
-    // Verificar inmediatamente al cargar
-    checkAndUpdateStatuses();
-
-    // Verificar cada minuto para bookings que pasen de paid a completed
-    const interval = setInterval(checkAndUpdateStatuses, 60000); // 60 segundos
-
-    return () => clearInterval(interval);
-  }, [bookings, tenantId, supabase, showToast]);
-
-  // Detectar conflictos
-  // Función auxiliar para detectar conflictos (mantenida para compatibilidad con código existente)
-  const detectConflictsForBooking = (
-    startsAt: string,
-    endsAt: string,
-    staffId: string,
-    excludeBookingId?: string
-  ) => {
-    return conflictsHook.checkBookingConflicts({
-      id: excludeBookingId,
-      staff_id: staffId,
-      starts_at: startsAt,
-      ends_at: endsAt,
-    });
-  };
-
-  const notifyError = (err: unknown, fallback: string) => {
-    console.error(fallback, err);
-    const code = typeof err === "object" && err !== null && "code" in err ? (err as { code?: string }).code : undefined;
-    const hint = typeof err === "object" && err !== null && "hint" in err ? (err as { hint?: string }).hint : undefined;
-    const message = err instanceof Error ? err.message : undefined;
-    if (code === "23P01") {
-      showToast("El horario seleccionado ya está ocupado por otra cita confirmada.", "error");
-      return;
-    }
-    showToast(message || hint || fallback, "error");
-  };
-
-  const syncAppointmentSlot = async (
-    bookingId: string,
-    payload: { staff_id?: string; starts_at?: string; ends_at?: string }
-  ) => {
-    if (!tenantId) return;
-    const targetBooking = bookings.find((b) => b.id === bookingId);
-    if (!targetBooking?.appointment_id) return;
-
-    const updatePayload: Record<string, string> = {};
-    if (payload.staff_id) updatePayload.staff_id = payload.staff_id;
-    if (payload.starts_at) updatePayload.starts_at = payload.starts_at;
-    if (payload.ends_at) updatePayload.ends_at = payload.ends_at;
-
-    if (Object.keys(updatePayload).length === 0) return;
-
-    const { error } = await supabase
-      .from("appointments")
-      .update(updatePayload)
-      .eq("id", targetBooking.appointment_id)
-      .eq("tenant_id", tenantId);
-
-    if (error) throw error;
-  };
-
-  // Callbacks
-  const onNewBooking = (slot: CalendarSlot) => {
-    modals.openNewBookingModal(slot);
-  };
-
-  const onUnavailability = (slot: CalendarSlot) => {
-    modals.openBlockingModal(slot);
-  };
-
-  const onAbsence = (slot: CalendarSlot) => {
-    modals.openBlockingModal({ ...slot, type: "absence" });
-  };
-
-  const onBookingEdit = (booking: Booking) => {
-    modals.openEditBookingModal(booking);
-  };
-
-  const onBookingCancel = async (bookingId: string) => {
-    if (!tenantId) return;
-    if (!confirm("¿Estás seguro de que quieres cancelar esta cita?")) return;
-
-    try {
-      const { error } = await supabase
-        .from("bookings")
-        .update({ status: "cancelled" })
-        .eq("id", bookingId)
-        .eq("tenant_id", tenantId);
-
-      if (error) throw error;
-
-      await refreshDaySnapshots();
-      showToast("Cita cancelada correctamente", "success");
-    } catch (err) {
-      notifyError(err, "Error al cancelar la cita");
-    }
-  };
-
-  const onBookingSendMessage = (booking: Booking) => {
-    // TODO: Implementar envío de mensaje
-    console.log("Enviar mensaje a:", booking.customer?.email);
-    showToast(`Pronto podrás enviar mensajes a ${booking.customer?.name || "este cliente"}.`, "info");
-  };
-
-  const onBookingStatusChange = async (bookingId: string, newStatus: BookingStatus) => {
-    if (!tenantId) return;
-
-    try {
-      const { error } = await supabase
-        .from("bookings")
-        .update({ status: newStatus })
-        .eq("id", bookingId)
-        .eq("tenant_id", tenantId);
-
-      if (error) {
-        notifyError(error, "Error al cambiar el estado de la cita");
-        return;
-      }
-
-      await refreshDaySnapshots();
-      if (newStatus === "cancelled") {
-        showToast("Cita cancelada correctamente.", "success");
-      } else {
-        showToast(`Estado cambiado a ${BOOKING_STATUS_CONFIG[newStatus].label}.`, "success");
-      }
-    } catch (err) {
-      notifyError(err, "Error al cambiar el estado de la cita");
-    }
-  };
-
-  // Slot action callbacks for popover
-  const onSlotNewBooking = (slot: { staffId: string; date: string; time: string }) => {
-    const calendarSlot: CalendarSlot = {
-      staffId: slot.staffId,
-      time: slot.time,
-      date: slot.date,
-      endTime: addMinutes(parseISO(`${slot.date}T${slot.time}`), 30).toISOString().split('T')[1].slice(0, 5), // 30 min default
-    };
-    modals.openNewBookingModal(calendarSlot);
-    setSlotPopover(null);
-  };
-
-  const onSlotBlock = (slot: { staffId: string; date: string; time: string }) => {
-    const calendarSlot: CalendarSlot = {
-      staffId: slot.staffId,
-      time: slot.time,
-      date: slot.date,
-      endTime: addMinutes(parseISO(`${slot.date}T${slot.time}`), 30).toISOString().split('T')[1].slice(0, 5),
-    };
-    modals.openBlockingModal(calendarSlot, 'block');
-    setSlotPopover(null);
-  };
-
-  const onSlotAbsence = (slot: { staffId: string; date: string; time: string }) => {
-    const calendarSlot: CalendarSlot = {
-      staffId: slot.staffId,
-      time: slot.time,
-      date: slot.date,
-      endTime: addMinutes(parseISO(`${slot.date}T${slot.time}`), 30).toISOString().split('T')[1].slice(0, 5),
-    };
-    modals.openBlockingModal(calendarSlot, 'absence');
-    setSlotPopover(null);
-  };
-
-  // Booking context menu callback
-  const onBookingContextMenu = useCallback((e: React.MouseEvent, booking: Booking) => {
-    setBookingPopover({ 
-      open: true, 
-      position: { x: e.clientX, y: e.clientY }, 
-      booking 
-    });
-  }, []);
-
-  const closeSlotPopover = () => setSlotPopover(null);
-  const closeBookingPopover = () => setBookingPopover(null);
-
-  // Popover show callback for DayView interactions
-  const onPopoverShow = (position: { x: number; y: number }, slot?: { staffId: string; date: string; time: string }, booking?: Booking) => {
-    if (slot) {
-      setSlotPopover({ open: true, position, slot });
-    } else if (booking) {
-      setBookingPopover({ open: true, position, booking });
-    }
-  };
-
-  const onBookingMove = async (bookingId: string, newStaffId: string, newStartsAt: string, newEndsAt: string) => {
-    if (!tenantId) return;
-
-    try {
-      // Validar datos
-      const startsAtDate = new Date(newStartsAt);
-      const endsAtDate = new Date(newEndsAt);
-      if (isNaN(startsAtDate.getTime()) || isNaN(endsAtDate.getTime())) {
-        throw new Error("Las fechas proporcionadas no son válidas");
-      }
-      if (endsAtDate <= startsAtDate) {
-        throw new Error("La fecha de fin debe ser posterior a la fecha de inicio");
-      }
-
-      const bookingToUpdate = bookings.find((b) => b.id === bookingId);
-      if (!bookingToUpdate) {
-        throw new Error("No se encontró la cita seleccionada");
-      }
-
-      if (bookingToUpdate.status === "paid" || bookingToUpdate.status === "completed") {
-        showToast("Las citas pagadas o completadas no se pueden mover. Cancela y vuelve a crearla.", "error");
-        return;
-      }
-
-      const targetStaffId = newStaffId || bookingToUpdate.staff_id;
-
-      if (!targetStaffId) {
-        showToast("Debe seleccionar un profesional para la cita", "error");
-        return;
-      }
-
-      const hasConflicts = conflictsHook.checkAndShowBookingConflicts({
-        id: bookingId,
-        staff_id: targetStaffId,
-        starts_at: newStartsAt,
-        ends_at: newEndsAt,
-      });
-
-      if (hasConflicts) {
-        return;
-      }
-
-      // Asegurar que las fechas estén en formato ISO string
-      const startsAtISO = new Date(newStartsAt).toISOString();
-      const endsAtISO = new Date(newEndsAt).toISOString();
-
-      const updatedBooking: BookingFormPayload = {
-        ...bookingToUpdate,
-        staff_id: targetStaffId,
-        starts_at: startsAtISO,
-        ends_at: endsAtISO,
-      };
-
-      const result = await saveBooking(updatedBooking, false, "Cita reprogramada correctamente.");
-
-      if (!result.ok) {
-        notifyError(new Error(result.error), "Error al mover la cita");
-      }
-    } catch (err) {
-      notifyError(err, "Error al mover la cita");
-    }
-  };
-
-  const onBookingResize = async (bookingId: string, newStartsAt: string, newEndsAt: string) => {
-    if (!tenantId) return;
-
-    try {
-      // Validar que las nuevas fechas sean válidas
-      const startsAtDate = new Date(newStartsAt);
-      const endsAtDate = new Date(newEndsAt);
-
-      if (isNaN(startsAtDate.getTime()) || isNaN(endsAtDate.getTime())) {
-        throw new Error("Las fechas proporcionadas no son válidas");
-      }
-
-      if (endsAtDate <= startsAtDate) {
-        throw new Error("La fecha de fin debe ser posterior a la fecha de inicio");
-      }
-
-      const booking = bookings.find((b) => b.id === bookingId);
-      if (!booking || !booking.staff_id) {
-        throw new Error("No se pudo encontrar la cita o el staff asignado");
-      }
-
-      // Verificar si el booking está protegido (paid/completed)
-      const isProtected = booking.status === "paid" || booking.status === "completed";
-      if (isProtected) {
-        throw new Error("No se puede modificar la duración de una cita pagada o completada");
-      }
-
-      // Verificar conflictos usando el hook
-      const hasConflicts = conflictsHook.checkAndShowBookingConflicts({
-        id: bookingId,
-        staff_id: booking.staff_id,
-        starts_at: newStartsAt,
-        ends_at: newEndsAt,
-      });
-
-      if (hasConflicts) {
-        return;
-      }
-
-      const result = await saveBooking({
-        ...booking,
-        starts_at: newStartsAt,
-        ends_at: newEndsAt,
-      }, false, "Cita actualizada correctamente.");
-
-      if (!result.ok) {
-        notifyError(new Error(result.error), "Error al cambiar la duración de la cita");
-      }
-    } catch (err) {
-      notifyError(err, "Error al redimensionar la cita");
-    }
-  };
-
-  // Wrapper functions to adapt existing handlers to AgendaContainer interface
-  const handleBookingDrag = async (bookingId: string, newTime: string, newStaffId?: string) => {
-    // For drag operations, we need to calculate the end time based on original booking duration
-    const originalBooking = bookings.find(b => b.id === bookingId);
-    if (!originalBooking) return;
-
-    const originalDuration = new Date(originalBooking.ends_at).getTime() - new Date(originalBooking.starts_at).getTime();
-    const newEndsAt = new Date(new Date(newTime).getTime() + originalDuration).toISOString();
-
-    await onBookingMove(bookingId, newStaffId || originalBooking.staff_id || '', newTime, newEndsAt);
-  };
-
-  const handleBookingResize = async (bookingId: string, newEndTime: string) => {
-    // For resize operations, we keep the original start time and only change the end time
-    const originalBooking = bookings.find(b => b.id === bookingId);
-    if (!originalBooking) return;
-
-    await onBookingResize(bookingId, originalBooking.starts_at, newEndTime);
-  };
-
-  // Función auxiliar para guardar un bloqueo
-  const saveBlocking = async (blocking: BlockingFormPayload, forceOverlap = false) => {
-    if (!tenantId) return;
-
-    // Si no se fuerza el solape, verificar conflictos nuevamente (solo contra citas)
-    if (!forceOverlap) {
-      const detectedConflicts = detectConflictsForBooking(
-        blocking.start_at,
-        blocking.end_at,
-        blocking.staff_id
-      );
-
-      if (detectedConflicts.length > 0) {
-        throw new Error("Todavía hay conflictos. Por favor, resuélvelos primero.");
-      }
-    }
-
-    const { error: insertError } = await supabase
-      .from("staff_blockings")
-      .insert({
-        tenant_id: tenantId,
-        staff_id: blocking.staff_id,
-        start_at: blocking.start_at,
-        end_at: blocking.end_at,
-        type: blocking.type,
-        reason: blocking.reason,
-        notes: blocking.notes || null,
-      });
-
-    if (insertError) throw insertError;
-
-    await refreshDaySnapshots();
-    showToast("Bloqueo registrado correctamente.", "success");
-
-    setShowBlockingModal(false);
-    setSelectedSlot(null);
-    conflictsHook.clearConflicts();
-  };
-
-  // Los datos filtrados y stats ahora vienen del hook useAgendaData
-
-  // Helper para obtener bookings en el rango actual según viewMode
-  const getBookingsInCurrentRange = useMemo(() => {
-    return (bookings: Booking[], selectedDate: string, viewMode: ViewMode, timezone: string): Booking[] => {
-      const selectedDateObj = parseISO(selectedDate);
-
-      const filterByRange = (rangeStart: Date, rangeEnd: Date) => {
-        return bookings.filter((booking) => {
-          const bookingDate = toTenantLocalDate(new Date(booking.starts_at), timezone);
-          return bookingDate >= rangeStart && bookingDate <= rangeEnd;
-        });
-      };
-
-      switch (viewMode) {
-        case "day": {
-          const dayStart = startOfDay(selectedDateObj);
-          const dayEnd = endOfDay(selectedDateObj);
-          return filterByRange(dayStart, dayEnd);
-        }
-        case "week": {
-          const weekStart = startOfWeek(selectedDateObj, { weekStartsOn: 1 });
-          const weekEnd = endOfWeek(selectedDateObj, { weekStartsOn: 1 });
-          return filterByRange(weekStart, weekEnd);
-        }
-        case "month": {
-          const monthStart = startOfMonth(selectedDateObj);
-          const monthEnd = endOfMonth(selectedDateObj);
-          return filterByRange(monthStart, monthEnd);
-        }
-        case "list": {
-          const dayStart = startOfDay(selectedDateObj);
-          const dayEnd = endOfDay(selectedDateObj);
-          return filterByRange(dayStart, dayEnd);
-        }
-        default:
-          return bookings;
-      }
-    };
-  }, []);
-
-  // Handler para filtrar por staff desde chips de utilización
-  const handleStaffFilterChange = (staffId: string) => {
-    setFilters((prev: { payment: string[]; status: string[]; staff: string[]; highlighted: boolean | null }) => {
-      // Si el staff ya está filtrado, quitarlo; si no, añadirlo
-      const currentStaff = prev.staff.includes("all") ? [] : prev.staff;
-      if (currentStaff.includes(staffId)) {
-        // Quitar el filtro
-        const newStaff = currentStaff.filter((id) => id !== staffId);
-        return {
-          ...prev,
-          staff: newStaff.length === 0 ? ["all"] : newStaff,
-        };
-      } else {
-        // Añadir el filtro
-        return {
-          ...prev,
-          staff: [staffId],
-        };
-      }
-    });
-  };
-
-  // Guardar preferencias cuando cambian
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("agenda_selectedDate", selectedDate);
-    }
-  }, [selectedDate]);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("agenda_viewMode", viewMode);
-    }
-  }, [viewMode]);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("agenda_filters", JSON.stringify(filters));
-    }
-  }, [filters]);
-
-  // Atajos de teclado
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignorar si está escribiendo en un input/textarea
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement ||
-        (e.target as HTMLElement).isContentEditable
-      ) {
-        return;
-      }
-
-      const shortcutsBlocked =
-        modals.showNewBookingModal ||
-        modals.showBlockingModal ||
-        modals.showBookingDetail ||
-        conflictsHook.showConflictModal ||
-        notificationsOpen ||
-        searchOpen;
-
-      if (shortcutsBlocked) {
-        return;
-      }
-
-      // N → Nueva cita
-      if (e.key === "n" || e.key === "N") {
-        e.preventDefault();
-        onNewBooking({} as CalendarSlot); // Abrir modal vacío
-        return;
-      }
-
-      // T → Hoy
-      if (e.key === "t" || e.key === "T") {
-        e.preventDefault();
-        setSelectedDate(format(new Date(), "yyyy-MM-dd"));
-        return;
-      }
-
-      // ← / → → Navegar fechas
-      if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        const date = parseISO(selectedDate);
-        let newDate: Date;
-        switch (viewMode) {
-          case "day":
-            newDate = subDays(date, 1);
-            break;
-          case "week":
-            newDate = subWeeks(date, 1);
-            break;
-          case "month":
-            newDate = subMonths(date, 1);
-            break;
-          default:
-            newDate = subDays(date, 1);
-        }
-        setSelectedDate(format(newDate, "yyyy-MM-dd"));
-        return;
-      }
-
-      if (e.key === "ArrowRight") {
-        e.preventDefault();
-        const date = parseISO(selectedDate);
-        let newDate: Date;
-        switch (viewMode) {
-          case "day":
-            newDate = addDays(date, 1);
-            break;
-          case "week":
-            newDate = addWeeks(date, 1);
-            break;
-          case "month":
-            newDate = addMonths(date, 1);
-            break;
-          default:
-            newDate = addDays(date, 1);
-        }
-        setSelectedDate(format(newDate, "yyyy-MM-dd"));
-        return;
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [
+  } = useAgendaData({
+    tenantId,
     selectedDate,
     viewMode,
-    modals.showNewBookingModal,
-    modals.showBlockingModal,
-    modals.showBookingDetail,
-    conflictsHook.showConflictModal,
-    notificationsOpen,
-    searchOpen,
-  ]);
+    initialData,
+  });
 
-  useEffect(() => {
-    if (notificationsOpen) {
-      setNotifications((prev) => prev.map((notification) => ({ ...notification, read: true })));
-    }
-  }, [notificationsOpen]);
+  const { saveBooking, saveBlocking } = useAgendaHandlers({
+    tenantId,
+    onAfterMutation: () => refreshDaySnapshots(selectedDate),
+  });
 
-  const unreadNotifications = useMemo(
-    () => notifications.filter((notification) => !notification.read).length,
-    [notifications]
+  const handleBookingSave = useCallback(
+    (payload: BookingMutationPayload): Promise<SaveBookingResult> => saveBooking(payload),
+    [saveBooking]
   );
 
-  // Early return for error state - MUST be after all hooks
-  if (error && !tenantId) {
+  const handleBlockingSave = useCallback(
+    (payload: Parameters<typeof saveBlocking>[0]) => saveBlocking(payload),
+    [saveBlocking]
+  );
+
+  const handleSlotNewBooking = useCallback(
+    (slot: CalendarSlot) => {
+      modals.openNewBookingModal(slot);
+      setSlotPopover(null);
+    },
+    [modals]
+  );
+
+  const handleSlotBlock = useCallback(
+    (slot: CalendarSlot, type: CalendarSlot["type"] = "block") => {
+      modals.openBlockingModal({ ...slot, type });
+      setSlotPopover(null);
+    },
+    [modals]
+  );
+
+  const handleBookingClick = useCallback(
+    (booking: Booking) => {
+      modals.openBookingDetail(booking);
+    },
+    [modals]
+  );
+
+  const handleBookingContextMenu = useCallback((e: React.MouseEvent, booking: Booking) => {
+    e.preventDefault();
+    setBookingPopover({
+      open: true,
+      position: { x: e.clientX, y: e.clientY },
+      booking,
+    });
+  }, []);
+
+  const closeBookingPopover = () => setBookingPopover(null);
+  const closeSlotPopover = () => setSlotPopover(null);
+
+  const filteredBookings = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return bookings.filter((booking) => {
+      if (filters.status.length > 0 && !filters.status.includes(booking.status)) {
+        return false;
+      }
+
+      if (!filters.staff.includes("all") && filters.staff.length > 0) {
+        if (!booking.staff_id || !filters.staff.includes(booking.staff_id)) {
+          return false;
+        }
+      }
+
+      if (filters.highlighted !== null && Boolean(booking.is_highlighted) !== filters.highlighted) {
+        return false;
+      }
+
+      if (filters.payment.includes("paid")) {
+        const isPaid = booking.status === "paid" || booking.status === "completed";
+        if (!isPaid) return false;
+      }
+
+      if (filters.payment.includes("unpaid")) {
+        const requiresPayment = booking.status === "pending" || booking.status === "hold";
+        if (!requiresPayment) return false;
+      }
+
+      if (!term) return true;
+      const haystack = [booking.customer?.name, booking.customer?.phone, booking.service?.name]
+        .filter(Boolean)
+        .map((value) => value!.toLowerCase());
+      return haystack.some((value) => value.includes(term));
+    });
+  }, [bookings, filters, searchTerm]);
+
+  const visibleStaff = useMemo(() => {
+    if (filters.staff.includes("all")) return staffList;
+    return staffList.filter((member) => filters.staff.includes(member.id));
+  }, [filters.staff, staffList]);
+
+  const staffUtilization = useMemo(
+    () =>
+      staffList.map((member) => {
+        const staffBookings = filteredBookings.filter((booking) => booking.staff_id === member.id);
+        return {
+          staffId: member.id,
+          staffName: member.name,
+          utilization: Math.min(100, staffBookings.length * 10),
+        };
+      }),
+    [filteredBookings, staffList]
+  );
+
+  const quickStats = stats
+    ? {
+        totalBookings: stats.total_bookings,
+        totalHours: Number((stats.total_minutes / 60).toFixed(1)),
+        totalAmount: stats.total_amount,
+        rangeLabel,
+      }
+    : undefined;
+
+  const unreadNotifications = notifications.filter((n) => !n.read).length;
+
+  const defaultSlot: CalendarSlot = {
+    staffId: visibleStaff[0]?.id || staffList[0]?.id || "",
+    date: selectedDate,
+    time: "10:00",
+    endTime: "10:30",
+  };
+
+  if (!tenantId) {
     return (
-      <ProtectedRoute requiredPermission="agenda">
-        <div className="p-8 rounded-[var(--radius-lg)] bg-[rgba(239,68,68,0.1)] border border-red-500/30">
-          <h3 className="text-red-400 font-semibold mb-2">Error de Configuración</h3>
-          <p className="text-red-400 font-satoshi mb-4">{error}</p>
-        </div>
-        {ToastComponent}
-      </ProtectedRoute>
+      <div className="p-6 rounded-2xl border border-red-500/40 bg-red-500/5 text-red-200">
+        No se pudo cargar la agenda para este usuario.
+      </div>
     );
   }
 
   return (
-    <ProtectedRoute requiredPermission="agenda">
-      <div className="h-full flex flex-col">
-        <AgendaContainer
-          // Data from useAgendaData hook
-          loading={loading}
-          error={error}
-          staffList={staffList}
-          bookings={bookings}
-          staffBlockings={staffBlockings}
-          staffSchedules={staffSchedules}
-          searchTerm={searchTerm}
-          setSearchTerm={setAgendaSearchTerm}
-          filters={filters}
-          setFilters={setFilters}
-          activeFiltersCount={activeFiltersCount}
-          filteredBookings={filteredBookings}
-          visibleStaff={visibleStaff}
-          quickStats={quickStats}
-          staffUtilization={staffUtilization}
-          refreshDaySnapshots={refreshDaySnapshots}
+    <div className="h-full flex flex-col gap-4">
+      <AgendaHeader
+        selectedDate={selectedDate}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onDateChange={setSelectedDate}
+        onNotificationsClick={() => setNotificationsOpen(true)}
+        onSearchClick={() => setSearchOpen(true)}
+        onFiltersClick={() => setSidebarOpen(true)}
+        showFiltersButton
+        quickStats={quickStats}
+        searchOpen={searchOpen}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        onSearchClose={() => setSearchOpen(false)}
+        searchResultCount={filteredBookings.length}
+        searchTotalCount={bookings.length}
+        staffUtilization={staffUtilization}
+        onStaffFilterChange={(staffId) =>
+          setFilters((prev) => ({
+            ...prev,
+            staff: staffId === "all" ? ["all"] : [staffId],
+          }))
+        }
+      />
 
-          // Core state from page.tsx
-          tenantId={tenantId}
-          tenantTimezone={tenantTimezone}
-          selectedDate={selectedDate}
-          selectedStaffId={filters.staff.includes("all") ? null : filters.staff[0] || null}
-          viewMode={viewMode}
+      <div className="flex-1 min-h-0 flex gap-4">
+        <aside className="hidden xl:block w-80 flex-shrink-0">
+          <AgendaSidebar
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
+            filters={filters}
+            onFiltersChange={setFilters}
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+          />
+        </aside>
 
-          // Callbacks from page.tsx
-          onDateChange={setSelectedDate}
-          onViewModeChange={setViewMode}
-          onStaffChange={(staffId) => {
-            setFilters(prev => ({
-              ...prev,
-              staff: staffId ? [staffId] : ["all"]
-            }));
-          }}
-          onBookingClick={(booking) => {
-            const fullBooking = bookings.find((b) => b.id === booking.id);
-            if (fullBooking) {
-              modals.openBookingDetail(fullBooking);
+        <div className="flex-1 min-h-0 flex flex-col">
+          <AgendaContent
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+            bookings={filteredBookings}
+            staffList={visibleStaff}
+            staffBlockings={staffBlockings}
+            staffSchedules={staffSchedules}
+            loading={loading}
+            error={error}
+            tenantTimezone={tenantTimezone}
+            onBookingClick={handleBookingClick}
+            onNewBooking={() => handleSlotNewBooking(defaultSlot)}
+            density="default"
+            onPopoverShow={(position, slot) =>
+              setSlotPopover({
+                open: true,
+                position,
+                slot: slot || defaultSlot,
+              })
             }
-          }}
-          onNewBooking={() => modals.openNewBookingModal({} as CalendarSlot)}
-          onBookingDrag={handleBookingDrag}
-          onBookingResize={handleBookingResize}
-          onNotificationsToggle={() => setNotificationsOpen((prev) => !prev)}
-
-          // UI state
-          searchOpen={searchOpen}
-          onSearchToggle={() => setSearchOpen(!searchOpen)}
-          onSearchClose={() => {
-            setSearchOpen(false);
-            setAgendaSearchTerm("");
-          }}
-          selectedBooking={modals.selectedBooking}
-          newBookingOpen={modals.showNewBookingModal}
-          unreadNotifications={unreadNotifications}
-
-          // Options
-          density="default"
-          enableDragDrop={true}
-          showConflicts={true}
-
-          // Interaction layer callbacks
-          onPopoverShow={onPopoverShow}
-          onBookingContextMenu={onBookingContextMenu}
-          slotPopover={slotPopover}
-          onSlotPopoverClose={closeSlotPopover}
-          onSlotNewBooking={onSlotNewBooking}
-          onSlotBlock={onSlotBlock}
-          onSlotAbsence={onSlotAbsence}
-        />
+            onBookingContextMenu={handleBookingContextMenu}
+            slotPopover={slotPopover}
+            onSlotPopoverClose={closeSlotPopover}
+            onSlotNewBooking={handleSlotNewBooking}
+            onSlotBlock={(slot) => handleSlotBlock(slot, "block")}
+            onSlotAbsence={(slot) => handleSlotBlock(slot, "absence")}
+          />
+        </div>
       </div>
 
-      {/* Modals and panels - kept in page.tsx for business logic */}
-      {modals.showNewBookingModal && (
-        <NewBookingModal
-          isOpen={modals.showNewBookingModal}
-          onClose={() => {
-            modals.closeNewBookingModal();
-          }}
-          onSave={onBookingSave}
-          services={services}
-          staff={staffList}
-          customers={customers}
-          selectedDate={selectedDate}
-          selectedTime={modals.selectedSlot?.time}
-          selectedEndTime={modals.selectedSlot?.endTime}
-          selectedStaffId={modals.selectedSlot?.staffId || (filters.staff.includes("all") ? undefined : filters.staff[0] || undefined)}
-          isLoading={loading}
-          editingBooking={modals.editingBooking}
-          tenantId={tenantId || undefined}
-        />
-      )}
+      <SearchPanel
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        resultCount={filteredBookings.length}
+        totalCount={bookings.length}
+      />
 
-      {modals.showBlockingModal && modals.selectedSlot && (
-        <StaffBlockingModal
-          isOpen={modals.showBlockingModal}
-          onClose={() => {
-            modals.closeBlockingModal();
-          }}
-          onSave={async (blocking: Omit<BlockingFormPayload, 'tenant_id'>) => {
-            await saveBlocking({ ...blocking, tenant_id: tenantId! }, false);
-          }}
-          staff={staffList}
-          slot={modals.selectedSlot}
-          isLoading={loading}
-          tenantId={tenantId!}
-        />
-      )}
+      <NotificationsPanel
+        isOpen={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+        notifications={notifications}
+      />
 
-      {conflictsHook.showConflictModal && (
-        <ConflictResolutionModal
-          isOpen={conflictsHook.showConflictModal}
-          onClose={() => conflictsHook.setShowConflictModal(false)}
-          conflicts={conflictsHook.conflicts}
-          newBookingStart={conflictsHook.pendingBooking?.starts_at || ""}
-          newBookingEnd={conflictsHook.pendingBooking?.ends_at || ""}
-          newBookingStaffId={conflictsHook.pendingBooking?.staff_id || ""}
-          newBookingStaffName={staffList.find(s => s.id === conflictsHook.pendingBooking?.staff_id)?.name}
-          timezone={tenantTimezone}
-          onResolve={(action: "change_time" | "change_staff" | "force" | "cancel") => {
-            conflictsHook.handleResolve(action, async (force: boolean) => {
-              if (conflictsHook.pendingBooking) {
-                // Convert PendingBookingInput to BookingFormPayload with validation
-                const bookingPayload: BookingFormPayload = {
-                  id: conflictsHook.pendingBooking.id || "", // Use empty string for undefined id
-                  staff_id: conflictsHook.pendingBooking.staff_id || "",
-                  starts_at: conflictsHook.pendingBooking.starts_at,
-                  ends_at: conflictsHook.pendingBooking.ends_at,
-                  customer_id: conflictsHook.pendingBooking.customer_id || null,
-                  service_id: conflictsHook.pendingBooking.service_id || null,
-                  status: (conflictsHook.pendingBooking.status as BookingStatus) || "pending",
-                  internal_notes: conflictsHook.pendingBooking.internal_notes || null,
-                  client_message: conflictsHook.pendingBooking.client_message || null,
-                  is_highlighted: conflictsHook.pendingBooking.is_highlighted || false,
-                };
-                await saveBooking(bookingPayload, force);
-              } else if (conflictsHook.pendingBlocking) {
-                // Convert PendingBlockingInput to BlockingFormPayload with validation
-                const blockingPayload: BlockingFormPayload = {
-                  tenant_id: tenantId!,
-                  staff_id: conflictsHook.pendingBlocking.staff_id,
-                  start_at: conflictsHook.pendingBlocking.start_at,
-                  end_at: conflictsHook.pendingBlocking.end_at,
-                  type: conflictsHook.pendingBlocking.type || "block", // Default to "block" if undefined
-                  reason: conflictsHook.pendingBlocking.reason || "",
-                  notes: conflictsHook.pendingBlocking.notes || null,
-                };
-                await saveBlocking(blockingPayload, force);
-              }
-            });
+      {bookingPopover && (
+        <BookingActionPopover
+          isOpen={bookingPopover.open}
+          position={bookingPopover.position}
+          onClose={closeBookingPopover}
+          onEdit={() => {
+            modals.openEditBookingModal(bookingPopover.booking);
+            closeBookingPopover();
           }}
+          onCancel={() => showToast("Cancelar cita: próximamente", "info")}
+          onSendMessage={() => showToast("Mensajería: próximamente", "info")}
+          onStatusChange={(status) => showToast(`Estado actualizado a ${status}`, "info")}
+          currentStatus={bookingPopover.booking.status}
+          canCancel
         />
       )}
 
@@ -1214,55 +356,45 @@ export default function AgendaPage({
         <BookingDetailPanel
           booking={modals.selectedBooking}
           isOpen={modals.showBookingDetail}
-          onClose={() => {
-            modals.closeBookingDetail();
-          }}
+          onClose={modals.closeBookingDetail}
           onEdit={(booking) => {
-            // Cerrar el panel de detalle antes de abrir el modal de edición
             modals.closeBookingDetail();
-            onBookingEdit(booking);
+            modals.openEditBookingModal(booking);
           }}
-          onDelete={onBookingCancel}
+          onDelete={() => showToast("Eliminación gestionada por RPC", "info")}
           timezone={tenantTimezone}
         />
       )}
 
-      {showCustomerView && selectedBooking && selectedBooking.customer && (
-        <CustomerQuickView
-          customer={{
-            id: selectedBooking.customer_id!,
-            name: selectedBooking.customer.name,
-            email: selectedBooking.customer.email,
-            phone: selectedBooking.customer.phone,
-          }}
-          onClose={() => setShowCustomerView(false)}
+      {modals.showNewBookingModal && (
+        <NewBookingModal
+          isOpen={modals.showNewBookingModal}
+          onClose={modals.closeNewBookingModal}
+          onSave={handleBookingSave}
+          services={services}
+          staff={staffList}
+          customers={customers}
+          selectedDate={selectedDate}
+          selectedTime={modals.selectedSlot?.time}
+          selectedEndTime={modals.selectedSlot?.endTime}
+          selectedStaffId={modals.selectedSlot?.staffId}
+          isLoading={loading}
+          editingBooking={modals.editingBooking}
         />
       )}
 
-      {notificationsOpen && (
-        <NotificationsPanel
-          isOpen={notificationsOpen}
-          onClose={() => setNotificationsOpen(false)}
-          notifications={notifications}
-        />
-      )}
-
-      {/* Popovers for DayView interactions */}
-      {bookingPopover && (
-        <BookingActionPopover
-          isOpen={bookingPopover.open}
-          position={bookingPopover.position}
-          onClose={closeBookingPopover}
-          onEdit={() => onBookingEdit(bookingPopover.booking)}
-          onCancel={() => onBookingCancel(bookingPopover.booking.id)}
-          onSendMessage={() => onBookingSendMessage(bookingPopover.booking)}
-          onStatusChange={(newStatus) => onBookingStatusChange(bookingPopover.booking.id, newStatus)}
-          currentStatus={bookingPopover.booking.status}
-          canCancel={bookingPopover.booking.status !== "paid" && bookingPopover.booking.status !== "completed"}
+      {modals.showBlockingModal && (
+        <StaffBlockingModal
+          isOpen={modals.showBlockingModal}
+          onClose={modals.closeBlockingModal}
+          onSave={handleBlockingSave}
+          staff={staffList}
+          slot={modals.selectedSlot}
+          isLoading={loading}
         />
       )}
 
       {ToastComponent}
-    </ProtectedRoute>
+    </div>
   );
 }

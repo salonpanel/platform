@@ -6,50 +6,38 @@ import { Booking, StaffBlocking } from "@/types/agenda";
 
 export interface PendingBookingInput {
   id?: string;
-  staff_id: string;
   starts_at: string;
   ends_at: string;
-  // Campos adicionales opcionales para poder guardar el booking completo
-  customer_id?: string | null;
-  service_id?: string | null;
+  staff_id: string;
+  customer_id?: string;
+  service_id?: string;
+  notes?: string;
   status?: string;
-  internal_notes?: string | null;
-  client_message?: string | null;
-  is_highlighted?: boolean;
-  [key: string]: any; // Permitir campos adicionales
 }
 
 export interface PendingBlockingInput {
-  staff_id: string;
   start_at: string;
   end_at: string;
-  type?: "block" | "absence" | "vacation";
-  reason?: string | null;
-  notes?: string | null;
+  staff_id: string;
+  reason?: string;
 }
 
-export type ConflictResolution = "change_time" | "change_staff" | "force" | "cancel";
+export type ConflictResolution = "force" | "cancel" | "change_time" | "change_staff";
 
 interface UseAgendaConflictsProps {
   bookings: Booking[];
   staffBlockings: StaffBlocking[];
   userRole: "owner" | "admin" | "manager" | "staff";
-  tenantTimezone: string;
 }
 
-export function useAgendaConflicts({
-  bookings,
-  staffBlockings,
-  userRole,
-  tenantTimezone,
-}: UseAgendaConflictsProps) {
+export function useAgendaConflicts({ bookings, staffBlockings, userRole }: UseAgendaConflictsProps) {
   const [pendingBooking, setPendingBooking] = useState<PendingBookingInput | null>(null);
   const [pendingBlocking, setPendingBlocking] = useState<PendingBlockingInput | null>(null);
   const [conflicts, setConflicts] = useState<Conflict[]>([]);
   const [showConflictModal, setShowConflictModal] = useState(false);
 
   /**
-   * Verifica conflictos para una nueva cita o edición de cita
+   * Verifica conflictos para una nueva cita
    */
   const checkBookingConflicts = useCallback(
     (bookingPayload: PendingBookingInput): Conflict[] => {
