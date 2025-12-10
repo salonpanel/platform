@@ -172,10 +172,10 @@ function VerifyCodeContent() {
         
         console.log("[VerifyCode] Redirigiendo a:", redirectPath);
         
-        // Redirigir después de un pequeño delay para dar tiempo al prefetch
+        // Redirigir después de un delay mayor para asegurar que las cookies se propaguen
         setTimeout(() => {
           window.location.href = redirectPath;
-        }, 300); // Aumentado de 200ms a 300ms para dar tiempo al prefetch
+        }, 800); // Aumentado a 800ms para asegurar que las cookies se registren en el navegador
         
       } catch (prefetchError) {
         console.warn('[VerifyCode] Error en prefetch, continuando con redirección normal:', prefetchError);
@@ -184,7 +184,7 @@ function VerifyCodeContent() {
         const redirectPath = redirectParam || "/panel";
         setTimeout(() => {
           window.location.href = redirectPath;
-        }, 200);
+        }, 800); // Aumentado a 800ms para asegurar propagación de cookies
       }
     } catch (err: any) {
       console.error("[VerifyCode] Error inesperado:", err);

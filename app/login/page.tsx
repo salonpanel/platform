@@ -19,6 +19,25 @@ function LoginContent() {
   // 🔥 PRECARGA PROGRESIVA: Componentes mientras login, datos después de email
   const { preloadUserData } = useProgressivePreload();
 
+  // Limpiar cookies viejas al entrar en login para evitar conflictos
+  useEffect(() => {
+    const cleanupStaleCookies = async () => {
+      try {
+        // Si hay una sesión antigua, hacer signOut para limpiar cookies
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          console.log("[Login] Sesión antigua detectada, limpiando...");
+          await supabase.auth.signOut({ scope: 'local' });
+        }
+      } catch (err) {
+        console.warn("[Login] Error limpiando cookies viejas (no crítico):", err);
+        // No es crítico si esto falla
+      }
+    };
+    
+    cleanupStaleCookies();
+  }, [supabase]);
+
   // Efecto para ir bajando el cooldown
   useEffect(() => {
     if (cooldown <= 0) return;
