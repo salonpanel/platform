@@ -97,10 +97,10 @@ export async function fetchAgendaDataset(
           return data?.role || null;
         })()
       : Promise.resolve(null),
-    supabase.rpc("get_agenda", {
+    supabase.rpc("get_filtered_bookings", {
       p_tenant_id: tenant.id,
-      p_start_date: range.startISO,
-      p_end_date: range.endISO,
+      p_start_at: range.startISO,
+      p_end_at: range.endISO,
     })
   ]);
 
