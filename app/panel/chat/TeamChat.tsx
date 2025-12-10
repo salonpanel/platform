@@ -375,13 +375,17 @@ export function TeamChat() {
 				// 🔥 OPTIMIZACIÓN: Crear conversación default, chats 1:1 y cargar conversaciones en paralelo
 				const [defaultConvResult, directConvsResult, conversationsResult] = await Promise.all([
 					supabase.rpc("ensure_default_team_conversation", { p_tenant_id: targetTenantId }),
+					// Fallback silencioso si la función RPC no existe aún
 					supabase.rpc("ensure_direct_conversations_for_user", { 
 						p_tenant_id: targetTenantId, 
 						p_user_id: user.id 
-					}).catch(err => {
-						console.warn("[TeamChat] ensure_direct_conversations_for_user no disponible o error:", err);
-						return { data: [], error: null }; // Fallback silencioso
-					}),
+					}).then(
+						result => result,
+						err => {
+							console.warn("[TeamChat] ensure_direct_conversations_for_user no disponible o error:", err);
+							return { data: [], error: null }; // Fallback silencioso
+						}
+					),
 					loadConversationsOptimized(targetTenantId, user.id)
 				]);
 
