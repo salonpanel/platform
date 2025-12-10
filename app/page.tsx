@@ -1,4 +1,5 @@
-﻿import { headers } from "next/headers";
+﻿import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { getHostType } from "@/lib/domains";
 import ComingSoonPage from "./coming-soon";
 
@@ -15,6 +16,6 @@ export default async function Home() {
     return <ComingSoonPage />;
   }
   
-  // Para otros casos (localhost, etc.), mostrar el mensaje por defecto
-  return <h1>Platform OK ✓</h1>;
+  // Para pro.bookfast.es u otros subdominios, redirigir directamente al panel
+  redirect("/panel");
 }
