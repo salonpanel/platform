@@ -14,6 +14,7 @@ type BookingFormPayload = Booking & {
 };
 
 type BlockingFormPayload = {
+  tenant_id: string;
   staff_id: string;
   start_at: string;
   end_at: string;

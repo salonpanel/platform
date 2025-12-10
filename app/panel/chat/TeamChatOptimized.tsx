@@ -48,6 +48,11 @@ type TeamMessage = {
 	body: string;
 	created_at: string;
 	edited_at: string | null;
+	// 🚀 Metadatos del RPC para paginación infinita
+	author_name?: string;
+	author_avatar?: string;
+	has_more_before?: boolean;
+	has_more_after?: boolean;
 };
 
 type TenantMemberProfile = {
@@ -94,6 +99,7 @@ export function TeamChatOptimized({
 	);
 	const [messagesByConversation, setMessagesByConversation] = useState<Record<string, TeamMessage[]>>({});
 	const [messagesLoading, setMessagesLoading] = useState(false);
+	const [hasMoreMessages, setHasMoreMessages] = useState<Record<string, boolean>>({}); // 🚀 Rastrear si hay más mensajes
 	const [showUnreadOnly, setShowUnreadOnly] = useState(false);
 	const [showNewChatModal, setShowNewChatModal] = useState(false);
 	const [showMembersModal, setShowMembersModal] = useState(false);
@@ -128,31 +134,62 @@ export function TeamChatOptimized({
 		bootstrap();
 	}, [supabase.auth]);
 
-	// 🔥 CARGAR MENSAJES DE CONVERSACIÓN SELECCIONADA (solo cuando se necesita)
+	// 🔥 CARGAR MENSAJES DE CONVERSACIÓN SELECCIONADA CON RPC OPTIMIZADO
 	const loadMessagesForConversation = useCallback(
-		async (conversationId: string) => {
-			if (messagesByConversation[conversationId]) return; // Ya cargados
+		async (conversationId: string, beforeTimestamp?: string) => {
+			// Si ya hay mensajes y no es paginación, no recargar
+			if (!beforeTimestamp && messagesByConversation[conversationId]) return;
 
 			setMessagesLoading(true);
 			try {
-				const { data, error } = await supabase
-					.from("team_messages")
-					.select("id, conversation_id, sender_id, body, created_at, edited_at")
-					.eq("conversation_id", conversationId)
-					.is("deleted_at", null)
-					.order("created_at", { ascending: false })
-					.limit(50); // Solo últimos 50 mensajes inicialmente
+				// 🚀 OPTIMIZACIÓN: Usar get_conversation_messages_paginated RPC
+				const { data, error } = await supabase.rpc('get_conversation_messages_paginated', {
+					p_conversation_id: conversationId,
+					p_limit: 50,
+					p_before_timestamp: beforeTimestamp || null,
+					p_after_timestamp: null,
+				});
 
 				if (error) throw error;
 
-				const sorted = (data as TeamMessage[] ?? []).reverse();
-				setMessagesByConversation((prev) => ({
-					...prev,
-					[conversationId]: sorted,
+				const messages = (data || []).map((msg: any) => ({
+					id: msg.id,
+					conversation_id: msg.conversation_id,
+					sender_id: msg.sender_id,
+					body: msg.body,
+					created_at: msg.created_at,
+					edited_at: msg.edited_at,
+					// Metadatos adicionales del RPC (útiles para paginación infinita)
+					author_name: msg.author_name,
+					author_avatar: msg.author_avatar,
+					has_more_before: msg.has_more_before,
+					has_more_after: msg.has_more_after,
 				}));
 
-				// Marcar como leídos
-				if (currentUserId) {
+				// 🚀 Actualizar has_more_before para esta conversación
+				const hasMore = messages.length > 0 ? messages[0].has_more_before : false;
+				setHasMoreMessages(prev => ({
+					...prev,
+					[conversationId]: hasMore,
+				}));
+
+				// Si es paginación (beforeTimestamp), agregar al inicio; sino reemplazar
+				setMessagesByConversation((prev) => {
+					if (beforeTimestamp) {
+						const existing = prev[conversationId] || [];
+						return {
+							...prev,
+							[conversationId]: [...messages, ...existing],
+						};
+					}
+					return {
+						...prev,
+						[conversationId]: messages,
+					};
+				});
+
+				// Marcar como leídos solo en la primera carga
+				if (!beforeTimestamp && currentUserId) {
 					const now = new Date().toISOString();
 					await supabase
 						.from("team_conversation_members")
@@ -174,6 +211,21 @@ export function TeamChatOptimized({
 		},
 		[supabase, currentUserId, messagesByConversation]
 	);
+
+	// 🚀 FUNCIÓN PARA SCROLL INFINITO: Cargar mensajes más antiguos
+	const handleLoadMoreMessages = useCallback(() => {
+		if (!selectedConversationId || messagesLoading) return;
+
+		const messages = messagesByConversation[selectedConversationId];
+		if (!messages || messages.length === 0) return;
+
+		// Obtener timestamp del mensaje más antiguo
+		const oldestMessage = messages[0];
+		if (!oldestMessage) return;
+
+		// Cargar mensajes anteriores a este timestamp
+		loadMessagesForConversation(selectedConversationId, oldestMessage.created_at);
+	}, [selectedConversationId, messagesLoading, messagesByConversation, loadMessagesForConversation]);
 
 	// 🔥 REAL-TIME SUBSCRIPTION OPTIMIZADA
 	useEffect(() => {
@@ -525,15 +577,15 @@ export function TeamChatOptimized({
 							/>
 
 							<div className="flex-1 min-h-0 flex flex-col">
-								<MessageList
-									messages={messagesForSelected}
-									currentUserId={currentUserId}
-									membersDirectory={membersDirectory}
-									loading={messagesLoading}
-									containerRef={messageContainerRef}
-								/>
-
-								<MessageComposer
+							<MessageList
+								messages={messagesForSelected}
+								currentUserId={currentUserId}
+								membersDirectory={membersDirectory}
+								loading={messagesLoading}
+								containerRef={messageContainerRef}
+								onLoadMore={handleLoadMoreMessages}
+								hasMoreMessages={selectedConversationId ? (hasMoreMessages[selectedConversationId] || false) : false}
+							/>								<MessageComposer
 									onSend={handleSendMessage}
 									disabled={!selectedConversation}
 								/>

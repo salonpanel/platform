@@ -39,6 +39,7 @@ interface BookingService {
 
 interface BookingFormPayload {
   id?: string;
+  tenant_id: string;
   customer_id: string;
   service_id: string;
   staff_id: string;
@@ -114,6 +115,11 @@ export function NewBookingModal({
   // Función handleSave
   const handleSave = async () => {
     // Validación básica
+    if (!tenantId) {
+      showToast("Error: tenant ID no disponible", "error");
+      return;
+    }
+
     if (!customerName.trim()) {
       showToast("El nombre del cliente es obligatorio", "error");
       return;
@@ -224,6 +230,7 @@ export function NewBookingModal({
       // Construir payload con solo el primer servicio (multi-service UI, single-service persistence)
       const bookingPayload: BookingFormPayload = {
         id: editingBooking?.id,
+        tenant_id: tenantId!,
         customer_id: customerIdToUse,
         service_id: bookingServices[0].service_id,
         staff_id: bookingServices[0].staff_id,

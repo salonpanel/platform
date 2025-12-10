@@ -17,7 +17,7 @@ import { AgendaContainer } from "@/components/agenda/AgendaContainer";
 import { NewBookingModal } from "@/components/calendar/NewBookingModal";
 import { CustomerQuickView } from "@/components/calendar/CustomerQuickView";
 import { BookingDetailPanel } from "@/components/calendar/BookingDetailPanel";
-import { StaffBlockingModal } from "@/components/calendar/StaffBlockingModal";
+import StaffBlockingModal from "@/components/calendar/StaffBlockingModal";
 import { ConflictResolutionModal } from "@/components/calendar/ConflictResolutionModal";
 import { NotificationsPanel } from "@/components/calendar/NotificationsPanel";
 import { BookingActionPopover } from "@/components/calendar/BookingActionPopover";
@@ -48,6 +48,7 @@ type BookingFormPayload = Booking & {
 };
 
 type BlockingFormPayload = {
+  tenant_id: string;
   staff_id: string;
   start_at: string;
   end_at: string;
@@ -1154,12 +1155,13 @@ export default function AgendaPage({
           onClose={() => {
             modals.closeBlockingModal();
           }}
-          onSave={async (blocking) => {
-            await saveBlocking(blocking as BlockingFormPayload, false);
+          onSave={async (blocking: Omit<BlockingFormPayload, 'tenant_id'>) => {
+            await saveBlocking({ ...blocking, tenant_id: tenantId! }, false);
           }}
           staff={staffList}
           slot={modals.selectedSlot}
           isLoading={loading}
+          tenantId={tenantId!}
         />
       )}
 
@@ -1193,6 +1195,7 @@ export default function AgendaPage({
               } else if (conflictsHook.pendingBlocking) {
                 // Convert PendingBlockingInput to BlockingFormPayload with validation
                 const blockingPayload: BlockingFormPayload = {
+                  tenant_id: tenantId!,
                   staff_id: conflictsHook.pendingBlocking.staff_id,
                   start_at: conflictsHook.pendingBlocking.start_at,
                   end_at: conflictsHook.pendingBlocking.end_at,

@@ -230,13 +230,20 @@ export function useCustomersPageData(impersonateOrgId: string | null) {
 }
 
 /**
- * Hook optimizado para página de Servicios - obtiene tenant + servicios en paralelo
+ * Hook optimizado para página de Servicios - usa get_services_filtered RPC
  */
-export function useServicesPageData(impersonateOrgId: string | null) {
+export function useServicesPageData(
+  impersonateOrgId: string | null,
+  options?: { 
+    status?: 'active' | 'inactive' | 'all';
+    limit?: number;
+    offset?: number;
+  }
+) {
   const supabase = getSupabaseBrowser();
 
   return useStaleWhileRevalidate(
-    `services-page-${impersonateOrgId || 'default'}`,
+    `services-page-${impersonateOrgId || 'default'}-${options?.status || 'all'}-${options?.offset || 0}`,
     async () => {
       // 1. Obtener tenant
       const { tenant } = await getCurrentTenant(impersonateOrgId);
@@ -244,14 +251,18 @@ export function useServicesPageData(impersonateOrgId: string | null) {
 
       const tenantId = tenant.id;
 
-      // 2. Cargar servicios
-      const { data: services, error } = await supabase
-        .from("services")
-        .select("*")
-        .eq("tenant_id", tenantId)
-        .order("name");
+      // 🚀 OPTIMIZACIÓN: Usar función RPC get_services_filtered con filtrado y paginación del servidor
+      const { data: services, error } = await supabase.rpc('get_services_filtered', {
+        p_tenant_id: tenantId,
+        p_status: options?.status || 'all',
+        p_limit: options?.limit || 100,
+        p_offset: options?.offset || 0,
+      });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[useServicesPageData] Error calling get_services_filtered:', error);
+        throw error;
+      }
 
       return {
         tenant: {
@@ -267,13 +278,18 @@ export function useServicesPageData(impersonateOrgId: string | null) {
 }
 
 /**
- * Hook optimizado para página de Staff - obtiene tenant + staff en paralelo
+ * Hook optimizado para página de Staff - usa get_staff_with_stats RPC
  */
-export function useStaffPageData(impersonateOrgId: string | null) {
+export function useStaffPageData(
+  impersonateOrgId: string | null,
+  options?: {
+    includeInactive?: boolean;
+  }
+) {
   const supabase = getSupabaseBrowser();
 
   return useStaleWhileRevalidate(
-    `staff-page-${impersonateOrgId || 'default'}`,
+    `staff-page-${impersonateOrgId || 'default'}-${options?.includeInactive ? 'all' : 'active'}`,
     async () => {
       // 1. Obtener tenant
       const { tenant } = await getCurrentTenant(impersonateOrgId);
@@ -281,17 +297,16 @@ export function useStaffPageData(impersonateOrgId: string | null) {
 
       const tenantId = tenant.id;
 
-      // 2. Cargar staff con estadísticas
-      const { data: staff, error } = await supabase
-        .from("staff")
-        .select(`
-          *,
-          bookings_count:bookings(count)
-        `)
-        .eq("tenant_id", tenantId)
-        .order("name");
+      // 🚀 OPTIMIZACIÓN: Usar función RPC get_staff_with_stats con estadísticas precalculadas
+      const { data: staff, error } = await supabase.rpc('get_staff_with_stats', {
+        p_tenant_id: tenantId,
+        p_include_inactive: options?.includeInactive || false,
+      });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[useStaffPageData] Error calling get_staff_with_stats:', error);
+        throw error;
+      }
 
       return {
         tenant: {
@@ -299,10 +314,7 @@ export function useStaffPageData(impersonateOrgId: string | null) {
           name: tenant.name || "Tu barbería",
           timezone: tenant.timezone || "Europe/Madrid",
         },
-        staff: (staff || []).map(s => ({
-          ...s,
-          bookings_count: Array.isArray(s.bookings_count) ? s.bookings_count.length : 0,
-        })),
+        staff: staff || [],
       };
     },
     { enabled: true }

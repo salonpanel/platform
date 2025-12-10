@@ -52,7 +52,8 @@ export async function fetchAgendaDataset(
   range: { startISO: string; endISO: string; viewMode: ViewMode; anchorDate: string },
   options?: { includeUserRole?: boolean; userId?: string | null }
 ): Promise<AgendaDataset> {
-  const [staffRes, servicesRes, customersRes, bookingsRes, blockingsRes, schedulesRes, roleRes] = await Promise.all([
+
+  const [staffRes, servicesRes, customersRes, blockingsRes, schedulesRes, roleRes, bookingsRpcRes] = await Promise.all([
     supabase
       .from("staff")
       .select("id, name, active")
@@ -71,18 +72,6 @@ export async function fetchAgendaDataset(
       .eq("tenant_id", tenant.id)
       .order("name")
       .limit(100),
-    supabase
-      .from("bookings")
-      .select(`
-        *,
-        customer:customers(id, name, email, phone),
-        service:services(id, name, duration_min, price_cents),
-        staff:staff(id, name)
-      `)
-      .eq("tenant_id", tenant.id)
-      .gte("starts_at", range.startISO)
-      .lte("starts_at", range.endISO)
-      .order("starts_at"),
     supabase
       .from("staff_blockings")
       .select("*")
@@ -108,14 +97,19 @@ export async function fetchAgendaDataset(
           return data?.role || null;
         })()
       : Promise.resolve(null),
+    supabase.rpc('get_agenda', {
+      tenant_id: tenant.id,
+      start_date: range.startISO,
+      end_date: range.endISO
+    })
   ]);
 
   if (staffRes.error) throw staffRes.error;
   if (servicesRes.error) throw servicesRes.error;
   if (customersRes.error) throw customersRes.error;
-  if (bookingsRes.error) throw bookingsRes.error;
   if (blockingsRes.error) throw blockingsRes.error;
   if (schedulesRes.error) throw schedulesRes.error;
+  if (bookingsRpcRes.error) throw bookingsRpcRes.error;
 
   return {
     tenant: {
@@ -126,7 +120,7 @@ export async function fetchAgendaDataset(
     staff: staffRes.data || [],
     services: (servicesRes.data || []).map(s => ({ ...s, buffer_min: s.buffer_min ?? 0 })),
     customers: customersRes.data || [],
-    bookings: bookingsRes.data || [],
+    bookings: bookingsRpcRes.data || [],
     blockings: blockingsRes.data || [],
     schedules: schedulesRes.data || [],
     userRole: await roleRes,

@@ -20,10 +20,32 @@ type Staff = {
   skills: string[] | null;
   user_id: string | null;
   created_at: string;
-  bookings_count?: number;
   profile_photo_url?: string | null;
   weekly_hours?: number | null;
   provides_services?: boolean;
+  
+  // 🚀 ESTADÍSTICAS PRECALCULADAS DEL RPC get_staff_with_stats
+  bookings_today?: number;
+  bookings_this_week?: number;
+  bookings_this_month?: number;
+  bookings_all_time?: number;
+  
+  revenue_today?: bigint;
+  revenue_this_week?: bigint;
+  revenue_this_month?: bigint;
+  revenue_all_time?: bigint;
+  
+  occupancy_today_percent?: number;
+  occupancy_this_week_percent?: number;
+  
+  no_shows_this_month?: number;
+  cancellations_this_month?: number;
+  avg_service_duration_min?: number;
+  
+  services_count?: number;
+  
+  // Retrocompatibilidad
+  bookings_count?: number;
 };
 
 function StaffContent() {
@@ -313,7 +335,7 @@ function StaffContent() {
     }
   };
 
-  const filteredStaff = staffList.filter((staff) => {
+  const filteredStaff = staffList.filter((staff: Staff) => {
     const search = searchTerm.toLowerCase();
     return (
       staff.name.toLowerCase().includes(search) ||
@@ -405,7 +427,7 @@ function StaffContent() {
         </motion.div>
       ) : (
         <div className="space-y-3">
-          {filteredStaff.map((staff, index) => (
+          {filteredStaff.map((staff: Staff, index: number) => (
             <motion.div
               key={staff.id}
               initial={{ opacity: 0, y: 8 }}
@@ -459,8 +481,22 @@ function StaffContent() {
                         }}
                       >
                         <Calendar className="h-4 w-4" />
-                        {staff.bookings_count || 0} {staff.bookings_count === 1 ? "reserva" : "reservas"}
+                        {staff.bookings_all_time || staff.bookings_count || 0} reservas totales
                       </div>
+                      {/* 🚀 NUEVAS ESTADÍSTICAS DEL RPC */}
+                      {(staff.bookings_today !== undefined || staff.bookings_this_week !== undefined) && (
+                        <div
+                          className="flex items-center gap-2"
+                          style={{
+                            fontFamily: "var(--font-body)",
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          <span className="text-xs">
+                            {staff.bookings_today || 0} hoy • {staff.bookings_this_week || 0} esta semana
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   {canManageStaff && (

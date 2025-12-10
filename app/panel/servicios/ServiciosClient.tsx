@@ -17,7 +17,6 @@ import {
   DEFAULT_CATEGORY,
   buildDefaultFormState,
   normalizeService,
-  useFilteredServices,
   usePagination,
   useServiceStats,
 } from "./hooks";
@@ -103,17 +102,9 @@ export function ServiciosClient({
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filters = useMemo<ServiceFilters>(
-    () => ({
-      status: filterStatus,
-      stripe: filterStripe,
-      category: filterCategory,
-      priceRange,
-      buffer: bufferFilter,
-    }),
-    [filterStatus, filterStripe, filterCategory, priceRange, bufferFilter]
-  );
-
+  // 🚀 OPTIMIZACIÓN: Los filtros ahora se pasan directamente a get_services_filtered RPC
+  // Ya no necesitamos el objeto filters para filtrado en cliente
+  
   const priceBounds = useMemo(() => {
     if (!services.length) return { min: 0, max: 0 };
     const values = services.map((service) => service.price_cents / 100);
@@ -156,11 +147,23 @@ export function ServiciosClient({
       }
       try {
         setPageError(null);
-        const { data, error } = await supabase
-          .from("services")
-          .select("*")
-          .eq("tenant_id", tenantId)
-          .order("name");
+        
+        // 🚀 OPTIMIZACIÓN: Usar get_services_filtered con filtros del servidor
+        const { data, error } = await supabase.rpc('get_services_filtered', {
+          p_tenant_id: tenantId,
+          p_status: filterStatus,
+          p_category: filterCategory !== 'all' ? filterCategory : null,
+          p_min_price: priceRange[0] > 0 ? Math.round(priceRange[0] * 100) : null,
+          p_max_price: priceRange[1] > 0 ? Math.round(priceRange[1] * 100) : null,
+          p_has_buffer: bufferFilter === 'no_buffer' ? false : null,
+          p_stripe_synced: filterStripe === 'synced' ? true : (filterStripe === 'pending' ? false : null),
+          p_search_term: searchTerm || null,
+          p_sort_by: sortBy,
+          p_sort_direction: 'ASC',
+          p_limit: 1000, // Cargar todos inicialmente (optimizar después con paginación real)
+          p_offset: 0,
+        });
+        
         if (error) {
           throw new Error(error.message);
         }
@@ -184,8 +187,19 @@ export function ServiciosClient({
         }
       }
     },
-    [supabase, tenantId, services.length]
+    [supabase, tenantId, services.length, filterStatus, filterCategory, priceRange, bufferFilter, filterStripe, searchTerm, sortBy]
   );
+
+  // 🔥 Recargar servicios cuando cambien los filtros (debounce para evitar llamadas excesivas)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (tenantId) {
+        loadServices({ showLoader: false });
+      }
+    }, 300); // Debounce de 300ms
+    
+    return () => clearTimeout(timer);
+  }, [filterStatus, filterCategory, priceRange, bufferFilter, filterStripe, searchTerm, sortBy]);
 
   const openNewModal = useCallback(
     (defaults?: Partial<ServiceFormState>) => {
@@ -577,12 +591,9 @@ export function ServiciosClient({
 
   const stats = useServiceStats(services);
 
-  const filteredServices = useFilteredServices({
-    items: services,
-    filters,
-    searchTerm,
-    sortBy,
-  });
+  // 🚀 OPTIMIZACIÓN: El filtrado ahora se hace en el servidor con get_services_filtered
+  // Ya no necesitamos filtrar en el cliente, solo paginar
+  const filteredServices = services; // Los servicios ya vienen filtrados del servidor
 
   const {
     paginatedItems,

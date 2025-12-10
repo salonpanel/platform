@@ -22,6 +22,7 @@ interface StaffBlockingModalProps {
   staff: Staff[];
   slot?: CalendarSlot | null;
   isLoading?: boolean;
+  tenantId?: string; // Añadir tenantId como prop opcional
 }
 
 const BLOCKING_TYPES: Array<{
@@ -54,13 +55,14 @@ const BLOCKING_TYPES: Array<{
  * Modal para crear/editar bloqueos y ausencias de staff
  * Más simple que el modal de nueva cita
  */
-export function StaffBlockingModal({
+export default function StaffBlockingModal({
   isOpen,
   onClose,
   onSave,
   staff,
   slot,
   isLoading = false,
+  tenantId,
 }: StaffBlockingModalProps) {
   const [selectedStaffId, setSelectedStaffId] = useState(slot?.staffId || "");
   const [type, setType] = useState<"block" | "absence" | "vacation">("block");
@@ -144,6 +146,11 @@ export function StaffBlockingModal({
 
     if (endAt <= startAt) {
       showToast("La hora de fin debe ser posterior a la hora de inicio.", "error");
+      return;
+    }
+
+    if (!tenantId) {
+      showToast("Error: tenant_id no disponible.", "error");
       return;
     }
 

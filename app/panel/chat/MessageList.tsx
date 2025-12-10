@@ -22,6 +22,9 @@ type MessageListProps = {
 	membersDirectory?: Record<string, { displayName: string; profilePhotoUrl?: string }>;
 	conversationType?: "all" | "direct" | "group";
 	tenantId?: string | null;
+	// 🚀 Soporte para scroll infinito
+	onLoadMore?: () => void;
+	hasMoreMessages?: boolean;
 };
 
 function formatTimestamp(iso: string): string {
@@ -76,8 +79,26 @@ export function MessageList({
 	membersDirectory = {},
 	conversationType = "direct",
 	tenantId,
+	onLoadMore,
+	hasMoreMessages = false,
 }: MessageListProps) {
 	const supabase = getSupabaseBrowser();
+
+	// 🚀 SCROLL INFINITO: Detectar cuando el usuario scrollea hasta arriba
+	useEffect(() => {
+		const container = containerRef.current;
+		if (!container || !onLoadMore || !hasMoreMessages) return;
+
+		const handleScroll = () => {
+			// Si estamos en el tope (scrollTop < 100px) y no estamos cargando
+			if (container.scrollTop < 100 && !loading) {
+				onLoadMore();
+			}
+		};
+
+		container.addEventListener('scroll', handleScroll);
+		return () => container.removeEventListener('scroll', handleScroll);
+	}, [containerRef, onLoadMore, hasMoreMessages, loading]);
 
 	// Función para obtener nombre y avatar usando RPC si no están en el directorio
 	const getSenderInfo = async (senderId: string): Promise<{ displayName: string; profilePhotoUrl?: string }> => {
@@ -153,6 +174,14 @@ export function MessageList({
 
 	return (
 		<div ref={containerRef} className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
+			{/* 🚀 Indicador de "Cargando más mensajes..." */}
+			{loading && hasMoreMessages && (
+				<div className="flex items-center justify-center py-2">
+					<Spinner size="sm" />
+					<span className="ml-2 text-xs text-[var(--text-secondary)]">Cargando más mensajes...</span>
+				</div>
+			)}
+
 			{dateKeys.map((dateKey) => {
 				const dayMessages = messagesWithDates[dateKey];
 				const firstMessage = dayMessages[0];
