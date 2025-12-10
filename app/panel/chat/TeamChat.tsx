@@ -164,9 +164,7 @@ export function TeamChat() {
 		async (conversationId: string) => {
 			setMessagesLoading(true);
 			try {
-				if (process.env.NODE_ENV === "development") {
-					console.debug("[TeamChat] Cargando mensajes para conversación", conversationId);
-				}
+				console.log("[TeamChat] 📥 Cargando mensajes para conversación:", conversationId);
 
 				// TODO: Implementar paginación/infinite scroll para cargar mensajes anteriores
 				// Por ahora limitamos a los últimos 100 mensajes
@@ -178,7 +176,16 @@ export function TeamChat() {
 					.order("created_at", { ascending: false })
 					.limit(100);
 
-				if (error) throw error;
+				if (error) {
+					console.error("[TeamChat] ❌ Error al cargar mensajes:", error);
+					throw error;
+				}
+
+				console.log(`[TeamChat] ✓ Mensajes cargados: ${data?.length || 0} mensajes`, {
+					conversation_id: conversationId,
+					first_message: data?.[0]?.body?.slice(0, 30),
+					last_message: data?.[data.length - 1]?.body?.slice(0, 30)
+				});
 
 				// Reordenar en cliente para mostrar ASC (más antiguos primero)
 				const sorted = (data as TeamMessage[] ?? []).reverse();
@@ -365,11 +372,23 @@ export function TeamChat() {
 					throw new Error("No se pudo determinar el tenant");
 				}
 
-				// 🔥 OPTIMIZACIÓN: Crear conversación default y cargar conversaciones en paralelo
-				const [defaultConvResult, conversationsResult] = await Promise.all([
+				// 🔥 OPTIMIZACIÓN: Crear conversación default, chats 1:1 y cargar conversaciones en paralelo
+				const [defaultConvResult, directConvsResult, conversationsResult] = await Promise.all([
 					supabase.rpc("ensure_default_team_conversation", { p_tenant_id: targetTenantId }),
+					supabase.rpc("ensure_direct_conversations_for_user", { 
+						p_tenant_id: targetTenantId, 
+						p_user_id: user.id 
+					}).catch(err => {
+						console.warn("[TeamChat] ensure_direct_conversations_for_user no disponible o error:", err);
+						return { data: [], error: null }; // Fallback silencioso
+					}),
 					loadConversationsOptimized(targetTenantId, user.id)
 				]);
+
+				// Log para debugging: ver cuántos chats 1:1 se crearon
+				if (directConvsResult?.data && directConvsResult.data.length > 0) {
+					console.log(`[TeamChat] ✓ ${directConvsResult.data.length} conversaciones directas verificadas/creadas`);
+				}
 
 				// 🔥 OPTIMIZACIÓN: Lazy load miembros - solo cuando sea necesario
 				// Por ahora solo cargamos miembros si hay conversaciones o se necesita
@@ -530,7 +549,17 @@ export function TeamChat() {
 				.select()
 				.single();
 
-			if (error) throw error;
+			if (error) {
+				console.error("[TeamChat] ❌ Error al insertar mensaje:", error);
+				throw error;
+			}
+
+			console.log("[TeamChat] ✓ Mensaje insertado correctamente:", {
+				id: data?.id,
+				conversation_id: selectedConversation.id,
+				body_preview: trimmedBody.slice(0, 30),
+				tenant_id: tenantId
+			});
 
 			// Reemplazar mensaje optimista con el real cuando llegue por realtime
 			// O hacerlo directamente aquí si realtime no lo hace a tiempo
