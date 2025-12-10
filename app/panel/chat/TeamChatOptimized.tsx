@@ -236,20 +236,50 @@ export function TeamChatOptimized({
 
 					if (error) throw error;
 
-					const mapped: ConversationMember[] = (data || []).map((member) => ({
-						userId: member.user_id,
-						displayName: membersDirectory[member.user_id]?.displayName ?? "Usuario",
-						role: (member.role as "member" | "admin") ?? "member",
-						joinedAt: member.created_at,
-						profilePhotoUrl: membersDirectory[member.user_id]?.profilePhotoUrl,
-					}));
+					const enriched: ConversationMember[] = await Promise.all(
+						(data || []).map(async (member) => {
+							const fromDirectory = membersDirectory[member.user_id];
+							if (fromDirectory) {
+								return {
+									userId: member.user_id,
+									displayName: fromDirectory.displayName,
+									role: (member.role as "member" | "admin") ?? "member",
+									joinedAt: member.created_at,
+									profilePhotoUrl: fromDirectory.profilePhotoUrl,
+								};
+							}
+
+							// Fallback: obtener display name via RPC para no mostrar email
+							let displayName = "Usuario";
+							try {
+								if (tenantId && currentUserId) {
+									const resp = await supabase.rpc("get_user_display_name", {
+										p_viewer_user_id: currentUserId,
+										p_target_user_id: member.user_id,
+										p_tenant_id: tenantId,
+									});
+									displayName = resp.data ?? "Usuario";
+								}
+							} catch (fetchErr) {
+								console.error("[TeamChatOptimized] Error obteniendo display name", fetchErr);
+							}
+
+							return {
+								userId: member.user_id,
+								displayName,
+								role: (member.role as "member" | "admin") ?? "member",
+								joinedAt: member.created_at,
+								profilePhotoUrl: undefined,
+							};
+						})
+					);
 
 					setMembersByConversation((prev) => ({
 						...prev,
-						[conversationId]: mapped,
+						[conversationId]: enriched,
 					}));
 
-					return mapped;
+					return enriched;
 				} catch (err) {
 					console.error("[TeamChatOptimized] Error cargando miembros", err);
 					return [];
@@ -257,7 +287,7 @@ export function TeamChatOptimized({
 					setMembersLoading(false);
 				}
 			},
-			[supabase, membersDirectory, membersByConversation]
+			[supabase, membersDirectory, membersByConversation, tenantId, currentUserId]
 		);
 
 	// 🚀 FUNCIÓN PARA SCROLL INFINITO: Cargar mensajes más antiguos
