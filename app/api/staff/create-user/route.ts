@@ -1,11 +1,62 @@
 import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseServer } from "@/lib/supabase";
 import { assertMembership } from "@/lib/server/assertMembership";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const legacyRoleMap: Record<string, string> = {
+  admin: "manager",
+};
+
+const mapLegacyRole = (role: string) => legacyRoleMap[role] ?? role;
+
+async function ensureLegacyUserRecord(
+  supabase: SupabaseClient,
+  userId: string,
+  tenantId: string,
+  role: string
+) {
+  const mappedRole = mapLegacyRole(role);
+  const { data: existingUser, error: fetchError } = await supabase
+    .from("users")
+    .select("id, role")
+    .eq("id", userId)
+    .eq("tenant_id", tenantId)
+    .maybeSingle();
+
+  if (fetchError) {
+    throw new Error(fetchError.message);
+  }
+
+  if (existingUser) {
+    if (existingUser.role !== mappedRole) {
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({ role: mappedRole })
+        .eq("id", userId)
+        .eq("tenant_id", tenantId);
+
+      if (updateError) {
+        throw new Error(updateError.message);
+      }
+    }
+    return;
+  }
+
+  const { error: insertError } = await supabase.from("users").insert({
+    id: userId,
+    tenant_id: tenantId,
+    role: mappedRole,
+  });
+
+  if (insertError) {
+    throw new Error(insertError.message);
+  }
+}
 
 /**
  * POST /api/staff/create-user
@@ -29,9 +80,19 @@ export async function POST(req: Request) {
 
     // Obtener datos del body
     const body = await req.json();
-    const { email, full_name, role, tenant_id } = body;
+    const {
+      email,
+      full_name,
+      role,
+      tenant_id,
+    }: { email?: string; full_name?: string; role?: string; tenant_id?: string } = body;
 
-    if (!email || !full_name || !role || !tenant_id) {
+    const normalizedEmail = email?.toLowerCase().trim() ?? "";
+    const normalizedFullName = full_name?.trim() ?? "";
+    const normalizedRole = role?.toLowerCase().trim() ?? "";
+    const tenantId = tenant_id ?? "";
+
+    if (!normalizedEmail || !normalizedFullName || !normalizedRole || !tenantId) {
       return NextResponse.json(
         { error: "Faltan campos requeridos: email, full_name, role, tenant_id" },
         { status: 400 }
@@ -39,7 +100,7 @@ export async function POST(req: Request) {
     }
 
     // Llamar a assertMembership
-    const membership = await assertMembership(supabaseServer(), session.user.id, tenant_id);
+    const membership = await assertMembership(supabaseServer(), session.user.id, tenantId);
 
     // Verificar que sea owner o admin
     if (membership.role !== "owner" && membership.role !== "admin") {
@@ -51,7 +112,7 @@ export async function POST(req: Request) {
 
     // Validar rol permitido
     const allowedRoles = ["owner", "admin", "staff"];
-    if (!allowedRoles.includes(role)) {
+    if (!allowedRoles.includes(normalizedRole)) {
       return NextResponse.json(
         { error: "Rol no válido. Debe ser: owner, admin o staff" },
         { status: 400 }
@@ -78,10 +139,10 @@ export async function POST(req: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        email: email.toLowerCase().trim(),
+        email: normalizedEmail,
         email_confirm: true,
         user_metadata: {
-          full_name: full_name.trim(),
+          full_name: normalizedFullName,
         },
       }),
     });
@@ -97,7 +158,7 @@ export async function POST(req: Request) {
         const { data: existingUser, error: findError } = await sb
           .from("auth.users")
           .select("id")
-          .eq("email", email.toLowerCase().trim())
+          .eq("email", normalizedEmail)
           .single();
 
         if (findError || !existingUser) {
@@ -112,7 +173,7 @@ export async function POST(req: Request) {
           .from("memberships")
           .select("id")
           .eq("user_id", existingUser.id)
-          .eq("tenant_id", tenant_id)
+          .eq("tenant_id", tenantId)
           .single();
 
         if (existingMembership) {
@@ -126,9 +187,9 @@ export async function POST(req: Request) {
         const { data: newMembership, error: membershipCreateError } = await sb
           .from("memberships")
           .insert({
-            tenant_id,
+            tenant_id: tenantId,
             user_id: existingUser.id,
-            role,
+            role: normalizedRole,
           })
           .select()
           .single();
@@ -141,11 +202,22 @@ export async function POST(req: Request) {
           );
         }
 
+        try {
+          await ensureLegacyUserRecord(sb, existingUser.id, tenantId, normalizedRole);
+        } catch (legacyError: any) {
+          console.error("Error al sincronizar public.users:", legacyError);
+          await sb.from("memberships").delete().eq("id", newMembership.id);
+          return NextResponse.json(
+            { error: "No se pudo sincronizar el perfil legacy del usuario" },
+            { status: 500 }
+          );
+        }
+
         return NextResponse.json({
           user_id: existingUser.id,
-          email: email.toLowerCase().trim(),
-          full_name: full_name.trim(),
-          role,
+          email: normalizedEmail,
+          full_name: normalizedFullName,
+          role: normalizedRole,
           membership_id: newMembership.id,
           existing_user: true,
         });
@@ -166,9 +238,9 @@ export async function POST(req: Request) {
     const { data: newMembership, error: membershipCreateError } = await sb
       .from("memberships")
       .insert({
-        tenant_id,
+        tenant_id: tenantId,
         user_id: newUserId,
-        role,
+        role: normalizedRole,
       })
       .select()
       .single();
@@ -190,11 +262,30 @@ export async function POST(req: Request) {
       );
     }
 
+    try {
+      await ensureLegacyUserRecord(sb, newUserId, tenantId, normalizedRole);
+    } catch (legacyError: any) {
+      console.error("Error al sincronizar public.users:", legacyError);
+      await sb.from("memberships").delete().eq("id", newMembership.id);
+      await fetch(`${supabaseUrl}/auth/v1/admin/users/${newUserId}`, {
+        method: "DELETE",
+        headers: {
+          apikey: serviceRoleKey,
+          Authorization: `Bearer ${serviceRoleKey}`,
+        },
+      });
+
+      return NextResponse.json(
+        { error: "No se pudo sincronizar el perfil legacy del usuario" },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
       user_id: newUserId,
-      email: email.toLowerCase().trim(),
-      full_name: full_name.trim(),
-      role,
+      email: normalizedEmail,
+      full_name: normalizedFullName,
+      role: normalizedRole,
       membership_id: newMembership.id,
       existing_user: false,
     });
