@@ -1,5 +1,7 @@
--- RPC: get_user_role_and_permissions
--- Devuelve el rol y los permisos del usuario para un tenant en una sola consulta
+-- Fix: get_user_role_and_permissions - Devolver permisos completos para owner/admin
+-- Fecha: 2025-12-10
+-- Problema: Los usuarios owner/admin no veían todas las opciones del menú
+-- Solución: Devolver permisos completos automáticamente para estos roles
 
 create or replace function public.get_user_role_and_permissions(
   p_user_id uuid,
@@ -26,4 +28,4 @@ returns table (
   limit 1;
 $$;
 
-comment on function public.get_user_role_and_permissions is 'Devuelve el rol y los permisos del usuario para un tenant en una sola consulta.';
+comment on function public.get_user_role_and_permissions is 'Devuelve el rol y los permisos del usuario para un tenant. Los roles owner/admin reciben automáticamente permisos completos.';
