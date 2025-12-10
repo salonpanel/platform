@@ -23,7 +23,7 @@
 # Redirects for Next.js API routes and dynamic routes
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/:splat"
+  to = "/.netlify/functions/next_api"
   status = 200
 
 [[redirects]]
