@@ -147,8 +147,8 @@ export function TeamChatOptimized({
 	// 🔥 CARGAR MENSAJES DE CONVERSACIÓN SELECCIONADA CON RPC OPTIMIZADO
 	const loadMessagesForConversation = useCallback(
 		async (conversationId: string, beforeTimestamp?: string) => {
-			// Si ya hay mensajes y no es paginación, no recargar
-			if (!beforeTimestamp && messagesByConversation[conversationId]) return;
+			// Si ya hay mensajes (no vacíos) y no es paginación, no recargar
+			if (!beforeTimestamp && (messagesByConversation[conversationId]?.length ?? 0) > 0) return;
 
 			setMessagesLoading(true);
 			try {

@@ -273,10 +273,13 @@ export function NewBookingModal({
 
   // Efectos y lógica del componente...
 
-  // Cargar datos de booking cuando se está editando
+  // Cargar/Reset datos de booking sólo al abrir el modal o cambiar la cita en edición.
+  // Evitamos dependencias que se actualizan en tiempo real (customers, selectedDate/Time)
+  // para no resetear el formulario mientras el usuario escribe.
   useEffect(() => {
-    if (editingBooking && isOpen) {
-      // Pre-llenar formulario con datos del booking existente
+    if (!isOpen) return;
+
+    if (editingBooking) {
       const existingCustomer = customers.find((c) => c.id === editingBooking.customer_id);
       setCustomerId(editingBooking.customer_id || "");
       setCustomerName(existingCustomer?.name || "");
@@ -285,7 +288,6 @@ export function NewBookingModal({
       setCustomerNotes(existingCustomer?.notes || "");
       setCustomerInternalNotes(existingCustomer?.internal_notes || "");
 
-      // Validar fecha de inicio
       if (editingBooking.starts_at) {
         const startsAt = new Date(editingBooking.starts_at);
         if (!isNaN(startsAt.getTime())) {
@@ -294,12 +296,11 @@ export function NewBookingModal({
         }
       }
 
-      setStatus(editingBooking.status as "pending" | "paid" | "completed" | "cancelled" | "no_show" || "pending");
+      setStatus((editingBooking.status as "pending" | "paid" | "completed" | "cancelled" | "no_show") || "pending");
       setInternalNotes(editingBooking.internal_notes || "");
       setClientMessage(editingBooking.client_message || "");
       setIsHighlighted(editingBooking.is_highlighted || false);
 
-      // Cargar servicio si existe
       if (editingBooking.service_id && editingBooking.staff_id) {
         setBookingServices([
           {
@@ -311,8 +312,7 @@ export function NewBookingModal({
           },
         ]);
       }
-    } else if (!editingBooking && isOpen) {
-      // Resetear formulario
+    } else {
       setCustomerId("");
       setCustomerName("");
       setCustomerPhone("");
@@ -328,7 +328,7 @@ export function NewBookingModal({
       setClientMessage("");
       setIsHighlighted(false);
     }
-  }, [editingBooking, isOpen, customers, selectedDate, selectedTime]);
+  }, [isOpen, editingBooking?.id]);
 
   // Función para filtrar sugerencias de cliente
   const updateCustomerSuggestions = useMemo(() => {
