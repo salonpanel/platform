@@ -150,8 +150,11 @@ export function useSmartPrefetchData(tenantId: string | null, impersonateOrgId: 
         console.log('[SmartPrefetch] Iniciando precarga inteligente...');
 
         const supabase = getSupabaseBrowser();
-        const { tenant } = await getCurrentTenant(impersonateOrgId);
-        if (!tenant) return;
+        const [{ tenant }, { data: { user } }] = await Promise.all([
+          getCurrentTenant(impersonateOrgId),
+          supabase.auth.getUser(),
+        ]);
+        if (!tenant || !user) return;
 
         const tenantIdLocal = tenant.id;
 
@@ -174,7 +177,7 @@ export function useSmartPrefetchData(tenantId: string | null, impersonateOrgId: 
             // Usar la misma RPC que el componente optimizado
             const { data: conversationsData, error } = await supabase
               .rpc("get_user_conversations_optimized", {
-                p_user_id: tenantId,
+                p_user_id: user.id,
                 p_tenant_id: tenant.id,
               });
 
