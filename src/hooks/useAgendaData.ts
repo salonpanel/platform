@@ -161,8 +161,8 @@ export function useAgendaData({ tenantId, selectedDate, viewMode, initialData }:
         const [bookingsRpc, statsRpc, blockingsRes, schedulesRes] = await Promise.all([
           supabase.rpc("get_filtered_bookings", {
             p_tenant_id: tenantId,
-            p_start_at: range.startISO,
-            p_end_at: range.endISO,
+            p_start_date: range.startISO,
+            p_end_date: range.endISO,
           }),
           supabase.rpc("get_agenda_stats", {
             p_tenant_id: tenantId,
