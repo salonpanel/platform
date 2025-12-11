@@ -117,7 +117,8 @@ export async function PUT(
     // Obtener user_id del contexto de autenticación
     const { cookies } = await import("next/headers");
     const { createRouteHandlerClient } = await import("@supabase/auth-helpers-nextjs");
-    const supabaseAuth = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabaseAuth = createRouteHandlerClient({ cookies: () => cookieStore });
     const {
       data: { session },
     } = await supabaseAuth.auth.getSession();

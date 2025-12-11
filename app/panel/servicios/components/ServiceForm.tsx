@@ -12,6 +12,7 @@ type Props = {
   onChange: (patch: Partial<ServiceFormState>) => void;
   categoryOptions: string[];
   staffOptions?: Array<{ id: string; name: string }>;
+  staffOptionsLoading?: boolean;
   tenantId: string;
   serviceId?: string; // For editing existing services
   onStaffChange?: (staffIds: string[]) => void; // Callback for staff assignment changes
@@ -19,7 +20,7 @@ type Props = {
 
 const formatPriceField = (value: number) => (value / 100).toFixed(2);
 
-export function ServiceForm({ form, onChange, categoryOptions, staffOptions, tenantId, serviceId, onStaffChange }: Props) {
+export function ServiceForm({ form, onChange, categoryOptions, staffOptions, staffOptionsLoading, tenantId, serviceId, onStaffChange }: Props) {
   const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
   const [loadingStaff, setLoadingStaff] = useState(false);
 
@@ -121,7 +122,11 @@ export function ServiceForm({ form, onChange, categoryOptions, staffOptions, ten
             <label className="block text-sm font-medium text-white mb-3">
               Miembros del staff que pueden prestar este servicio
             </label>
-            {staffOptions && staffOptions.length > 0 ? (
+            {staffOptionsLoading ? (
+              <div className="p-3 rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-white/5">
+                <p className="text-sm text-[var(--color-text-secondary)]">Cargando miembros del staff...</p>
+              </div>
+            ) : staffOptions && staffOptions.length > 0 ? (
               <div className="space-y-2 max-h-48 overflow-y-auto glass p-3 rounded-[var(--radius-md)] border border-[var(--glass-border)]">
                 {loadingStaff ? (
                   <p className="text-sm text-[var(--color-text-secondary)]">Cargando asignaciones...</p>

@@ -60,7 +60,8 @@ export async function POST(req: Request) {
     }
 
     const supabase = supabaseServer();
-    const supabaseAuth = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabaseAuth = createRouteHandlerClient({ cookies: () => cookieStore });
     const { data: { user: currentUser } } = await supabaseAuth.auth.getUser();
 
     if (!currentUser) {

@@ -31,7 +31,8 @@ export function withFeatureGuard(featureKey: string) {
 
         // Si aún no hay org_id, intentar obtenerlo del usuario autenticado
         if (!orgId) {
-          const supabase = createRouteHandlerClient({ cookies });
+          const cookieStore = await cookies();
+          const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
           const {
             data: { user },
           } = await supabase.auth.getUser();

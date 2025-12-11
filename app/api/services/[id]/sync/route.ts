@@ -19,7 +19,8 @@ export async function POST(_: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "ID requerido." }, { status: 400 });
     }
 
-    const supabaseAuth = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabaseAuth = createRouteHandlerClient({ cookies: cookieStore });
     const {
       data: { session },
     } = await supabaseAuth.auth.getSession();

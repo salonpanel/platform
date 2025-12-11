@@ -6,7 +6,8 @@ import { cookies } from "next/headers";
  * Nota: En producción, esto debería usar service_role o verificar permisos de platform admin
  */
 export async function getPlatformClient() {
-  const supabase = createRouteHandlerClient({ cookies });
+  const cookieStore = await cookies();
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   
   // TODO: Verificar que el usuario es platform admin
   // const { data: { user } } = await supabase.auth.getUser();
@@ -25,7 +26,8 @@ export async function getPlatformClient() {
  * Verificar si un usuario es platform admin
  */
 export async function isPlatformAdmin(userId: string): Promise<boolean> {
-  const supabase = createRouteHandlerClient({ cookies });
+  const cookieStore = await cookies();
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   
   // En producción, verificarías en platform.platform_users
   // Por ahora, retornamos false (implementar según tu modelo de auth)

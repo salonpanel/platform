@@ -57,7 +57,8 @@ export async function POST(
     }
 
     // Obtener user_id del contexto de autenticación
-    const supabaseAuth = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabaseAuth = createRouteHandlerClient({ cookies: () => cookieStore });
     const {
       data: { session },
     } = await supabaseAuth.auth.getSession();
@@ -148,7 +149,8 @@ export async function DELETE(
     const supabase = supabaseServer();
 
     // Obtener user_id del contexto de autenticación
-    const supabaseAuth = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabaseAuth = createRouteHandlerClient({ cookies: () => cookieStore });
     const {
       data: { session },
     } = await supabaseAuth.auth.getSession();

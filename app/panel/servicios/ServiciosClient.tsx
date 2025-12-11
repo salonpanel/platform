@@ -87,6 +87,7 @@ export function ServiciosClient({
   const [servicePendingHardDelete, setServicePendingHardDelete] =
     useState<Service | null>(null);
   const [staffOptions, setStaffOptions] = useState<Array<{ id: string; name: string }>>([]);
+  const [staffOptionsLoading, setStaffOptionsLoading] = useState(false);
   const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
 
   const [filterStatus, setFilterStatus] =
@@ -667,8 +668,16 @@ export function ServiciosClient({
     if (!showModal || !tenantId) return;
 
     const loadStaffOptions = async () => {
-      const options = await fetchTenantStaffOptions(tenantId);
-      setStaffOptions(options);
+      setStaffOptionsLoading(true);
+      try {
+        const options = await fetchTenantStaffOptions(tenantId);
+        setStaffOptions(options);
+      } catch (err) {
+        console.error("Error fetching staff options:", err);
+        setStaffOptions([]);
+      } finally {
+        setStaffOptionsLoading(false);
+      }
     };
 
     loadStaffOptions();
@@ -1070,6 +1079,7 @@ export function ServiciosClient({
           onChange={handleFormChange}
           categoryOptions={categoryOptions}
           staffOptions={staffOptions}
+          staffOptionsLoading={staffOptionsLoading}
           tenantId={tenantId}
           serviceId={editingService?.id}
           onStaffChange={(staffIds) => {

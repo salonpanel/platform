@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     }
 
     // 1) Verificar sesión y membership
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     const {
       data: { session },

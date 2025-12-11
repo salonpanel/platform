@@ -12,8 +12,9 @@ export async function GET(req: NextRequest) {
   try {
     console.log("[PrefetchPanelData] 🔥 Iniciando prefetch inteligente de datos del panel...");
 
-    // En Next.js 16, cookies() NO es async en route handlers, se pasa directamente
-    const supabase = createRouteHandlerClient({ cookies });
+    // En Next.js 15+, cookies() retorna una Promise en route handlers y debe ser awaited
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     // Verificar que tenemos sesión válida
     const {

@@ -28,7 +28,8 @@ export async function GET(req: Request) {
     const searchTerm = searchParams.get("search") || "";
     const impersonateOrgId = searchParams.get("impersonate");
 
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     const {
       data: { session },
     } = await supabase.auth.getSession();

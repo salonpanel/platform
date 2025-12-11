@@ -37,7 +37,8 @@ export async function POST(req: Request) {
     const body = (await req.json()) as SyncServiceRequest | SyncAllRequest;
     
     // P1.3: Validar autenticación
-    const supabaseAuth = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabaseAuth = createRouteHandlerClient({ cookies: () => cookieStore });
     const {
       data: { session },
     } = await supabaseAuth.auth.getSession();

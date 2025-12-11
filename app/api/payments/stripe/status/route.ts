@@ -21,8 +21,9 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   try {
     // 1. Verificar autenticación
+    const cookieStore = await cookies();
     const supabaseAuth = createRouteHandlerClient({ 
-      cookies 
+      cookies: () => cookieStore 
     });
     const {
       data: { session },

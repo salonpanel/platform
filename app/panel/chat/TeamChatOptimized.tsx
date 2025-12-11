@@ -1,5 +1,6 @@
 "use client";
 
+// Updated error logging - 2025-12-10
 import {
 	RefObject,
 	useCallback,
@@ -214,7 +215,13 @@ export function TeamChatOptimized({
 					);
 				}
 			} catch (err) {
-				console.error("[TeamChatOptimized] Error cargando mensajes", err);
+				console.error("[TeamChatOptimized] Error cargando mensajes", {
+					error: err,
+					message: err instanceof Error ? err.message : String(err),
+					stack: err instanceof Error ? err.stack : undefined,
+					conversationId,
+					beforeTimestamp
+				});
 			} finally {
 				setMessagesLoading(false);
 			}
