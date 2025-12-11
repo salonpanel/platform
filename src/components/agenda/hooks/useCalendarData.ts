@@ -55,7 +55,7 @@ export function useCalendarData({
             .select(`
               *,
               customer:customers(id, name, email, phone),
-              service:services(id, name, duration_min, price_cents),
+              service:services!bookings_service_id_fkey(id, name, duration_min, price_cents),
               staff:staff(id, name)
             `)
             .eq("tenant_id", tenantId)
@@ -143,7 +143,7 @@ export function useCalendarData({
           .select(`
             *,
             customer:customers(id, name, email, phone),
-            service:services(id, name, duration_min, price_cents),
+            service:services!bookings_service_id_fkey(id, name, duration_min, price_cents),
             staff:staff(id, name)
           `)
           .eq("tenant_id", tenantId)

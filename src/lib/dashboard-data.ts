@@ -294,7 +294,7 @@ export async function fetchDashboardDataset(
       .select(`
         id, starts_at, ends_at, status,
         customer:customers(name, email),
-        service:services(name, price_cents),
+        service:services!bookings_service_id_fkey(name, price_cents),
         staff:staff(name)
       `)
       .eq("tenant_id", tenant.id)

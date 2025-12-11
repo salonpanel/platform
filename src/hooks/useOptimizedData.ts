@@ -125,7 +125,7 @@ export function useDashboardDataLegacy(tenantId: string | null, timezone: string
           ends_at,
           status,
           customer:customers(name, email),
-          service:services(name),
+          service:services!bookings_service_id_fkey(name),
           staff:staff(name)
         `)
         .eq("tenant_id", tenantId)
