@@ -48,12 +48,9 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (checkError || !userCheck) {
-      console.log("[PreloadUserSession] ℹ️ Usuario no encontrado:", emailNormalized);
-      return NextResponse.json({
-        ok: false,
-        error: "Usuario no encontrado",
-        isNewUser: true
-      }, { status: 404 });
+      console.log("[PreloadUserSession] ℹ️ Usuario no encontrado (no crítico en preload):", emailNormalized);
+      // No ruido: devolver ok:true para que el hook no muestre 404 en consola
+      return NextResponse.json({ ok: true, isNewUser: true });
     }
 
     console.log("[PreloadUserSession] ✅ Usuario encontrado, preparando tenant info...");
@@ -67,12 +64,8 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (!membership?.tenant_id) {
-      console.log("[PreloadUserSession] ⚠️ Usuario sin membership activo");
-      return NextResponse.json({
-        ok: false,
-        error: "Usuario sin barbería asignada",
-        userId: userCheck.id
-      }, { status: 404 });
+      console.log("[PreloadUserSession] ⚠️ Usuario sin membership activo (preload)");
+      return NextResponse.json({ ok: true, userId: userCheck.id, isNewUser: true });
     }
 
     // Obtener info básica del tenant (sin datos sensibles)
@@ -83,12 +76,8 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (!tenant) {
-      console.log("[PreloadUserSession] ❌ Tenant no encontrado");
-      return NextResponse.json({
-        ok: false,
-        error: "Barbería no encontrada",
-        tenantId: membership.tenant_id
-      }, { status: 404 });
+      console.log("[PreloadUserSession] ❌ Tenant no encontrado (preload)");
+      return NextResponse.json({ ok: true, tenantId: membership.tenant_id });
     }
 
     console.log("[PreloadUserSession] ✅ Sesión preparada para:", {

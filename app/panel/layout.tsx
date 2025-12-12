@@ -6,7 +6,8 @@
 import { ReactNode } from "react";
 import PanelLayoutClient from "./layout-client";
 import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
+import { redirect } from "next/navigation";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { supabaseServer } from "@/lib/supabase";
 import { BookingModalProvider } from "@/contexts/BookingModalContext";
 import { BookingCreateModal } from "@/modules/bookings/BookingCreateModal";
@@ -18,24 +19,17 @@ export default async function PanelLayout({ children }: { children: ReactNode })
   // while still keeping the client-side auth verification as a safe fallback.
   try {
     const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll() {
-            /* lectura únicamente */
-          },
-        },
-      }
-    );
+    const supabase = createServerComponentClient({ cookies: () => cookieStore });
 
     const {
-      data: { user },
-    } = await supabase.auth.getUser();
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      redirect("/login?redirect=/panel");
+    }
+
+    const user = session.user;
 
     if (!user) {
       return (

@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   try {
     console.log("[PrefetchPanelData] 🔥 Iniciando prefetch inteligente de datos del panel...");
 
-    // En Next.js 15+, cookies() retorna una Promise en route handlers y debe ser awaited
+    // Usar cookies directamente con createRouteHandlerClient
     const cookieStore = await cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
       data: { session },
     } = await supabase.auth.getSession();
 
-    if (!session?.user) {
+    if (!session) {
       console.log("[PrefetchPanelData] ❌ No hay sesión válida, abortando prefetch");
       return NextResponse.json(
         { ok: false, error: "No session" },

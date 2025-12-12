@@ -30,34 +30,7 @@ function VerifyCodeContent() {
     return () => clearInterval(timer);
   }, [timeLeft]);
 
-  // Listener para detectar cuando la sesión se establece después de verificar OTP
-  useEffect(() => {
-    const checkSessionAndRedirect = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session && success) {
-          // Si hay sesión y ya verificamos el código, redirigir
-          const redirectParam = searchParams?.get("redirect");
-          const redirectPath = redirectParam || "/panel";
-          console.log("[VerifyCode] Sesión detectada, redirigiendo a:", redirectPath);
-          window.location.href = redirectPath;
-        }
-      } catch (err) {
-        console.warn("[VerifyCode] Error checking session:", err);
-      }
-    };
-
-    // Verificar sesión periódicamente después de verificación exitosa
-    if (success) {
-      const interval = setInterval(checkSessionAndRedirect, 500);
-      // Limpiar después de 5 segundos para evitar loops infinitos
-      const timeout = setTimeout(() => clearInterval(interval), 5000);
-      return () => {
-        clearInterval(interval);
-        clearTimeout(timeout);
-      };
-    }
-  }, [success, supabase, searchParams]);
+  // Redirección se hace directamente tras verificación exitosa en el servidor
 
   // Ya no necesitamos el listener de auth state porque la verificación se hace en el servidor
   // El servidor escribe las cookies y luego redirigimos
@@ -76,8 +49,8 @@ function VerifyCodeContent() {
       return;
     }
 
-    if (code.length !== 8) {
-      setError("El código debe tener 8 dígitos");
+    if (code.length !== 6) {
+      setError("El código debe tener 6 dígitos");
       setVerifying(false);
       return;
     }
@@ -138,6 +111,8 @@ function VerifyCodeContent() {
       // Esperar un momento para asegurar que las cookies se establezcan antes de redirigir
       setVerifying(false);
       setSuccess(true);
+      // Redirigir inmediatamente sin leer cookies manualmente
+      router.replace("/panel");
       
       // 🔥 OPTIMIZACIÓN: Después de verificación exitosa, hacer prefetch inteligente
       // para calentar datos críticos antes de redirigir
@@ -172,10 +147,10 @@ function VerifyCodeContent() {
         
         console.log("[VerifyCode] Redirigiendo a:", redirectPath);
         
-        // Redirigir después de un delay mayor para asegurar que las cookies se propaguen
+        // Redirección ya ejecutada; mantener por seguridad si aún no navegó
         setTimeout(() => {
-          window.location.href = redirectPath;
-        }, 800); // Aumentado a 800ms para asegurar que las cookies se registren en el navegador
+          router.replace(redirectPath);
+        }, 500);
         
       } catch (prefetchError) {
         console.warn('[VerifyCode] Error en prefetch, continuando con redirección normal:', prefetchError);
@@ -183,8 +158,8 @@ function VerifyCodeContent() {
         const redirectParam = searchParams?.get("redirect");
         const redirectPath = redirectParam || "/panel";
         setTimeout(() => {
-          window.location.href = redirectPath;
-        }, 800); // Aumentado a 800ms para asegurar propagación de cookies
+          router.replace(redirectPath);
+        }, 500);
       }
     } catch (err: any) {
       console.error("[VerifyCode] Error inesperado:", err);
@@ -206,6 +181,7 @@ function VerifyCodeContent() {
         email: email.toLowerCase().trim(),
         options: {
           shouldCreateUser: true,
+          skipBrowserRedirect: true, // ✅ Necesario con SSR en Next.js 16
         },
       });
 
@@ -303,7 +279,7 @@ function VerifyCodeContent() {
               Verifica tu código
             </h1>
             <p className="text-slate-400 text-sm">
-              Introduce el código de 8 dígitos enviado a
+              Introduce el código de 6 dígitos enviado a
             </p>
             <p className="text-white font-semibold mt-1">{email}</p>
           </motion.div>
@@ -362,31 +338,31 @@ function VerifyCodeContent() {
                       id="code"
                       type="text"
                       inputMode="numeric"
-                      pattern="[0-9]{8}"
-                      maxLength={8}
+                      pattern="[0-9]{6}"
+                      maxLength={6}
                       required
                       value={code}
                       onChange={(e) => {
                         // Solo permitir números
-                        const value = e.target.value.replace(/\D/g, '').slice(0, 8);
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 6);
                         setCode(value);
                         setError(null); // Limpiar error al escribir
                       }}
                       disabled={verifying}
                       className="w-full px-4 py-3.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 font-mono text-2xl text-center tracking-widest backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                      placeholder="00000000"
+                      placeholder="000000"
                       style={{ borderRadius: "12px" }}
                       autoFocus
                     />
                   </div>
                   <p className="text-xs text-slate-500 mt-2 text-center">
-                    El código de 8 dígitos expira en 10 minutos
+                    El código de 6 dígitos expira en 10 minutos
                   </p>
                 </div>
 
                 <motion.button
                   type="submit"
-                  disabled={verifying || code.length !== 8}
+                  disabled={verifying || code.length !== 6}
                   whileHover={{ scale: verifying ? 1 : 1.02 }}
                   whileTap={{ scale: verifying ? 1 : 0.98 }}
                   className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold font-satoshi shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"

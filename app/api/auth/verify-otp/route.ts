@@ -5,52 +5,21 @@ import { createServerClient } from "@supabase/ssr";
 
 export async function POST(req: NextRequest) {
   try {
-    if (process.env.NODE_ENV === 'development') {
-      console.log("[VerifyOTP API] Iniciando verificación OTP...");
-    }
+    const body = await req.json();
+    const email = body?.email?.toLowerCase()?.trim();
+    const token = body?.token?.trim();
 
-    // SEGURIDAD: Validar origen de la request (CSRF protection)
-    const origin = req.headers.get('origin');
-    const referer = req.headers.get('referer');
-    const isDevelopment = process.env.NODE_ENV === 'development';
+    console.log("[VerifyOTP] Request recibido:", {
+      email: email ? email.substring(0, 5) + "..." : "EMPTY",
+      tokenLength: token?.length || 0,
+      body,
+    });
 
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://127.0.0.1:3000',
-      'https://pro.bookfast.es',
-      'https://admin.bookfast.es',
-    ];
-
-    // Validar origen solo en producción
-    if (!isDevelopment && origin && !allowedOrigins.includes(origin)) {
-      console.error("[VerifyOTP API] Origen no permitido:", origin);
-      return NextResponse.json(
-        { ok: false, error: "Origen no permitido" },
-        { status: 403 }
-      );
-    }
-
-    let body;
-    try {
-      body = await req.json();
-      if (process.env.NODE_ENV === 'development') {
-        console.log("[VerifyOTP API] Body recibido:", {
-          hasEmail: !!body?.email,
-          hasToken: !!body?.token
-        });
-      }
-    } catch (parseError: any) {
-      console.error("[VerifyOTP API] Error parseando JSON:", parseError);
-      return NextResponse.json(
-        { ok: false, error: "Error al procesar la solicitud." },
-        { status: 400 }
-      );
-    }
-
-    if (!body || !body.email || !body.token) {
-      console.error("[VerifyOTP API] Datos incompletos:", {
-        hasEmail: !!body?.email,
-        hasToken: !!body?.token
+    if (!email || !token) {
+      console.error("[VerifyOTP] Datos incompletos:", {
+        hasEmail: !!email,
+        hasToken: !!token,
+        body,
       });
       return NextResponse.json(
         { ok: false, error: "Datos de verificación incompletos." },
@@ -58,19 +27,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const email = String(body.email).toLowerCase().trim();
-    const token = String(body.token).trim();
-
-    if (process.env.NODE_ENV === 'development') {
-      console.log("[VerifyOTP API] Creando cliente Supabase...");
-    }
-    // ✅ Usar createServerClient de @supabase/ssr para Next.js 16
-    // Este helper maneja correctamente las cookies en route handlers
+    // ❗ Next.js 16 → cookies() ES UNA PROMISE
     const cookieStore = await cookies();
 
-    // Crear una respuesta vacía para establecer cookies
-    const response = new NextResponse();
+    // ❗ Crea una respuesta base, que será usada para Set-Cookie
+    const res = NextResponse.json({ ok: true });
 
+    // ❗ createServerClient DEBE usar esta respuesta
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -81,25 +44,18 @@ export async function POST(req: NextRequest) {
           },
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value, options }) => {
-              response.cookies.set(name, value, options);
+              res.cookies.set(name, value, options);
             });
           },
         },
-        // CRÍTICO: usar el mismo nombre de cookie que el cliente del navegador
-        // (definido en src/lib/supabase/browser.ts como "sb-panel-auth")
         cookieOptions: {
           name: "sb-panel-auth",
           path: "/",
+          sameSite: "lax",
+          secure: process.env.NODE_ENV === "production",
         },
       }
     );
-    if (process.env.NODE_ENV === 'development') {
-      console.log("[VerifyOTP API] Cliente Supabase creado correctamente");
-    }
-
-    if (process.env.NODE_ENV === 'development') {
-      console.log("[VerifyOTP API] Verificando OTP para:", email);
-    }
 
     const { data, error } = await supabase.auth.verifyOtp({
       type: "email",
@@ -107,68 +63,42 @@ export async function POST(req: NextRequest) {
       token,
     });
 
+    console.log("[VerifyOTP] Respuesta de Supabase:", {
+      hasData: !!data,
+      hasSession: !!data?.session,
+      errorMessage: error?.message,
+      errorStatus: error?.status,
+      errorCode: error?.code,
+      fullError: error,
+    });
+
     if (error || !data?.session) {
-      console.error("[VerifyOTP API] Error al verificar OTP:", error);
+      console.error("[VerifyOTP] FALLO - Error:", error?.message || "No hay sesión");
       return NextResponse.json(
-        {
-          ok: false,
-          error:
-            error?.message ||
-            "El código no es válido o ha expirado. Por favor, inténtalo de nuevo.",
-        },
+        { ok: false, error: error?.message || "Código inválido." },
         { status: 400 }
       );
     }
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log("[VerifyOTP API] Sesión creada:", {
-        userId: data.session.user?.id,
-        email: data.session.user?.email,
-      });
-
-      // Log adicional: inspeccionar las cookies que se han escrito en la respuesta
-      try {
-        const allCookies = response.cookies.getAll();
-        const authCookies = allCookies.filter((c) => c.name.startsWith("sb-panel-auth"));
-        console.log("[VerifyOTP API] Cookies en respuesta tras verifyOtp:", {
-          totalCookies: allCookies.length,
-          allCookieNames: allCookies.map((c) => c.name),
-          authCookieNames: authCookies.map((c) => c.name),
-        });
-      } catch (cookieError) {
-        console.warn("[VerifyOTP API] Error inspeccionando cookies de respuesta:", cookieError);
-      }
-    }
-
-    // ⚠️ Importante:
-    // - createServerClient + verifyOtp escriben las cookies de sesión en response
-    //   (sb-panel-auth-auth-token, sb-panel-auth-refresh-token, etc.)
-    // - Devolver la respuesta con los headers de cookies establecidos
-
-    return NextResponse.json(
-      {
+    // ❗ Devuelve la MISMA respuesta con las cookies adjuntas
+    return new NextResponse(
+      JSON.stringify({
         ok: true,
         user: {
-          id: data.session.user?.id,
-          email: data.session.user?.email,
+          id: data.session.user.id,
+          email: data.session.user.email,
         },
-      },
+      }),
       {
-        headers: response.headers,
+        status: 200,
+        headers: res.headers, // → AQUÍ VAN LAS COOKIES
       }
     );
+
   } catch (err: any) {
-    console.error("[VerifyOTP API] Error inesperado:", {
-      message: err?.message,
-      name: err?.name,
-      stack: err?.stack,
-      cause: err?.cause,
-    });
+    console.error("[VerifyOTP ERROR]", err);
     return NextResponse.json(
-      {
-        ok: false,
-        error: err?.message || "Error inesperado en verificación OTP.",
-      },
+      { ok: false, error: err?.message || "Error inesperado." },
       { status: 500 }
     );
   }

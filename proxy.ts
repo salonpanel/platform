@@ -1,49 +1,76 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
-import { getSupabaseServer } from "@/lib/supabase/server";
-import { getAppContextFromHost, resolveTenantByHost, getBaseUrlForContext, AppContext, parseSubdomain, isReservedSubdomain, getHostType, getTenantSubdomain } from "@/lib/domains";
-import { logDomainDebug, logTenantResolution } from "@/lib/middleware-debug";
-import { getMarketingUrl, URLS } from "@/lib/urls";
+import { createServerClient } from "@supabase/ssr";
 
-const RESERVED = ["www", "pro", "admin"];
-
+/**
+ * PROXY BOOKFAST — Next.js 16
+ * Maneja autenticación SSR + cookie personalizada sb-panel-auth
+ */
 export async function proxy(req: NextRequest) {
   const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req, res });
+
+  // Cliente Supabase SSR compatible con cookie personalizada
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return Array.from(req.cookies.getAll()).map((c) => ({
+            name: c.name,
+            value: c.value,
+          }));
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            res.cookies.set(name, value, {
+              ...options,
+            });
+          });
+        },
+      },
+      cookieOptions: {
+        name: "sb-panel-auth",
+        path: "/",
+        // NO domain (auto en prod, none en localhost)
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      },
+    }
+  );
+
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const host = req.nextUrl.host;
   const pathname = req.nextUrl.pathname;
 
-  // Log de depuración para sesión en proxy
+  // DEBUG SOLO PANEL / ADMIN
   if (pathname.startsWith("/panel") || pathname.startsWith("/admin")) {
-    // Log de cookies disponibles
-    const authCookies = Array.from(req.cookies.getAll()).filter(c => 
-      c.name.includes('sb-panel-auth')
+    const rawCookies = Array.from(req.cookies.getAll());
+    const authCookies = rawCookies.filter((c) =>
+      c.name.startsWith("sb-panel-auth")
     );
-    
-    // Log también todas las cookies para debugging
-    const allCookies = Array.from(req.cookies.getAll());
-    const cookieNames = allCookies.map(c => c.name);
-    
-    logDomainDebug(`[Proxy] Session check for ${pathname}:`, {
+
+    console.log("[Proxy] Session check:", {
+      path: pathname,
       hasSession: !!session,
       userId: session?.user?.id,
-      email: session?.user?.email,
-      authCookiesCount: authCookies.length,
-      authCookieNames: authCookies.map(c => c.name),
-      allCookiesCount: allCookies.length,
-      allCookieNames: cookieNames,
+      authCookies: authCookies.map((c) => c.name),
+      allCookies: rawCookies.map((c) => c.name),
     });
   }
-  // ...existing code...
+
+  // PROTEGER PANEL
+  if (!session && pathname.startsWith("/panel")) {
+    const url = new URL("/login", req.url);
+    url.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(url);
+  }
+
+  return res;
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|api/|auth/callback|login/verify-code|public|_vercel|static|assets|img|fonts|docs|legal|robots.txt|sitemap.xml).*)",
-  ],
+  matcher: ["/panel/:path*"],
 };

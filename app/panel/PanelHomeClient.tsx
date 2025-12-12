@@ -69,8 +69,16 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
       credentials: 'include',
       cache: 'no-store'
     })
-      .then(response => response.json())
+      .then(response => {
+        if (response.status === 401) {
+          console.log('[PanelHome] 🔄 Sesión expirada, redirigiendo a login...');
+          router.push('/login');
+          return;
+        }
+        return response.json();
+      })
       .then(data => {
+        if (!data) return; // Si redirigió, no hay data
         if (data.ok && data.data) {
           console.log('[PanelHome] ✅ Datos prefetched obtenidos del API');
           // Guardar en sessionStorage para uso inmediato

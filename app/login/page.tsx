@@ -55,39 +55,42 @@ function LoginContent() {
     setLoading(true);
 
     try {
-      const { error: authError } = await supabase.auth.signInWithOtp({
-        email: email.toLowerCase().trim(),
-        options: {
-          shouldCreateUser: true,
-        },
+      console.log("[Login] Enviando código vía Resend...");
+
+      // Llamar al endpoint Resend que genera el token y envía el email
+      const sendRes = await fetch("/api/auth/send-otp-resend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+        }),
       });
 
-      if (authError) {
-        console.error("Error al enviar OTP:", authError);
-        
-        // Si Supabase devuelve el mensaje de "solo puedes pedirlo después de X segundos"
-        if (authError.message?.includes("you can only request this after")) {
-          // Extraer el número de segundos del mensaje o usar 60 por defecto
-          const match = authError.message.match(/(\d+)\s+seconds?/i);
-          const seconds = match ? parseInt(match[1], 10) : 60;
-          setCooldown(seconds);
-          setError(`Por favor espera ${seconds} segundos antes de solicitar otro código.`);
-        } else if (authError.message?.includes('rate limit') || authError.message?.includes('too many')) {
-          setCooldown(60);
-          setError('Por favor espera un momento antes de reenviar el código. Puedes solicitar un nuevo código cada 60 segundos.');
-        } else if (authError.message?.includes('email')) {
-          setError('Por favor ingresa un correo electrónico válido.');
+      const sendData = await sendRes.json();
+
+      console.log("[Login] Respuesta de /api/auth/send-otp-resend:", sendData);
+
+      if (!sendRes.ok || !sendData.ok) {
+        const errorMsg = sendData?.error || "No se pudo enviar el código.";
+        console.error("Error al enviar OTP:", errorMsg);
+
+        if (sendRes.status === 429) {
+          const retryAfter = sendData?.retryAfter || 60;
+          setCooldown(retryAfter);
+          setError(
+            `Por favor espera ${retryAfter} segundos antes de solicitar otro código.`
+          );
         } else {
-          setError(authError.message || 'No se pudo enviar el código. Intenta de nuevo.');
+          setError(errorMsg);
         }
         setLoading(false);
         return;
       }
 
-      // Éxito: redirigir a la página de verificación
+      // Éxito: el código fue enviado vía Resend
       setSent(true);
       setLoading(false);
-      setCooldown(60); // Establecer cooldown después de envío exitoso
+      setCooldown(60);
 
       // 🔥 PRECARGA DE DATOS: Una vez sabemos el email, preparamos la sesión
       try {
@@ -99,9 +102,8 @@ function LoginContent() {
         console.warn('[Login] Error iniciando precarga:', preloadError);
         // Continuar sin precarga si falla
       }
-
-      // Redirigir a la página de verificación con el email como parámetro
-      router.push(`/login/verify-code?email=${encodeURIComponent(email)}`);
+      // Redirigir a la página de verificación con el email
+      router.push(`/login/verify-code?email=${encodeURIComponent(email.toLowerCase().trim())}`);
     } catch (err: any) {
       console.error("Error inesperado:", err);
       setError(err?.message || "Error al enviar el código. Por favor, intenta de nuevo.");

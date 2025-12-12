@@ -1,0 +1,312 @@
+-- ============================================================================
+-- SEED DATA - BookFast Pro Local Development
+-- ============================================================================
+-- Este archivo contiene datos mínimos para desarrollo local:
+-- - Usuarios de prueba en auth.users
+-- - Un tenant de ejemplo
+-- - Memberships para los usuarios
+-- - Staff, servicios y configuración básica
+-- ============================================================================
+
+-- ============================================================================
+-- 1. USUARIOS DE PRUEBA
+-- ============================================================================
+-- Nota: Los usuarios se deben crear con la función de Supabase Auth
+-- Aquí solo insertamos datos si no existen
+
+-- Usuario propietario (owner)
+INSERT INTO auth.users (
+  id,
+  instance_id,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  created_at,
+  updated_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  is_super_admin,
+  role,
+  aud,
+  confirmation_token,
+  email_change,
+  email_change_token_new,
+  recovery_token
+) VALUES (
+  '00000000-0000-0000-0000-000000000001'::uuid,
+  '00000000-0000-0000-0000-000000000000'::uuid,
+  'owner@bookfast.local',
+  '$2a$10$abcdefghijklmnopqrstuvwxyz12345678901234567890',  -- password: 'password123' (cambiar en producción)
+  NOW(),
+  NOW(),
+  NOW(),
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{"full_name":"Demo Owner"}'::jsonb,
+  false,
+  'authenticated',
+  'authenticated',
+  '',
+  '',
+  '',
+  ''
+) ON CONFLICT (id) DO NOTHING;
+
+-- Usuario staff
+INSERT INTO auth.users (
+  id,
+  instance_id,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  created_at,
+  updated_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  is_super_admin,
+  role,
+  aud,
+  confirmation_token,
+  email_change,
+  email_change_token_new,
+  recovery_token
+) VALUES (
+  '00000000-0000-0000-0000-000000000002'::uuid,
+  '00000000-0000-0000-0000-000000000000'::uuid,
+  'staff@bookfast.local',
+  '$2a$10$abcdefghijklmnopqrstuvwxyz12345678901234567890',
+  NOW(),
+  NOW(),
+  NOW(),
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{"full_name":"Demo Staff"}'::jsonb,
+  false,
+  'authenticated',
+  'authenticated',
+  '',
+  '',
+  '',
+  ''
+) ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- 2. TENANT DE PRUEBA
+-- ============================================================================
+
+INSERT INTO public.tenants (
+  id,
+  name,
+  slug,
+  timezone,
+  logo_url,
+  primary_color,
+  contact_email,
+  contact_phone,
+  address,
+  stripe_account_id,
+  stripe_onboarding_status,
+  stripe_charges_enabled,
+  stripe_payouts_enabled,
+  public_subdomain
+) VALUES (
+  '10000000-0000-0000-0000-000000000001'::uuid,
+  'BookFast Demo',
+  'bookfast-demo',
+  'Europe/Madrid',
+  NULL,
+  '#4cb3ff',
+  'demo@bookfast.local',
+  '+34 600 000 000',
+  'Calle Demo, 123, Madrid',
+  NULL,
+  'pending',
+  false,
+  false,
+  'demo'
+) ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- 3. MEMBERSHIPS (Relaciones usuario-tenant)
+-- ============================================================================
+
+-- Owner
+INSERT INTO public.memberships (
+  id,
+  tenant_id,
+  user_id,
+  role
+) VALUES (
+  '20000000-0000-0000-0000-000000000001'::uuid,
+  '10000000-0000-0000-0000-000000000001'::uuid,
+  '00000000-0000-0000-0000-000000000001'::uuid,
+  'owner'
+) ON CONFLICT (id) DO NOTHING;
+
+-- Staff
+INSERT INTO public.memberships (
+  id,
+  tenant_id,
+  user_id,
+  role
+) VALUES (
+  '20000000-0000-0000-0000-000000000002'::uuid,
+  '10000000-0000-0000-0000-000000000001'::uuid,
+  '00000000-0000-0000-0000-000000000002'::uuid,
+  'staff'
+) ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- 4. PROFILES
+-- ============================================================================
+
+INSERT INTO public.profiles (
+  id,
+  full_name,
+  avatar_url
+) VALUES (
+  '00000000-0000-0000-0000-000000000001'::uuid,
+  'Demo Owner',
+  NULL
+) ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.profiles (
+  id,
+  full_name,
+  avatar_url
+) VALUES (
+  '00000000-0000-0000-0000-000000000002'::uuid,
+  'Demo Staff',
+  NULL
+) ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- 5. STAFF (Personal que atiende)
+-- ============================================================================
+
+INSERT INTO public.staff (
+  id,
+  tenant_id,
+  user_id,
+  name,
+  email,
+  phone,
+  active,
+  avatar_url,
+  bio,
+  specialties
+) VALUES (
+  '30000000-0000-0000-0000-000000000001'::uuid,
+  '10000000-0000-0000-0000-000000000001'::uuid,
+  '00000000-0000-0000-0000-000000000002'::uuid,
+  'Demo Staff',
+  'staff@bookfast.local',
+  '+34 600 000 001',
+  true,
+  NULL,
+  'Barbero profesional con 10 años de experiencia',
+  ARRAY['Corte clásico', 'Fade', 'Barba']
+) ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- 6. SERVICIOS
+-- ============================================================================
+
+INSERT INTO public.services (
+  id,
+  tenant_id,
+  name,
+  description,
+  duration_minutes,
+  price_cents,
+  active,
+  color,
+  category
+) VALUES (
+  '40000000-0000-0000-0000-000000000001'::uuid,
+  '10000000-0000-0000-0000-000000000001'::uuid,
+  'Corte de pelo',
+  'Corte de pelo clásico',
+  30,
+  1500,  -- 15.00 EUR
+  true,
+  '#FF6B6B',
+  'haircut'
+) ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.services (
+  id,
+  tenant_id,
+  name,
+  description,
+  duration_minutes,
+  price_cents,
+  active,
+  color,
+  category
+) VALUES (
+  '40000000-0000-0000-0000-000000000002'::uuid,
+  '10000000-0000-0000-0000-000000000001'::uuid,
+  'Arreglo de barba',
+  'Perfilado y arreglo de barba',
+  20,
+  1000,  -- 10.00 EUR
+  true,
+  '#4ECDC4',
+  'beard'
+) ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- 7. RELACIÓN STAFF-SERVICIOS
+-- ============================================================================
+
+INSERT INTO public.staff_provides_services (
+  id,
+  staff_id,
+  service_id,
+  tenant_id
+) VALUES (
+  '50000000-0000-0000-0000-000000000001'::uuid,
+  '30000000-0000-0000-0000-000000000001'::uuid,
+  '40000000-0000-0000-0000-000000000001'::uuid,
+  '10000000-0000-0000-0000-000000000001'::uuid
+) ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.staff_provides_services (
+  id,
+  staff_id,
+  service_id,
+  tenant_id
+) VALUES (
+  '50000000-0000-0000-0000-000000000002'::uuid,
+  '30000000-0000-0000-0000-000000000001'::uuid,
+  '40000000-0000-0000-0000-000000000002'::uuid,
+  '10000000-0000-0000-0000-000000000001'::uuid
+) ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- 8. HORARIOS DEL STAFF
+-- ============================================================================
+
+-- Lunes a Viernes: 9:00 - 18:00
+INSERT INTO public.staff_schedules (
+  id,
+  staff_id,
+  tenant_id,
+  day_of_week,
+  start_time,
+  end_time,
+  active
+) VALUES 
+  ('60000000-0000-0000-0000-000000000001'::uuid, '30000000-0000-0000-0000-000000000001'::uuid, '10000000-0000-0000-0000-000000000001'::uuid, 1, '09:00', '18:00', true),
+  ('60000000-0000-0000-0000-000000000002'::uuid, '30000000-0000-0000-0000-000000000001'::uuid, '10000000-0000-0000-0000-000000000001'::uuid, 2, '09:00', '18:00', true),
+  ('60000000-0000-0000-0000-000000000003'::uuid, '30000000-0000-0000-0000-000000000001'::uuid, '10000000-0000-0000-0000-000000000001'::uuid, 3, '09:00', '18:00', true),
+  ('60000000-0000-0000-0000-000000000004'::uuid, '30000000-0000-0000-0000-000000000001'::uuid, '10000000-0000-0000-0000-000000000001'::uuid, 4, '09:00', '18:00', true),
+  ('60000000-0000-0000-0000-000000000005'::uuid, '30000000-0000-0000-0000-000000000001'::uuid, '10000000-0000-0000-0000-000000000001'::uuid, 5, '09:00', '18:00', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- SEED COMPLETADO
+-- ============================================================================
+-- Para aplicar este seed:
+-- 1. supabase db reset (reset completo)
+-- 2. supabase db seed (aplicar solo el seed)
+-- ============================================================================
