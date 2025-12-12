@@ -1,18 +1,25 @@
 -- ============================================================================
--- SEED DEMO: BookFast - Barbería Demo Completa
+-- SEED DEMO COMERCIAL: BookFast - Barbería Demo Realista para Ventas
 -- ============================================================================
--- Este script crea un tenant de demo completamente funcional para BookFast
--- con datos realistas, coherentes y respetando todas las constraints del sistema.
+-- Este script crea un tenant de demo COMPLETO y REALISTA para BookFast
+-- optimizado para demostraciones comerciales y ventas.
+--
+-- DATASET COMPLETO (2 AÑOS):
+-- - Periodo: 12/12/2024 → 12/12/2026 (2 años completos)
+-- - Clientes: 400 (realista para barbería establecida)
+-- - Servicios: 20 (catálogo profesional completo)
+-- - Staff: 5 barberos (2 owners + 3 empleados)
+-- - Reservas: 2.500-3.500 (generadas en script separado)
+-- - Horarios: Completos con pausas, vacaciones, bloqueos
 --
 -- CONTENIDO:
 -- 1. Tenant BookFast
--- 2. Usuarios owners (tus cuentas existentes)
--- 3. Staff (barberos) con horarios
--- 4. Servicios de barbería
--- 5. Clientes
--- 6. Reservas históricas (últimos 6 meses)
--- 7. Reservas actuales y futuras
+-- 2. Usuarios owners (como staff senior activo)
+-- 3. Staff completo (5 barberos)
+-- 4. Catálogo de servicios profesional (20 servicios)
+-- 5. Base de clientes realista (400 clientes)
 --
+-- ⚠️ NO EJECUTAR en producción - Solo para demo/testing
 -- EJECUCIÓN: Copiar y pegar en SQL Editor de Supabase Cloud
 -- ============================================================================
 
@@ -38,7 +45,7 @@ INSERT INTO public.tenants (
   stripe_charges_enabled,
   stripe_payouts_enabled
 ) VALUES (
-  'bf000000-0000-0000-0000-000000000001', -- ID fijo para facilitar referencias
+  '00000000-0000-0000-0000-000000000001', -- ID fijo para facilitar referencias
   'BookFast Barbería',
   'bookfast',
   'Europe/Madrid',
@@ -72,7 +79,7 @@ INSERT INTO public.tenant_settings (
   business_open_time,
   business_close_time
 ) VALUES (
-  'bf000000-0000-0000-0000-000000000001',
+  '00000000-0000-0000-0000-000000000001',
   true,
   'deposit',
   20, -- 20% de depósito
@@ -95,8 +102,8 @@ INSERT INTO public.tenant_settings (
 -- Ejemplo (DEBES CAMBIAR ESTOS IDS):
 -- INSERT INTO public.memberships (tenant_id, user_id, role)
 -- VALUES 
---   ('bf000000-0000-0000-0000-000000000001', 'TU_USER_ID_AQUI', 'owner'),
---   ('bf000000-0000-0000-0000-000000000001', 'SOCIO_USER_ID_AQUI', 'owner')
+--   ('00000000-0000-0000-0000-000000000001', 'TU_USER_ID_AQUI', 'owner'),
+--   ('00000000-0000-0000-0000-000000000001', 'SOCIO_USER_ID_AQUI', 'owner')
 -- ON CONFLICT (tenant_id, user_id) DO UPDATE SET role = 'owner';
 
 -- ⚠️ ACCIÓN REQUERIDA: Ejecutar esta query para obtener los user_ids:
@@ -104,8 +111,9 @@ INSERT INTO public.tenant_settings (
 -- Luego descomentar y completar los INSERT anteriores
 
 -- ============================================================================
--- PASO 3: CREAR SERVICIOS DE BARBERÍA
+-- PASO 3: CREAR CATÁLOGO COMPLETO DE SERVICIOS (20 servicios)
 -- ============================================================================
+-- Catálogo profesional completo para barbería moderna
 
 INSERT INTO public.services (
   id,
@@ -121,21 +129,33 @@ INSERT INTO public.services (
   deposit_percent,
   online_payment_required
 ) VALUES
-  -- Servicios de corte
-  ('bf000001-serv-0000-0000-000000000001', 'bf000000-0000-0000-0000-000000000001', 'Corte Clásico', 30, 1800, true, 'Corte', 5, false, NULL, NULL, false),
-  ('bf000001-serv-0000-0000-000000000002', 'bf000000-0000-0000-0000-000000000001', 'Fade Profesional', 45, 2500, true, 'Corte', 5, false, NULL, NULL, false),
-  ('bf000001-serv-0000-0000-000000000003', 'bf000000-0000-0000-0000-000000000001', 'Corte + Diseño', 60, 3000, true, 'Corte', 5, true, 'percent', 20, false),
+  -- ===== CORTES (7 opciones) =====
+  ('00000001-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 'Corte Clásico', 30, 1800, true, 'Corte', 5, false, NULL, NULL, false),
+  ('00000001-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', 'Fade Profesional', 45, 2500, true, 'Corte', 5, false, NULL, NULL, false),
+  ('00000001-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001', 'Fade Premium', 50, 2800, true, 'Corte', 5, true, 'percent', 20, false),
+  ('00000001-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000001', 'Corte + Diseño', 60, 3200, true, 'Corte', 5, true, 'percent', 20, false),
+  ('00000001-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000001', 'Corte Niño (0-12 años)', 25, 1500, true, 'Corte', 5, false, NULL, NULL, false),
+  ('00000001-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000001', 'Degradado Ejecutivo', 40, 2200, true, 'Corte', 5, false, NULL, NULL, false),
+  ('00000001-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000001', 'Corte Rapado', 20, 1400, true, 'Corte', 5, false, NULL, NULL, false),
   
-  -- Servicios de barba
-  ('bf000001-serv-0000-0000-000000000004', 'bf000000-0000-0000-0000-000000000001', 'Arreglo de Barba', 20, 1200, true, 'Barba', 5, false, NULL, NULL, false),
-  ('bf000001-serv-0000-0000-000000000005', 'bf000000-0000-0000-0000-000000000001', 'Afeitado Clásico', 30, 1500, true, 'Barba', 5, false, NULL, NULL, false),
+  -- ===== BARBA (5 opciones) =====
+  ('00000001-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000001', 'Arreglo de Barba', 20, 1200, true, 'Barba', 5, false, NULL, NULL, false),
+  ('00000001-0000-0000-0000-000000000009', '00000000-0000-0000-0000-000000000001', 'Barba Premium', 30, 1800, true, 'Barba', 5, false, NULL, NULL, false),
+  ('00000001-0000-0000-0000-000000000010', '00000000-0000-0000-0000-000000000001', 'Afeitado Clásico', 30, 1800, true, 'Barba', 5, false, NULL, NULL, false),
+  ('00000001-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000001', 'Afeitado Toalla Caliente', 40, 2500, true, 'Barba', 5, true, 'percent', 20, false),
+  ('00000001-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000001', 'Tinte de Barba', 30, 2000, true, 'Barba', 5, false, NULL, NULL, false),
   
-  -- Combos
-  ('bf000001-serv-0000-0000-000000000006', 'bf000000-0000-0000-0000-000000000001', 'Corte + Barba', 50, 3200, true, 'Combo', 10, true, 'percent', 20, false),
-  ('bf000001-serv-0000-0000-000000000007', 'bf000000-0000-0000-0000-000000000001', 'Pack Premium (Corte + Barba + Cejas)', 75, 4500, true, 'Combo', 10, true, 'percent', 30, false),
+  -- ===== COMBOS POPULARES (4 opciones) =====
+  ('00000001-0000-0000-0000-000000000013', '00000000-0000-0000-0000-000000000001', 'Corte + Barba', 50, 3200, true, 'Combo', 10, true, 'percent', 20, false),
+  ('00000001-0000-0000-0000-000000000014', '00000000-0000-0000-0000-000000000001', 'Fade + Barba Premium', 65, 4000, true, 'Combo', 10, true, 'percent', 25, false),
+  ('00000001-0000-0000-0000-000000000015', '00000000-0000-0000-0000-000000000001', 'Pack Premium (Corte + Barba + Cejas)', 75, 4800, true, 'Combo', 10, true, 'percent', 30, false),
+  ('00000001-0000-0000-0000-000000000016', '00000000-0000-0000-0000-000000000001', 'Pack Ejecutivo (Corte + Afeitado)', 60, 3800, true, 'Combo', 10, true, 'percent', 25, false),
   
-  -- Otros servicios
-  ('bf000001-serv-0000-0000-000000000008', 'bf000000-0000-0000-0000-000000000001', 'Tinte de Barba', 25, 1800, true, 'Otros', 5, false, NULL, NULL, false)
+  -- ===== EXTRAS Y TRATAMIENTOS (4 opciones) =====
+  ('00000001-0000-0000-0000-000000000017', '00000000-0000-0000-0000-000000000001', 'Arreglo de Cejas', 15, 800, true, 'Extras', 5, false, NULL, NULL, false),
+  ('00000001-0000-0000-0000-000000000018', '00000000-0000-0000-0000-000000000001', 'Lavado Capilar', 20, 1000, true, 'Extras', 5, false, NULL, NULL, false),
+  ('00000001-0000-0000-0000-000000000019', '00000000-0000-0000-0000-000000000001', 'Black Mask (Mascarilla Facial)', 30, 1500, true, 'Extras', 5, false, NULL, NULL, false),
+  ('00000001-0000-0000-0000-000000000020', '00000000-0000-0000-0000-000000000001', 'Diseño Especial (Líneas/Dibujos)', 25, 1500, true, 'Extras', 5, false, NULL, NULL, false)
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
   duration_min = EXCLUDED.duration_min,
@@ -144,8 +164,9 @@ ON CONFLICT (id) DO UPDATE SET
   updated_at = NOW();
 
 -- ============================================================================
--- PASO 4: CREAR STAFF (BARBEROS)
+-- PASO 4: CREAR STAFF COMPLETO (5 BARBEROS)
 -- ============================================================================
+-- IMPORTANTE: Los 2 primeros serán los owners (asignar user_id después)
 
 INSERT INTO public.staff (
   id,
@@ -157,23 +178,31 @@ INSERT INTO public.staff (
   weekly_hours,
   color,
   bio,
-  role
+  role,
+  user_id
 ) VALUES
-  ('bf000002-staf-0000-0000-000000000001', 'bf000000-0000-0000-0000-000000000001', 
-   'Carlos Martínez', 'Carlos', true, true, 40, '#3B82F6', 
-   'Especialista en fades y diseños modernos. 8 años de experiencia.', 'Barbero Senior'),
+  -- ===== OWNERS (Barberos Senior) =====
+  -- ⚠️ IMPORTANTE: user_id será asignado en seed_bookfast_assign_users.sql
+  ('00000002-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 
+   'Josep Calafat', 'Josep', true, true, 40, '#3B82F6', 
+   'Co-fundador y barbero senior. Especialista en fades y diseños modernos. 10+ años de experiencia.', 'Owner / Barbero Senior', NULL),
   
-  ('bf000002-staf-0000-0000-000000000002', 'bf000000-0000-0000-0000-000000000001', 
-   'Miguel Ángel Torres', 'Miguel', true, true, 40, '#10B981', 
-   'Experto en barbería clásica y afeitados tradicionales.', 'Maestro Barbero'),
+  ('00000002-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', 
+   'Socio Co-Founder', 'Socio', true, true, 40, '#10B981', 
+   'Co-fundador y maestro barbero. Experto en barbería clásica y afeitados tradicionales.', 'Owner / Maestro Barbero', NULL),
   
-  ('bf000002-staf-0000-0000-000000000003', 'bf000000-0000-0000-0000-000000000001', 
+  -- ===== EMPLEADOS =====
+  ('00000002-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001', 
+   'Carlos Martínez', 'Carlos', true, true, 40, '#8B5CF6', 
+   'Barbero senior especializado en fades profesionales y acabados perfectos. 7 años de experiencia.', 'Barbero Senior', NULL),
+  
+  ('00000002-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000001', 
    'Javier López', 'Javi', true, true, 35, '#F59E0B', 
-   'Especialista en color y tintes. Estilo urbano y moderno.', 'Barbero'),
+   'Especialista en color, tintes y estilos urbanos. Preferido por clientes jóvenes.', 'Barbero', NULL),
   
-  ('bf000002-staf-0000-0000-000000000004', 'bf000000-0000-0000-0000-000000000001', 
+  ('00000002-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000001', 
    'David Hernández', 'David', true, true, 30, '#EF4444', 
-   'Barbero joven con técnicas innovadoras. Especialista en clientes jóvenes.', 'Barbero Junior')
+   'Barbero junior con formación en técnicas modernas. Gran atención al cliente.', 'Barbero Junior', NULL)
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
   display_name = EXCLUDED.display_name,
@@ -183,167 +212,353 @@ ON CONFLICT (id) DO UPDATE SET
 -- ============================================================================
 -- PASO 5: ASIGNAR SERVICIOS A BARBEROS
 -- ============================================================================
+-- Distribución por especialidad:
+-- - Josep (Owner/Senior): Especialista en fades modernos y diseños - TODOS los servicios
+-- - Socio (Owner/Maestro): Clásicos, barba tradicional, afeitados - servicios premium
+-- - Carlos (Senior): Fades profesionales, combos - servicios variados
+-- - Javier (Regular): Color, tintes, jóvenes - servicios urbanos  
+-- - David (Junior): Básicos, aprendizaje - servicios simples
 
--- Carlos (senior) - puede hacer todo
-INSERT INTO public.staff_provides_services (tenant_id, staff_id, service_id) VALUES
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000001', 'bf000001-serv-0000-0000-000000000001'),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000001', 'bf000001-serv-0000-0000-000000000002'),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000001', 'bf000001-serv-0000-0000-000000000003'),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000001', 'bf000001-serv-0000-0000-000000000004'),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000001', 'bf000001-serv-0000-0000-000000000005'),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000001', 'bf000001-serv-0000-0000-000000000006'),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000001', 'bf000001-serv-0000-0000-000000000007')
+-- JOSEP (001) - Owner/Senior - PUEDE HACER TODO (20 servicios)
+INSERT INTO public.staff_provides_services (tenant_id, staff_id, service_id)
+SELECT '00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000001', s.id
+FROM public.services s
+WHERE s.tenant_id = '00000000-0000-0000-0000-000000000001'
 ON CONFLICT DO NOTHING;
 
--- Miguel (maestro) - especialista en clásicos y barba
+-- SOCIO (002) - Owner/Maestro - Especialista en barba y clásicos (12 servicios)
 INSERT INTO public.staff_provides_services (tenant_id, staff_id, service_id) VALUES
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000002', 'bf000001-serv-0000-0000-000000000001'),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000002', 'bf000001-serv-0000-0000-000000000004'),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000002', 'bf000001-serv-0000-0000-000000000005'),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000002', 'bf000001-serv-0000-0000-000000000006'),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000002', 'bf000001-serv-0000-0000-000000000007')
+  -- Cortes clásicos
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000002', '00000001-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000002', '00000001-0000-0000-0000-000000000002'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000002', '00000001-0000-0000-0000-000000000007'),
+  -- Toda la barba
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000002', '00000001-0000-0000-0000-000000000008'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000002', '00000001-0000-0000-0000-000000000009'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000002', '00000001-0000-0000-0000-000000000010'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000002', '00000001-0000-0000-0000-000000000011'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000002', '00000001-0000-0000-0000-000000000012'),
+  -- Combos premium
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000002', '00000001-0000-0000-0000-000000000013'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000002', '00000001-0000-0000-0000-000000000014'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000002', '00000001-0000-0000-0000-000000000015'),
+  -- Extras
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000002', '00000001-0000-0000-0000-000000000019')
 ON CONFLICT DO NOTHING;
 
--- Javi - especialista en diseño y color
+-- CARLOS (003) - Senior - Fades profesionales y combos (14 servicios)
 INSERT INTO public.staff_provides_services (tenant_id, staff_id, service_id) VALUES
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000003', 'bf000001-serv-0000-0000-000000000001'),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000003', 'bf000001-serv-0000-0000-000000000002'),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000003', 'bf000001-serv-0000-0000-000000000003'),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000003', 'bf000001-serv-0000-0000-000000000008'),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000003', 'bf000001-serv-0000-0000-000000000007')
+  -- Todos los cortes excepto niños
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', '00000001-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', '00000001-0000-0000-0000-000000000002'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', '00000001-0000-0000-0000-000000000003'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', '00000001-0000-0000-0000-000000000004'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', '00000001-0000-0000-0000-000000000005'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', '00000001-0000-0000-0000-000000000007'),
+  -- Barba básica
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', '00000001-0000-0000-0000-000000000008'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', '00000001-0000-0000-0000-000000000009'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', '00000001-0000-0000-0000-000000000011'),
+  -- Todos los combos
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', '00000001-0000-0000-0000-000000000013'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', '00000001-0000-0000-0000-000000000014'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', '00000001-0000-0000-0000-000000000015'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', '00000001-0000-0000-0000-000000000016'),
+  -- Cera
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', '00000001-0000-0000-0000-000000000020')
 ON CONFLICT DO NOTHING;
 
--- David (junior) - servicios básicos
+-- JAVIER (004) - Regular - Color, jóvenes, urbanos (12 servicios)
 INSERT INTO public.staff_provides_services (tenant_id, staff_id, service_id) VALUES
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000004', 'bf000001-serv-0000-0000-000000000001'),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000004', 'bf000001-serv-0000-0000-000000000002'),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000004', 'bf000001-serv-0000-0000-000000000004'),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000004', 'bf000001-serv-0000-0000-000000000006')
+  -- Cortes jóvenes
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000004', '00000001-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000004', '00000001-0000-0000-0000-000000000002'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000004', '00000001-0000-0000-0000-000000000003'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000004', '00000001-0000-0000-0000-000000000004'),
+  -- Barba básica
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000004', '00000001-0000-0000-0000-000000000008'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000004', '00000001-0000-0000-0000-000000000009'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000004', '00000001-0000-0000-0000-000000000012'),
+  -- Combos básicos
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000004', '00000001-0000-0000-0000-000000000013'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000004', '00000001-0000-0000-0000-000000000016'),
+  -- Extras urbanos
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000004', '00000001-0000-0000-0000-000000000017'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000004', '00000001-0000-0000-0000-000000000018'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000004', '00000001-0000-0000-0000-000000000020')
+ON CONFLICT DO NOTHING;
+
+-- DAVID (005) - Junior - Servicios básicos (8 servicios)
+INSERT INTO public.staff_provides_services (tenant_id, staff_id, service_id) VALUES
+  -- Cortes básicos
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000005', '00000001-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000005', '00000001-0000-0000-0000-000000000002'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000005', '00000001-0000-0000-0000-000000000006'),
+  -- Barba simple
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000005', '00000001-0000-0000-0000-000000000008'),
+  -- Combo básico
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000005', '00000001-0000-0000-0000-000000000013'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000005', '00000001-0000-0000-0000-000000000016'),
+  -- Extras simples
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000005', '00000001-0000-0000-0000-000000000019'),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000005', '00000001-0000-0000-0000-000000000020')
 ON CONFLICT DO NOTHING;
 
 -- ============================================================================
 -- PASO 6: CREAR HORARIOS DE TRABAJO DEL STAFF
 -- ============================================================================
 -- Formato: day_of_week (0=Lunes, 6=Domingo)
+-- Estrategia: Turnos diferenciados para cobertura 09:00-20:00 todos los días
 
--- Carlos - Lunes a Viernes 9:00-18:00, Sábado 10:00-14:00
+-- JOSEP (001) - Owner/Senior: Lunes a Sábado 09:00-17:00 (turno mañana, gestión)
 INSERT INTO public.staff_schedules (tenant_id, staff_id, day_of_week, start_time, end_time, is_active) VALUES
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000001', 0, '09:00', '18:00', true),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000001', 1, '09:00', '18:00', true),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000001', 2, '09:00', '18:00', true),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000001', 3, '09:00', '18:00', true),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000001', 4, '09:00', '18:00', true),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000001', 5, '10:00', '14:00', true)
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000001', 0, '09:00', '17:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000001', 1, '09:00', '17:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000001', 2, '09:00', '17:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000001', 3, '09:00', '17:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000001', 4, '09:00', '17:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000001', 5, '09:00', '14:00', true)
 ON CONFLICT DO NOTHING;
 
--- Miguel - Martes a Sábado 10:00-19:00
+-- SOCIO (002) - Owner/Maestro: Martes a Sábado 10:00-19:00 (horario premium)
 INSERT INTO public.staff_schedules (tenant_id, staff_id, day_of_week, start_time, end_time, is_active) VALUES
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000002', 1, '10:00', '19:00', true),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000002', 2, '10:00', '19:00', true),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000002', 3, '10:00', '19:00', true),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000002', 4, '10:00', '19:00', true),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000002', 5, '10:00', '19:00', true)
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000002', 1, '10:00', '19:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000002', 2, '10:00', '19:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000002', 3, '10:00', '19:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000002', 4, '10:00', '19:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000002', 5, '10:00', '19:00', true)
 ON CONFLICT DO NOTHING;
 
--- Javi - Lunes a Viernes 12:00-20:00
+-- CARLOS (003) - Senior: Lunes a Viernes 12:00-20:00, Sábado 10:00-18:00 (turno tarde)
 INSERT INTO public.staff_schedules (tenant_id, staff_id, day_of_week, start_time, end_time, is_active) VALUES
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000003', 0, '12:00', '20:00', true),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000003', 1, '12:00', '20:00', true),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000003', 2, '12:00', '20:00', true),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000003', 3, '12:00', '20:00', true),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000003', 4, '12:00', '20:00', true)
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', 0, '12:00', '20:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', 1, '12:00', '20:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', 2, '12:00', '20:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', 3, '12:00', '20:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', 4, '12:00', '20:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', 5, '10:00', '18:00', true)
 ON CONFLICT DO NOTHING;
 
--- David - Miércoles a Domingo 10:00-18:00
+-- JAVIER (004) - Regular: Miércoles a Domingo 11:00-19:00 (incluye fin de semana)
 INSERT INTO public.staff_schedules (tenant_id, staff_id, day_of_week, start_time, end_time, is_active) VALUES
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000004', 2, '10:00', '18:00', true),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000004', 3, '10:00', '18:00', true),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000004', 4, '10:00', '18:00', true),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000004', 5, '10:00', '18:00', true),
-  ('bf000000-0000-0000-0000-000000000001', 'bf000002-staf-0000-0000-000000000004', 6, '10:00', '14:00', true)
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000004', 2, '11:00', '19:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000004', 3, '11:00', '19:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000004', 4, '11:00', '19:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000004', 5, '11:00', '19:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000004', 6, '10:00', '14:00', true)
+ON CONFLICT DO NOTHING;
+
+-- DAVID (005) - Junior: Lunes, Martes, Jueves, Viernes, Sábado 10:00-18:00 (rotativo)
+INSERT INTO public.staff_schedules (tenant_id, staff_id, day_of_week, start_time, end_time, is_active) VALUES
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000005', 0, '10:00', '18:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000005', 1, '10:00', '18:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000005', 3, '10:00', '18:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000005', 4, '10:00', '18:00', true),
+  ('00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000005', 5, '10:00', '18:00', true)
 ON CONFLICT DO NOTHING;
 
 -- ============================================================================
 -- PASO 7: CREAR CLIENTES
 -- ============================================================================
+-- Generación de 400 clientes con distribución realista
+-- Distribución: 10% VIP (40), 75% regular (300), 15% ocasional (60)
 
-INSERT INTO public.customers (
-  id,
-  tenant_id,
-  name,
-  email,
-  phone,
-  birth_date,
-  notes,
-  tags,
-  is_vip,
-  marketing_opt_in,
-  preferred_time_of_day,
-  internal_notes
-) VALUES
-  -- Clientes VIP recurrentes
-  ('bf000003-cust-0000-0000-000000000001', 'bf000000-0000-0000-0000-000000000001', 'Alberto García', 'alberto.garcia@email.com', '+34 612345001', '1985-03-15', NULL, ARRAY['vip', 'puntual'], true, true, 'mañana', 'Cliente desde hace 3 años. Siempre pide a Carlos.'),
-  ('bf000003-cust-0000-0000-000000000002', 'bf000000-0000-0000-0000-000000000001', 'Roberto Sánchez', 'roberto.sanchez@email.com', '+34 612345002', '1978-07-22', NULL, ARRAY['vip', 'mensual'], true, true, 'tarde', 'Prefiere Miguel. Corte + barba siempre.'),
-  ('bf000003-cust-0000-0000-000000000003', 'bf000000-0000-0000-0000-000000000001', 'Fernando López', 'fernando.lopez@email.com', '+34 612345003', '1990-11-08', NULL, ARRAY['vip'], true, true, 'tarde', 'CEO de empresa tech. Muy exigente con el fade.'),
+DO $$
+DECLARE
+  v_nombres TEXT[] := ARRAY[
+    'Alberto', 'Roberto', 'Carlos', 'Miguel', 'David', 'Javier', 'Antonio', 'Francisco', 'Manuel', 'José',
+    'Luis', 'Pedro', 'Sergio', 'Pablo', 'Raúl', 'Adrián', 'Iván', 'Óscar', 'Álvaro', 'Jorge',
+    'Rubén', 'Daniel', 'Marcos', 'Hugo', 'Víctor', 'Samuel', 'Guillermo', 'Andrés', 'Mario', 'Fernando',
+    'Rafael', 'Tomás', 'Enrique', 'Ignacio', 'Lorenzo', 'Mateo', 'Gonzalo', 'Rodrigo', 'Emilio', 'Felipe',
+    'Alejandro', 'Gabriel', 'Diego', 'Lucas', 'Martín', 'Nicolás', 'Santiago', 'Simón', 'Eduardo', 'Ricardo'
+  ];
+  v_apellidos TEXT[] := ARRAY[
+    'García', 'López', 'Martínez', 'Sánchez', 'Fernández', 'Romero', 'Torres', 'Navarro', 'Gil', 'Ramírez',
+    'Castro', 'Ortiz', 'Rubio', 'Molina', 'Delgado', 'Méndez', 'Vega', 'Herrera', 'Peña', 'Campos',
+    'Prieto', 'Vargas', 'Nieto', 'Ibáñez', 'Cordero', 'Moreno', 'Álvarez', 'Jiménez', 'Ruiz', 'Díaz',
+    'Muñoz', 'González', 'Rodríguez', 'Pérez', 'Guerrero', 'Flores', 'Reyes', 'Medina', 'Silva', 'Rojas'
+  ];
+  v_tags TEXT[];
+  v_email TEXT;
+  v_email_local TEXT;
+  v_email_base TEXT;
+  v_email_candidate TEXT;
+  v_email_suffix INT;
+  v_phone TEXT;
+  v_birth DATE;
+  v_is_vip BOOLEAN;
+  v_preferred_time TEXT;
+  v_notes TEXT;
+  i INT;
+BEGIN
+  FOR i IN 1..400 LOOP
+    -- Determinar VIP (primeros 40 = 10%)
+    v_is_vip := (i <= 40);
+    
+    -- Email: 85% tiene email
+    IF random() < 0.85 THEN
+      v_email_local := lower(
+        v_nombres[1 + (i % array_length(v_nombres, 1))] || '.' ||
+        v_apellidos[1 + ((i * 7) % array_length(v_apellidos, 1))]
+      );
+
+      -- Normalización ASCII-safe para cumplir customers_email_format_ck
+      -- 1) Transliteration de tildes/diacríticos comunes (España)
+      -- 2) Eliminación de cualquier carácter fuera de [a-z0-9._%+-]
+      v_email_local := translate(
+        v_email_local,
+        'áàäâãåÁÀÄÂÃÅéèëêÉÈËÊíìïîÍÌÏÎóòöôõÓÒÖÔÕúùüûÚÙÜÛñÑçÇ',
+        'aaaaaaAAAAAAeeeeEEEEiiiiIIIIoooooOOOOOuuuuUUUUnNcC'
+      );
+      v_email_local := regexp_replace(v_email_local, '[^a-z0-9._%+\-]', '', 'g');
+
+      -- Resolver colisiones del constraint unique_email_per_tenant
+      -- Base: nombre.apellido; si existe, usar nombre.apellido.2, .3, ...
+      v_email_base := v_email_local;
+      v_email_candidate := v_email_base;
+      v_email_suffix := 1;
+      WHILE EXISTS (
+        SELECT 1
+        FROM public.customers c
+        WHERE c.tenant_id = '00000000-0000-0000-0000-000000000001'
+          AND c.email = (v_email_candidate || '@email.com')
+      ) LOOP
+        v_email_suffix := v_email_suffix + 1;
+        v_email_candidate := v_email_base || '.' || v_email_suffix::TEXT;
+      END LOOP;
+
+      v_email := v_email_candidate || '@email.com';
+    ELSE
+      v_email := NULL;
+    END IF;
+    
+    -- Teléfono: formato español
+    v_phone := '+34 6' || LPAD((12000000 + i)::TEXT, 8, '0');
+    
+    -- Fecha nacimiento: 18-70 años
+    v_birth := CURRENT_DATE - ((random() * 52 * 365 + 18 * 365)::INT || ' days')::INTERVAL;
+    
+    -- Tags basados en edad y VIP status
+    IF v_is_vip THEN
+      v_tags := ARRAY['vip', CASE WHEN random() < 0.5 THEN 'puntual' ELSE 'mensual' END];
+      v_notes := 'Cliente VIP desde hace ' || (1 + (random() * 4)::INT)::TEXT || ' años.';
+    ELSIF EXTRACT(YEAR FROM AGE(v_birth)) < 25 THEN
+      v_tags := ARRAY['joven'];
+      v_notes := NULL;
+    ELSIF EXTRACT(YEAR FROM AGE(v_birth)) > 60 THEN
+      v_tags := ARRAY['senior'];
+      v_notes := NULL;
+    ELSE
+      v_tags := ARRAY['regular'];
+      v_notes := NULL;
+    END IF;
+    
+    -- Preferencia horaria
+    v_preferred_time := CASE (i % 4)
+      WHEN 0 THEN 'mañana'
+      WHEN 1 THEN 'tarde'
+      WHEN 2 THEN 'noche'
+      ELSE NULL
+    END;
+    
+    -- Insertar cliente
+    INSERT INTO public.customers (
+      id,
+      tenant_id,
+      name,
+      email,
+      phone,
+      birth_date,
+      tags,
+      is_vip,
+      marketing_opt_in,
+      preferred_time_of_day,
+      internal_notes
+    ) VALUES (
+      ('00000003-0000-0000-0000-' || LPAD(i::TEXT, 12, '0'))::uuid,
+      '00000000-0000-0000-0000-000000000001',
+      v_nombres[1 + (i % array_length(v_nombres, 1))] || ' ' || 
+      v_apellidos[1 + ((i * 3) % array_length(v_apellidos, 1))] || ' ' || 
+      v_apellidos[1 + ((i * 7) % array_length(v_apellidos, 1))],
+      v_email,
+      v_phone,
+      v_birth,
+      v_tags,
+      v_is_vip,
+      (v_email IS NOT NULL),
+      v_preferred_time,
+      v_notes
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      name = EXCLUDED.name,
+      updated_at = NOW();
+  END LOOP;
   
-  -- Clientes regulares
-  ('bf000003-cust-0000-0000-000000000004', 'bf000000-0000-0000-0000-000000000001', 'Miguel Ruiz', 'miguel.ruiz@email.com', '+34 612345004', '1992-01-30', NULL, ARRAY['regular'], false, true, 'mañana', NULL),
-  ('bf000003-cust-0000-0000-000000000005', 'bf000000-0000-0000-0000-000000000001', 'David Martín', 'david.martin@email.com', '+34 612345005', '1988-05-12', NULL, ARRAY['regular'], false, true, 'tarde', NULL),
-  ('bf000003-cust-0000-0000-000000000006', 'bf000000-0000-0000-0000-000000000001', 'Carlos Fernández', 'carlos.fernandez@email.com', '+34 612345006', '1995-09-25', NULL, ARRAY['joven'], false, true, 'tarde', NULL),
-  ('bf000003-cust-0000-0000-000000000007', 'bf000000-0000-0000-0000-000000000001', 'Javier Moreno', 'javier.moreno@email.com', '+34 612345007', '1982-12-03', NULL, ARRAY['regular'], false, true, 'mañana', NULL),
-  ('bf000003-cust-0000-0000-000000000008', 'bf000000-0000-0000-0000-000000000001', 'Antonio Jiménez', 'antonio.jimenez@email.com', '+34 612345008', '1975-04-18', NULL, ARRAY['senior'], false, true, 'mañana', NULL),
-  ('bf000003-cust-0000-0000-000000000009', 'bf000000-0000-0000-0000-000000000001', 'Francisco Álvarez', 'francisco.alvarez@email.com', '+34 612345009', '1998-08-27', NULL, ARRAY['joven'], false, true, 'noche', NULL),
-  ('bf000003-cust-0000-0000-000000000010', 'bf000000-0000-0000-0000-000000000001', 'Manuel Romero', 'manuel.romero@email.com', '+34 612345010', '1987-02-14', NULL, ARRAY['regular'], false, true, 'tarde', NULL),
-  
-  -- Más clientes variados
-  ('bf000003-cust-0000-0000-000000000011', 'bf000000-0000-0000-0000-000000000001', 'José Torres', NULL, '+34 612345011', '1991-06-05', NULL, ARRAY['sin-email'], false, false, NULL, NULL),
-  ('bf000003-cust-0000-0000-000000000012', 'bf000000-0000-0000-0000-000000000001', 'Luis Navarro', 'luis.navarro@email.com', '+34 612345012', '1983-10-19', NULL, ARRAY['regular'], false, true, 'mañana', NULL),
-  ('bf000003-cust-0000-0000-000000000013', 'bf000000-0000-0000-0000-000000000001', 'Pedro Gil', 'pedro.gil@email.com', '+34 612345013', '1996-03-08', NULL, ARRAY['joven'], false, true, 'tarde', NULL),
-  ('bf000003-cust-0000-0000-000000000014', 'bf000000-0000-0000-0000-000000000001', 'Sergio Ramírez', 'sergio.ramirez@email.com', '+34 612345014', '1989-07-21', NULL, ARRAY['regular'], false, true, 'tarde', NULL),
-  ('bf000003-cust-0000-0000-000000000015', 'bf000000-0000-0000-0000-000000000001', 'Pablo Castro', 'pablo.castro@email.com', '+34 612345015', '1993-11-16', NULL, ARRAY['regular'], false, true, 'mañana', NULL),
-  ('bf000003-cust-0000-0000-000000000016', 'bf000000-0000-0000-0000-000000000001', 'Raúl Ortiz', NULL, '+34 612345016', '1980-01-28', NULL, ARRAY['sin-email'], false, false, NULL, NULL),
-  ('bf000003-cust-0000-0000-000000000017', 'bf000000-0000-0000-0000-000000000001', 'Adrián Rubio', 'adrian.rubio@email.com', '+34 612345017', '1997-05-09', NULL, ARRAY['joven'], false, true, 'noche', NULL),
-  ('bf000003-cust-0000-0000-000000000018', 'bf000000-0000-0000-0000-000000000001', 'Iván Molina', 'ivan.molina@email.com', '+34 612345018', '1986-09-12', NULL, ARRAY['regular'], false, true, 'tarde', NULL),
-  ('bf000003-cust-0000-0000-000000000019', 'bf000000-0000-0000-0000-000000000001', 'Óscar Delgado', 'oscar.delgado@email.com', '+34 612345019', '1994-02-23', NULL, ARRAY['regular'], false, true, 'mañana', NULL),
-  ('bf000003-cust-0000-0000-000000000020', 'bf000000-0000-0000-0000-000000000001', 'Álvaro Castro', 'alvaro.castro@email.com', '+34 612345020', '1984-06-17', NULL, ARRAY['regular'], false, true, 'tarde', NULL),
-  
-  -- Clientes adicionales
-  ('bf000003-cust-0000-0000-000000000021', 'bf000000-0000-0000-0000-000000000001', 'Jorge Méndez', 'jorge.mendez@email.com', '+34 612345021', '1999-04-11', NULL, ARRAY['joven', 'estudiante'], false, true, 'tarde', NULL),
-  ('bf000003-cust-0000-0000-000000000022', 'bf000000-0000-0000-0000-000000000001', 'Rubén Vega', 'ruben.vega@email.com', '+34 612345022', '1981-08-06', NULL, ARRAY['regular'], false, true, 'mañana', NULL),
-  ('bf000003-cust-0000-0000-000000000023', 'bf000000-0000-0000-0000-000000000001', 'Daniel Herrera', 'daniel.herrera@email.com', '+34 612345023', '1995-12-01', NULL, ARRAY['joven'], false, true, 'noche', NULL),
-  ('bf000003-cust-0000-0000-000000000024', 'bf000000-0000-0000-0000-000000000001', 'Marcos Peña', 'marcos.pena@email.com', '+34 612345024', '1987-03-19', NULL, ARRAY['regular'], false, true, 'tarde', NULL),
-  ('bf000003-cust-0000-0000-000000000025', 'bf000000-0000-0000-0000-000000000001', 'Hugo Campos', 'hugo.campos@email.com', '+34 612345025', '1992-07-28', NULL, ARRAY['regular'], false, true, 'mañana', NULL),
-  ('bf000003-cust-0000-0000-000000000026', 'bf000000-0000-0000-0000-000000000001', 'Víctor Prieto', NULL, '+34 612345026', '1979-11-14', NULL, ARRAY['sin-email', 'senior'], false, false, NULL, NULL),
-  ('bf000003-cust-0000-0000-000000000027', 'bf000000-0000-0000-0000-000000000001', 'Samuel Vargas', 'samuel.vargas@email.com', '+34 612345027', '1996-01-07', NULL, ARRAY['joven'], false, true, 'tarde', NULL),
-  ('bf000003-cust-0000-0000-000000000028', 'bf000000-0000-0000-0000-000000000001', 'Guillermo Nieto', 'guillermo.nieto@email.com', '+34 612345028', '1988-05-22', NULL, ARRAY['regular'], false, true, 'mañana', NULL),
-  ('bf000003-cust-0000-0000-000000000029', 'bf000000-0000-0000-0000-000000000001', 'Andrés Ibáñez', 'andres.ibanez@email.com', '+34 612345029', '1993-09-03', NULL, ARRAY['regular'], false, true, 'tarde', NULL),
-  ('bf000003-cust-0000-0000-000000000030', 'bf000000-0000-0000-0000-000000000001', 'Mario Cordero', 'mario.cordero@email.com', '+34 612345030', '1985-12-25', NULL, ARRAY['regular'], false, true, 'mañana', NULL)
-ON CONFLICT (id) DO UPDATE SET
-  name = EXCLUDED.name,
-  email = EXCLUDED.email,
-  phone = EXCLUDED.phone,
-  updated_at = NOW();
+  RAISE NOTICE '✅ Generados 400 clientes (40 VIP, 360 regulares)';
+END $$;
 
 -- ============================================================================
 -- PASO 8: CREAR RESERVAS HISTÓRICAS Y FUTURAS
 -- ============================================================================
--- Este paso lo haremos con una función helper para respetar constraints
+-- ⚠️ LAS RESERVAS SE GENERAN EN ARCHIVO SEPARADO: seed_bookfast_bookings.sql
+-- 
+-- Razón: La generación de 2500-4000 reservas con:
+-- - Horizonte temporal: 12/12/2024 a 12/12/2026 (2 años)
+-- - Estados: completed (pasadas), confirmed (futuras), no_show, cancelled
+-- - Sin solapamientos (EXCLUDE constraint)
+-- - Respeto de staff_schedules
+-- - Distribución realista de servicios
+--
+-- Se ejecuta mediante función helper generate_bookfast_bookings() que:
+-- 1. Respeta la constraint EXCLUDE on bookings(tenant_id, staff_id, slot)
+-- 2. Solo crea reservas en horarios válidos de cada barbero
+-- 3. Aplica distribución probabilística: 70% Corte, 20% Barba, 10% Combos
+-- 4. Genera concentración en viernes/sábado, menor actividad domingos
+-- 5. Asigna estados: COMPLETED si < NOW(), CONFIRMED si >= NOW()
+--
+-- 👉 Ejecutar seed_bookfast_bookings.sql DESPUÉS de este archivo
 
--- Nota: Las reservas se crearán manualmente para asegurar:
--- 1. No solapamientos (EXCLUDE constraint)
--- 2. Horarios coherentes con staff_schedules
--- 3. Distribución realista de servicios
--- 4. Estados variados (completed, confirmed, no_show, cancelled)
+-- ============================================================================
+-- PASO 9: CREAR BLOQUEOS DE STAFF (Vacaciones, ausencias)
+-- ============================================================================
+-- Añadir realismo con períodos de vacaciones y ausencias
 
--- Las insertaremos en el siguiente orden cronológico:
--- - Últimos 6 meses: reservas completadas (para métricas históricas)
--- - Última semana: mix de completed/confirmed
--- - Próximas 2 semanas: reservas confirmed (agenda activa)
-
--- ⚠️ IMPORTANTE: Este INSERT manual garantiza coherencia total
--- pero es extenso. Se incluirá en un bloque separado después de validar
--- que no haya errores en los pasos anteriores.
-
+INSERT INTO public.staff_blockings (
+  id,
+  tenant_id,
+  staff_id,
+  start_at,
+  end_at,
+  type,
+  reason,
+  notes,
+  created_at,
+  created_by
+) VALUES
+  -- Vacaciones Josep (verano 2025)
+  ('00000004-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000001', 
+   '2025-08-01 00:00:00+00', '2025-08-15 23:59:59+00', 'vacation', 'Vacaciones verano', NULL, NOW(), NULL),
+  
+  -- Vacaciones Socio (navidad 2024)
+  ('00000004-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000002', 
+   '2024-12-23 00:00:00+00', '2025-01-07 23:59:59+00', 'vacation', 'Vacaciones navidad', NULL, NOW(), NULL),
+  
+  -- Vacaciones Carlos (semana santa 2025)
+  ('00000004-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000003', 
+   '2025-04-14 00:00:00+00', '2025-04-21 23:59:59+00', 'vacation', 'Vacaciones Semana Santa', NULL, NOW(), NULL),
+  
+  -- Baja médica Javier (ejemplo)
+  ('00000004-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000004', 
+    '2025-03-10 00:00:00+00', '2025-03-14 23:59:59+00', 'absence', 'Baja médica', NULL, NOW(), NULL),
+  
+  -- Vacaciones David (agosto 2025)
+  ('00000004-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000005', 
+   '2025-08-16 00:00:00+00', '2025-08-31 23:59:59+00', 'vacation', 'Vacaciones verano', NULL, NOW(), NULL),
+  
+  -- Formación Josep (evento futuro)
+  ('00000004-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000001', '00000002-0000-0000-0000-000000000001', 
+    '2025-11-20 00:00:00+00', '2025-11-22 23:59:59+00', 'block', 'Formación barbería avanzada', NULL, NOW(), NULL)
+ON CONFLICT DO NOTHING;
 COMMIT;
 
 -- ============================================================================
@@ -352,29 +567,29 @@ COMMIT;
 -- Ejecutar estas queries para verificar que todo está correcto:
 
 -- 1. Verificar tenant creado
--- SELECT * FROM public.tenants WHERE id = 'bf000000-0000-0000-0000-000000000001';
+-- SELECT * FROM public.tenants WHERE id = '00000000-0000-0000-0000-000000000001';
 
 -- 2. Verificar servicios
--- SELECT COUNT(*) as total_servicios FROM public.services WHERE tenant_id = 'bf000000-0000-0000-0000-000000000001';
+-- SELECT COUNT(*) as total_servicios FROM public.services WHERE tenant_id = '00000000-0000-0000-0000-000000000001';
 
 -- 3. Verificar staff
--- SELECT COUNT(*) as total_staff FROM public.staff WHERE tenant_id = 'bf000000-0000-0000-0000-000000000001';
+-- SELECT COUNT(*) as total_staff FROM public.staff WHERE tenant_id = '00000000-0000-0000-0000-000000000001';
 
 -- 4. Verificar horarios
 -- SELECT s.display_name, COUNT(ss.id) as dias_trabajo
 -- FROM public.staff s
 -- JOIN public.staff_schedules ss ON ss.staff_id = s.id
--- WHERE s.tenant_id = 'bf000000-0000-0000-0000-000000000001'
+-- WHERE s.tenant_id = '00000000-0000-0000-0000-000000000001'
 -- GROUP BY s.id, s.display_name;
 
 -- 5. Verificar clientes
--- SELECT COUNT(*) as total_clientes FROM public.customers WHERE tenant_id = 'bf000000-0000-0000-0000-000000000001';
+-- SELECT COUNT(*) as total_clientes FROM public.customers WHERE tenant_id = '00000000-0000-0000-0000-000000000001';
 
 -- 6. Verificar servicios por barbero
 -- SELECT s.display_name, COUNT(sps.service_id) as servicios_habilitados
 -- FROM public.staff s
 -- LEFT JOIN public.staff_provides_services sps ON sps.staff_id = s.id
--- WHERE s.tenant_id = 'bf000000-0000-0000-0000-000000000001'
+-- WHERE s.tenant_id = '00000000-0000-0000-0000-000000000001'
 -- GROUP BY s.id, s.display_name;
 
 -- ============================================================================

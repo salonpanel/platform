@@ -1,0 +1,43 @@
+name: Run BookFast Seeds (manual)
+
+on:
+  workflow_dispatch:
+    inputs: {}
+
+jobs:
+  run-seeds:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install psql (Postgres client)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Run BookFast seeds (demo -> assign -> bookings)
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          echo "Running seed_bookfast_demo.sql"
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/seed_bookfast_demo.sql
+          echo "Running seed_bookfast_assign_users.sql"
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/seed_bookfast_assign_users.sql
+          echo "Running seed_bookfast_bookings.sql"
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/seed_bookfast_bookings.sql
+
+      - name: Run validation queries
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          echo "-- total_bookings"
+          psql "$SUPABASE_DB_URL" -t -c "SELECT COUNT(*) FROM public.bookings WHERE tenant_id = '00000000-0000-0000-0000-000000000001';"
+          echo "-- min/max starts_at"
+          psql "$SUPABASE_DB_URL" -t -c "SELECT MIN(starts_at), MAX(starts_at) FROM public.bookings WHERE tenant_id = '00000000-0000-0000-0000-000000000001';"
+          echo "-- status distribution"
+          psql "$SUPABASE_DB_URL" -t -c "SELECT status, COUNT(*) FROM public.bookings WHERE tenant_id = '00000000-0000-0000-0000-000000000001' GROUP BY status ORDER BY COUNT(*) DESC;"
+
+      - name: Finish
+        run: echo "BookFast seeds executed (check logs for validation outputs)."
