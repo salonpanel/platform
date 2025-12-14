@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClientForServer } from "@/lib/supabase/server-client";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseServer } from "@/lib/supabase";
 import { assertMembership } from "@/lib/server/assertMembership";
@@ -66,8 +65,8 @@ async function ensureLegacyUserRecord(
 export async function POST(req: Request) {
   try {
     // Obtener sesión vía createRouteHandlerClient
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: cookieStore });
+    // Obtener sesión vía createClientForServer
+    const supabase = await createClientForServer();
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -151,7 +150,7 @@ export async function POST(req: Request) {
     if (!createUserResponse.ok) {
       const errorData = await createUserResponse.json();
       console.error("Error al crear usuario:", errorData);
-      
+
       // Si el usuario ya existe, intentar obtener su ID
       if (errorData.error_code === "email_exists" || errorData.msg?.includes("already been registered")) {
         // Usar supabaseServer() para consultas directas

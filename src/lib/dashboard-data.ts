@@ -60,9 +60,29 @@ export type DashboardDataset = {
   staffMembers: StaffMember[];
 };
 
-// Fallback function removed in Phase 4 Cleanup
-// export const EMPTY_DASHBOARD_KPIS removed
-// export function createEmptyDashboardKpis removed
+export const EMPTY_DASHBOARD_KPIS: DashboardKpis = {
+  bookingsToday: 0,
+  activeServices: 0,
+  activeStaff: 0,
+  bookingsLast7Days: [],
+  totalBookingsLast7Days: 0,
+  totalBookingsLast30Days: 0,
+  revenueToday: 0,
+  revenueLast7Days: 0,
+  revenueLast30Days: 0,
+  noShowsLast7Days: 0,
+  avgTicketLast7Days: 0,
+  bookingsLast30DaysByDay: [],
+  occupancyTodayPercent: 0,
+  occupancyLast7DaysPercent: 0,
+  occupancyLast30DaysPercent: 0,
+  avgTicketToday: 0,
+  avgTicketLast30Days: 0,
+};
+
+export function createEmptyDashboardKpis(): DashboardKpis {
+  return { ...EMPTY_DASHBOARD_KPIS };
+}
 
 // Runtime validation helper for dashboard KPIs - development only
 export function validateDashboardKpis(kpis: DashboardKpis): DashboardKpis {

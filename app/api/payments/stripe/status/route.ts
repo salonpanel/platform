@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClientForServer } from "@/lib/supabase/server-client";
 import { stripe } from "@/lib/stripe";
 
 export const runtime = "nodejs";
@@ -21,10 +20,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   try {
     // 1. Verificar autenticación
-    const cookieStore = await cookies();
-    const supabaseAuth = createRouteHandlerClient({ 
-      cookies: () => cookieStore 
-    });
+    const supabaseAuth = await createClientForServer();
     const {
       data: { session },
     } = await supabaseAuth.auth.getSession();
@@ -91,8 +87,8 @@ export async function GET(req: Request) {
       const onboardingStatus = account.details_submitted && account.charges_enabled && account.payouts_enabled
         ? "completed"
         : account.details_submitted
-        ? "restricted"
-        : "pending";
+          ? "restricted"
+          : "pending";
 
       await supabase
         .from("tenants")

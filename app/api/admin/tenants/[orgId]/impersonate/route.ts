@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase";
 import { isPlatformAdmin, canModifyPlatform } from "@/lib/platform-auth";
-import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { createClientForServer } from "@/lib/supabase/server-client";
 import { addHours } from "date-fns";
 
 type RouteParams = {
@@ -57,8 +56,7 @@ export async function POST(
     }
 
     // Obtener user_id del contexto de autenticación
-    const cookieStore = await cookies();
-    const supabaseAuth = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabaseAuth = await createClientForServer();
     const {
       data: { session },
     } = await supabaseAuth.auth.getSession();
@@ -149,8 +147,7 @@ export async function DELETE(
     const supabase = supabaseServer();
 
     // Obtener user_id del contexto de autenticación
-    const cookieStore = await cookies();
-    const supabaseAuth = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabaseAuth = await createClientForServer();
     const {
       data: { session },
     } = await supabaseAuth.auth.getSession();

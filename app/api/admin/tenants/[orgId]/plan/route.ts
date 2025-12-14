@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase";
 import { isPlatformAdmin, canModifyPlatform } from "@/lib/platform-auth";
+import { createClientForServer } from "@/lib/supabase/server-client";
 
 type RouteParams = {
   params: Promise<{
@@ -115,10 +116,7 @@ export async function PUT(
     }
 
     // Obtener user_id del contexto de autenticación
-    const { cookies } = await import("next/headers");
-    const { createRouteHandlerClient } = await import("@supabase/auth-helpers-nextjs");
-    const cookieStore = await cookies();
-    const supabaseAuth = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabaseAuth = await createClientForServer();
     const {
       data: { session },
     } = await supabaseAuth.auth.getSession();

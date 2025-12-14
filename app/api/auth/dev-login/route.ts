@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClientForServer } from "@/lib/supabase/server-client";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
 /**
@@ -18,7 +17,7 @@ export async function POST(req: Request) {
   // Verificación estricta: solo desarrollo
   const isDevelopment = process.env.NODE_ENV === "development";
   const devLoginEnabled = process.env.NEXT_PUBLIC_ENABLE_DEV_LOGIN === "true";
-  
+
   // Triple verificación para máxima seguridad:
   // 1. NODE_ENV debe ser development
   // 2. Flag explícita NEXT_PUBLIC_ENABLE_DEV_LOGIN debe ser "true"
@@ -58,7 +57,7 @@ export async function POST(req: Request) {
 
     // Buscar el usuario existente primero
     const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-    
+
     if (listError) {
       console.error("Error al listar usuarios:", listError);
       return NextResponse.json(
@@ -66,7 +65,7 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
-    
+
     let user = existingUsers?.users?.find(
       (u) => u.email?.toLowerCase() === email.toLowerCase()
     );
@@ -75,7 +74,7 @@ export async function POST(req: Request) {
     if (!user) {
       try {
         console.log("Usuario no existe, creando...");
-        
+
         // Crear usuario con email confirmado
         const { data: newUser, error: createError } =
           await supabaseAdmin.auth.admin.createUser({
@@ -89,10 +88,10 @@ export async function POST(req: Request) {
         // Incluso si hay error, el usuario puede haberse creado (el trigger puede fallar pero el usuario se crea)
         if (createError) {
           console.warn("Error al crear usuario (puede ser del trigger):", createError.message);
-          
+
           // Esperar un momento para que el usuario se cree (aunque el trigger falle)
           await new Promise(resolve => setTimeout(resolve, 2000));
-          
+
           // Buscar el usuario de nuevo
           const { data: retryUsers, error: retryError } = await supabaseAdmin.auth.admin.listUsers();
           if (!retryError && retryUsers) {
@@ -100,24 +99,24 @@ export async function POST(req: Request) {
               (u) => u.email?.toLowerCase() === email.toLowerCase()
             );
           }
-          
+
           // Si aún no existe después de esperar, el trigger está bloqueando la creación
           // En este caso, el usuario puede haberse creado parcialmente en auth.users
           // pero el trigger falló. Vamos a verificar directamente en la base de datos
           if (!user) {
             console.log("Usuario no encontrado después del error, verificando en base de datos directamente...");
-            
+
             // Intentar buscar el usuario usando RPC o consulta directa
             try {
               // Usar una función RPC para crear el usuario directamente, evitando el trigger
               // O simplemente intentar crear de nuevo después de más tiempo
               await new Promise(resolve => setTimeout(resolve, 3000));
-              
+
               const { data: finalRetry } = await supabaseAdmin.auth.admin.listUsers();
               user = finalRetry?.users?.find(
                 (u) => u.email?.toLowerCase() === email.toLowerCase()
               );
-              
+
               if (!user) {
                 // Si aún no existe, el trigger está bloqueando completamente
                 // En este caso, necesitamos deshabilitar el trigger temporalmente o crear el usuario manualmente
@@ -131,11 +130,11 @@ export async function POST(req: Request) {
           user = newUser.user;
           console.log("Usuario creado exitosamente");
         }
-        
+
         // Si después de todo no tenemos usuario, devolver error
         if (!user) {
           return NextResponse.json(
-            { 
+            {
               error: "No se pudo crear el usuario. Verifica los logs del servidor.",
               message: "Intenta usar el flujo normal de magic link."
             },
@@ -144,16 +143,16 @@ export async function POST(req: Request) {
         }
       } catch (err: any) {
         console.error("Excepción al crear usuario:", err);
-        
+
         // Último intento: buscar el usuario
         const { data: lastRetry } = await supabaseAdmin.auth.admin.listUsers();
         user = lastRetry?.users?.find(
           (u) => u.email?.toLowerCase() === email.toLowerCase()
         );
-        
+
         if (!user) {
           return NextResponse.json(
-            { 
+            {
               error: "Error inesperado al crear usuario",
               message: err?.message || "Error desconocido"
             },
@@ -210,9 +209,9 @@ export async function POST(req: Request) {
     }
 
     // Crear sesión usando el cliente normal con el código
-    // En Next.js 15+, cookies() retorna una Promise y debe ser awaited
-    const cookieStore = await cookies();
-    const supabaseClient = createRouteHandlerClient({ cookies: () => cookieStore });
+    // Crear sesión usando el cliente normal con el código
+    // En Next.js 15+, cookies() es manejado dentro de createClientForServer
+    const supabaseClient = await createClientForServer();
 
     // Intercambiar código por sesión
     const { data: sessionData, error: sessionError } =
@@ -238,7 +237,7 @@ export async function POST(req: Request) {
     console.error("Error en dev-login:", err);
     console.error("Stack trace:", err?.stack);
     return NextResponse.json(
-      { 
+      {
         error: err?.message || "Error inesperado",
         details: process.env.NODE_ENV === "development" ? err?.stack : undefined
       },

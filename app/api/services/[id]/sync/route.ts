@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { createClientForServer } from "@/lib/supabase/server-client";
 import { supabaseServer } from "@/lib/supabase";
 import { hasTenantPermission } from "@/lib/permissions/server";
 import { stripe } from "@/lib/stripe";
@@ -19,8 +18,7 @@ export async function POST(_: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "ID requerido." }, { status: 400 });
     }
 
-    const cookieStore = await cookies();
-    const supabaseAuth = createRouteHandlerClient({ cookies: cookieStore });
+    const supabaseAuth = await createClientForServer();
     const {
       data: { session },
     } = await supabaseAuth.auth.getSession();

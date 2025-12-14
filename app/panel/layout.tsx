@@ -7,7 +7,7 @@ import { ReactNode } from "react";
 import PanelLayoutClient from "./layout-client";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClientForServer } from "@/lib/supabase/server-client";
 import { supabaseServer } from "@/lib/supabase";
 import { BookingModalProvider } from "@/contexts/BookingModalContext";
 import { BookingCreateModal } from "@/modules/bookings/BookingCreateModal";
@@ -18,8 +18,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
   // This avoids an extra client round-trip on the very first load after login
   // while still keeping the client-side auth verification as a safe fallback.
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerComponentClient({ cookies: () => cookieStore });
+    const supabase = await createClientForServer();
 
     const {
       data: { session },

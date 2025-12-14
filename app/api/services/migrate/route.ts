@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { createClientForServer } from "@/lib/supabase/server-client";
 import { stripe } from "@/lib/stripe";
 
 const CURRENCY = process.env.STRIPE_DEFAULT_CURRENCY ?? "eur";
@@ -21,8 +20,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: cookieStore });
+  const supabase = await createClientForServer();
   const {
     data: { session },
   } = await supabase.auth.getSession();

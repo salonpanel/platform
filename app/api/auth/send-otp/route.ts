@@ -1,7 +1,5 @@
-// app/api/auth/send-otp/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createClientForServer } from "@/lib/supabase/server-client";
 
 /**
  * POST /api/auth/send-otp
@@ -45,29 +43,8 @@ export async function POST(req: NextRequest) {
     }
 
     // ✅ Crear cliente Supabase server-side
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options);
-            });
-          },
-        },
-        cookieOptions: {
-          name: "sb-panel-auth",
-          path: "/",
-          sameSite: "lax",
-          secure: process.env.NODE_ENV === "production",
-        },
-      }
-    );
+    // Usar cliente centralizado
+    const supabase = await createClientForServer();
 
     console.log(`[SendOTP] Enviando OTP a: ${email}`);
 
@@ -76,7 +53,6 @@ export async function POST(req: NextRequest) {
       email,
       options: {
         shouldCreateUser: true,
-        skipBrowserRedirect: true, // ✅ CRÍTICO en Next.js 16 SSR
       },
     });
 
@@ -92,7 +68,7 @@ export async function POST(req: NextRequest) {
         // Extraer segundos si está disponible
         const match = otpError.message.match(/(\d+)\s+seconds?/i);
         const seconds = match ? parseInt(match[1], 10) : 60;
-        
+
         return NextResponse.json(
           {
             ok: false,

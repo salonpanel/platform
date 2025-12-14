@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase";
 import { isPlatformAdmin, canModifyPlatform } from "@/lib/platform-auth";
 import { createClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { createClientForServer } from "@/lib/supabase/server-client";
 import { isValidTenantSlug, isReservedSubdomain } from "@/lib/domains";
 
 /**
@@ -34,7 +33,7 @@ export async function POST(req: Request) {
 
     // Validar formato de slug usando la función centralizada
     const trimmedSlug = slug.trim().toLowerCase();
-    
+
     if (!isValidTenantSlug(trimmedSlug)) {
       // Verificar si es un subdominio reservado
       if (isReservedSubdomain(trimmedSlug)) {
@@ -43,7 +42,7 @@ export async function POST(req: Request) {
           { status: 400 }
         );
       }
-      
+
       // Otro error de formato
       return NextResponse.json(
         { error: "El slug debe tener entre 3 y 32 caracteres, solo letras minúsculas, números y guiones, y no puede empezar ni terminar en guion" },
@@ -60,8 +59,7 @@ export async function POST(req: Request) {
     }
 
     const supabase = supabaseServer();
-    const cookieStore = await cookies();
-    const supabaseAuth = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabaseAuth = await createClientForServer();
     const { data: { user: currentUser } } = await supabaseAuth.auth.getUser();
 
     if (!currentUser) {
@@ -307,10 +305,10 @@ export async function GET() {
                 .maybeSingle();
               planData = plan
                 ? {
-                    key: plan.key,
-                    name: plan.name,
-                    billing_state: directPlan.billing_state,
-                  }
+                  key: plan.key,
+                  name: plan.name,
+                  billing_state: directPlan.billing_state,
+                }
                 : null;
             }
           } catch (e) {
@@ -345,7 +343,7 @@ export async function GET() {
           bookingsCount = { count: latestMetrics.total_bookings || 0 };
           servicesCount = { count: latestMetrics.active_services || 0 };
           staffCount = { count: latestMetrics.active_staff || 0 };
-          
+
           // Reservas de hoy (si las métricas son de hoy)
           if (latestMetrics.metric_date === today) {
             bookingsToday = latestMetrics.confirmed_bookings || 0;

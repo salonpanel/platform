@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { createClientForServer } from "@/lib/supabase/server-client";
 import { supabaseServer } from "@/lib/supabase";
 import { hasTenantPermission } from "@/lib/permissions/server";
 
@@ -28,8 +27,7 @@ export async function GET(req: Request) {
     const searchTerm = searchParams.get("search") || "";
     const impersonateOrgId = searchParams.get("impersonate");
 
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = await createClientForServer();
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -208,9 +206,9 @@ export async function GET(req: Request) {
     const rows = filtered.map((customer) => {
       const lastVisit = customer.last_booking_at
         ? new Date(customer.last_booking_at).toLocaleString("es-ES", {
-            dateStyle: "short",
-            timeStyle: "short",
-          })
+          dateStyle: "short",
+          timeStyle: "short",
+        })
         : "";
 
       const totalSpent = customer.total_spent_cents

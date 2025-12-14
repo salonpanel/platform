@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { createClientForServer } from "@/lib/supabase/server-client";
 import { supabaseServer } from "@/lib/supabase";
 import { assertMembership } from "@/lib/server/assertMembership";
 
@@ -22,8 +21,7 @@ export async function POST(req: Request) {
     }
 
     // 1) Verificar sesión y membership
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = await createClientForServer();
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -94,7 +92,7 @@ export async function POST(req: Request) {
         const fullName = (authUser?.user?.user_metadata as any)?.full_name as string | undefined;
         const email = authUser?.user?.email || "";
         displayName = fullName || (email ? email.split("@")[0] : "Usuario");
-      } catch {}
+      } catch { }
 
       const { error: insStaffErr } = await admin.from("staff").insert({
         tenant_id: tenantId,

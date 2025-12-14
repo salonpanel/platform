@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createClientForServer } from "@/lib/supabase/server-client";
 import { stripe } from "@/lib/stripe";
 
 export const runtime = "nodejs";
@@ -18,23 +17,7 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   try {
     // 1. Verificar autenticación
-    const cookieStore = await cookies();
-    
-    const supabaseAuth = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            // No necesitamos setAll para este endpoint
-          },
-        },
-      }
-    );
-    
+    const supabaseAuth = await createClientForServer();
     const {
       data: { session },
     } = await supabaseAuth.auth.getSession();
@@ -118,7 +101,7 @@ export async function POST(req: Request) {
         // Guardar stripe_account_id en Supabase
         const { error: updateError } = await supabase
           .from("tenants")
-          .update({ 
+          .update({
             stripe_account_id: stripeAccountId,
             stripe_onboarding_status: "pending"
           })
@@ -143,7 +126,7 @@ export async function POST(req: Request) {
     // 5. Crear account link para onboarding
     try {
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://pro.bookfast.es";
-      
+
       const accountLink = await stripe.accountLinks.create({
         account: stripeAccountId,
         refresh_url: `${baseUrl}/panel/monedero`,

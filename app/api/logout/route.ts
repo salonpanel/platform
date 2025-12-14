@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
-import { cookies, headers } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { headers } from "next/headers";
+import { createClientForServer } from "@/lib/supabase/server-client";
 import { supabaseServer } from "@/lib/supabase";
 import { getClientIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
-  // En Next.js 15+, cookies() retorna una Promise en route handlers y debe ser awaited
-  const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: cookieStore });
+  const supabase = await createClientForServer();
   const {
     data: { user },
   } = await supabase.auth.getUser();

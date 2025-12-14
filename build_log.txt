@@ -1,0 +1,31 @@
+app/api/admin/tenants/[orgId]/features/route.ts(120,68): error TS2739: Type 'ReadonlyRequestCookies' is missing the following properties from type 'Promise<ReadonlyRequestCookies>': then, catch, finally, [Symbol.toStringTag]
+app/api/admin/tenants/[orgId]/impersonate/route.ts(61,68): error TS2739: Type 'ReadonlyRequestCookies' is missing the following properties from type 'Promise<ReadonlyRequestCookies>': then, catch, finally, [Symbol.toStringTag]
+app/api/admin/tenants/[orgId]/impersonate/route.ts(153,68): error TS2739: Type 'ReadonlyRequestCookies' is missing the following properties from type 'Promise<ReadonlyRequestCookies>': then, catch, finally, [Symbol.toStringTag]
+app/api/admin/tenants/[orgId]/plan/route.ts(121,68): error TS2739: Type 'ReadonlyRequestCookies' is missing the following properties from type 'Promise<ReadonlyRequestCookies>': then, catch, finally, [Symbol.toStringTag]
+app/api/admin/tenants/[orgId]/timezone/route.ts(116,68): error TS2739: Type 'ReadonlyRequestCookies' is missing the following properties from type 'Promise<ReadonlyRequestCookies>': then, catch, finally, [Symbol.toStringTag]
+app/api/admin/tenants/route.ts(64,68): error TS2739: Type 'ReadonlyRequestCookies' is missing the following properties from type 'Promise<ReadonlyRequestCookies>': then, catch, finally, [Symbol.toStringTag]
+app/api/auth/dev-login/route.ts(215,70): error TS2739: Type 'ReadonlyRequestCookies' is missing the following properties from type 'Promise<ReadonlyRequestCookies>': then, catch, finally, [Symbol.toStringTag]
+app/api/auth/send-otp/route.ts(79,9): error TS2353: Object literal may only specify known properties, and 'skipBrowserRedirect' does not exist in type '{ emailRedirectTo?: string | undefined; shouldCreateUser?: boolean | undefined; data?: object | undefined; captchaToken?: string | undefined; } | { shouldCreateUser?: boolean | undefined; data?: object | undefined; captchaToken?: string | undefined; channel?: "sms" | ... 1 more ... | undefined; }'.
+app/api/logout/route.ts(10,47): error TS2322: Type 'ReadonlyRequestCookies' is not assignable to type '() => Promise<ReadonlyRequestCookies>'.
+  Type 'ReadonlyRequestCookies' provides no match for the signature '(): Promise<ReadonlyRequestCookies>'.
+app/api/panel/customers/export/route.ts(32,64): error TS2739: Type 'ReadonlyRequestCookies' is missing the following properties from type 'Promise<ReadonlyRequestCookies>': then, catch, finally, [Symbol.toStringTag]
+app/api/payments/services/sync/route.ts(41,68): error TS2739: Type 'ReadonlyRequestCookies' is missing the following properties from type 'Promise<ReadonlyRequestCookies>': then, catch, finally, [Symbol.toStringTag]
+app/api/payments/stripe/status/route.ts(26,22): error TS2739: Type 'ReadonlyRequestCookies' is missing the following properties from type 'Promise<ReadonlyRequestCookies>': then, catch, finally, [Symbol.toStringTag]
+app/api/prefetch/panel-data/route.ts(17,64): error TS2739: Type 'ReadonlyRequestCookies' is missing the following properties from type 'Promise<ReadonlyRequestCookies>': then, catch, finally, [Symbol.toStringTag]
+app/api/services/[id]/sync/route.ts(23,53): error TS2322: Type 'ReadonlyRequestCookies' is not assignable to type '() => Promise<ReadonlyRequestCookies>'.
+  Type 'ReadonlyRequestCookies' provides no match for the signature '(): Promise<ReadonlyRequestCookies>'.
+app/api/services/migrate/route.ts(25,47): error TS2322: Type 'ReadonlyRequestCookies' is not assignable to type '() => Promise<ReadonlyRequestCookies>'.
+  Type 'ReadonlyRequestCookies' provides no match for the signature '(): Promise<ReadonlyRequestCookies>'.
+app/api/services/route.ts(90,53): error TS2322: Type 'ReadonlyRequestCookies' is not assignable to type '() => Promise<ReadonlyRequestCookies>'.
+  Type 'ReadonlyRequestCookies' provides no match for the signature '(): Promise<ReadonlyRequestCookies>'.
+app/api/staff/create-user/route.ts(70,49): error TS2322: Type 'ReadonlyRequestCookies' is not assignable to type '() => Promise<ReadonlyRequestCookies>'.
+  Type 'ReadonlyRequestCookies' provides no match for the signature '(): Promise<ReadonlyRequestCookies>'.
+app/api/staff/sync/route.ts(26,64): error TS2739: Type 'ReadonlyRequestCookies' is missing the following properties from type 'Promise<ReadonlyRequestCookies>': then, catch, finally, [Symbol.toStringTag]
+app/auth/callback/route.ts(130,70): error TS2739: Type 'ReadonlyRequestCookies' is missing the following properties from type 'Promise<ReadonlyRequestCookies>': then, catch, finally, [Symbol.toStringTag]
+app/login/verify-code/page.tsx(184,11): error TS2353: Object literal may only specify known properties, and 'skipBrowserRedirect' does not exist in type '{ emailRedirectTo?: string | undefined; shouldCreateUser?: boolean | undefined; data?: object | undefined; captchaToken?: string | undefined; } | { shouldCreateUser?: boolean | undefined; data?: object | undefined; captchaToken?: string | undefined; channel?: "sms" | ... 1 more ... | undefined; }'.
+app/panel/layout.tsx(22,67): error TS2739: Type 'ReadonlyRequestCookies' is missing the following properties from type 'Promise<ReadonlyRequestCookies>': then, catch, finally, [Symbol.toStringTag]
+src/hooks/useOptimizedData.ts(3,28): error TS2305: Module '"@/lib/dashboard-data"' has no exported member 'createEmptyDashboardKpis'.
+src/lib/dashboard-data.ts(92,21): error TS2304: Cannot find name 'createEmptyDashboardKpis'.
+src/lib/middleware-feature-guard.ts(35,70): error TS2739: Type 'ReadonlyRequestCookies' is missing the following properties from type 'Promise<ReadonlyRequestCookies>': then, catch, finally, [Symbol.toStringTag]
+src/lib/platform-admin.ts(10,62): error TS2739: Type 'ReadonlyRequestCookies' is missing the following properties from type 'Promise<ReadonlyRequestCookies>': then, catch, finally, [Symbol.toStringTag]
+src/lib/platform-admin.ts(30,62): error TS2739: Type 'ReadonlyRequestCookies' is missing the following properties from type 'Promise<ReadonlyRequestCookies>': then, catch, finally, [Symbol.toStringTag]

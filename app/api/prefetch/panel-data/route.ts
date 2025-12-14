@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { createClientForServer } from "@/lib/supabase/server-client";
 import { fetchDashboardDataset } from "@/lib/dashboard-data";
 
 /**
@@ -13,8 +12,8 @@ export async function GET(req: NextRequest) {
     console.log("[PrefetchPanelData] 🔥 Iniciando prefetch inteligente de datos del panel...");
 
     // Usar cookies directamente con createRouteHandlerClient
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    // Usar createClientForServer
+    const supabase = await createClientForServer();
 
     // Verificar que tenemos sesión válida
     const {

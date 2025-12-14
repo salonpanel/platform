@@ -15,8 +15,8 @@
  * El cliente NO debe manejar tokens directamente del hash.
  */
 import { NextResponse } from "next/server";
-import { cookies, headers } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { headers } from "next/headers";
+import { createClientForServer } from "@/lib/supabase/server-client";
 import { supabaseServer } from "@/lib/supabase";
 import { getClientIp } from "@/lib/rate-limit";
 
@@ -124,10 +124,10 @@ export async function GET(request: Request) {
 
   try {
     console.log("[AuthCallback] Creating Supabase client...");
+    console.log("[AuthCallback] Creating Supabase client...");
     // Crear cliente de Supabase con cookies (Next.js 15+)
-    // En Next.js 15+, cookies() retorna una Promise y debe ser awaited
-    const cookieStore = await cookies();
-    const supabaseClient = createRouteHandlerClient({ cookies: () => cookieStore });
+    // En Next.js 15+, cookies() es manejado internamente por createClientForServer
+    const supabaseClient = await createClientForServer();
     console.log("[AuthCallback] Supabase client created");
 
     let session;

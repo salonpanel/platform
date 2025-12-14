@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { hasFeature } from "./platform-features";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClientForServer } from "@/lib/supabase/server-client";
 
 /**
  * Middleware para proteger endpoints por feature flags
@@ -31,11 +30,12 @@ export function withFeatureGuard(featureKey: string) {
 
         // Si aún no hay org_id, intentar obtenerlo del usuario autenticado
         if (!orgId) {
-          const cookieStore = await cookies();
-          const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+          const supabase = await createClientForServer();
+          // getUser es seguro en server components/route handlers con @supabase/ssr
           const {
             data: { user },
           } = await supabase.auth.getUser();
+
           if (user) {
             // Usar memberships en lugar de users (legacy)
             const { data: membership } = await supabase

@@ -11,7 +11,7 @@ function VerifyCodeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const email = searchParams?.get("email") || "";
-  
+
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
@@ -22,7 +22,7 @@ function VerifyCodeContent() {
   // Contador regresivo para reenvío
   useEffect(() => {
     if (timeLeft <= 0) return;
-    
+
     const timer = setInterval(() => {
       setTimeLeft((prev) => Math.max(0, prev - 1));
     }, 1000);
@@ -94,7 +94,7 @@ function VerifyCodeContent() {
         });
         setError(
           data?.error ||
-            "No hemos podido verificar el código. Por favor, inténtalo de nuevo."
+          "No hemos podido verificar el código. Por favor, inténtalo de nuevo."
         );
         setCode(""); // Limpiar campo por seguridad
         setVerifying(false);
@@ -113,45 +113,45 @@ function VerifyCodeContent() {
       setSuccess(true);
       // Redirigir inmediatamente sin leer cookies manualmente
       router.replace("/panel");
-      
+
       // 🔥 OPTIMIZACIÓN: Después de verificación exitosa, hacer prefetch inteligente
       // para calentar datos críticos antes de redirigir
       try {
         console.log('[VerifyCode] 🔥 Iniciando prefetch inteligente post-verificación...');
-        
+
         // 1. Prefetch de la ruta del panel (ya existe)
         const redirectParam = searchParams?.get("redirect");
         const redirectPath = redirectParam || "/panel";
-        
+
         // 2. 🔥 NUEVO: Prefetch inteligente de datos críticos usando las cookies recién creadas
         // Esto permite que el servidor lea la sesión y prepare datos iniciales
         const prefetchPromises = [
           // Prefetch básico de ruta (ya existe)
-          fetch(redirectPath, { method: "GET", credentials: "include", cache: "no-store" }).catch(() => {}),
-          
+          fetch(redirectPath, { method: "GET", credentials: "include", cache: "no-store" }).catch(() => { }),
+
           // 🔥 Prefetch de datos del panel con credenciales (nuevo)
           // El servidor ahora puede leer las cookies de sesión y hacer SSR optimizado
-          fetch("/api/prefetch/panel-data", { 
-            method: "GET", 
-            credentials: "include", 
-            cache: "no-store" 
-          }).catch(() => {}),
+          fetch("/api/prefetch/panel-data", {
+            method: "GET",
+            credentials: "include",
+            cache: "no-store"
+          }).catch(() => { }),
         ];
-        
+
         // Ejecutar prefetches en paralelo sin bloquear
         Promise.all(prefetchPromises).then(() => {
           console.log('[VerifyCode] ✅ Prefetch inteligente completado');
         }).catch(() => {
           // Silenciar errores - es prefetch, no crítico
         });
-        
+
         console.log("[VerifyCode] Redirigiendo a:", redirectPath);
-        
+
         // Redirección ya ejecutada; mantener por seguridad si aún no navegó
         setTimeout(() => {
           router.replace(redirectPath);
         }, 500);
-        
+
       } catch (prefetchError) {
         console.warn('[VerifyCode] Error en prefetch, continuando con redirección normal:', prefetchError);
         // Si el prefetch falla, redirigir normalmente
@@ -181,13 +181,12 @@ function VerifyCodeContent() {
         email: email.toLowerCase().trim(),
         options: {
           shouldCreateUser: true,
-          skipBrowserRedirect: true, // ✅ Necesario con SSR en Next.js 16
         },
       });
 
       if (authError) {
         console.error("Error reenviando OTP:", authError);
-        
+
         // Si Supabase devuelve el mensaje de "solo puedes pedirlo después de X segundos"
         if (authError.message?.includes("you can only request this after")) {
           const match = authError.message.match(/(\d+)\s+seconds?/i);
@@ -243,11 +242,11 @@ function VerifyCodeContent() {
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
       {/* Fondo con gradiente animado */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
-      
+
       {/* Efectos de luz decorativos */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-      
+
       {/* Contenido principal */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
