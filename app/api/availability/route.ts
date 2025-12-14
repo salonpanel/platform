@@ -27,7 +27,7 @@ export async function GET(req: Request) {
       const { success, reset } = await holdRateLimit.limit(`availability:${ip}`);
       if (!success) {
         return NextResponse.json(
-          { 
+          {
             error: "Se han realizado demasiadas solicitudes. Inténtalo más tarde.",
             code: "RATE_LIMIT"
           },
@@ -36,7 +36,7 @@ export async function GET(req: Request) {
       }
     }
     const { searchParams } = new URL(req.url);
-    
+
     const tenant = searchParams.get("tenant"); // Puede ser UUID o slug
     const serviceId = searchParams.get("service_id");
     const staffId = searchParams.get("staff_id");
@@ -69,7 +69,7 @@ export async function GET(req: Request) {
         .select("id, timezone")
         .eq("slug", tenant)
         .maybeSingle();
-      
+
       tenantData = tenantBySlug;
       tenantError = slugError;
     }
@@ -118,30 +118,64 @@ export async function GET(req: Request) {
       }
     }
 
-    // Llamar a la función SQL
-    const { data: slots, error: slotsError } = await supabase.rpc(
-      "get_available_slots",
-      {
-        p_tenant_id: tenantId,
-        p_service_id: serviceId,
-        p_staff_id: staffId || null,
-        p_date: date || new Date().toISOString().split("T")[0],
-        p_days_ahead: daysAhead ? parseInt(daysAhead, 10) : 30,
-      }
-    );
+    // Feature Flag: Switch to new RPC if enabled
+    const useNewRpc = process.env.NEXT_PUBLIC_USE_RPC_AVAILABILITY === 'true';
+    let slotsData, slotsErr;
 
-    if (slotsError) {
-      console.error("Error al calcular slots:", slotsError);
+    if (useNewRpc) {
+      // New RPC Path (Strict Tenant Isolation)
+      // Input: (p_tenant_id, p_service_id, p_from_date, p_to_date)
+      const targetDate = date ? new Date(date) : new Date();
+      const days = daysAhead ? parseInt(daysAhead, 10) : 30;
+      const toDate = new Date(targetDate);
+      toDate.setDate(toDate.getDate() + days);
+
+      const { data, error } = await supabase.rpc(
+        "get_public_availability_v1",
+        {
+          p_tenant_id: tenantId,
+          p_service_id: serviceId,
+          p_from_date: targetDate.toISOString().split("T")[0],
+          p_to_date: toDate.toISOString().split("T")[0],
+        }
+      );
+
+      // Filter by staff_id if provided (RPC returns all relevant staff)
+      if (data && staffId) {
+        slotsData = data.filter((s: any) => s.staff_id === staffId);
+      } else {
+        slotsData = data;
+      }
+      slotsErr = error;
+
+    } else {
+      // Legacy Path (Shadowed/Deprecated)
+      const { data, error } = await supabase.rpc(
+        "get_available_slots",
+        {
+          p_tenant_id: tenantId,
+          p_service_id: serviceId,
+          p_staff_id: staffId || null,
+          p_date: date || new Date().toISOString().split("T")[0],
+          p_days_ahead: daysAhead ? parseInt(daysAhead, 10) : 30,
+        }
+      );
+      slotsData = data;
+      slotsErr = error;
+    }
+
+    if (slotsErr) {
+      console.error("Error al calcular slots:", slotsErr);
       return NextResponse.json(
-        { error: slotsError.message || "Error al calcular disponibilidad" },
+        { error: slotsErr.message || "Error al calcular disponibilidad" },
         { status: 500 }
       );
     }
 
     // P1.2: Retornar slots con timezone del tenant
     return NextResponse.json({
-      slots: slots || [],
-      count: (slots || []).length,
+      slots: slotsData || [],
+      count: (slotsData || []).length,
       timezone: tenantTimezone, // Timezone del tenant para el frontend
     });
   } catch (err: any) {

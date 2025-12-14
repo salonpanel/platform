@@ -11,6 +11,7 @@ import type {
   StaffSchedule,
   ViewMode,
 } from "@/types/agenda";
+import { guardTenantQuery, logTenantQueryResult } from "@/lib/tenant/validateTenantId";
 
 export interface AgendaStats {
   total_bookings: number;
@@ -97,7 +98,7 @@ export function useAgendaData({ tenantId, selectedDate, viewMode, initialData }:
   }, [tenantId]);
 
   useEffect(() => {
-    if (!tenantId) return;
+    if (!guardTenantQuery(tenantId, "useAgendaData:loadStaticCatalogs")) return;
     if (hydratedTenantId === tenantId) return;
 
     let cancelled = false;
@@ -148,9 +149,42 @@ export function useAgendaData({ tenantId, selectedDate, viewMode, initialData }:
     };
   }, [tenantId, hydratedTenantId, supabase]);
 
+  // New RPC Data Fetcher
+  const fetchWithRpc = async (range: { startISO: string; endISO: string }) => {
+    // Call the consolidated RPC
+    const { data, error } = await supabase.rpc("get_agenda_v1", {
+      p_tenant_id: tenantId,
+      p_start_date: range.startISO,
+      p_end_date: range.endISO,
+    });
+
+    if (error) throw error;
+
+    // The RPC returns a single JSON object. Map it to state.
+    // Ensure types match what state expects.
+    const rpcData = data as any; // Type assertion since RPC return type is generic JSON
+
+    // 1. Bookings: RPC returns them with nested objects. 
+    // We map them to ensure they match 'Booking' interface if needed, 
+    // or rely on RPC shape matching.
+    setBookings(rpcData.bookings || []);
+
+    // 2. Blockings
+    setStaffBlockings(rpcData.blockings || []);
+
+    // 3. Schedules
+    setStaffSchedules(rpcData.schedules || []);
+
+    // 4. Stats
+    setStats(rpcData.stats || null);
+
+    // Log success
+    logTenantQueryResult(rpcData.bookings?.length || 0, "fetchWithRpc:bookings");
+  };
+
   const fetchRangeData = useCallback(
     async (targetDate?: string) => {
-      if (!tenantId) return;
+      if (!guardTenantQuery(tenantId, "fetchRangeData")) return;
       setLoading(true);
       setError(null);
 
@@ -158,40 +192,7 @@ export function useAgendaData({ tenantId, selectedDate, viewMode, initialData }:
       const range = getAgendaRange(rangeDate, viewMode);
 
       try {
-        const [bookingsRpc, statsRpc, blockingsRes, schedulesRes] = await Promise.all([
-          supabase.rpc("get_filtered_bookings", {
-            p_tenant_id: tenantId,
-            p_start_date: range.startISO,
-            p_end_date: range.endISO,
-          }),
-          supabase.rpc("get_agenda_stats", {
-            p_tenant_id: tenantId,
-            p_start_date: range.startISO.slice(0, 10),
-            p_end_date: range.endISO.slice(0, 10),
-          }),
-          supabase
-            .from("staff_blockings")
-            .select("id, staff_id, start_at, end_at, type, reason, notes")
-            .eq("tenant_id", tenantId)
-            .gte("start_at", range.startISO)
-            .lte("end_at", range.endISO)
-            .order("start_at"),
-          supabase
-            .from("staff_schedules")
-            .select("staff_id, start_time, end_time")
-            .eq("tenant_id", tenantId)
-            .eq("is_active", true),
-        ]);
-
-        if (bookingsRpc.error) throw bookingsRpc.error;
-        if (statsRpc.error) throw statsRpc.error;
-        if (blockingsRes.error) throw blockingsRes.error;
-        if (schedulesRes.error) throw schedulesRes.error;
-
-        setBookings((bookingsRpc.data as Booking[]) || []);
-        setStaffBlockings(blockingsRes.data || []);
-        setStaffSchedules(schedulesRes.data || []);
-        setStats((statsRpc.data as AgendaStats) || null);
+        await fetchWithRpc(range);
       } catch (err) {
         setError("No se pudo cargar la agenda");
         console.error(err);

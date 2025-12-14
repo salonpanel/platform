@@ -9,6 +9,7 @@ import {
   startOfWeek,
 } from "date-fns";
 import { ViewMode } from "@/types/agenda";
+import { validateTenantObject, logTenantQueryResult } from "@/lib/tenant/validateTenantId";
 
 export type AgendaDataset = {
   tenant: {
@@ -52,6 +53,9 @@ export async function fetchAgendaDataset(
   range: { startISO: string; endISO: string; viewMode: ViewMode; anchorDate: string },
   options?: { includeUserRole?: boolean; userId?: string | null }
 ): Promise<AgendaDataset> {
+  if (!validateTenantObject(tenant, "fetchAgendaDataset")) {
+    throw new Error("Invalid tenant object provided to fetchAgendaDataset");
+  }
 
   const [staffRes, servicesRes, customersRes, blockingsRes, schedulesRes, roleRes, bookingsRpcRes] = await Promise.all([
     supabase
@@ -86,22 +90,24 @@ export async function fetchAgendaDataset(
       .eq("is_active", true),
     options?.includeUserRole
       ? (async () => {
-          const userId = options.userId || (await supabase.auth.getUser()).data.user?.id || null;
-          if (!userId) return null;
-          const { data } = await supabase
-            .from("memberships")
-            .select("role")
-            .eq("tenant_id", tenant.id)
-            .eq("user_id", userId)
-            .maybeSingle();
-          return data?.role || null;
-        })()
+        const userId = options.userId || (await supabase.auth.getUser()).data.user?.id || null;
+        if (!userId) return null;
+        const { data } = await supabase
+          .from("memberships")
+          .select("role")
+          .eq("tenant_id", tenant.id)
+          .eq("user_id", userId)
+          .maybeSingle();
+        return data?.role || null;
+      })()
       : Promise.resolve(null),
-    supabase.rpc("get_agenda", {
-      tenant_id: tenant.id,
-      start_date: range.startISO,
-      end_date: range.endISO,
-    })
+    supabase
+      .from("bookings")
+      .select("*, customer:customers(id, name, phone), service:services(id, name), staff:staff(id, name)")
+      .eq("tenant_id", tenant.id)
+      .gte("starts_at", range.startISO)
+      .lte("ends_at", range.endISO)
+      .order("starts_at")
   ]);
 
   if (staffRes.error) throw staffRes.error;
@@ -110,6 +116,7 @@ export async function fetchAgendaDataset(
   if (blockingsRes.error) throw blockingsRes.error;
   if (schedulesRes.error) throw schedulesRes.error;
   if (bookingsRpcRes.error) throw bookingsRpcRes.error;
+  logTenantQueryResult(bookingsRpcRes.data?.length || 0, "fetchAgendaDataset:bookings");
 
   return {
     tenant: {

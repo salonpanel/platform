@@ -5,6 +5,7 @@
  */
 
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
+import { guardTenantQuery, logTenantQueryResult } from "./validateTenantId";
 
 export interface TenantStaffOption {
   id: string;
@@ -22,17 +23,9 @@ export interface TenantServiceOption {
  * Fetches all staff for a tenant with resilience
  */
 export async function fetchTenantStaff(tenantId: string): Promise<TenantStaffOption[]> {
-  // 🔒 GUARDRAIL: Strict validation to prevent queries without tenant_id
-  if (!tenantId || tenantId.trim() === "" || tenantId === "undefined" || tenantId === "null") {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[fetchTenantStaff] ⚠️ BLOCKED: Invalid tenantId provided:", { tenantId, type: typeof tenantId });
-    }
+  // 🔒 GUARDRAIL: Strict validation using reusable utility
+  if (!guardTenantQuery(tenantId, "fetchTenantStaff")) {
     return [];
-  }
-
-  // 🔍 DEV LOGGING: Track execution
-  if (process.env.NODE_ENV === "development") {
-    console.log("[fetchTenantStaff] 🚀 Executing query with tenantId:", tenantId);
   }
 
   const supabase = getSupabaseBrowser();
@@ -61,14 +54,11 @@ export async function fetchTenantStaff(tenantId: string): Promise<TenantStaffOpt
       return [];
     }
 
-    // 🔍 DEV LOGGING: Track results
-    if (process.env.NODE_ENV === "development") {
-      console.log("[fetchTenantStaff] ✅ Query succeeded:", {
-        tenantId,
-        rowsReturned: data?.length || 0,
-        staffNames: data?.map(s => s.name || s.display_name) || []
-      });
-    }
+    // 🔍 DEV LOGGING: Track results using reusable utility
+    logTenantQueryResult(data?.length || 0, "fetchTenantStaff", {
+      tenantId,
+      staffNames: data?.map(s => s.name || s.display_name) || []
+    });
 
     return (data || []).map(staff => ({
       id: staff.id,
@@ -85,17 +75,9 @@ export async function fetchTenantStaff(tenantId: string): Promise<TenantStaffOpt
  * Fetches all services for a tenant with resilience
  */
 export async function fetchTenantServices(tenantId: string): Promise<TenantServiceOption[]> {
-  // 🔒 GUARDRAIL: Strict validation to prevent queries without tenant_id
-  if (!tenantId || tenantId.trim() === "" || tenantId === "undefined" || tenantId === "null") {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[fetchTenantServices] ⚠️ BLOCKED: Invalid tenantId provided:", { tenantId, type: typeof tenantId });
-    }
+  // 🔒 GUARDRAIL: Strict validation using reusable utility
+  if (!guardTenantQuery(tenantId, "fetchTenantServices")) {
     return [];
-  }
-
-  // 🔍 DEV LOGGING: Track execution
-  if (process.env.NODE_ENV === "development") {
-    console.log("[fetchTenantServices] 🚀 Executing query with tenantId:", tenantId);
   }
 
   const supabase = getSupabaseBrowser();
@@ -124,14 +106,11 @@ export async function fetchTenantServices(tenantId: string): Promise<TenantServi
       return [];
     }
 
-    // 🔍 DEV LOGGING: Track results
-    if (process.env.NODE_ENV === "development") {
-      console.log("[fetchTenantServices] ✅ Query succeeded:", {
-        tenantId,
-        rowsReturned: data?.length || 0,
-        serviceNames: data?.map(s => s.name) || []
-      });
-    }
+    // 🔍 DEV LOGGING: Track results using reusable utility
+    logTenantQueryResult(data?.length || 0, "fetchTenantServices", {
+      tenantId,
+      serviceNames: data?.map(s => s.name) || []
+    });
 
     return (data || []).map(service => ({
       id: service.id,

@@ -1,0 +1,42 @@
+* Host localhost:3000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:3000...
+* Established connection to localhost (::1 port 3000) from ::1 port 61851 
+* using HTTP/1.x
+> GET /api/availability?tenant=00000000-0000-0000-0000-000000000001&service_id=00000001-0000-0000-0000-000000000017&staff_id=00000002-0000-0000-0000-000000000003 HTTP/1.1
+
+> Host: localhost:3000
+
+> User-Agent: curl/8.16.0
+
+> Accept: */*
+
+> 
+
+* Request completely sent off
+< HTTP/1.1 500 Internal Server Error
+
+< vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+
+< content-type: application/json
+
+< Date: Sun, 14 Dec 2025 06:43:59 GMT
+
+< Connection: keep-alive
+
+< Keep-Alive: timeout=5
+
+< Transfer-Encoding: chunked
+
+< 
+
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0{ [67 bytes data]
+
+100    56    0    56    0     0     60      0 --:--:-- --:--:-- --:--:--    60
+* Connection #0 to host localhost:3000 left intact
+{"error":"relation \"public.schedules\" does not exist"}
