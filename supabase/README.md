@@ -4,6 +4,12 @@
 
 Este documento define el workflow profesional para gestionar migraciones de base de datos en BookFast Pro, asegurando que el entorno local refleje fielmente el estado de producción.
 
+### Flujo oficial para seed BookFast (demo comercial)
+1. `seed_bookfast_demo.sql`
+2. `seed_bookfast_assign_users.sql` (falla si `staff.user_id` en owners queda NULL)
+3. `seed_bookfast_bookings.sql`
+4. `seed_bookfast_validate.sql` + validaciones comerciales
+
 ## 🏗️ Arquitectura de Base de Datos
 
 ### Multi-Tenancy con RLS

@@ -105,7 +105,7 @@ export function ServiciosClient({
 
   // 🚀 OPTIMIZACIÓN: Los filtros ahora se pasan directamente a get_services_filtered RPC
   // Ya no necesitamos el objeto filters para filtrado en cliente
-  
+
   const priceBounds = useMemo(() => {
     if (!services.length) return { min: 0, max: 0 };
     const values = services.map((service) => service.price_cents / 100);
@@ -131,9 +131,9 @@ export function ServiciosClient({
         pricing_levels:
           patch.pricing_levels !== undefined
             ? {
-                ...prev.pricing_levels,
-                ...patch.pricing_levels,
-              }
+              ...prev.pricing_levels,
+              ...patch.pricing_levels,
+            }
             : prev.pricing_levels,
       }));
     },
@@ -148,7 +148,7 @@ export function ServiciosClient({
       }
       try {
         setPageError(null);
-        
+
         // 🚀 OPTIMIZACIÓN: Usar get_services_filtered con filtros del servidor
         const { data, error } = await supabase.rpc('get_services_filtered', {
           p_tenant_id: tenantId,
@@ -164,7 +164,7 @@ export function ServiciosClient({
           p_limit: 1000, // Cargar todos inicialmente (optimizar después con paginación real)
           p_offset: 0,
         });
-        
+
         if (error) {
           throw new Error(error.message);
         }
@@ -205,7 +205,7 @@ export function ServiciosClient({
         loadServices({ showLoader: false });
       }
     }, 300); // Debounce de 300ms
-    
+
     return () => clearTimeout(timer);
   }, [filterStatus, filterCategory, priceRange, bufferFilter, filterStripe, searchTerm, sortBy, tenantId, loadServices]);
 
@@ -450,9 +450,8 @@ export function ServiciosClient({
       setSuccessMessage(
         synced === 0
           ? "No había servicios pendientes de Stripe."
-          : `Se han sincronizado ${synced} servicio${
-              synced === 1 ? "" : "s"
-            } con Stripe.`
+          : `Se han sincronizado ${synced} servicio${synced === 1 ? "" : "s"
+          } con Stripe.`
       );
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
@@ -665,13 +664,29 @@ export function ServiciosClient({
   }, [priceBounds.min, priceBounds.max, services.length]);
 
   useEffect(() => {
-    if (!showModal || !tenantId) return;
+    // 🔒 GUARDRAIL: Do not execute if modal is closed or tenant is not ready
+    if (!showModal || !tenantId) {
+      if (process.env.NODE_ENV === "development" && showModal && !tenantId) {
+        console.warn("[ServiciosClient] ⚠️ Modal opened but tenantId not ready yet");
+      }
+      return;
+    }
+
+    // 🔍 DEV LOGGING: Track staff loading trigger
+    if (process.env.NODE_ENV === "development") {
+      console.log("[ServiciosClient] 🔄 Loading staff options for modal with tenantId:", tenantId);
+    }
 
     const loadStaffOptions = async () => {
       setStaffOptionsLoading(true);
       try {
         const options = await fetchTenantStaffOptions(tenantId);
         setStaffOptions(options);
+
+        // 🔍 DEV LOGGING: Track results
+        if (process.env.NODE_ENV === "development") {
+          console.log("[ServiciosClient] ✅ Staff options loaded:", { count: options.length, options });
+        }
       } catch (err) {
         console.error("Error fetching staff options:", err);
         setStaffOptions([]);
@@ -697,17 +712,15 @@ export function ServiciosClient({
 
   const filterSummaryText = useMemo(() => {
     const parts = [
-      `Estado: ${
-        filterStatus === "all"
-          ? "Todos"
-          : filterStatus === "active"
+      `Estado: ${filterStatus === "all"
+        ? "Todos"
+        : filterStatus === "active"
           ? "Activos"
           : "Inactivos"
       }`,
-      `Stripe: ${
-        filterStripe === "all"
-          ? "Todos"
-          : filterStripe === "synced"
+      `Stripe: ${filterStripe === "all"
+        ? "Todos"
+        : filterStripe === "synced"
           ? "Sincronizados"
           : "Pendientes"
       }`,
@@ -822,11 +835,10 @@ export function ServiciosClient({
               <button
                 key={option.value}
                 onClick={() => setFilterStatus(option.value)}
-                className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                  filterStatus === option.value
+                className={`px-3 py-1 text-xs rounded-full transition-colors ${filterStatus === option.value
                     ? "bg-white text-black"
                     : "text-white/70 hover:bg-white/10"
-                }`}
+                  }`}
                 aria-pressed={filterStatus === option.value}
               >
                 {option.label}
@@ -845,11 +857,10 @@ export function ServiciosClient({
             <button
               key={category}
               onClick={() => setFilterCategory(category)}
-              className={`rounded-full px-3 py-1 text-sm transition ${
-                filterCategory === category
+              className={`rounded-full px-3 py-1 text-sm transition ${filterCategory === category
                   ? "bg-white text-black"
                   : "bg-white/5 text-white hover:bg-white/10"
-              }`}
+                }`}
               aria-pressed={filterCategory === category}
             >
               {category === "all" ? "Todas" : category}
@@ -995,9 +1006,8 @@ export function ServiciosClient({
         <>
           <div className="relative">
             <div
-              className={`grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 ${
-                gridLoading ? "opacity-60" : "opacity-100"
-              } transition`}
+              className={`grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 ${gridLoading ? "opacity-60" : "opacity-100"
+                } transition`}
             >
               {paginatedItems.map((service) => (
                 <ServiceCard
@@ -1089,7 +1099,7 @@ export function ServiciosClient({
         {editingService && (
           <div className="mt-4 rounded-[12px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80">
             {editingService.stripe_product_id &&
-            editingService.stripe_price_id
+              editingService.stripe_price_id
               ? "Este servicio está conectado a Stripe."
               : "Pendiente de sincronizar con Stripe."}
           </div>

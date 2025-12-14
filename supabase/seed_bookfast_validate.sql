@@ -1,8 +1,15 @@
 -- ============================================================================
 -- VALIDACIONES COMPLETAS: Tenant BookFast
 -- ============================================================================
--- Este script ejecuta todas las validaciones necesarias para verificar
--- que el seed de BookFast se ejecutó correctamente.
+-- Este script valida que el SEED DEMO COMERCIAL de BookFast fue exitoso.
+-- 
+-- ⚠️ EXPECTATIVAS ACTUALIZADAS para versión comercial:
+-- - Servicios: 20 (ANTES: 8)
+-- - Staff: 5 (ANTES: 4)
+-- - Clientes: 400 (ANTES: 30)
+-- - Reservas: 2500-4000 (ANTES: 500-800)
+-- - Horizonte: 2 años completos (ANTES: 6 meses)
+-- - Bloqueos staff: 6 (NUEVO)
 --
 -- INSTRUCCIONES:
 -- 1. Ejecutar DESPUÉS de haber corrido los 3 scripts de seed
@@ -107,7 +114,7 @@ SELECT COUNT(*) as total_servicios
 FROM public.services 
 WHERE tenant_id = 'bf000000-0000-0000-0000-000000000001';
 
--- Resultado esperado: 8
+-- ✅ Resultado esperado: 20 (ACTUALIZADO desde 8)
 
 -- 3.2 Listar servicios por categoría
 \echo '\n💈 3.2 Servicios por Categoría...'
@@ -121,11 +128,11 @@ WHERE tenant_id = 'bf000000-0000-0000-0000-000000000001'
 GROUP BY category
 ORDER BY category;
 
--- Resultado esperado:
--- Barba: 2
--- Combo: 2
--- Corte: 3
--- Otros: 1
+-- ✅ Resultado esperado (ACTUALIZADO):
+-- Barba: 5
+-- Combo: 4
+-- Corte: 7
+-- Extras: 4
 
 -- 3.3 Verificar precios y duraciones
 \echo '\n💈 3.3 Resumen de Precios y Duraciones...'
@@ -153,7 +160,7 @@ FROM public.staff
 WHERE tenant_id = 'bf000000-0000-0000-0000-000000000001'
   AND active = true;
 
--- Resultado esperado: 4
+-- ✅ Resultado esperado: 5 (ACTUALIZADO desde 4)
 
 -- 4.2 Listar barberos con horarios
 \echo '\n👨‍🦲 4.2 Barberos y Días de Trabajo...'
@@ -178,11 +185,12 @@ WHERE s.tenant_id = 'bf000000-0000-0000-0000-000000000001'
 GROUP BY s.id, s.display_name, s.role
 ORDER BY s.display_name;
 
--- Resultado esperado:
--- Carlos: 6 días
--- David: 5 días
--- Javi: 5 días
--- Miguel: 5 días
+-- ✅ Resultado esperado (ACTUALIZADO):
+-- Carlos: 6 días (Lun-Sáb)
+-- David: 5 días (Lun, Mar, Jue, Vie, Sáb)
+-- Javier: 5 días (Mié-Dom)
+-- Josep: 6 días (Lun-Sáb)
+-- Socio: 5 días (Mar-Sáb)
 
 -- 4.3 Servicios por barbero
 \echo '\n👨‍🦲 4.3 Servicios Habilitados por Barbero...'
@@ -217,7 +225,7 @@ SELECT COUNT(*) as total_clientes
 FROM public.customers 
 WHERE tenant_id = 'bf000000-0000-0000-0000-000000000001';
 
--- Resultado esperado: 30
+-- ✅ Resultado esperado: 400 (ACTUALIZADO desde 30)
 
 -- 5.2 Clientes VIP
 \echo '\n🧑 5.2 Clientes VIP...'
@@ -232,7 +240,8 @@ WHERE tenant_id = 'bf000000-0000-0000-0000-000000000001'
   AND is_vip = true
 ORDER BY visits_count DESC;
 
--- Resultado esperado: 3-8 clientes VIP
+-- ✅ Resultado esperado: 40-60 clientes VIP (ACTUALIZADO)
+-- (40 marcados inicialmente + adicionales por gasto >€200)
 
 -- 5.3 Distribución de clientes por tags
 \echo '\n🧑 5.3 Distribución por Tags...'
@@ -271,7 +280,7 @@ SELECT COUNT(*) as total_reservas
 FROM public.bookings 
 WHERE tenant_id = 'bf000000-0000-0000-0000-000000000001';
 
--- Resultado esperado: 500-800
+-- ✅ Resultado esperado: 2500-4000 (ACTUALIZADO desde 500-800)
 
 -- 6.2 Distribución por estado
 \echo '\n📅 6.2 Distribución por Estado...'
@@ -284,11 +293,11 @@ WHERE tenant_id = 'bf000000-0000-0000-0000-000000000001'
 GROUP BY status
 ORDER BY count DESC;
 
--- Resultado esperado:
--- completed: ~60-70%
--- confirmed: ~20-25%
--- cancelled: ~5-10%
--- no_show: ~2-5%
+-- ✅ Resultado esperado (ACTUALIZADO):
+-- completed: ~50-65% (reservas pasadas completadas)
+-- confirmed: ~30-40% (reservas futuras)
+-- cancelled: ~5-8%
+-- no_show: ~3-5%
 
 -- 6.3 Reservas por barbero
 \echo '\n📅 6.3 Reservas por Barbero...'
@@ -525,9 +534,9 @@ UNION ALL
 
 SELECT 
   '✅ Servicios' as componente,
-  8 as esperado,
+  20 as esperado,
   COUNT(*) as real,
-  CASE WHEN COUNT(*) = 8 THEN '✅' ELSE '❌' END as status
+  CASE WHEN COUNT(*) = 20 THEN '✅' ELSE '❌' END as status
 FROM public.services 
 WHERE tenant_id = 'bf000000-0000-0000-0000-000000000001'
 
@@ -535,9 +544,9 @@ UNION ALL
 
 SELECT 
   '✅ Staff' as componente,
-  4 as esperado,
+  5 as esperado,
   COUNT(*) as real,
-  CASE WHEN COUNT(*) = 4 THEN '✅' ELSE '❌' END as status
+  CASE WHEN COUNT(*) = 5 THEN '✅' ELSE '❌' END as status
 FROM public.staff 
 WHERE tenant_id = 'bf000000-0000-0000-0000-000000000001'
 
@@ -545,9 +554,9 @@ UNION ALL
 
 SELECT 
   '✅ Clientes' as componente,
-  30 as esperado,
+  400 as esperado,
   COUNT(*) as real,
-  CASE WHEN COUNT(*) = 30 THEN '✅' ELSE '❌' END as status
+  CASE WHEN COUNT(*) = 400 THEN '✅' ELSE '❌' END as status
 FROM public.customers 
 WHERE tenant_id = 'bf000000-0000-0000-0000-000000000001'
 
@@ -555,9 +564,29 @@ UNION ALL
 
 SELECT 
   '✅ Reservas' as componente,
-  500 as esperado,
+  2500 as esperado,
   COUNT(*) as real,
-  CASE WHEN COUNT(*) >= 400 THEN '✅' ELSE '⚠️' END as status
+  CASE WHEN COUNT(*) >= 2500 THEN '✅' ELSE '⚠️' END as status
+FROM public.bookings 
+WHERE tenant_id = 'bf000000-0000-0000-0000-000000000001'
+
+UNION ALL
+
+SELECT 
+  '✅ Bloqueos Staff' as componente,
+  6 as esperado,
+  COUNT(*) as real,
+  CASE WHEN COUNT(*) >= 6 THEN '✅' ELSE '⚠️' END as status
+FROM public.staff_blockings 
+WHERE tenant_id = 'bf000000-0000-0000-0000-000000000001'
+
+UNION ALL
+
+SELECT 
+  '✅ Horizonte Temporal' as componente,
+  730 as esperado, -- 2 años = ~730 días
+  EXTRACT(DAY FROM (MAX(starts_at) - MIN(starts_at)))::INT as real,
+  CASE WHEN EXTRACT(DAY FROM (MAX(starts_at) - MIN(starts_at))) >= 700 THEN '✅' ELSE '❌' END as status
 FROM public.bookings 
 WHERE tenant_id = 'bf000000-0000-0000-0000-000000000001';
 

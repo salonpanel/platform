@@ -50,10 +50,41 @@ LIMIT 20;
 -- Reemplazar estos UUIDs con los reales de la query anterior:
 DO $$
 DECLARE
+<<<<<<< Updated upstream
   v_tenant_id UUID := 'bf000000-0000-0000-0000-000000000001'; -- BookFast tenant ID
   v_user_id_1 UUID := 'REEMPLAZAR_CON_TU_USER_ID';           -- Tu usuario
   v_user_id_2 UUID := 'REEMPLAZAR_CON_SOCIO_USER_ID';        -- Usuario de tu socio
+=======
+  v_tenant_id UUID := '00000000-0000-0000-0000-000000000001'; -- BookFast tenant ID
+  v_user_id_1 UUID := 'db57dbd2-9a8c-4050-b77f-e2236300f448';  -- josep@bookfast.es
+  v_user_id_2 UUID := 'e86c7e6e-71eb-48df-b7ff-451dec05ad8b';  -- sergi@bookfast.es
+  v_staff_id_1 UUID := '00000002-0000-0000-0000-000000000001'; -- Josep (Owner/Senior)
+  v_staff_id_2 UUID := '00000002-0000-0000-0000-000000000002'; -- Socio (Owner/Maestro)
+  v_email_1 TEXT;
+  v_email_2 TEXT;
+  v_full_name_1 TEXT;
+  v_full_name_2 TEXT;
+>>>>>>> Stashed changes
 BEGIN
+  -- Obtener datos de auth.users (por si se necesitan después)
+  SELECT email, raw_user_meta_data->>'full_name'
+  INTO v_email_1, v_full_name_1
+  FROM auth.users
+  WHERE id = v_user_id_1;
+  
+  SELECT email, raw_user_meta_data->>'full_name'
+  INTO v_email_2, v_full_name_2
+  FROM auth.users
+  WHERE id = v_user_id_2;
+  
+  -- Nota: Insertamos en public.users con id y tenant_id, ya que tenant_id es NOT NULL
+  INSERT INTO public.users (id, tenant_id)
+  VALUES (v_user_id_1, v_tenant_id)
+  ON CONFLICT (id) DO NOTHING;
+  
+  INSERT INTO public.users (id, tenant_id)
+  VALUES (v_user_id_2, v_tenant_id)
+  ON CONFLICT (id) DO NOTHING;
   -- Asignar primer usuario como owner
   INSERT INTO public.memberships (tenant_id, user_id, role)
   VALUES (v_tenant_id, v_user_id_1, 'owner')
