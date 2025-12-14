@@ -25,7 +25,17 @@ type TenantInfo = {
   timezone: string;
 };
 
-function PanelLayoutContent({ children, initialTenant, initialAuthStatus }: { children: ReactNode; initialTenant?: TenantInfo | null; initialAuthStatus?: "UNKNOWN" | "AUTHENTICATED" | "UNAUTHENTICATED" }) {
+function PanelLayoutContent({
+  children,
+  initialTenant,
+  initialAuthStatus,
+  initialBootstrapState
+}: {
+  children: ReactNode;
+  initialTenant?: TenantInfo | null;
+  initialAuthStatus?: "UNKNOWN" | "AUTHENTICATED" | "UNAUTHENTICATED";
+  initialBootstrapState?: "NO_MEMBERSHIP" | "NO_TENANT_SELECTED" | "AUTHENTICATED";
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -40,10 +50,60 @@ function PanelLayoutContent({ children, initialTenant, initialAuthStatus }: { ch
   const [authStatus, setAuthStatus] = useState<"UNKNOWN" | "AUTHENTICATED" | "UNAUTHENTICATED">(initialAuthStatus ?? "UNKNOWN");
   const [authRedirectTriggered, setAuthRedirectTriggered] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(initialAuthStatus ? initialAuthStatus === "UNKNOWN" : true);
-  
+
   // Obtener el contexto de permisos para setear el tenantId
   const { setTenantId: setPermissionsTenantId } = usePermissions();
 
+  // --------------------------------------------------------------------------
+  // PHASE 9.2: BOOTSTRAP STATE ENFORCEMENT & LOOP PREVENTION
+  // --------------------------------------------------------------------------
+  useEffect(() => {
+    if (!initialBootstrapState) return;
+
+    // Rule 1: NO MEMBERSHIP
+    if (initialBootstrapState === "NO_MEMBERSHIP") {
+      if (pathname !== "/panel/sin-permisos") {
+        console.log("[Bootstrap] Redirecting to /panel/sin-permisos");
+        router.push("/panel/sin-permisos");
+      }
+      return;
+    }
+
+    // Rule 2: NO TENANT SELECTED (Multi-Tenant Switcher Needed)
+    if (initialBootstrapState === "NO_TENANT_SELECTED") {
+      if (pathname !== "/panel/select-business") {
+        console.log("[Bootstrap] Redirecting to /panel/select-business");
+        router.push("/panel/select-business");
+      }
+      return;
+    }
+
+    // Rule 3: AUTHENTICATED
+    // Proceed as normal.
+  }, [initialBootstrapState, pathname, router]);
+
+  // Si estamos en estado de "Bootstrapping Exception" (No Membership / No Tenant), 
+  // permitimos renderizar si el path coincide con la excepción.
+  // Si no coincide, mostramos loading mientras el useEffect redirige.
+  const isBootstrapException = initialBootstrapState === "NO_MEMBERSHIP" || initialBootstrapState === "NO_TENANT_SELECTED";
+
+  if (initialBootstrapState === "NO_MEMBERSHIP") {
+    if (pathname === "/panel/sin-permisos") {
+      // Render children (the exception page) without sidebar
+      return <div className="min-h-screen bg-slate-950">{children}</div>;
+    }
+    return <div className="flex min-h-screen items-center justify-center bg-slate-950"><Spinner /></div>;
+  }
+
+  if (initialBootstrapState === "NO_TENANT_SELECTED") {
+    if (pathname === "/panel/select-business") {
+      // Render children (the selection page) without sidebar
+      return <div className="min-h-screen bg-slate-950">{children}</div>;
+    }
+    return <div className="flex min-h-screen items-center justify-center bg-slate-950"><Spinner /></div>;
+  }
+
+  // --------------------------------------------------------------------------
   // Hooks de precarga para navegación instantánea
   usePrefetchRoutes();
   useServiceWorker();
@@ -90,7 +150,7 @@ function PanelLayoutContent({ children, initialTenant, initialAuthStatus }: { ch
         if (error) {
           console.warn("[PanelLayoutClient] Session error:", error);
           if (error.message?.toLowerCase().includes("jwt does not exist") ||
-              error.message?.toLowerCase().includes("invalid jwt")) {
+            error.message?.toLowerCase().includes("invalid jwt")) {
             // JWT inválido - limpiar cookies y marcar como no autenticado
             console.log("[PanelLayoutClient] JWT inválido detectado en verificación inicial, limpiando");
             await supabase.auth.signOut({ scope: 'local' });
@@ -414,7 +474,24 @@ function PanelLayoutContent({ children, initialTenant, initialAuthStatus }: { ch
   );
 }
 
-export default function PanelLayoutClient({ children, initialTenant, initialAuthStatus, initialPermissions, initialRole }: { children: ReactNode; initialTenant?: TenantInfo | null; initialAuthStatus?: "UNKNOWN" | "AUTHENTICATED" | "UNAUTHENTICATED"; initialPermissions?: any; initialRole?: string | null }) {
+// Update Props Interface
+type PanelLayoutClientProps = {
+  children: ReactNode;
+  initialTenant?: TenantInfo | null;
+  initialAuthStatus?: "UNKNOWN" | "AUTHENTICATED" | "UNAUTHENTICATED";
+  initialPermissions?: any;
+  initialRole?: string | null;
+  initialBootstrapState?: "NO_MEMBERSHIP" | "NO_TENANT_SELECTED" | "AUTHENTICATED";
+};
+
+export default function PanelLayoutClient({
+  children,
+  initialTenant,
+  initialAuthStatus,
+  initialPermissions,
+  initialRole,
+  initialBootstrapState = "AUTHENTICATED"
+}: PanelLayoutClientProps) {
   return (
     <ToastProvider>
       <NotificationProvider>
@@ -429,7 +506,13 @@ export default function PanelLayoutClient({ children, initialTenant, initialAuth
               </div>
             }
           >
-            <PanelLayoutContent initialTenant={initialTenant} initialAuthStatus={initialAuthStatus}>{children}</PanelLayoutContent>
+            <PanelLayoutContent
+              initialTenant={initialTenant}
+              initialAuthStatus={initialAuthStatus}
+              initialBootstrapState={initialBootstrapState}
+            >
+              {children}
+            </PanelLayoutContent>
           </Suspense>
         </PermissionsProvider>
       </NotificationProvider>

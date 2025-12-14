@@ -28,6 +28,9 @@ export async function createClientForServer() {
                     }
                 },
             },
+            cookieOptions: {
+                name: "sb-panel-auth",
+            },
         }
     );
 }
