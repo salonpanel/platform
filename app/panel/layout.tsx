@@ -16,6 +16,7 @@ import { BookingDetailModal } from "@/modules/bookings/BookingDetailModal";
 // ... (imports)
 
 export default async function PanelLayout({ children }: { children: ReactNode }) {
+  console.log("[PanelLayout Debug] START");
   // Server-Side Authority for Session & Tenant Resolution
   try {
     const supabase = await createClientForServer();
@@ -130,6 +131,8 @@ export default async function PanelLayout({ children }: { children: ReactNode })
       hasInitialTenant: !!initialTenant,
       tenantId: initialTenant?.id
     });
+
+    console.log("[PanelLayout Debug] Returning JSX - START Render");
 
     // 4. Passing State to Client
     // Client Layout will enforce routing based on `bootstrapState`

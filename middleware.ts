@@ -68,6 +68,14 @@ export async function middleware(request: NextRequest) {
 
         // REWRITE: Mapear rutas limpias a la estructura real /panel
         // Si la ruta es raiz, ir al dashboard
+        // EXCLUSION SOLICITADA: No tocar root, login, ni panel. Dejar que la app maneje routing.
+        if (path === "/" || path.startsWith("/login") || path.startsWith("/auth") || path.startsWith("/panel")) {
+            return response;
+        }
+
+        /*
+        // REWRITE: Mapear rutas limpias a la estructura real /panel
+        // Si la ruta es raiz, ir al dashboard
         if (path === "/") {
             return NextResponse.rewrite(new URL("/panel", request.url));
         }
@@ -94,6 +102,7 @@ export async function middleware(request: NextRequest) {
                 return NextResponse.redirect(loginUrl);
             }
         }
+        */
 
         // Allow normal routing for everything else
         return response;
