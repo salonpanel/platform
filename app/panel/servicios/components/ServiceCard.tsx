@@ -2,9 +2,8 @@
 
 import { memo, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/Button";
+import { GlassButton, GlassBadge } from "@/components/ui/glass";
 import { Service } from "../types";
-import { ServiceStatusBadge } from "./ServiceStatusBadge";
 import { getServiceTotalDuration } from "@/lib/services";
 
 type Props = {
@@ -55,73 +54,71 @@ export const ServiceCard = memo(function ServiceCard({
       className="h-full"
     >
       <div
-        className="flex h-full cursor-pointer flex-col gap-4 rounded-[14px] border border-white/10 bg-white/5 p-4 shadow-glass transition hover:glow-card"
+        className="flex h-full cursor-pointer flex-col gap-4 rounded-xl border border-white/5 bg-white/[0.03] p-4 shadow-sm transition-all hover:bg-white/[0.05] hover:border-white/10 hover:shadow-md hover:scale-[1.01]"
         onClick={handleCardClick}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-base font-semibold text-white truncate">
+            <p className="text-base font-semibold text-white truncate font-satoshi">
               {service.name}
             </p>
-            <p className="text-xs text-white/60">
+            <p className="text-xs text-[var(--text-secondary)]">
               {service.category ?? "Otros"}
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
-            <ServiceStatusBadge
-              label={service.active ? "Activo" : "Inactivo"}
-              tone={service.active ? "success" : "neutral"}
-            />
-            <ServiceStatusBadge
-              label={stripeSynced ? "Stripe listo" : "Stripe pendiente"}
-              tone={stripeSynced ? "success" : "warning"}
-            />
+            <GlassBadge variant={service.active ? "success" : "neutral"}>
+              {service.active ? "Activo" : "Inactivo"}
+            </GlassBadge>
+            <GlassBadge variant={stripeSynced ? "success" : "warning"}>
+              {stripeSynced ? "Stripe listo" : "Stripe pendiente"}
+            </GlassBadge>
           </div>
         </div>
-        <div className="space-y-1 text-sm text-white/80">
+        <div className="space-y-1 text-sm text-[var(--text-secondary)]">
           <div className="flex items-center justify-between text-white">
-            <span className="text-2xl font-semibold">
+            <span className="text-2xl font-semibold font-satoshi">
               {formatPrice(service.price_cents)}
             </span>
-            <span className="text-xs text-white/70">
+            <span className="text-xs text-[var(--text-secondary)]">
               {service.duration_min} min{bufferText}
             </span>
           </div>
-          <p className="text-xs text-white/60">Total: {totalDuration} min</p>
+          <p className="text-xs text-[var(--text-secondary)]">Total: {totalDuration} min</p>
           {pricingEntries.length > 0 && (
-            <p className="text-xs text-white/60">
+            <p className="text-xs text-[var(--text-secondary)]">
               {pricingEntries
                 .map(([level, value]) => `${level}: ${formatPrice(value)}`)
                 .join(" · ")}
             </p>
           )}
         </div>
-        <div className="mt-auto flex flex-wrap gap-2 border-t border-white/10 pt-3">
+        <div className="mt-auto flex flex-wrap gap-2 border-t border-white/5 pt-3">
           <span
             className="contents"
             onClick={(event) => event.stopPropagation()}
           >
-            <Button variant="ghost" size="sm" onClick={() => onEdit(service)}>
+            <GlassButton variant="ghost" size="sm" onClick={() => onEdit(service)}>
               Editar
-            </Button>
+            </GlassButton>
           </span>
           <span
             className="contents"
             onClick={(event) => event.stopPropagation()}
           >
-            <Button
+            <GlassButton
               variant="secondary"
               size="sm"
               onClick={() => onDuplicate(service)}
             >
               Duplicar
-            </Button>
+            </GlassButton>
           </span>
           <span
             className="contents"
             onClick={(event) => event.stopPropagation()}
           >
-            <Button
+            <GlassButton
               variant={service.active ? "secondary" : "primary"}
               size="sm"
               isLoading={isToggling}
@@ -129,21 +126,21 @@ export const ServiceCard = memo(function ServiceCard({
               onClick={() => onToggleActive(service.id, service.active)}
             >
               {service.active ? "Desactivar" : "Activar"}
-            </Button>
+            </GlassButton>
           </span>
           <span
             className="contents"
             onClick={(event) => event.stopPropagation()}
           >
-            <Button
+            <GlassButton
               variant="danger"
               size="sm"
               isLoading={isToggling}
               disabled={isToggling}
               onClick={() => onDelete(service)}
             >
-              {service.active ? "Archivar" : "Eliminar definitivamente"}
-            </Button>
+              {service.active ? "Archivar" : "Eliminar"}
+            </GlassButton>
           </span>
         </div>
       </div>

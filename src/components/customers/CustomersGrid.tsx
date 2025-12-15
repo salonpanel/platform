@@ -207,17 +207,17 @@ export function CustomersGrid({
                                     </div>
                                 </div>
 
-                                <div className="flex justify-end gap-2 border-t border-white/5 pt-2">
-                                    <GlassButton variant="secondary" size="sm" onClick={() => onViewHistory(customer.id)} className="flex-1">
-                                        <Calendar className="w-3.5 h-3.5 mr-1.5" />
+                                <div className="flex justify-end gap-3 border-t border-white/5 pt-3">
+                                    <GlassButton variant="secondary" onClick={() => onViewHistory(customer.id)} className="flex-1 h-11 text-sm">
+                                        <Calendar className="w-4 h-4 mr-2" />
                                         Historial
                                     </GlassButton>
-                                    <GlassButton variant="secondary" size="sm" onClick={() => onEdit(customer)} className="flex-1">
-                                        <Edit2 className="w-3.5 h-3.5 mr-1.5" />
+                                    <GlassButton variant="secondary" onClick={() => onEdit(customer)} className="flex-1 h-11 text-sm">
+                                        <Edit2 className="w-4 h-4 mr-2" />
                                         Editar
                                     </GlassButton>
-                                    <GlassButton variant="ghost" size="sm" onClick={() => onDelete(customer.id)} className="text-red-400 hover:text-red-300 px-3">
-                                        <Trash2 className="w-4 h-4" />
+                                    <GlassButton variant="danger" onClick={() => onDelete(customer.id)} className="h-11 w-11 p-0 flex items-center justify-center">
+                                        <Trash2 className="w-5 h-5" />
                                     </GlassButton>
                                 </div>
                             </div>

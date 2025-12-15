@@ -6,14 +6,10 @@ import { useRouter } from "next/navigation";
 import { format, parseISO, isFuture, isPast } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import { es } from "date-fns/locale";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Spinner } from "@/components/ui/Spinner";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
-import { Switch } from "@/components/ui/Switch";
-import { Alert } from "@/components/ui/Alert";
-import { ArrowLeft, Mail, Phone, Calendar, AlertTriangle, X, ChevronDown, ChevronUp } from "lucide-react";
+import { formatInTimeZone } from "date-fns-tz";
+import { es } from "date-fns/locale";
+import { GlassCard, GlassButton, GlassSection } from "@/components/ui/glass";
+import { Loader2, ArrowLeft, Mail, Phone, Calendar, AlertTriangle, X, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import {
   CustomerBookingsTimeline,
@@ -223,7 +219,7 @@ function ClienteDetailContent() {
   const customerValueTier = useMemo(() => {
     const visits = completedCount || 0;
     const spent = totalAmountCents || 0;
-    
+
     if (visits >= 5 && spent >= 30000) {
       return { label: "PREMIUM", color: "from-yellow-400 to-amber-500", bgColor: "bg-yellow-500/10", borderColor: "border-yellow-400/30", textColor: "text-yellow-300" };
     } else if (visits >= 3 && spent < 30000) {
@@ -278,9 +274,9 @@ function ClienteDetailContent() {
 
   const renderAgendaAction = (booking: CustomerBooking) => (
     <Link href={`/panel/agenda?date=${format(parseISO(booking.starts_at), "yyyy-MM-dd")}`}>
-      <Button variant="ghost" size="sm">
+      <GlassButton variant="secondary" size="sm">
         Ver en agenda →
-      </Button>
+      </GlassButton>
     </Link>
   );
 
@@ -290,7 +286,7 @@ function ClienteDetailContent() {
     try {
       setSaving(true);
       const oldValue = customer[field];
-      
+
       const { error: updateError } = await supabase
         .from("customers")
         .update({ [field]: value })
@@ -419,42 +415,45 @@ function ClienteDetailContent() {
   };
 
   if (loadingTenant || loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Spinner size="lg" />
-      </div>
+    <div className="flex items-center justify-center py-12">
+      <Loader2 className="h-8 w-8 animate-spin text-white/20" />
+    </div>
     );
   }
 
   if (tenantError && !tenantId) {
     return (
-      <Card className="border-red-500/50 bg-red-500/10">
-        <div className="text-red-400">
+      <GlassCard className="border-red-500/50 bg-red-500/10">
+        <div className="text-red-400 p-4">
           <h3 className="mb-2 font-semibold">Error</h3>
           <p className="text-sm">{tenantError}</p>
         </div>
-        <div className="mt-4">
-          <Button onClick={() => router.push("/panel/clientes")}>
-            Volver a Clientes
-          </Button>
+        <div className="p-4 pt-0">
+          <Link href="/panel/clientes">
+            <GlassButton variant="secondary">
+              Volver a Clientes
+            </GlassButton>
+          </Link>
         </div>
-      </Card>
+      </GlassCard>
     );
   }
 
   if (error || !customer) {
     return (
-      <Card className="border-red-500/50 bg-red-500/10">
-        <div className="text-red-400">
+      <GlassCard className="border-red-500/50 bg-red-500/10">
+        <div className="text-red-400 p-4">
           <h3 className="mb-2 font-semibold">Error</h3>
           <p className="text-sm">{error || "Cliente no encontrado"}</p>
         </div>
-        <div className="mt-4">
-          <Button onClick={() => router.push("/panel/clientes")}>
-            Volver a Clientes
-          </Button>
+        <div className="p-4 pt-0">
+          <Link href="/panel/clientes">
+            <GlassButton variant="secondary">
+              Volver a Clientes
+            </GlassButton>
+          </Link>
         </div>
-      </Card>
+      </GlassCard>
     );
   }
 
@@ -463,10 +462,10 @@ function ClienteDetailContent() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:gap-4">
         <Link href="/panel/clientes" className="w-fit">
-          <Button variant="ghost" size="sm" className="text-xs sm:text-sm">
+          <GlassButton variant="ghost" size="sm" className="text-xs sm:text-sm">
             <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
             Volver
-          </Button>
+          </GlassButton>
         </Link>
         <div className="flex items-center gap-3 sm:gap-4">
           <div
@@ -494,7 +493,7 @@ function ClienteDetailContent() {
       </div>
 
       {/* KPIs de valor del cliente */}
-      <Card variant="glass" className="p-3 sm:p-4">
+      <GlassCard className="p-3 sm:p-4">
         <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
             { label: "Visitas totales", shortLabel: "Visitas", value: completedCount },
@@ -515,66 +514,98 @@ function ClienteDetailContent() {
             </div>
           ))}
         </div>
-      </Card>
+      </GlassCard>
 
       {/* Mensajes */}
       {successMessage && (
-        <Alert type="success" onClose={() => setSuccessMessage(null)}>
-          {successMessage}
-        </Alert>
+        <GlassCard className="border-emerald-500/50 bg-emerald-500/10 mb-4 p-4">
+          <div className="flex justify-between items-start">
+            <p className="text-sm text-emerald-400">{successMessage}</p>
+            <button onClick={() => setSuccessMessage(null)} className="text-emerald-400 hover:text-emerald-300"><X className="h-4 w-4" /></button>
+          </div>
+        </GlassCard>
       )}
 
       {error && (
-        <Alert type="error" onClose={() => setError(null)}>
-          {error}
-        </Alert>
+        <GlassCard className="border-red-500/50 bg-red-500/10 mb-4 p-4">
+          <div className="flex justify-between items-start">
+            <p className="text-sm text-red-400">{error}</p>
+            <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300"><X className="h-4 w-4" /></button>
+          </div>
+        </GlassCard>
       )}
 
       {/* Estado del cliente */}
-      <Card>
-        <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4 font-satoshi">
+      <GlassCard className="p-4 sm:p-6">
+        <h2 className="text-lg font-semibold text-white mb-4 font-satoshi">
           Estado del cliente
         </h2>
+
+        {/* Simple Switch implementation using standard HTML for now or we build GlassSwitch next. 
+            For now, I'll use a styled label checkbox as "GlassSwitch" to avoid external deps if possible,
+            or just keep it simple. But wait, I need to remove Switch.tsx.
+            I will use a simple custom toggle here.
+        */}
         <div className="space-y-4">
-          <Switch
-            label="Cliente VIP"
-            description="Marcar como cliente VIP"
-            checked={customer.is_vip ?? false}
-            onChange={(e) => handleFlagUpdate("is_vip", e.target.checked)}
-            disabled={saving}
-          />
-          <Switch
-            label="Cliente baneado"
-            description="Marcar como cliente baneado"
-            checked={customer.is_banned ?? false}
-            onChange={(e) => handleFlagUpdate("is_banned", e.target.checked)}
-            disabled={saving}
-          />
-          <Switch
-            label="Opt-in marketing"
-            description="Cliente ha aceptado recibir comunicaciones de marketing"
-            checked={customer.marketing_opt_in ?? false}
-            onChange={(e) => handleFlagUpdate("marketing_opt_in", e.target.checked)}
-            disabled={saving}
-          />
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <label className="text-sm font-medium text-white">Cliente VIP</label>
+              <p className="text-xs text-[var(--text-secondary)]">Marcar como cliente VIP</p>
+            </div>
+            <button
+              onClick={() => handleFlagUpdate("is_vip", !customer.is_vip)}
+              disabled={saving}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${customer.is_vip ? 'bg-emerald-500' : 'bg-white/10'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${customer.is_vip ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <label className="text-sm font-medium text-white">Cliente baneado</label>
+              <p className="text-xs text-[var(--text-secondary)]">Marcar como cliente baneado</p>
+            </div>
+            <button
+              onClick={() => handleFlagUpdate("is_banned", !customer.is_banned)}
+              disabled={saving}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${customer.is_banned ? 'bg-emerald-500' : 'bg-white/10'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${customer.is_banned ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <label className="text-sm font-medium text-white">Opt-in marketing</label>
+              <p className="text-xs text-[var(--text-secondary)]">Cliente ha aceptado recibir comunicaciones</p>
+            </div>
+            <button
+              onClick={() => handleFlagUpdate("marketing_opt_in", !customer.marketing_opt_in)}
+              disabled={saving}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${customer.marketing_opt_in ? 'bg-emerald-500' : 'bg-white/10'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${customer.marketing_opt_in ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
         </div>
 
-        <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-[var(--glass-border)]">
-          <h3 className="text-xs sm:text-sm font-semibold text-[var(--color-text-primary)] mb-2 sm:mb-3 font-satoshi">
+        <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-white/5">
+          <h3 className="text-xs sm:text-sm font-semibold text-white mb-2 sm:mb-3 font-satoshi">
             Etiquetas
           </h3>
           <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
             {(customer.tags ?? []).map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 sm:px-3 py-1 text-[10px] sm:text-xs uppercase tracking-wide text-[var(--color-text-secondary)]"
+                className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 sm:px-3 py-1 text-[10px] sm:text-xs uppercase tracking-wide text-[var(--text-secondary)]"
               >
                 {tag}
                 <button
                   type="button"
                   onClick={() => handleRemoveTag(tag)}
                   disabled={saving}
-                  className="ml-0.5 sm:ml-1 hover:text-[var(--color-text-primary)] transition-colors disabled:opacity-50 p-0.5"
+                  className="ml-0.5 sm:ml-1 hover:text-white transition-colors disabled:opacity-50 p-0.5"
                   aria-label={`Eliminar etiqueta ${tag}`}
                 >
                   <X className="h-3 w-3" />
@@ -595,153 +626,166 @@ function ClienteDetailContent() {
                 }
               }}
               disabled={saving}
-              className="flex-1 rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(15,23,42,0.65)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth disabled:opacity-50"
+              className="flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-white/20 focus:border-emerald-500/50 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-all h-11"
             />
-            <Button
+            <GlassButton
               onClick={handleAddTag}
               disabled={saving || !newTagValue.trim()}
               size="sm"
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto h-11"
             >
               Añadir
-            </Button>
+            </GlassButton>
           </div>
         </div>
-      </Card>
+      </GlassCard>
 
       {/* Posibles duplicados */}
       {potentialDuplicates.length > 0 && (
-        <Card className="p-3 sm:p-4">
+        <GlassCard className="p-3 sm:p-4">
           <div className="flex items-center gap-2 mb-3 sm:mb-4">
             <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-400 flex-shrink-0" />
-            <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] font-satoshi">
+            <h2 className="text-base sm:text-lg font-semibold text-white font-satoshi">
               Posibles duplicados
             </h2>
           </div>
-          <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] mb-3 sm:mb-4">
+          <p className="text-xs sm:text-sm text-[var(--text-secondary)] mb-3 sm:mb-4">
             Se encontraron {potentialDuplicates.length} cliente{potentialDuplicates.length > 1 ? "s" : ""} con el mismo email o teléfono.
           </p>
           <div className="space-y-2 sm:space-y-3">
             {potentialDuplicates.map((dup) => (
               <div
                 key={dup.id}
-                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-[var(--radius-md)] border border-amber-500/20 bg-amber-500/5"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg border border-amber-500/20 bg-amber-500/5"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm sm:text-base text-[var(--color-text-primary)] break-words">{dup.name}</p>
-                  <div className="mt-1 flex flex-wrap gap-2 sm:gap-3 text-[10px] sm:text-xs text-[var(--color-text-secondary)]">
+                  <p className="font-medium text-sm sm:text-base text-white break-words">{dup.name}</p>
+                  <div className="mt-1 flex flex-wrap gap-2 sm:gap-3 text-[10px] sm:text-xs text-[var(--text-secondary)]">
                     {dup.email && <span className="break-all">📧 {dup.email}</span>}
                     {dup.phone && <span>📱 {dup.phone}</span>}
                     <span>Visitas: {dup.visits_count || 0}</span>
                   </div>
                 </div>
                 <Link href={`/panel/clientes/${dup.id}`} className="flex-shrink-0">
-                  <Button variant="ghost" size="sm" className="w-full sm:w-auto text-xs sm:text-sm">
+                  <GlassButton variant="secondary" size="sm" className="w-full sm:w-auto text-xs sm:text-sm h-9">
                     Ver ficha
-                  </Button>
+                  </GlassButton>
                 </Link>
               </div>
             ))}
           </div>
-        </Card>
+        </GlassCard>
       )}
 
       {/* Información del cliente */}
-      <Card>
-        <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4 font-satoshi">Información</h2>
+      <GlassCard className="p-4 sm:p-6">
+        <h2 className="text-lg font-semibold text-white mb-4 font-satoshi">Información</h2>
         <div className="grid gap-6 sm:grid-cols-2">
           <div className="space-y-3">
             {customer.email && (
               <div className="flex items-center gap-3">
-                <Mail className="h-4 w-4 text-[var(--color-text-secondary)]" />
-                <span className="text-sm text-[var(--color-text-secondary)]">{customer.email}</span>
+                <Mail className="h-4 w-4 text-[var(--text-secondary)]" />
+                <span className="text-sm text-[var(--text-secondary)]">{customer.email}</span>
               </div>
             )}
             {customer.phone && (
               <div className="flex items-center gap-3">
-                <Phone className="h-4 w-4 text-[var(--color-text-secondary)]" />
-                <span className="text-sm text-[var(--color-text-secondary)]">{customer.phone}</span>
+                <Phone className="h-4 w-4 text-[var(--text-secondary)]" />
+                <span className="text-sm text-[var(--text-secondary)]">{customer.phone}</span>
               </div>
             )}
           </div>
           <div className="space-y-3">
             {customer.birth_date && (
               <div className="flex items-center gap-3">
-                <Calendar className="h-4 w-4 text-[var(--color-text-secondary)]" />
-                <span className="text-sm text-[var(--color-text-secondary)]">
+                <Calendar className="h-4 w-4 text-[var(--text-secondary)]" />
+                <span className="text-sm text-[var(--text-secondary)]">
                   Fecha de nacimiento: {format(parseISO(customer.birth_date), "dd/MM/yyyy")}
                 </span>
               </div>
             )}
             {customer.created_at && (
               <div className="flex items-center gap-3">
-                <Calendar className="h-4 w-4 text-[var(--color-text-secondary)]" />
-                <span className="text-sm text-[var(--color-text-secondary)]">
+                <Calendar className="h-4 w-4 text-[var(--text-secondary)]" />
+                <span className="text-sm text-[var(--text-secondary)]">
                   Fecha de alta: {format(parseISO(customer.created_at), "dd/MM/yyyy")}
                 </span>
               </div>
             )}
-          {lastNoShowAt && (
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="h-4 w-4 text-amber-400" />
-              <span className="text-sm text-[var(--color-text-secondary)]">
-                Último no-show: {format(parseISO(lastNoShowAt), "dd/MM/yyyy · HH:mm")}
-              </span>
-            </div>
-          )}
+            {lastNoShowAt && (
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="h-4 w-4 text-amber-400" />
+                <span className="text-sm text-[var(--text-secondary)]">
+                  Último no-show: {format(parseISO(lastNoShowAt), "dd/MM/yyyy · HH:mm")}
+                </span>
+              </div>
+            )}
           </div>
         </div>
         {customer.notes && (
-          <div className="mt-6 pt-6 border-t border-[var(--glass-border)]">
-            <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] mb-2 font-satoshi">Notas</h3>
-            <p className="text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap">{customer.notes}</p>
+          <div className="mt-6 pt-6 border-t border-white/5">
+            <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-2 font-satoshi">Notas</h3>
+            <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap">{customer.notes}</p>
           </div>
         )}
-      </Card>
+      </GlassCard>
 
       {/* Citas */}
-      <Card className="p-3 sm:p-4">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-          <TabsList className="w-full sm:w-auto grid grid-cols-2 sm:grid-cols-none">
-            <TabsTrigger value="upcoming" className="text-xs sm:text-sm">
+      <GlassCard className="p-3 sm:p-4">
+        {/* Helper para Tabs usando estado local */}
+        <div className="w-full">
+          <div className="flex gap-2 mb-4 border-b border-white/5">
+            <button
+              onClick={() => setActiveTab("upcoming")}
+              className={`pb-2 px-1 text-xs sm:text-sm font-medium transition-colors border-b-2 ${activeTab === 'upcoming' ? 'border-emerald-500 text-white' : 'border-transparent text-[var(--text-secondary)] hover:text-white'}`}
+            >
               Próximas ({upcomingBookings.length})
-            </TabsTrigger>
-            <TabsTrigger value="past" className="text-xs sm:text-sm">
+            </button>
+            <button
+              onClick={() => setActiveTab("past")}
+              className={`pb-2 px-1 text-xs sm:text-sm font-medium transition-colors border-b-2 ${activeTab === 'past' ? 'border-emerald-500 text-white' : 'border-transparent text-[var(--text-secondary)] hover:text-white'}`}
+            >
               Pasadas ({pastBookings.length})
-            </TabsTrigger>
-          </TabsList>
+            </button>
+          </div>
 
-          <TabsContent value="upcoming" className="mt-3 sm:mt-4">
-            {upcomingBookings.length === 0 ? (
-              <EmptyState
-                title="No hay citas próximas"
-                description="Este cliente no tiene citas programadas"
-              />
-            ) : (
-              <CustomerBookingsTimeline
-                bookings={upcomingBookings}
-                tenantTimezone={tenantTimezone}
-                renderAction={renderAgendaAction}
-              />
-            )}
-          </TabsContent>
+          {activeTab === 'upcoming' && (
+            <div className="mt-3 sm:mt-4">
+              {upcomingBookings.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-8 text-center rounded-lg border border-white/5 bg-white/[0.02]">
+                  <Calendar className="h-10 w-10 text-white/20 mb-3" />
+                  <h3 className="text-sm font-medium text-white">No hay citas próximas</h3>
+                  <p className="text-xs text-[var(--text-secondary)] mt-1">Este cliente no tiene citas programadas</p>
+                </div>
+              ) : (
+                <CustomerBookingsTimeline
+                  bookings={upcomingBookings}
+                  tenantTimezone={tenantTimezone}
+                  renderAction={renderAgendaAction}
+                />
+              )}
+            </div>
+          )}
 
-          <TabsContent value="past" className="mt-3 sm:mt-4">
-            {pastBookings.length === 0 ? (
-              <EmptyState
-                title="No hay citas pasadas"
-                description="Este cliente aún no tiene historial de citas"
-              />
-            ) : (
-              <CustomerBookingsTimeline
-                bookings={pastBookings}
-                tenantTimezone={tenantTimezone}
-                renderAction={renderAgendaAction}
-              />
-            )}
-          </TabsContent>
-        </Tabs>
-      </Card>
+          {activeTab === 'past' && (
+            <div className="mt-3 sm:mt-4">
+              {pastBookings.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-8 text-center rounded-lg border border-white/5 bg-white/[0.02]">
+                  <Calendar className="h-10 w-10 text-white/20 mb-3" />
+                  <h3 className="text-sm font-medium text-white">No hay citas pasadas</h3>
+                  <p className="text-xs text-[var(--text-secondary)] mt-1">Este cliente aún no tiene historial de citas</p>
+                </div>
+              ) : (
+                <CustomerBookingsTimeline
+                  bookings={pastBookings}
+                  tenantTimezone={tenantTimezone}
+                  renderAction={renderAgendaAction}
+                />
+              )}
+            </div>
+          )}
+        </div>
+      </GlassCard>
     </div>
   );
 }
@@ -751,7 +795,7 @@ export default function ClienteDetailPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center py-12">
-          <Spinner size="lg" />
+          <Loader2 className="h-8 w-8 animate-spin text-white/20" />
         </div>
       }
     >

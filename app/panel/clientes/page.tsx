@@ -4,8 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { UiModal, UiToast, UiButton, UiField, UiInput } from "@/components/ui/apple-ui-kit";
-import { GlassCard, GlassButton, GlassInput, GlassSelect, GlassSection } from "@/components/ui/glass";
+import { GlassCard, GlassButton, GlassInput, GlassSelect, GlassSection, GlassModal, GlassToast } from "@/components/ui/glass";
 import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
 import { CustomersGrid } from "@/components/customers/CustomersGrid";
 // import { CustomerHistory } from "@/components/customers/CustomerHistory";
@@ -395,7 +394,7 @@ export default function ClientesPage() {
   if (error && !tenantId) {
     return (
       <div className="p-6">
-        <UiToast
+        <GlassToast
           message={error.message || "Error desconocido"}
           tone="danger"
         />
@@ -490,11 +489,12 @@ export default function ClientesPage() {
               className="bg-white/5 border-white/10"
             />
 
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
+            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
               <GlassSelect
                 label="Visitas"
                 value={visitFilter}
                 onChange={(e) => setVisitFilter(e.target.value as typeof visitFilter)}
+                className="h-11"
               >
                 <option value="all">Todas</option>
                 <option value="with">Con reservas</option>
@@ -505,6 +505,7 @@ export default function ClientesPage() {
                 label="Actividad"
                 value={activityFilter}
                 onChange={(e) => setActivityFilter(e.target.value as typeof activityFilter)}
+                className="h-11"
               >
                 <option value="all">Todas</option>
                 <option value="active90">Activas 90d</option>
@@ -515,6 +516,7 @@ export default function ClientesPage() {
                 label="Segmento"
                 value={segmentFilter}
                 onChange={(e) => setSegmentFilter(e.target.value as typeof segmentFilter)}
+                className="h-11"
               >
                 <option value="all">Todos</option>
                 <option value="vip">VIP</option>
@@ -527,6 +529,7 @@ export default function ClientesPage() {
                 label="Ordenar"
                 value={sortOption}
                 onChange={(e) => setSortOption(e.target.value as typeof sortOption)}
+                className="h-11"
               >
                 <option value="recent">Recientes</option>
                 <option value="value">Mayor gasto</option>
@@ -550,9 +553,9 @@ export default function ClientesPage() {
         {/* Toast Notifications */}
         {
           showToast && toastMessage && (
-            <UiToast
+            <GlassToast
               message={toastMessage}
-              tone={toastType === "error" ? "danger" : toastType}
+              tone={toastType === "error" ? "danger" : toastType as any}
               onClose={() => setShowToast(false)}
             />
           )
@@ -644,90 +647,84 @@ export default function ClientesPage() {
           )
         }
 
-        {
-          showNewModal && (
-            <UiModal
-              open={showNewModal}
-              onClose={closeNewModal}
-              title={editingCustomer ? "Editar cliente" : "Nuevo cliente"}
-              footer={
-                <div className="flex items-center justify-end gap-3">
-                  <UiButton
-                    variant="secondary"
-                    onClick={closeNewModal}
-                  >
-                    Cancelar
-                  </UiButton>
-                  <UiButton
-                    variant="primary"
-                    type="submit"
-                    form="customer-form"
-                    disabled={loading}
-                  >
-                    {loading ? "Guardando..." : editingCustomer ? "Actualizar" : "Crear cliente"}
-                  </UiButton>
-                </div>
-              }
+        <GlassModal
+          isOpen={showNewModal}
+          onClose={closeNewModal}
+          title={editingCustomer ? "Editar cliente" : "Nuevo cliente"}
+          description={editingCustomer ? "Modifica los datos del cliente." : "Rellena los datos para crear un nuevo cliente."}
+          footer={
+            <div className="flex items-center justify-end gap-3">
+              <GlassButton
+                variant="secondary"
+                onClick={closeNewModal}
+              >
+                Cancelar
+              </GlassButton>
+              <GlassButton
+                variant="primary"
+                type="submit"
+                form="customer-form"
+                disabled={loading}
+              >
+                {loading ? "Guardando..." : editingCustomer ? "Actualizar" : "Crear cliente"}
+              </GlassButton>
+            </div>
+          }
+        >
+          <form id="customer-form" onSubmit={handleNewCustomer} className="space-y-4">
+            <GlassInput
+              label="Nombre completo"
+              value={newCustomer.name}
+              onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
+              placeholder="Juan Pérez"
+              required
+            />
+
+            <GlassInput
+              label="Email"
+              type="email"
+              value={newCustomer.email}
+              onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
+              placeholder="juan@ejemplo.com"
+            />
+
+            <GlassInput
+              label="Teléfono"
+              type="tel"
+              value={newCustomer.phone}
+              onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
+              placeholder="+34 600 000 000"
+            />
+
+            <GlassSelect
+              label="Segmento"
+              value={newCustomer.segment}
+              onChange={(e) => setNewCustomer({ ...newCustomer, segment: e.target.value as any })}
             >
-              <form id="customer-form" onSubmit={handleNewCustomer} className="space-y-6">
-                <UiField label="Nombre completo" required>
-                  <UiInput
-                    type="text"
-                    value={newCustomer.name}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
-                    placeholder="Juan Pérez"
-                    required
-                  />
-                </UiField>
-
-                <UiField label="Email">
-                  <UiInput
-                    type="email"
-                    value={newCustomer.email}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
-                    placeholder="juan@ejemplo.com"
-                  />
-                </UiField>
-
-                <UiField label="Teléfono">
-                  <UiInput
-                    type="tel"
-                    value={newCustomer.phone}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
-                    placeholder="+34 600 000 000"
-                  />
-                </UiField>
-
-                <UiField label="Segmento">
-                  <select
-                    value={newCustomer.segment}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, segment: e.target.value as any })}
-                    className="w-full rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
-                  >
-                    <option value="normal">Normal</option>
-                    <option value="vip">VIP</option>
-                    <option value="marketing">Marketing</option>
-                    <option value="no_contact">Sin contacto</option>
-                  </select>
-                </UiField>
-              </form>
-            </UiModal>
-          )
-        }
+              <option value="normal">Normal</option>
+              <option value="vip">VIP</option>
+              <option value="marketing">Marketing</option>
+              <option value="no_contact">Sin contacto</option>
+            </GlassSelect>
+          </form>
+        </GlassModal>
 
         {
-          showHistory && (
-            <UiModal
-              open={!!showHistory}
-              onClose={() => setShowHistory(null)}
-              title="Historial de reservas"
-              size="lg"
-            >
-              <div className="p-4 text-center text-slate-400">
-                Historial de reservas (Componente en desarrollo)
+          <GlassModal
+            isOpen={!!showHistory}
+            onClose={() => setShowHistory(null)}
+            title="Historial de reservas"
+            size="lg"
+          >
+            <div className="p-8 text-center flex flex-col items-center justify-center opacity-70">
+              <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
+                <Calendar className="w-6 h-6 text-[var(--text-secondary)]" />
               </div>
-            </UiModal>
-          )
+              <p className="text-sm text-[var(--text-secondary)]">
+                El componente de historial está en desarrollo (Fase D.3.2.c/f).
+              </p>
+            </div>
+          </GlassModal>
         }
       </div >
     </ProtectedRoute >

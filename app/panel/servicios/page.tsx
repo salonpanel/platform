@@ -2,7 +2,7 @@
 
 import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
 import { useSearchParams } from "next/navigation";
-import { Alert } from "@/components/ui/Alert";
+import { GlassCard } from "@/components/ui/glass";
 import type { Service } from "@/types/services";
 import { ServiciosClient } from "./ServiciosClient";
 import { useServicesPageData } from "@/hooks/useOptimizedData";
@@ -25,17 +25,19 @@ export default function ServiciosPage() {
 
   if (error) {
     return (
-      <Alert type="error" title="Error en servicios">
-        {error.message || "Error al cargar servicios"}
-      </Alert>
+      <GlassCard className="border-red-500/50 bg-red-500/10 p-6 m-4">
+        <h3 className="text-lg font-semibold text-red-400 mb-2">Error en servicios</h3>
+        <p className="text-sm text-red-300">{error.message || "Error al cargar servicios"}</p>
+      </GlassCard>
     );
   }
 
   if (!tenantId) {
     return (
-      <Alert type="error" title="No se encontró ninguna barbería">
-        No tienes acceso a ninguna organización. Solicita acceso a un tenant para continuar.
-      </Alert>
+      <GlassCard className="border-red-500/50 bg-red-500/10 p-6 m-4">
+        <h3 className="text-lg font-semibold text-red-400 mb-2">No se encontró ninguna barbería</h3>
+        <p className="text-sm text-red-300">No tienes acceso a ninguna organización. Solicita acceso a un tenant para continuar.</p>
+      </GlassCard>
     );
   }
 

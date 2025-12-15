@@ -1,15 +1,21 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { cn } from "@/lib/utils";
 import { fetchTenantStaffOptions } from "@/lib/staff/fetchTenantStaffOptions";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { updateServiceStaff } from "@/lib/staff/staffServicesRelations";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Spinner } from "@/components/ui/Spinner";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Alert } from "@/components/ui/Alert";
-import { Modal } from "@/components/ui/Modal";
+import {
+  GlassButton,
+  GlassCard,
+  GlassInput,
+  GlassSelect,
+  GlassBadge,
+  GlassModal,
+  GlassToast,
+  GlassSection,
+} from "@/components/ui/glass";
+import { Loader2, Plus, X, Search, AlertCircle } from "lucide-react";
 import { ServiceCard } from "./components/ServiceCard";
 import { ServiceForm } from "./components/ServiceForm";
 import { ServicePreviewModal } from "./components/ServicePreviewModal";
@@ -35,6 +41,17 @@ const STATUS_OPTIONS: Array<{ value: ServiceFilters["status"]; label: string }> 
     { value: "active", label: "Activos" },
     { value: "inactive", label: "Archivados" },
   ];
+
+const CATEGORY_OPTIONS = [
+  "General",
+  "Peluquería",
+  "Estética",
+  "Uñas",
+  "Corporal",
+  "Facial",
+  "Masajes",
+  "Otros",
+];
 
 const STRIPE_OPTIONS: Array<{ value: ServiceFilters["stripe"]; label: string }> =
   [
@@ -797,7 +814,14 @@ export function ServiciosClient({
       {/* Controles principales */}
       <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Button
+          <GlassButton
+            onClick={() => openNewModal()}
+            className="flex-1 sm:flex-none h-11"
+            leftIcon={<Plus className="w-4 h-4" />}
+          >
+            Nuevo Servicio
+          </GlassButton>
+          <GlassButton
             variant="secondary"
             onClick={handleSyncStripe}
             disabled={!tenantId || syncingStripe}
@@ -805,40 +829,36 @@ export function ServiciosClient({
             className="w-full sm:w-auto"
           >
             Sincronizar con Stripe
-          </Button>
-          <Button
-            onClick={() => openNewModal()}
-            className="w-full sm:w-auto"
-          >
-            + Nuevo servicio
-          </Button>
+          </GlassButton>
         </div>
       </div>
 
-      <Card className="rounded-[14px] border border-white/10 bg-white/5 p-4 shadow-glass">
+      <GlassCard className="p-4">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <p className="text-sm text-white/70">
+          <p className="text-sm text-[var(--text-secondary)]">
             Mostrando {filteredServices.length} de {services.length} servicios ·{" "}
             {filterSummaryText}
           </p>
-          <Button variant="ghost" size="sm" onClick={clearFilters}>
+          <GlassButton variant="ghost" size="sm" onClick={clearFilters}>
             Reiniciar filtros
-          </Button>
+          </GlassButton>
         </div>
-      </Card>
+      </GlassCard>
 
-      <Card className="rounded-[14px] border border-white/10 bg-white/5 p-4 shadow-glass">
+      <GlassCard className="p-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <p className="text-sm font-medium text-white">Estado de servicios</p>
-          <div className="inline-flex rounded-full bg-white/5 p-1">
+          <div className="inline-flex rounded-lg bg-white/5 p-1 border border-white/10">
             {STATUS_OPTIONS.map((option) => (
               <button
                 key={option.value}
                 onClick={() => setFilterStatus(option.value)}
-                className={`px-3 py-1 text-xs rounded-full transition-colors ${filterStatus === option.value
-                    ? "bg-white text-black"
-                    : "text-white/70 hover:bg-white/10"
-                  }`}
+                className={cn(
+                  "px-3 py-1 text-xs rounded-md transition-all duration-200 font-medium",
+                  filterStatus === option.value
+                    ? "bg-white text-black shadow-sm"
+                    : "text-[var(--text-secondary)] hover:text-white hover:bg-white/5"
+                )}
                 aria-pressed={filterStatus === option.value}
               >
                 {option.label}
@@ -846,9 +866,9 @@ export function ServiciosClient({
             ))}
           </div>
         </div>
-      </Card>
+      </GlassCard>
 
-      <Card className="rounded-[14px] border border-white/10 bg-white/5 p-4 shadow-glass">
+      <GlassCard className="p-4">
         <p className="mb-3 text-sm font-medium text-white">
           Filtrar por categoría
         </p>
@@ -857,68 +877,64 @@ export function ServiciosClient({
             <button
               key={category}
               onClick={() => setFilterCategory(category)}
-              className={`rounded-full px-3 py-1 text-sm transition ${filterCategory === category
-                  ? "bg-white text-black"
-                  : "bg-white/5 text-white hover:bg-white/10"
-                }`}
+              className={cn(
+                "rounded-lg px-3 py-1.5 text-xs font-medium border transition-all duration-200",
+                filterCategory === category
+                  ? "bg-emerald-500/10 border-emerald-500/50 text-emerald-400"
+                  : "bg-white/5 border-white/10 text-[var(--text-secondary)] hover:bg-white/10 hover:text-white"
+              )}
               aria-pressed={filterCategory === category}
             >
               {category === "all" ? "Todas" : category}
             </button>
           ))}
         </div>
-      </Card>
+      </GlassCard>
 
-      <Card className="rounded-[14px] border border-white/10 bg-white/5 p-4 shadow-glass">
+      <GlassCard className="p-4">
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-white">Rango de precio</p>
-              <p className="text-xs text-white/60">
+              <p className="text-xs text-[var(--text-secondary)]">
                 {formatEuros(priceRange[0])} – {formatEuros(priceRange[1])}
               </p>
             </div>
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
+            <GlassButton variant="ghost" size="sm" onClick={clearFilters}>
               Limpiar filtros
-            </Button>
+            </GlassButton>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs uppercase text-white/60">Mínimo (€)</label>
-              <input
-                type="number"
-                min={priceBounds.min}
-                max={priceRange[1]}
-                value={priceRange[0]}
-                disabled={priceSliderDisabled}
-                onChange={(event) =>
-                  setPriceRange((prev) => [
-                    Math.min(Number(event.target.value), prev[1]),
-                    prev[1],
-                  ])
-                }
-                className="rounded-[10px] border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs uppercase text-white/60">Máximo (€)</label>
-              <input
-                type="number"
-                min={priceRange[0]}
-                max={priceBounds.max || priceRange[1]}
-                value={priceRange[1]}
-                disabled={priceSliderDisabled}
-                onChange={(event) =>
-                  setPriceRange((prev) => [
-                    prev[0],
-                    Math.max(Number(event.target.value), prev[0]),
-                  ])
-                }
-                className="rounded-[10px] border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
-              />
-            </div>
+            <GlassInput
+              label="Mínimo (€)"
+              type="number"
+              min={priceBounds.min}
+              max={priceRange[1]}
+              value={priceRange[0]}
+              disabled={priceSliderDisabled}
+              onChange={(event) =>
+                setPriceRange((prev) => [
+                  Math.min(Number(event.target.value), prev[1]),
+                  prev[1],
+                ])
+              }
+            />
+            <GlassInput
+              label="Máximo (€)"
+              type="number"
+              min={priceRange[0]}
+              max={priceBounds.max || priceRange[1]}
+              value={priceRange[1]}
+              disabled={priceSliderDisabled}
+              onChange={(event) =>
+                setPriceRange((prev) => [
+                  prev[0],
+                  Math.max(Number(event.target.value), prev[0]),
+                ])
+              }
+            />
           </div>
-          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center pt-2">
             <input
               type="range"
               min={priceBounds.min}
@@ -931,7 +947,7 @@ export function ServiciosClient({
                   prev[1],
                 ])
               }
-              className="flex-1"
+              className="flex-1 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-emerald-500 [&::-webkit-slider-thumb]:rounded-full"
             />
             <input
               type="range"
@@ -945,63 +961,76 @@ export function ServiciosClient({
                   Math.max(Number(event.target.value), prev[0]),
                 ])
               }
-              className="flex-1"
+              className="flex-1 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-emerald-500 [&::-webkit-slider-thumb]:rounded-full"
             />
           </div>
         </div>
-      </Card>
+      </GlassCard>
 
-      {successMessage && (
-        <Card className="border border-emerald-500/20 bg-emerald-500/10 text-emerald-200">
-          <p className="text-sm font-medium">{successMessage}</p>
-        </Card>
-      )}
+      {
+        successMessage && (
+          <GlassCard className="border-emerald-500/20 bg-emerald-500/10 text-emerald-200">
+            <p className="text-sm font-medium">{successMessage}</p>
+          </GlassCard>
+        )
+      }
 
-      {pageError && (
-        <Alert type="error" title="Error">
-          <div className="flex items-center justify-between gap-4">
-            <span>{pageError}</span>
-            <Button size="sm" variant="secondary" onClick={handleRetry}>
-              Reintentar
-            </Button>
+      {
+        pageError && (
+          <GlassCard className="border-red-500/50 bg-red-500/10 p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-500/20 rounded-full">
+                  <AlertCircle className="w-5 h-5 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-white">Error</h3>
+                  <p className="text-sm text-red-300">{pageError}</p>
+                </div>
+              </div>
+              <GlassButton size="sm" variant="secondary" onClick={handleRetry}>
+                Reintentar
+              </GlassButton>
+            </div>
+          </GlassCard>
+        )
+      }
+
+      {/* Service List State Logic */}
+      {!hasServices && !loading && !filteredIsEmpty ? (
+        <GlassCard className="py-16 flex flex-col items-center justify-center text-center border-dashed border-2 border-white/10 bg-white/[0.02]">
+          <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+            <Plus className="w-8 h-8 text-white/40" />
           </div>
-        </Alert>
-      )}
-
-      {!hasServices ? (
-        <Card>
-          <EmptyState
-            title="Configura tus servicios base"
-            description="Estos servicios se usarán en agenda, pagos y automatizaciones. Crea tus cortes, barbas y tratamientos principales."
-            action={
-              <Button
-                onClick={() =>
-                  openNewModal({
-                    category: "Corte",
-                    duration_min: 30,
-                    buffer_min: 5,
-                  })
-                }
-              >
-                Crear primer servicio
-              </Button>
-            }
-          />
-        </Card>
+          <h3 className="text-xl font-bold text-white mb-2 font-satoshi">Comienza añadiendo servicios</h3>
+          <p className="text-[var(--text-secondary)] max-w-md mx-auto mb-6">
+            Crea tu primer servicio para que los clientes puedan empezar a reservar citas.
+          </p>
+          <GlassButton
+            onClick={() => openNewModal()}
+            size="lg"
+            leftIcon={<Plus className="w-5 h-5 ml-1" />}
+          >
+            Crear Primer Servicio
+          </GlassButton>
+        </GlassCard>
       ) : filteredIsEmpty ? (
-        <Card>
-          <EmptyState
-            title="Sin resultados con los filtros actuales"
-            description="Prueba a ajustar la búsqueda o limpiar filtros para ver más servicios."
-            action={
-              hasFiltersApplied ? (
-                <Button variant="secondary" onClick={clearFilters}>
-                  Limpiar filtros
-                </Button>
-              ) : undefined
-            }
-          />
-        </Card>
+        <GlassCard className="py-12 bg-white/[0.02]">
+          <div className="flex flex-col items-center justify-center text-center">
+            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-4">
+              <Search className="w-6 h-6 text-white/40" />
+            </div>
+            <h3 className="text-lg font-medium text-white mb-2">Sin resultados</h3>
+            <p className="text-[var(--text-secondary)] text-sm max-w-sm mb-6">
+              No se encontraron servicios que coincidan con los filtros actuales.
+            </p>
+            {hasFiltersApplied && (
+              <GlassButton variant="secondary" onClick={clearFilters}>
+                Limpiar filtros
+              </GlassButton>
+            )}
+          </div>
+        </GlassCard>
       ) : (
         <>
           <div className="relative">
@@ -1026,28 +1055,28 @@ export function ServiciosClient({
             </div>
             {gridLoading && (
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                <Spinner size="sm" />
+                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
               </div>
             )}
           </div>
           <div className="flex flex-col gap-3 rounded-[14px] border border-white/10 bg-white/5 p-4 shadow-glass md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-2">
-              <Button
+              <GlassButton
                 variant="ghost"
                 size="sm"
                 onClick={() => goToPage(currentPage - 1)}
                 disabled={currentPage === 1}
               >
                 Anterior
-              </Button>
-              <Button
+              </GlassButton>
+              <GlassButton
                 variant="ghost"
                 size="sm"
                 onClick={() => goToPage(currentPage + 1)}
                 disabled={currentPage === totalPages}
               >
                 Siguiente
-              </Button>
+              </GlassButton>
               <p className="text-sm text-white/70">
                 Página {currentPage} de {totalPages}
               </p>
@@ -1058,53 +1087,102 @@ export function ServiciosClient({
             </div>
           </div>
         </>
-      )}
+      )
+      }
 
-      <Modal
+      <GlassModal
         isOpen={showModal}
         onClose={closeModal}
-        title={editingService ? "Editar servicio" : "Nuevo servicio"}
-        footer={
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={closeModal}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={saving || !form.name.trim()}
-              isLoading={saving}
-            >
-              {editingService ? "Guardar cambios" : "Crear servicio"}
-            </Button>
-          </div>
-        }
+        title={editingService ? "Editar Servicio" : "Nuevo Servicio"}
+        className="max-w-4xl"
       >
         {modalError && (
-          <div className="mb-4 rounded-[12px] border border-red-400/40 bg-red-500/10 p-3 text-sm text-red-200">
-            {modalError}
-          </div>
+          <GlassCard className="border-red-500/50 bg-red-500/10 mb-6 p-4">
+            <div className="flex justify-between items-start">
+              <p className="text-sm text-red-400">{modalError}</p>
+              <button onClick={() => setModalError(null)} className="text-red-400 hover:text-red-300"><X className="h-4 w-4" /></button>
+            </div>
+          </GlassCard>
         )}
+
         <ServiceForm
           form={form}
           onChange={handleFormChange}
-          categoryOptions={categoryOptions}
+          saving={saving}
+          isEditing={!!editingService}
+          categoryOptions={CATEGORY_OPTIONS}
           staffOptions={staffOptions}
           staffOptionsLoading={staffOptionsLoading}
           tenantId={tenantId}
-          serviceId={editingService?.id}
-          onStaffChange={(staffIds) => {
-            setSelectedStaffIds(staffIds);
-          }}
         />
-        {editingService && (
-          <div className="mt-4 rounded-[12px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80">
-            {editingService.stripe_product_id &&
-              editingService.stripe_price_id
-              ? "Este servicio está conectado a Stripe."
-              : "Pendiente de sincronizar con Stripe."}
-          </div>
-        )}
-      </Modal>
+
+        {/* Staff Assignment Section */}
+        <div className="mt-8 pt-8 border-t border-white/5">
+          <h3 className="text-lg font-semibold text-white mb-4 font-satoshi">Personal asignado</h3>
+          <p className="text-sm text-[var(--text-secondary)] mb-4">
+            Selecciona los empleados que pueden realizar este servicio.
+          </p>
+
+          {staffOptionsLoading ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-5 w-5 animate-spin text-white/20" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {staffOptions.map(staff => (
+                <div
+                  key={staff.id}
+                  className={`
+                      relative flex items-center p-3 rounded-lg border cursor-pointer transition-all
+                      ${selectedStaffIds.includes(staff.id)
+                      ? 'bg-emerald-500/10 border-emerald-500/50'
+                      : 'bg-white/[0.03] border-white/10 hover:bg-white/[0.05]'}
+                   `}
+                  onClick={() => {
+                    setSelectedStaffIds(prev =>
+                      prev.includes(staff.id)
+                        ? prev.filter(id => id !== staff.id)
+                        : [...prev, staff.id]
+                    );
+                  }}
+                >
+                  <div className={`
+                    w-4 h-4 rounded border flex items-center justify-center mr-3 transition-colors
+                    ${selectedStaffIds.includes(staff.id)
+                      ? 'bg-emerald-500 border-emerald-500'
+                      : 'border-white/30'}
+                  `}>
+                    {selectedStaffIds.includes(staff.id) && <Plus className="w-3 h-3 text-white" />}
+                  </div>
+                  <span className={`text-sm ${selectedStaffIds.includes(staff.id) ? 'text-white font-medium' : 'text-[var(--text-secondary)]'}`}>
+                    {staff.name}
+                  </span>
+                </div>
+              ))}
+              {staffOptions.length === 0 && (
+                <p className="text-sm text-[var(--text-secondary)] italic col-span-2">No hay empleados disponibles.</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-8 flex justify-end gap-3 pt-6 border-t border-white/5">
+          <GlassButton
+            variant="ghost"
+            onClick={closeModal}
+            disabled={saving}
+          >
+            Cancelar
+          </GlassButton>
+          <GlassButton
+            onClick={handleSubmit}
+            isLoading={saving}
+            disabled={saving}
+          >
+            {editingService ? "Guardar Cambios" : "Crear Servicio"}
+          </GlassButton>
+        </div>
+      </GlassModal>
 
       <ServicePreviewModal
         service={previewService}
@@ -1117,78 +1195,6 @@ export function ServiciosClient({
         syncingServiceId={syncingServiceId}
         onDelete={handleRequestArchiveService}
       />
-
-      {servicePendingArchive && (
-        <Modal
-          isOpen={!!servicePendingArchive}
-          onClose={handleCancelArchiveService}
-          title="Archivar servicio"
-          footer={
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={handleCancelArchiveService}
-                disabled={!!deletingId}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="danger"
-                onClick={handleConfirmArchiveService}
-                isLoading={!!deletingId}
-                disabled={!!deletingId}
-              >
-                Archivar
-              </Button>
-            </div>
-          }
-        >
-          <p className="text-sm text-white/80">
-            Este servicio se marcará como inactivo y pasará a la sección de
-            servicios archivados. No se usará en nuevas reservas, pero
-            mantendremos su histórico para estadísticas.
-          </p>
-          <p className="mt-3 text-sm font-medium text-white">
-            {servicePendingArchive.name}
-          </p>
-        </Modal>
-      )}
-      {servicePendingHardDelete && (
-        <Modal
-          isOpen={!!servicePendingHardDelete}
-          onClose={handleCancelHardDeleteService}
-          title="Eliminar servicio definitivamente"
-          footer={
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={handleCancelHardDeleteService}
-                disabled={!!deletingId}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="danger"
-                onClick={handleConfirmHardDeleteService}
-                isLoading={!!deletingId}
-                disabled={!!deletingId}
-              >
-                Eliminar definitivamente
-              </Button>
-            </div>
-          }
-        >
-          <p className="text-sm text-white/80">
-            Este servicio se borrará de la base de datos y no será posible
-            recuperarlo. Tampoco podremos mantener sus estadísticas históricas,
-            lo que puede afectar a métricas como ticket medio o informes
-            anteriores.
-          </p>
-          <p className="mt-3 text-sm font-medium text-white">
-            {servicePendingHardDelete.name}
-          </p>
-        </Modal>
-      )}
     </div>
   );
 }

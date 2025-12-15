@@ -1,5 +1,7 @@
 "use client";
 
+import { GlassInput } from "@/components/ui/glass";
+
 import {
   SERVICE_PRESET_CATEGORIES,
 } from "../hooks";
@@ -7,16 +9,19 @@ import type { ServiceFormState } from "../types";
 import { useState, useEffect } from "react";
 import { getServiceStaff } from "@/lib/staff/staffServicesRelations";
 
-type Props = {
+interface Props {
+  initialData?: ServiceFormState; // Optional for create mode
   form: ServiceFormState;
   onChange: (patch: Partial<ServiceFormState>) => void;
+  saving?: boolean;
+  isEditing?: boolean;
   categoryOptions: string[];
   staffOptions?: Array<{ id: string; name: string }>;
   staffOptionsLoading?: boolean;
   tenantId: string;
   serviceId?: string; // For editing existing services
   onStaffChange?: (staffIds: string[]) => void; // Callback for staff assignment changes
-};
+}
 
 const formatPriceField = (value: number) => (value / 100).toFixed(2);
 
@@ -54,9 +59,9 @@ export function ServiceForm({ form, onChange, categoryOptions, staffOptions, sta
 
   const handleInput =
     (field: keyof ServiceFormState, parser: (value: string) => any = (value) => value) =>
-    (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-      onChange({ [field]: parser(event.target.value) } as Partial<ServiceFormState>);
-    };
+      (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        onChange({ [field]: parser(event.target.value) } as Partial<ServiceFormState>);
+      };
 
   const pricingLevels = [
     { key: "standard", label: "Nivel estándar" },
@@ -77,16 +82,13 @@ export function ServiceForm({ form, onChange, categoryOptions, staffOptions, sta
         <p className="text-xs uppercase tracking-wide text-white/60">
           Información básica
         </p>
-        <div>
-          <label className="mb-2 block text-sm font-medium text-white">
-            Nombre <span className="text-red-400">*</span>
-          </label>
-          <input
-            type="text"
+        <div className="grid gap-4">
+          <GlassInput
+            label="Nombre"
             value={form.name}
             onChange={handleInput("name")}
-            className="w-full rounded-[10px] border border-white/15 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
             placeholder="Corte premium, diseño, afeitado..."
+            required
           />
         </div>
         <div>
@@ -98,7 +100,7 @@ export function ServiceForm({ form, onChange, categoryOptions, staffOptions, sta
             value={form.category}
             onChange={handleInput("category")}
             placeholder="Corte, Barba, Color..."
-            className="w-full rounded-[10px] border border-white/15 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all font-satoshi"
           />
           <datalist id="service-category-options">
             {[...new Set([...SERVICE_PRESET_CATEGORIES, ...categoryOptions])]
@@ -107,14 +109,14 @@ export function ServiceForm({ form, onChange, categoryOptions, staffOptions, sta
                 <option value={category} key={category} />
               ))}
           </datalist>
-          <p className="mt-1 text-xs text-white/60">
+          <p className="mt-1 text-xs text-[var(--text-secondary)]">
             Selecciona una sugerencia o escribe una categoría personalizada.
           </p>
         </div>
       </div>
 
       <div className="space-y-3">
-        <p className="text-xs uppercase tracking-wide text-white/60">
+        <p className="text-xs uppercase tracking-wide text-[var(--text-secondary)] font-semibold">
           Asignación de staff
         </p>
         <div className="space-y-3">
@@ -123,18 +125,18 @@ export function ServiceForm({ form, onChange, categoryOptions, staffOptions, sta
               Miembros del staff que pueden prestar este servicio
             </label>
             {staffOptionsLoading ? (
-              <div className="p-3 rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-white/5">
-                <p className="text-sm text-[var(--color-text-secondary)]">Cargando miembros del staff...</p>
+              <div className="p-3 rounded-lg border border-white/10 bg-white/5">
+                <p className="text-sm text-[var(--text-secondary)]">Cargando miembros del staff...</p>
               </div>
             ) : staffOptions && staffOptions.length > 0 ? (
-              <div className="space-y-2 max-h-48 overflow-y-auto glass p-3 rounded-[var(--radius-md)] border border-[var(--glass-border)]">
+              <div className="space-y-2 max-h-48 overflow-y-auto glass p-3 rounded-lg border border-white/10 bg-black/20">
                 {loadingStaff ? (
-                  <p className="text-sm text-[var(--color-text-secondary)]">Cargando asignaciones...</p>
+                  <p className="text-sm text-[var(--text-secondary)]">Cargando asignaciones...</p>
                 ) : (
                   staffOptions.map((staff) => (
                     <label
                       key={staff.id}
-                      className="flex items-center gap-3 p-2 rounded-[var(--radius-sm)] hover:bg-[rgba(255,255,255,0.05)] transition-colors cursor-pointer"
+                      className="flex items-center gap-3 p-2 rounded-md hover:bg-white/5 transition-colors cursor-pointer"
                     >
                       <input
                         type="checkbox"
@@ -146,9 +148,9 @@ export function ServiceForm({ form, onChange, categoryOptions, staffOptions, sta
                             setSelectedStaffIds(selectedStaffIds.filter(id => id !== staff.id));
                           }
                         }}
-                        className="w-4 h-4 rounded border-[var(--glass-border)] text-[var(--accent-aqua)] focus:ring-2 focus:ring-[var(--accent-aqua)]"
+                        className="w-4 h-4 rounded border-white/30 bg-black/40 text-emerald-500 focus:ring-emerald-500/50"
                       />
-                      <span className="text-sm text-[var(--color-text-primary)] font-medium">
+                      <span className="text-sm text-white font-medium">
                         {staff.name}
                       </span>
                     </label>
@@ -156,11 +158,11 @@ export function ServiceForm({ form, onChange, categoryOptions, staffOptions, sta
                 )}
               </div>
             ) : (
-              <p className="text-sm text-[var(--color-text-secondary)]" style={{ fontFamily: "var(--font-body)" }}>
+              <p className="text-sm text-[var(--text-secondary)]">
                 No hay miembros del staff disponibles. Ve a la sección Staff para añadir miembros.
               </p>
             )}
-            <p className="text-xs text-[var(--color-text-secondary)] mt-2" style={{ fontFamily: "var(--font-body)" }}>
+            <p className="text-xs text-[var(--text-secondary)] mt-2">
               {selectedStaffIds.length === 0
                 ? "Si no seleccionas ninguno, cualquier miembro del staff podrá prestar este servicio."
                 : `Solo ${selectedStaffIds.length} miembro${selectedStaffIds.length === 1 ? '' : 's'} del staff puede${selectedStaffIds.length === 1 ? '' : 'n'} prestar este servicio.`}
@@ -170,76 +172,55 @@ export function ServiceForm({ form, onChange, categoryOptions, staffOptions, sta
       </div>
 
       <div className="space-y-3">
-        <p className="text-xs uppercase tracking-wide text-white/60">
+        <p className="text-xs uppercase tracking-wide text-[var(--text-secondary)] font-semibold">
           Configuración
         </p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-2 block text-sm font-medium text-white">
-              Duración (min)
-            </label>
-            <input
+            <GlassInput
+              label="Duración (min)"
               type="number"
               min={5}
               step={5}
               value={form.duration_min}
-              onChange={handleInput("duration_min", (value) =>
-                parseNumber(value, 5)
-              )}
-              className="w-full rounded-[10px] border border-white/15 bg-white/5 px-4 py-3 text-white focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
+              onChange={handleInput("duration_min", (value) => parseNumber(value, 5))}
+              helperText="Mínimo 5 minutos. Usa múltiplos de 5 para cuadrar la agenda."
             />
-            <p className="mt-1 text-xs text-white/60">
-              Mínimo 5 minutos. Usa múltiplos de 5 para cuadrar la agenda.
-            </p>
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-white">
-              Buffer adicional (min)
-            </label>
-            <input
+            <GlassInput
+              label="Buffer adicional (min)"
               type="number"
               min={0}
               step={5}
               value={form.buffer_min}
-              onChange={handleInput("buffer_min", (value) =>
-                parseNumber(value, 0)
-              )}
-              className="w-full rounded-[10px] border border-white/15 bg-white/5 px-4 py-3 text-white focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
+              onChange={handleInput("buffer_min", (value) => parseNumber(value, 0))}
+              helperText="Tiempo extra para limpieza o preparación entre citas."
             />
-            <p className="mt-1 text-xs text-white/60">
-              Tiempo extra para limpieza o preparación entre citas.
-            </p>
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-white">
-              Precio base (€)
-            </label>
-            <input
+            <GlassInput
+              label="Precio base (€)"
               type="number"
               min={0}
               step={0.5}
               value={formatPriceField(form.price_cents)}
               onChange={handleInput("price_cents", parsePriceToCents)}
-              className="w-full rounded-[10px] border border-white/15 bg-white/5 px-4 py-3 text-white focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
+              helperText="Se convierte automáticamente a céntimos para Stripe y reportes."
             />
-            <p className="mt-1 text-xs text-white/60">
-              Se convierte automáticamente a céntimos para Stripe y reportes.
-            </p>
           </div>
         </div>
       </div>
 
       <div className="space-y-3">
-        <p className="text-xs uppercase tracking-wide text-white/60">
+        <p className="text-xs uppercase tracking-wide text-[var(--text-secondary)] font-semibold">
           Precios por nivel
         </p>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           {pricingLevels.map(({ key, label }) => (
             <div key={key}>
-              <label className="mb-2 block text-sm font-medium text-white">
-                {label}
-              </label>
-              <input
+              <GlassInput
+                label={label}
                 type="number"
                 min={0}
                 step={0.5}
@@ -260,11 +241,8 @@ export function ServiceForm({ form, onChange, categoryOptions, staffOptions, sta
                   });
                 }}
                 placeholder="Ej. 25"
-                className="w-full rounded-[10px] border border-white/15 bg-white/5 px-4 py-3 text-white focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
+                helperText="Opcional. Si se deja vacío, se usará el precio base."
               />
-              <p className="mt-1 text-xs text-white/60">
-                Opcional. Si se deja vacío, se usará el precio base.
-              </p>
             </div>
           ))}
         </div>
