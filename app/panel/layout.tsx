@@ -32,12 +32,14 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     }
 
     const user = session.user;
+    console.log("[PanelLayout Debug] Session valid. User:", user.id);
 
     if (!user) {
       redirect("/login");
     }
 
     const sb = supabaseServer();
+    console.log("[PanelLayout Debug] Fetching memberships...");
 
     // 1. Fetch ALL Memberships (Limit 50 to be safe)
     const { data: memberships, error: membershipError } = await sb
