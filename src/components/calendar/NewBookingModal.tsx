@@ -1,22 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { format } from "date-fns";
 import { AgendaModal } from "@/components/calendar/AgendaModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
-import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import type { Booking, Staff } from "@/types/agenda";
 import type { Service as PlatformService } from "@/types/services";
 import type { BookingMutationPayload, SaveBookingResult } from "@/hooks/useAgendaHandlers";
-
-interface CustomerLite {
-  id: string;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  notes?: string | null;
-}
+import { useCustomerSearch, type CustomerLite } from "@/hooks/useCustomerSearch";
+import { Loader2, Search, X, Check, User } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type CalendarService = Pick<PlatformService, "id" | "name" | "duration_min" | "price_cents" | "buffer_min">;
 
@@ -26,13 +20,14 @@ interface NewBookingModalProps {
   onSave: (payload: BookingMutationPayload) => Promise<SaveBookingResult>;
   services: CalendarService[];
   staff: Staff[];
-  customers: CustomerLite[];
+  customers: CustomerLite[]; // Deprecated, kept for compat but ignored
   selectedDate: string;
   selectedTime?: string;
   selectedEndTime?: string;
   selectedStaffId?: string;
   isLoading?: boolean;
   editingBooking?: Booking | null;
+  tenantId: string;
 }
 
 const DEFAULT_STATUS: Booking["status"] = "pending";
@@ -43,19 +38,25 @@ export function NewBookingModal({
   onSave,
   services,
   staff,
-  customers,
+  customers: _deprecatedCustomers,
   selectedDate,
   selectedTime,
   selectedEndTime,
   selectedStaffId,
   isLoading = false,
   editingBooking = null,
+  tenantId
 }: NewBookingModalProps) {
   const { showToast, ToastComponent } = useToast();
 
   const [activeTab, setActiveTab] = useState<"details" | "notes">("details");
-  const [customerQuery, setCustomerQuery] = useState("");
-  const [customerId, setCustomerId] = useState("");
+
+  // New Customer Search Logic
+  const { query, setQuery, results, loading: searching, search } = useCustomerSearch(tenantId);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerLite | null>(null);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
   const [serviceId, setServiceId] = useState("");
   const [staffId, setStaffId] = useState(selectedStaffId || "");
   const [bookingDate, setBookingDate] = useState(selectedDate);
@@ -65,11 +66,33 @@ export function NewBookingModal({
   const [clientMessage, setClientMessage] = useState("");
   const [isHighlighted, setIsHighlighted] = useState(false);
 
+  // Close search dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setIsSearchFocused(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   useEffect(() => {
     if (!isOpen) return;
 
     if (editingBooking) {
-      setCustomerId(editingBooking.customer_id || "");
+      // Map existing customer to state
+      if (editingBooking.customer) {
+        setSelectedCustomer({
+          id: editingBooking.customer.id!, // Assuming id is present in type
+          name: editingBooking.customer.name,
+          email: editingBooking.customer.email,
+          phone: editingBooking.customer.phone
+        });
+      } else {
+        setSelectedCustomer(null);
+      }
+
       setServiceId(editingBooking.service_id || "");
       setStaffId(editingBooking.staff_id || "");
       setStatus(editingBooking.status || DEFAULT_STATUS);
@@ -81,7 +104,7 @@ export function NewBookingModal({
       setBookingDate(format(start, "yyyy-MM-dd"));
       setBookingTime(format(start, "HH:mm"));
     } else {
-      setCustomerId("");
+      setSelectedCustomer(null);
       setServiceId("");
       setStaffId(selectedStaffId || "");
       setStatus(DEFAULT_STATUS);
@@ -91,24 +114,12 @@ export function NewBookingModal({
       setBookingDate(selectedDate);
       setBookingTime(selectedTime || "09:00");
     }
-    setCustomerQuery("");
+    setQuery("");
     setActiveTab("details");
   }, [isOpen, editingBooking, selectedDate, selectedTime, selectedStaffId]);
 
-  const filteredCustomers = useMemo(() => {
-    const term = customerQuery.trim().toLowerCase();
-    if (!term) return customers.slice(0, 20);
-    return customers
-      .filter((customer) => {
-        const values = [customer.name, customer.email, customer.phone].filter(Boolean) as string[];
-        return values.some((value) => value.toLowerCase().includes(term));
-      })
-      .slice(0, 20);
-  }, [customerQuery, customers]);
-
   const selectedService = services.find((svc) => svc.id === serviceId);
   const selectedStaff = staff.find((member) => member.id === staffId);
-  const selectedCustomer = customers.find((c) => c.id === customerId.trim());
 
   const estimatedEndTime = useMemo(() => {
     if (selectedEndTime) return selectedEndTime;
@@ -157,6 +168,20 @@ export function NewBookingModal({
     showToast(result.error, "error");
   };
 
+  const clearSelection = () => {
+    setSelectedCustomer(null);
+    setQuery("");
+    setTimeout(() => {
+      // Focus input logic if ref was attached to input
+    }, 0);
+  };
+
+  const handleSelectCustomer = (c: CustomerLite) => {
+    setSelectedCustomer(c);
+    setQuery("");
+    setIsSearchFocused(false);
+  };
+
   return (
     <>
       <AgendaModal
@@ -171,7 +196,7 @@ export function NewBookingModal({
             label: editingBooking ? "Actualizar" : "Guardar",
             variant: "primary",
             loading: isLoading,
-            disabled: !customerId.trim() || !serviceId || !staffId || isLoading,
+            disabled: !selectedCustomer || !serviceId || !staffId || isLoading,
             onClick: handleSave,
           },
         ]}
@@ -183,36 +208,89 @@ export function NewBookingModal({
         }}
       >
         <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "details" | "notes")}> 
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "details" | "notes")}>
             <TabsList>
               <TabsTrigger value="details">Detalles</TabsTrigger>
               <TabsTrigger value="notes">Notas</TabsTrigger>
             </TabsList>
 
             <TabsContent value="details" className="space-y-6">
-              <div>
-                <label className="text-sm font-semibold text-white mb-2 flex justify-between">
+
+              {/* ASYNC CUSTOMER COMBOBOX */}
+              <div className="relative" ref={searchContainerRef}>
+                <label className="text-sm font-semibold text-white mb-2 block">
                   Cliente
-                  <span className="text-xs text-white/60">{filteredCustomers.length} resultados</span>
                 </label>
-                <Input
-                  placeholder="Busca por nombre, email o teléfono"
-                  value={customerQuery}
-                  onChange={(e) => setCustomerQuery(e.target.value)}
-                  className="mb-3"
-                />
-                <select
-                  value={customerId}
-                  onChange={(e) => setCustomerId(e.target.value)}
-                  className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white"
-                >
-                  <option value=" ">Selecciona un cliente...</option>
-                  {filteredCustomers.map((customer) => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.name} · {customer.phone || customer.email || "Sin contacto"}
-                    </option>
-                  ))}
-                </select>
+
+                {selectedCustomer ? (
+                  <div className="flex items-center justify-between w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                        <User className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{selectedCustomer.name}</p>
+                        <p className="text-xs text-white/50">{selectedCustomer.phone || selectedCustomer.email || "Sin contacto"}</p>
+                      </div>
+                    </div>
+                    <button onClick={clearSelection} className="p-1 hover:bg-white/10 rounded-full text-white/50 hover:text-white transition-colors">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                      <input
+                        placeholder="Buscar por nombre, email o teléfono..."
+                        value={query}
+                        onChange={(e) => {
+                          setQuery(e.target.value);
+                          setIsSearchFocused(true);
+                        }}
+                        onFocus={() => setIsSearchFocused(true)}
+                        className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] pl-10 pr-10 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                      />
+                      {searching && (
+                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-400 animate-spin" />
+                      )}
+                    </div>
+
+                    {/* DROPDOWN RESULTS */}
+                    {isSearchFocused && (query.trim().length > 0 || results.length > 0) && (
+                      <div className="absolute z-50 mt-2 w-full rounded-xl border border-white/10 bg-[#1b1d21] shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                        {results.length > 0 ? (
+                          <ul className="max-h-[240px] overflow-y-auto py-1">
+                            {results.map((c) => (
+                              <li key={c.id}>
+                                <button
+                                  onClick={() => handleSelectCustomer(c)}
+                                  className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors flex items-center gap-3 group"
+                                >
+                                  <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/40 group-hover:text-white/70 transition-colors">
+                                    <User className="w-4 h-4" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium text-white group-hover:text-indigo-300 transition-colors">{c.name}</p>
+                                    <div className="flex items-center gap-2 text-xs text-white/40">
+                                      {c.phone && <span>{c.phone}</span>}
+                                      {c.phone && c.email && <span>•</span>}
+                                      {c.email && <span>{c.email}</span>}
+                                    </div>
+                                  </div>
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="p-4 text-center text-sm text-white/40">
+                            {searching ? "Buscando..." : "No se encontraron clientes"}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -351,4 +429,3 @@ export function NewBookingModal({
     </>
   );
 }
-

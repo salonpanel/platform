@@ -14,6 +14,7 @@ interface DragDropManagerProps {
   dayStartHour?: number;
   dayEndHour?: number;
   staffWindows?: StaffWindowsMap;
+  slotHeight?: number;
 }
 
 export interface DragState {
@@ -45,6 +46,7 @@ export function useDragDropManager({
   dayStartHour,
   dayEndHour,
   staffWindows,
+  slotHeight = SLOT_HEIGHT_PX,
 }: DragDropManagerProps = {}) {
   const [draggingBooking, setDraggingBooking] = useState<DragState | null>(null);
   const [resizingBooking, setResizingBooking] = useState<ResizeState | null>(null);
@@ -64,13 +66,13 @@ export function useDragDropManager({
 
   // Utility functions
   const pixelsToMinutes = (pixels: number): number => {
-    const slots = Math.round(Math.max(0, pixels) / SLOT_HEIGHT_PX); // Use shared constants
+    const slots = Math.round(Math.max(0, pixels) / slotHeight); // Use dynamic slot height
     const relativeMinutes = slots * SLOT_DURATION_MINUTES;
     return START_HOUR * 60 + relativeMinutes;
   };
   const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60;
   const TOTAL_SLOTS = TOTAL_MINUTES / SLOT_DURATION_MINUTES;
-  const TOTAL_HEIGHT_PX = TOTAL_SLOTS * SLOT_HEIGHT_PX;
+  const TOTAL_HEIGHT_PX = TOTAL_SLOTS * slotHeight;
 
   const snapToValidWindow = (rawStartMinutes: number, durationMinutes: number, staffId: string): number | null => {
     const windowsForStaff: TimeWindow[] | undefined = staffWindows ? staffWindows[staffId] : undefined;
@@ -141,9 +143,9 @@ export function useDragDropManager({
       const scrollDelta = nextScrollTop - currentDrag.initialScrollTop;
       const newTopRaw = currentDrag.originalTop + scrollDelta;
 
-      const slotIndex = Math.round(newTopRaw / SLOT_HEIGHT_PX);
+      const slotIndex = Math.round(newTopRaw / slotHeight);
       const clampedSlotIndex = Math.max(0, Math.min(TOTAL_SLOTS - 1, slotIndex));
-      const clampedY = clampedSlotIndex * SLOT_HEIGHT_PX;
+      const clampedY = clampedSlotIndex * slotHeight;
 
       const updatedDrag: DragState = {
         ...currentDrag,
@@ -241,9 +243,9 @@ export function useDragDropManager({
         const scrollDelta = container ? container.scrollTop - currentDrag.initialScrollTop : 0;
         const newTopRaw = currentDrag.originalTop + deltaY + scrollDelta;
 
-        const slotIndex = Math.round(newTopRaw / SLOT_HEIGHT_PX);
+        const slotIndex = Math.round(newTopRaw / slotHeight);
         const clampedSlotIndex = Math.max(0, Math.min(TOTAL_SLOTS - 1, slotIndex));
-        const clampedY = clampedSlotIndex * SLOT_HEIGHT_PX;
+        const clampedY = clampedSlotIndex * slotHeight;
 
         const updatedDrag = {
           ...currentDrag,
@@ -364,7 +366,7 @@ export function useDragDropManager({
         if (!currentResize) return;
 
         const deltaY = moveEvent.clientY - e.clientY;
-        const newHeight = Math.max(64, currentResize.originalHeight + (currentResize.resizeType === "end" ? deltaY : -deltaY));
+        const newHeight = Math.max(slotHeight, currentResize.originalHeight + (currentResize.resizeType === "end" ? deltaY : -deltaY));
 
         const updatedResize = {
           ...currentResize,
@@ -444,7 +446,7 @@ export function useDragDropManager({
               originalEndTenant.getHours() * 60 + originalEndTenant.getMinutes();
 
             // Derive a raw new start from the current height (duration) anchored at the fixed end
-            const slots = Math.max(1, Math.round(currentResize.currentHeight / SLOT_HEIGHT_PX));
+            const slots = Math.max(1, Math.round(currentResize.currentHeight / slotHeight));
             const newDurationMinutes = slots * SLOT_DURATION_MINUTES;
             let rawStartMinutes = originalEndMinutes - newDurationMinutes;
 

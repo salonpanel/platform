@@ -147,5 +147,39 @@ export function useAgendaHandlers({ tenantId, onAfterMutation }: UseAgendaHandle
     [tenantId, supabase, showToast]
   );
 
-  return { saveBooking, saveBlocking, checkConflicts };
+  const moveBooking = useCallback(
+    async (booking: Booking, newStartsAt: string, newStaffId?: string) => {
+      const durationMin = booking.service?.duration_min || 30;
+      const start = new Date(newStartsAt);
+      const end = new Date(start.getTime() + durationMin * 60000);
+
+      return saveBooking({
+        id: booking.id,
+        customer_id: booking.customer_id!, // Assumes customer_id exists on booking object
+        service_id: booking.service_id!,
+        staff_id: newStaffId || booking.staff_id!,
+        starts_at: start.toISOString(),
+        ends_at: end.toISOString(),
+        status: booking.status,
+      });
+    },
+    [saveBooking]
+  );
+
+  const resizeBooking = useCallback(
+    async (booking: Booking, newEndsAt: string) => {
+      return saveBooking({
+        id: booking.id,
+        customer_id: booking.customer_id!,
+        service_id: booking.service_id!,
+        staff_id: booking.staff_id!,
+        starts_at: booking.starts_at,
+        ends_at: newEndsAt,
+        status: booking.status,
+      });
+    },
+    [saveBooking]
+  );
+
+  return { saveBooking, saveBlocking, checkConflicts, moveBooking, resizeBooking };
 }

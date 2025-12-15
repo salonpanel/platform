@@ -70,12 +70,7 @@ export async function fetchAgendaDataset(
       .eq("tenant_id", tenant.id)
       .eq("active", true)
       .order("name"),
-    supabase
-      .from("customers")
-      .select("id, name, email, phone, notes")
-      .eq("tenant_id", tenant.id)
-      .order("name")
-      .limit(100),
+    supabase.from("customers").select("id").limit(0), // No-op, we don't fetch customers initially anymore
     supabase
       .from("staff_blockings")
       .select("*")
@@ -112,7 +107,7 @@ export async function fetchAgendaDataset(
 
   if (staffRes.error) throw staffRes.error;
   if (servicesRes.error) throw servicesRes.error;
-  if (customersRes.error) throw customersRes.error;
+  // if (customersRes.error) throw customersRes.error; // Ignored
   if (blockingsRes.error) throw blockingsRes.error;
   if (schedulesRes.error) throw schedulesRes.error;
   if (bookingsRpcRes.error) throw bookingsRpcRes.error;
@@ -126,7 +121,7 @@ export async function fetchAgendaDataset(
     },
     staff: staffRes.data || [],
     services: (servicesRes.data || []).map(s => ({ ...s, buffer_min: s.buffer_min ?? 0 })),
-    customers: customersRes.data || [],
+    customers: [], // Async loaded now
     bookings: bookingsRpcRes.data || [],
     blockings: blockingsRes.data || [],
     schedules: schedulesRes.data || [],

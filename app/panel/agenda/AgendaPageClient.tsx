@@ -62,18 +62,18 @@ export default function AgendaPageClient({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [slotPopover, setSlotPopover] = useState<
     | {
-        open: boolean;
-        position: { x: number; y: number };
-        slot: CalendarSlot;
-      }
+      open: boolean;
+      position: { x: number; y: number };
+      slot: CalendarSlot;
+    }
     | null
   >(null);
   const [bookingPopover, setBookingPopover] = useState<
     | {
-        open: boolean;
-        position: { x: number; y: number };
-        booking: Booking;
-      }
+      open: boolean;
+      position: { x: number; y: number };
+      booking: Booking;
+    }
     | null
   >(null);
   const [notifications, setNotifications] = useState(
@@ -81,15 +81,15 @@ export default function AgendaPageClient({
       initialData
         ? []
         : [
-            {
-              id: "1",
-              type: "info" as const,
-              title: "Agenda lista",
-              message: "Las notificaciones llegarán aquí",
-              timestamp: "Hace 1 min",
-              read: false,
-            },
-          ]
+          {
+            id: "1",
+            type: "info" as const,
+            title: "Agenda lista",
+            message: "Las notificaciones llegarán aquí",
+            timestamp: "Hace 1 min",
+            read: false,
+          },
+        ]
   );
 
   useEffect(() => {
@@ -119,7 +119,7 @@ export default function AgendaPageClient({
     initialData,
   });
 
-  const { saveBooking, saveBlocking } = useAgendaHandlers({
+  const { saveBooking, saveBlocking, moveBooking, resizeBooking } = useAgendaHandlers({
     tenantId,
     onAfterMutation: () => refreshDaySnapshots(selectedDate),
   });
@@ -132,6 +132,33 @@ export default function AgendaPageClient({
   const handleBlockingSave = useCallback(
     (payload: Parameters<typeof saveBlocking>[0]) => saveBlocking(payload),
     [saveBlocking]
+  );
+
+  const handleBookingDrag = useCallback(
+    async (bookingId: string, newTime: string, newStaffId?: string) => {
+      const booking = bookings.find((b) => b.id === bookingId);
+      if (!booking) return;
+
+      const dateStr = format(new Date(selectedDate), "yyyy-MM-dd");
+      const newStartsAt = `${dateStr}T${newTime}`;
+
+      await moveBooking(booking, newStartsAt, newStaffId);
+    },
+    [bookings, selectedDate, moveBooking]
+  );
+
+  const handleBookingResize = useCallback(
+    async (bookingId: string, newEndTime: string) => {
+      const booking = bookings.find((b) => b.id === bookingId);
+      if (!booking) return;
+
+      // Ensure date is conserved
+      const dateStr = format(new Date(booking.starts_at), "yyyy-MM-dd");
+      const newEndsAt = `${dateStr}T${newEndTime}`;
+
+      await resizeBooking(booking, newEndsAt);
+    },
+    [bookings, resizeBooking]
   );
 
   const handleSlotNewBooking = useCallback(
@@ -224,11 +251,11 @@ export default function AgendaPageClient({
 
   const quickStats = stats
     ? {
-        totalBookings: stats.total_bookings,
-        totalHours: Number((stats.total_minutes / 60).toFixed(1)),
-        totalAmount: stats.total_amount,
-        rangeLabel,
-      }
+      totalBookings: stats.total_bookings,
+      totalHours: Number((stats.total_minutes / 60).toFixed(1)),
+      totalAmount: stats.total_amount,
+      rangeLabel,
+    }
     : undefined;
 
   const unreadNotifications = notifications.filter((n) => !n.read).length;
@@ -302,6 +329,8 @@ export default function AgendaPageClient({
             tenantTimezone={tenantTimezone}
             onBookingClick={handleBookingClick}
             onNewBooking={() => handleSlotNewBooking(defaultSlot)}
+            onBookingDrag={handleBookingDrag}
+            onBookingResize={handleBookingResize}
             density="default"
             onPopoverShow={(position, slot) =>
               setSlotPopover({
@@ -380,6 +409,7 @@ export default function AgendaPageClient({
           selectedStaffId={modals.selectedSlot?.staffId}
           isLoading={loading}
           editingBooking={modals.editingBooking}
+          tenantId={tenantId || ""}
         />
       )}
 

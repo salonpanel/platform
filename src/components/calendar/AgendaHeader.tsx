@@ -10,6 +10,7 @@ import { SearchPanel } from "./SearchPanel";
 import { GlassCard } from "@/components/agenda/primitives/GlassCard";
 import { theme } from "@/theme/ui";
 import { useState } from "react";
+import { useResponsive } from "@/hooks/useResponsive";
 
 type ViewMode = "day" | "week" | "month" | "list";
 
@@ -68,10 +69,10 @@ export function AgendaHeader({
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [statsExpanded, setStatsExpanded] = useState(false);
-  
+
   // Parsear fecha desde selectedDate = "yyyy-MM-dd" usando parseISO para robustez
   const date = parseISO(selectedDate);
-  
+
   const getDateLabel = () => {
     switch (viewMode) {
       case "day":
@@ -136,12 +137,146 @@ export function AgendaHeader({
     { value: "list", label: "Lista" },
   ];
 
+  /* 
+    PHASE C: SIMPLIFIED MOBILE HEADER logic
+    We use useResponsive to conditionally render a much simpler header on mobile.
+  */
+  const { isMobile } = useResponsive();
+
+  /* --------------------------------------------------------------------------------
+   * MOBILE VIEW (Simplified)
+   * -------------------------------------------------------------------------------- */
+  if (isMobile) {
+    return (
+      <div className="w-full">
+        <GlassCard variant="elevated" padding="md" className="w-full">
+          <div className="flex items-center justify-between gap-3">
+            {/* Left: Menu & Date (Compact) */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 -ml-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                aria-label="Menu"
+              >
+                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-[var(--text-primary)] font-[var(--font-heading)] leading-none">
+                  {format(date, "d MMM")}
+                </span>
+                <span className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider font-semibold">
+                  {format(date, "EEEE")}
+                </span>
+              </div>
+            </div>
+
+            {/* Right: Actions (New Booking + Search) */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={onSearchClick}
+                className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                aria-label="Buscar"
+              >
+                <Search className="h-5 w-5" />
+              </button>
+              {/* Primary Action Button (Add) could be added here if not handled by FAB */}
+            </div>
+          </div>
+
+          {/* Collapsible Mobile Menu for Secondary Controls */}
+          <AnimatePresence>
+            {mobileMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25 }}
+                className="overflow-hidden border-t border-[var(--glass-border-subtle)] mt-3 pt-3"
+              >
+                {/* View Selector */}
+                <div className="flex gap-2 mb-4 overflow-x-auto pb-1 no-scrollbar">
+                  {viewModes.map((mode) => (
+                    <button
+                      key={mode.value}
+                      onClick={() => {
+                        onViewModeChange(mode.value);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={cn(
+                        "px-3 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-colors",
+                        viewMode === mode.value
+                          ? "bg-[var(--accent-blue)]/10 text-[var(--accent-blue)] border border-[var(--accent-blue)]/20"
+                          : "bg-[var(--glass-bg-subtle)] text-[var(--text-secondary)] border border-transparent"
+                      )}
+                    >
+                      {mode.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Secondary Actions Row */}
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handlePrevious}
+                      className="p-2 rounded-lg bg-[var(--glass-bg-subtle)] text-[var(--text-secondary)]"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={handleToday}
+                      className="px-3 py-1.5 rounded-lg bg-[var(--glass-bg-subtle)] text-xs font-semibold text-[var(--text-primary)]"
+                    >
+                      Hoy
+                    </button>
+                    <button
+                      onClick={handleNext}
+                      className="p-2 rounded-lg bg-[var(--glass-bg-subtle)] text-[var(--text-secondary)]"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={onNotificationsClick}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--glass-bg-subtle)] text-xs text-[var(--text-secondary)]"
+                  >
+                    <Bell className="h-4 w-4" />
+                    <span>Avisos</span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </GlassCard>
+
+        {/* Search Panel Overlay */}
+        {searchOpen && onSearchChange && onSearchClose && (
+          <div className="mt-2">
+            <SearchPanel
+              isOpen={searchOpen}
+              onClose={onSearchClose}
+              searchTerm={searchTerm || ""}
+              onSearchChange={onSearchChange}
+              resultCount={searchResultCount}
+              totalCount={searchTotalCount}
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  /* --------------------------------------------------------------------------------
+   * DESKTOP/TABLET VIEW (Existing Premium Header)
+   * -------------------------------------------------------------------------------- */
   return (
     <div className="w-full">
       {/* Premium Header with GlassCard - Mobile First */}
       <GlassCard variant="elevated" padding="lg" className="w-full">
         <div className="flex flex-col gap-4">
-          {/* Mobile-First: Date Navigation (Centered on mobile, left-aligned on desktop) */}
+          {/* Date Navigation (Centered on mobile, left-aligned on desktop) */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             {/* Date Navigation Controls */}
             <div className="flex items-center justify-center sm:justify-start gap-2 min-w-0 flex-1">
@@ -380,8 +515,8 @@ export function AgendaHeader({
                       className={cn(
                         "relative flex-1 sm:flex-initial px-3 py-2 text-xs font-semibold rounded-xl transition-all duration-200",
                         "font-[var(--font-heading)]",
-                        viewMode === mode.value 
-                          ? "text-[var(--text-primary)]" 
+                        viewMode === mode.value
+                          ? "text-[var(--text-primary)]"
                           : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                       )}
                     >
@@ -428,7 +563,7 @@ export function AgendaHeader({
             </div>
 
             {/* Collapsible Stats Section - Always visible on desktop, collapsible on mobile */}
-            <div 
+            <div
               id="stats-section"
               className={cn(
                 "overflow-hidden",
@@ -481,7 +616,7 @@ export function AgendaHeader({
                             </div>
                           </div>
                         )}
-                        
+
                         {/* Staff Utilization Chips */}
                         {staffUtilization && staffUtilization.length > 0 && onStaffFilterChange && (
                           <div className="flex items-center gap-2 flex-wrap">
@@ -496,7 +631,7 @@ export function AgendaHeader({
                                   return "bg-[var(--status-pending)]/10 border-[var(--status-pending)]/25 text-[var(--status-pending)] hover:bg-[var(--status-pending)]/15";
                                 }
                               };
-                              
+
                               // Obtener iniciales del nombre
                               const getInitials = (name: string) => {
                                 const parts = name.trim().split(" ");
@@ -505,7 +640,7 @@ export function AgendaHeader({
                                 }
                                 return name.slice(0, 2).toUpperCase();
                               };
-                    
+
                               return (
                                 <motion.button
                                   key={staff.staffId}
@@ -571,7 +706,7 @@ export function AgendaHeader({
                             </div>
                           </div>
                         )}
-                        
+
                         {/* Staff Utilization Chips */}
                         {staffUtilization && staffUtilization.length > 0 && onStaffFilterChange && (
                           <div className="flex items-center gap-2 flex-wrap">
@@ -586,7 +721,7 @@ export function AgendaHeader({
                                   return "bg-[var(--status-pending)]/10 border-[var(--status-pending)]/25 text-[var(--status-pending)] hover:bg-[var(--status-pending)]/15";
                                 }
                               };
-                              
+
                               // Obtener iniciales del nombre
                               const getInitials = (name: string) => {
                                 const parts = name.trim().split(" ");
@@ -595,7 +730,7 @@ export function AgendaHeader({
                                 }
                                 return name.slice(0, 2).toUpperCase();
                               };
-                    
+
                               return (
                                 <motion.button
                                   key={staff.staffId}
@@ -629,7 +764,7 @@ export function AgendaHeader({
           </div>
         </div>
       </GlassCard>
-      
+
       {/* Search Panel */}
       {searchOpen && onSearchChange && onSearchClose && (
         <div className="relative mt-2">

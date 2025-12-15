@@ -10,9 +10,10 @@ interface TimeColumnProps {
   startHour: number;
   endHour: number;
   timezone: string;
+  slotHeight?: number;
 }
 
-export function TimeColumn({ startHour, endHour, timezone }: TimeColumnProps) {
+export function TimeColumn({ startHour, endHour, timezone, slotHeight = SLOT_HEIGHT_PX }: TimeColumnProps) {
   const timeSlots = useMemo(() => {
     const slots = [];
     for (let hour = startHour; hour < endHour; hour++) {
@@ -24,7 +25,7 @@ export function TimeColumn({ startHour, endHour, timezone }: TimeColumnProps) {
   }, [startHour, endHour]);
 
   return (
-    <div 
+    <div
       className="bg-[#0B0C10]/80 backdrop-blur-xl border-r border-white/5 flex flex-col h-full z-30"
       style={{ width: `${TIME_COLUMN_WIDTH_PX}px` }}
     >
@@ -49,8 +50,8 @@ export function TimeColumn({ startHour, endHour, timezone }: TimeColumnProps) {
                 isHour ? "border-t border-white/[0.03]" : "border-t border-white/[0.015]"
               )}
               style={{
-                top: `${index * SLOT_HEIGHT_PX}px`,
-                height: `${SLOT_HEIGHT_PX}px`,
+                top: `${index * slotHeight}px`,
+                height: `${slotHeight}px`,
               }}
             >
               {isHour && (

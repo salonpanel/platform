@@ -104,7 +104,7 @@ export function useAgendaData({ tenantId, selectedDate, viewMode, initialData }:
     let cancelled = false;
     const loadStaticCatalogs = async () => {
       try {
-        const [staffRes, servicesRes, customersRes] = await Promise.all([
+        const [staffRes, servicesRes] = await Promise.all([
           supabase
             .from("staff")
             .select("id, name, active")
@@ -117,23 +117,17 @@ export function useAgendaData({ tenantId, selectedDate, viewMode, initialData }:
             .eq("tenant_id", tenantId)
             .eq("active", true)
             .order("name"),
-          supabase
-            .from("customers")
-            .select("id, name, email, phone, notes")
-            .eq("tenant_id", tenantId)
-            .order("name")
-            .limit(100),
         ]);
 
         if (cancelled) return;
 
-        if (staffRes.error || servicesRes.error || customersRes.error) {
+        if (staffRes.error || servicesRes.error) {
           throw new Error("Error al cargar catálogos");
         }
 
         setStaffList(normalizeStaffList(staffRes.data));
         setServices((servicesRes.data || []).map((svc) => ({ ...svc, buffer_min: svc.buffer_min ?? 0 })));
-        setCustomers(customersRes.data || []);
+        setCustomers([]); // Reset or keep empty
         setHydratedTenantId(tenantId);
       } catch (err) {
         if (!cancelled) {

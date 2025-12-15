@@ -3,12 +3,12 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { format, addWeeks, subWeeks, startOfToday, addDays, subDays } from "date-fns";
 import { es } from "date-fns/locale";
-import { 
-  X, 
-  Filter, 
-  CreditCard, 
-  CheckCircle, 
-  ChevronLeft, 
+import {
+  X,
+  Filter,
+  CreditCard,
+  CheckCircle,
+  ChevronLeft,
   ChevronRight,
   Star,
   Clock,
@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { BookingStatus, BOOKING_STATUS_CONFIG } from "@/types/agenda";
 import { AgendaModal } from "./AgendaModal";
+import { useResponsive } from "@/hooks/useResponsive";
 
 // Type for filters
 interface AgendaFiltersState {
@@ -40,15 +41,15 @@ interface AgendaSidebarProps {
 }
 
 // Premium filter chip component
-function FilterChip({ 
-  label, 
-  isActive, 
-  onClick, 
+function FilterChip({
+  label,
+  isActive,
+  onClick,
   icon,
   color = "aqua"
-}: { 
-  label: string; 
-  isActive: boolean; 
+}: {
+  label: string;
+  isActive: boolean;
   onClick: () => void;
   icon?: React.ReactNode;
   color?: "aqua" | "purple" | "blue" | "pink" | "amber" | "red" | "green" | "gray";
@@ -71,7 +72,7 @@ function FilterChip({
       onClick={onClick}
       className={cn(
         "flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-all duration-200",
-        isActive 
+        isActive
           ? colorClasses[color]
           : "bg-white/[0.02] border-white/8 text-white/50 hover:bg-white/[0.04] hover:border-white/12 hover:text-white/70"
       )}
@@ -83,12 +84,12 @@ function FilterChip({
 }
 
 // Section header component
-function SectionHeader({ 
-  icon, 
+function SectionHeader({
+  icon,
   title,
   badge
-}: { 
-  icon: React.ReactNode; 
+}: {
+  icon: React.ReactNode;
   title: string;
   badge?: number;
 }) {
@@ -168,7 +169,7 @@ function SidebarContentComponent({
 
   const navigateWeek = useCallback((direction: "prev" | "next") => {
     const currentDate = new Date(selectedDate);
-    const newDate = direction === "next" 
+    const newDate = direction === "next"
       ? addWeeks(currentDate, 1)
       : subWeeks(currentDate, 1);
     onDateSelect(format(newDate, "yyyy-MM-dd"));
@@ -176,7 +177,7 @@ function SidebarContentComponent({
 
   const navigateDay = useCallback((direction: "prev" | "next") => {
     const currentDate = new Date(selectedDate);
-    const newDate = direction === "next" 
+    const newDate = direction === "next"
       ? addDays(currentDate, 1)
       : subDays(currentDate, 1);
     onDateSelect(format(newDate, "yyyy-MM-dd"));
@@ -189,7 +190,7 @@ function SidebarContentComponent({
   return (
     <div className="p-5 space-y-1">
       {/* Header - Mobile & Desktop */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center justify-between mb-6"
@@ -214,7 +215,7 @@ function SidebarContentComponent({
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            onClick={onClose || (() => {})}
+            onClick={onClose || (() => { })}
             className="p-2 rounded-xl bg-white/[0.04] border border-white/8 text-white/50 hover:text-white hover:bg-white/[0.08] transition-all duration-200"
             aria-label="Cerrar filtros"
           >
@@ -224,7 +225,7 @@ function SidebarContentComponent({
       </motion.div>
 
       {/* Date Navigation - Premium Card */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
@@ -232,13 +233,13 @@ function SidebarContentComponent({
       >
         {/* Subtle gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#4FE3C1]/5 via-transparent to-[#A06BFF]/5 pointer-events-none" />
-        
+
         <div className="relative">
-          <SectionHeader 
+          <SectionHeader
             icon={<CalendarDays className="h-3.5 w-3.5 text-[#4FE3C1]" />}
             title="Fecha"
           />
-          
+
           {/* Current date display */}
           <div className="text-center mb-4">
             <div className="flex items-center justify-center gap-2 mb-1">
@@ -265,7 +266,7 @@ function SidebarContentComponent({
               <ChevronLeft className="h-3.5 w-3.5" />
               <span className="text-xs font-medium">Ayer</span>
             </motion.button>
-            
+
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
@@ -280,7 +281,7 @@ function SidebarContentComponent({
               <Clock className="h-3.5 w-3.5" />
               Hoy
             </motion.button>
-            
+
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
@@ -332,7 +333,7 @@ function SidebarContentComponent({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <SectionHeader 
+        <SectionHeader
           icon={<CreditCard className="h-3.5 w-3.5 text-[#A06BFF]" />}
           title="Pagos"
           badge={filters.payment.length}
@@ -363,7 +364,7 @@ function SidebarContentComponent({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
       >
-        <SectionHeader 
+        <SectionHeader
           icon={<CheckCircle className="h-3.5 w-3.5 text-[#3A6DFF]" />}
           title="Estado de citas"
           badge={filters.status.length}
@@ -396,7 +397,7 @@ function SidebarContentComponent({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <SectionHeader 
+        <SectionHeader
           icon={<Sparkles className="h-3.5 w-3.5 text-[#FF6DA3]" />}
           title="Especiales"
           badge={filters.highlighted ? 1 : 0}
@@ -449,57 +450,29 @@ export function AgendaSidebar({
   const [showMobileDrawer, setShowMobileDrawer] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // Responsive detection - use lazy initial state to avoid hydration mismatch
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia("(max-width: 640px)").matches;
-  });
-  const [isTablet, setIsTablet] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia("(min-width: 641px) and (max-width: 1024px)").matches;
-  });
+
+
+  // Responsive detection using standardized hook
+  const { isMobile, isTablet } = useResponsive();
+
+  // Reset states when changing modes
+  useEffect(() => {
+    if (!isMobile) setShowMobileDrawer(false);
+    if (!isTablet) setIsCollapsed(false);
+  }, [isMobile, isTablet]);
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (filters.staff?.length) count++;
+    if (filters.status?.length) count++;
+    if (filters.payment?.length) count++;
+    if (filters.highlighted) count++;
+    return count;
+  }, [filters]);
 
   const isDrawerOpen = externalIsOpen !== undefined ? externalIsOpen : showMobileDrawer;
   const handleDrawerClose = externalIsOpen !== undefined ? onClose : () => setShowMobileDrawer(false);
   const handleDrawerOpen = externalOnOpen || (() => setShowMobileDrawer(true));
-
-  // Count active filters
-  const activeFiltersCount = useMemo(() => {
-    let count = 0;
-    count += filters.payment.length;
-    count += filters.status.length;
-    count += filters.staff.length;
-    if (filters.highlighted !== null) count += 1;
-    return count;
-  }, [filters]);
-
-  // Subscribe to media query changes
-  useEffect(() => {
-    const mobileQuery = window.matchMedia("(max-width: 640px)");
-    const tabletQuery = window.matchMedia("(min-width: 641px) and (max-width: 1024px)");
-    
-    const handleMobileChange = (e: MediaQueryListEvent) => {
-      setIsMobile(e.matches);
-      if (e.matches) {
-        setShowMobileDrawer(false);
-      }
-    };
-    
-    const handleTabletChange = (e: MediaQueryListEvent) => {
-      setIsTablet(e.matches);
-      if (!e.matches) {
-        setIsCollapsed(false);
-      }
-    };
-    
-    mobileQuery.addEventListener("change", handleMobileChange);
-    tabletQuery.addEventListener("change", handleTabletChange);
-    
-    return () => {
-      mobileQuery.removeEventListener("change", handleMobileChange);
-      tabletQuery.removeEventListener("change", handleTabletChange);
-    };
-  }, []);
 
   const handleFilterChange = useCallback((
     category: "payment" | "status" | "staff" | "highlighted",
@@ -575,10 +548,10 @@ export function AgendaSidebar({
             </div>
           </motion.button>
         )}
-        
+
         <AgendaModal
           isOpen={isDrawerOpen}
-          onClose={handleDrawerClose || (() => {})}
+          onClose={handleDrawerClose || (() => { })}
           title="Filtros y Navegación"
           variant="drawer"
           showMobileDrawer={true}
@@ -632,7 +605,7 @@ export function AgendaSidebar({
           </motion.button>
         </motion.div>
       )}
-      
+
       {/* Full sidebar content with premium styling */}
       {(!isTablet || !isCollapsed) && (
         <motion.div

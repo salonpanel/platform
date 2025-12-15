@@ -33,6 +33,7 @@ interface StaffColumnProps {
   onFreeSlotClick?: (slot: { staffId: string; time: string; endTime: string; date: string }) => void;
   ref?: React.Ref<HTMLDivElement>;
   draggingBooking?: DragState | null;
+  slotHeight?: number;
 }
 
 interface FreeSlot {
@@ -59,6 +60,7 @@ export const StaffColumn = React.memo(function StaffColumn({
   onFreeSlotClick,
   ref,
   draggingBooking,
+  slotHeight = SLOT_HEIGHT_PX,
 }: StaffColumnProps) {
   const columnRef = useRef<HTMLDivElement>(null);
 
@@ -229,8 +231,8 @@ export const StaffColumn = React.memo(function StaffColumn({
 
     // Use shared constants for consistent positioning
     const slotIndex = Math.round(relativeStartMinutes / SLOT_DURATION_MINUTES);
-    const top = Math.max(0, slotIndex * SLOT_HEIGHT_PX);
-    const height = Math.max(MIN_BOOKING_HEIGHT_PX, Math.ceil(duration / SLOT_DURATION_MINUTES) * SLOT_HEIGHT_PX);
+    const top = Math.max(0, slotIndex * slotHeight);
+    const height = Math.max(MIN_BOOKING_HEIGHT_PX, Math.ceil(duration / SLOT_DURATION_MINUTES) * slotHeight);
 
     return { top, height, startMinutes: startMinutesFromMidnight, endMinutes: endMinutesFromMidnight };
   };

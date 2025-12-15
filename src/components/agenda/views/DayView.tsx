@@ -10,9 +10,9 @@ import { useDragDropManager } from "../interactions/DragDropManager";
 import { useScrollSyncManager } from "../interactions/ScrollSyncManager";
 import { motion } from "framer-motion";
 import { staggerPresets } from "../motion/presets";
-import { STAFF_COLUMN_MIN_WIDTH_DESKTOP, STAFF_COLUMN_MIN_WIDTH_MOBILE } from "../constants/layout";
+import { STAFF_COLUMN_MIN_WIDTH_DESKTOP, STAFF_COLUMN_MIN_WIDTH_MOBILE, SLOT_HEIGHT_PX, SLOT_HEIGHT_MOBILE_PX } from "../constants/layout";
 import { cn } from "@/lib/utils";
-import { useMediaQuery } from "../../../hooks/useMediaQuery";
+import { useResponsive } from "@/hooks/useResponsive";
 import { buildStaffWindowsForDay } from "../utils/timeWindows";
 import { AgendaActionPopover } from "@/components/calendar/AgendaActionPopover";
 
@@ -66,7 +66,8 @@ export function DayView({
   onSlotAbsence,
 }: DayViewProps) {
   const timelineRef = useRef<HTMLDivElement>(null);
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const { isMobile } = useResponsive();
+  const slotHeight = isMobile ? SLOT_HEIGHT_MOBILE_PX : SLOT_HEIGHT_PX;
 
   // Interaction handlers
   const interactions = useCalendarInteractions({
@@ -152,6 +153,7 @@ export function DayView({
     dayStartHour,
     dayEndHour,
     staffWindows,
+    slotHeight,
   });
 
   // Scroll synchronization
@@ -211,11 +213,11 @@ export function DayView({
   return (
     <div className="w-full h-full min-h-[520px] flex flex-col overflow-hidden bg-[#0B0C10] relative">
       {/* Radial Gradient Overlay for Neo-Glass effect */}
-      <div 
+      <div
         className="absolute top-0 left-0 w-[500px] h-[500px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none z-0"
         style={{ transform: 'translate(-20%, -20%)' }}
       />
-      
+
       <div
         ref={timelineRef}
         className="relative flex-1 overflow-x-auto overflow-y-auto scrollbar-hide z-10"
@@ -228,6 +230,7 @@ export function DayView({
               startHour={dayStartHour}
               endHour={dayEndHour}
               timezone={timezone}
+              slotHeight={slotHeight}
             />
           </div>
 
@@ -267,6 +270,7 @@ export function DayView({
                     onFreeSlotClick={onFreeSlotClick}
                     ref={setColumnRef(staff.id)}
                     draggingBooking={dragDrop.draggingBooking}
+                    slotHeight={slotHeight}
                   />
                 </motion.div>
               );

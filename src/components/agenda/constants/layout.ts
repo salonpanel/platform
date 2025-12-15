@@ -1,5 +1,6 @@
 export const SLOT_DURATION_MINUTES = 15;
 export const SLOT_HEIGHT_PX = 64;
+export const SLOT_HEIGHT_MOBILE_PX = 40;
 export const MIN_BOOKING_HEIGHT_PX = SLOT_HEIGHT_PX;
 export const TIMELINE_HEADER_HEIGHT_PX = 72;
 export const TIME_COLUMN_WIDTH_PX = 80;
