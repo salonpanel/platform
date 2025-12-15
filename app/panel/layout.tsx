@@ -24,20 +24,16 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     const cookieStore = await cookies();
 
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-    if (!session) {
-      console.log("[PanelLayout] No session, redirecting to login");
+    if (authError || !user) {
+      console.log("[PanelLayout] Auth check failed (getUser):", authError?.message || "No user found");
       redirect("/login?redirect=/panel");
     }
 
-    const user = session.user;
-    console.log("[PanelLayout Debug] Session valid. User:", user.id);
-
-    if (!user) {
-      redirect("/login");
-    }
+    console.log("[PanelLayout Debug] User verified via getUser:", user.id);
 
     const sb = supabaseServer();
     const lastTenantId = cookieStore.get("last_tenant_id")?.value;
