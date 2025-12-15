@@ -191,6 +191,19 @@ function PanelLayoutContent({
     };
   }, [initialAuthStatus]);
 
+  // Safety Timeout: If auth status is stuck in UNKNOWN for > 4s, force redirect
+  useEffect(() => {
+    if (authStatus !== "UNKNOWN") return;
+
+    const timer = setTimeout(() => {
+      console.warn("[PanelLayoutClient] Auth check timed out. Forcing redirect to login.");
+      // Force hard redirect to clear any stale state
+      window.location.href = "/login?reason=timeout";
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, [authStatus]);
+
   useEffect(() => {
     let mounted = true;
     const loadTenant = async () => {

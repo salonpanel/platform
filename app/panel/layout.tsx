@@ -155,8 +155,13 @@ export default async function PanelLayout({ children }: { children: ReactNode })
       </BookingModalProvider>
     );
 
-  } catch (err) {
-    // Error Barrier
+  } catch (err: any) {
+    // CRITICAL: Rethrow redirect errors so Next.js can handle them
+    if (err?.digest?.startsWith("NEXT_REDIRECT")) {
+      throw err;
+    }
+
+    // Error Barrier for actual errors
     console.error("[PanelLayout] Error:", err);
     // Redirect to login on critical failure
     redirect("/login");
