@@ -41,69 +41,63 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     const sb = supabaseServer();
     console.log("[PanelLayout Debug] Fetching memberships...");
 
-    // 1. Fetch ALL Memberships (Limit 50 to be safe)
+    // ----------------------------------------------------------------------
+    // PHASE 14.2: DETERMINISTIC STATE RESOLUTION
+    // ----------------------------------------------------------------------
+
+    // 1. Fetch memberships to determine access level
     const { data: memberships, error: membershipError } = await sb
       .from("memberships")
       .select("tenant_id")
       .eq("user_id", user.id)
-      .order("created_at", { ascending: true }) // Default order
+      .order("created_at", { ascending: true })
       .limit(50);
 
-    console.log("[PanelLayout] Memberships found:", memberships?.length);
-
-    // Default State
-    let authStatus = "AUTHENTICATED";
+    // Default State: Assume OK unless proven otherwise
     let bootstrapState: "NO_MEMBERSHIP" | "NO_TENANT_SELECTED" | "AUTHENTICATED" = "AUTHENTICATED";
     let activeTenantId: string | null = null;
 
+    // CASE 0: No Memberships -> Access Denied
     if (membershipError || !memberships || memberships.length === 0) {
-      // CASE 0: No Memberships -> Access Denied / Onboarding
-      console.log("[PanelLayout] No memberships found for user");
+      console.log("[PanelLayout] Deterministic State: NO_MEMBERSHIP");
       bootstrapState = "NO_MEMBERSHIP";
-      // We do NOT redirect here to avoid loops. We let Client Layout handle it.
+      // We pass this state to Client Layout. It renders "Access Denied".
     } else {
-      // 2. Resolve Active Tenant
+      // CASE 1-N: User has memberships. Resolve Active Tenant.
       const lastTenantId = cookieStore.get("last_tenant_id")?.value;
-      console.log("[PanelLayout] Resolving tenant. LastTenantId:", lastTenantId);
 
-      // CASE 1: Single Tenant
+      // Strategy:
+      // A) Single Tenant -> Always wins.
+      // B) Multi Tenant + Valid Cookie -> Cookie wins.
+      // C) Multi Tenant + No/Invalid Cookie -> NO_TENANT_SELECTED (Force Picker).
+
       if (memberships.length === 1) {
         activeTenantId = memberships[0].tenant_id;
-        console.log("[PanelLayout] Single tenant detected:", activeTenantId);
-      }
-      // CASE N: Multi Tenant
-      else {
-        // If we have a preference cookie AND user is still a member of it
-        if (lastTenantId && memberships.some(m => m.tenant_id === lastTenantId)) {
+      } else {
+        // Multi-tenant
+        const isValidCookie = lastTenantId && memberships.some(m => m.tenant_id === lastTenantId);
+
+        if (isValidCookie) {
           activeTenantId = lastTenantId;
-          console.log("[PanelLayout] Multi-tenant using cookie preference:", activeTenantId);
         } else {
-          // No preference or invalid -> Force Selection
-          console.log("[PanelLayout] Multi-tenant NO preference (or invalid). Forcing selection.");
+          // Ambiguity -> Explicitly ask user to choose
+          console.log("[PanelLayout] Deterministic State: NO_TENANT_SELECTED (Multi-tenant ambiguity)");
           bootstrapState = "NO_TENANT_SELECTED";
-          // activeTenantId remains null
         }
       }
     }
 
-    // 3. If we resolved a tenant, Fetch Tenant Details & Permissions (Parallel)
+    // 2. Fetch Tenant Details ONLY if we have an Active Tenant ID
     let initialTenant = null;
     let initialPermissions: any = null;
     let initialRole: string | null = null;
 
     if (activeTenantId) {
-      const [tenantResult, permissionsResult] = await Promise.all([
-        sb
-          .from("tenants")
-          .select("id, name, timezone, slug")
-          .eq("id", activeTenantId)
-          .maybeSingle(),
-        sb
-          .rpc("get_user_role_and_permissions", { p_user_id: user.id, p_tenant_id: activeTenantId })
-          .single()
-      ]);
-
-      const { data: tenant } = tenantResult;
+      const { data: tenant } = await sb
+        .from("tenants")
+        .select("id, name, timezone, slug")
+        .eq("id", activeTenantId)
+        .maybeSingle();
 
       if (tenant) {
         initialTenant = {
@@ -112,22 +106,30 @@ export default async function PanelLayout({ children }: { children: ReactNode })
           slug: tenant.slug || "",
           timezone: tenant.timezone || "Europe/Madrid",
         };
-      } else {
-        // Edge case: Membership points to non-existent tenant -> Treat as No Membership? Or Error?
-        // For safety, fallback to selector if multi-tenant, or error if single.
-        // Simplified: Treat as Error or No Tenant Selected
-        console.error("Tenant not found for ID:", activeTenantId);
-        bootstrapState = "NO_TENANT_SELECTED"; // Fallback to selector/list
-      }
 
-      const { data: roleAndPermissions, error: rpError } = permissionsResult;
-      if (!rpError && roleAndPermissions) {
-        const rp = roleAndPermissions as any;
-        initialRole = rp.role ?? null;
-        initialPermissions = rp.permissions ?? null;
+        // Fetch Permissions
+        const { data: rp } = await sb
+          .rpc("get_user_role_and_permissions", {
+            p_user_id: user.id,
+            p_tenant_id: activeTenantId
+          })
+          .maybeSingle();
+
+        if (rp) {
+          const permissionsData = rp as any;
+          initialRole = permissionsData.role ?? null;
+          initialPermissions = permissionsData.permissions ?? null;
+        }
+
+      } else {
+        // Critical Conflict: Membership points to deleted tenant?
+        // Fallback to NO_TENANT_SELECTED to force a fresh choice (or empty list if all bad)
+        console.warn(`[PanelLayout] Critical: Tenant ${activeTenantId} not found but membership exists.`);
+        bootstrapState = "NO_TENANT_SELECTED";
       }
     }
 
+    // ----------------------------------------------------------------------
     console.log("[PanelLayout] Final State:", {
       bootstrapState,
       hasInitialTenant: !!initialTenant,
@@ -142,7 +144,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     return (
       <BookingModalProvider>
         <PanelLayoutClient
-          initialAuthStatus={authStatus as any}
+          initialAuthStatus="AUTHENTICATED"
           initialBootstrapState={bootstrapState}
           initialTenant={initialTenant}
           initialPermissions={initialPermissions}

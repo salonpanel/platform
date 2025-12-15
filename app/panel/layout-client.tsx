@@ -137,78 +137,25 @@ function PanelLayoutContent({
     }
   }, []);
 
-  // Verificar sesión inicial antes de cargar el tenant
+  // --------------------------------------------------------------------------
+  // CLIENT PACIFICATION (Phase 14.4)
+  // Trust the server. No initial session checks or timeouts on mount.
+  // The Middleware and Server Layout have already validated the session.
+  // --------------------------------------------------------------------------
+
+  // Sync auth status from props if provided
   useEffect(() => {
-    // Si ya tenemos authStatus proporcionado por el servidor, no hacemos la comprobación client-side
     if (initialAuthStatus && initialAuthStatus !== "UNKNOWN") {
-      setSessionLoading(false);
       setAuthStatus(initialAuthStatus);
-      return;
+      setSessionLoading(false);
     }
-
-    let mounted = true;
-    const checkSession = async () => {
-      try {
-        const supabase = getSupabaseBrowser();
-        const { data: { session }, error } = await supabase.auth.getSession();
-
-        if (!mounted) return;
-
-        // Manejar errores de sesión
-        if (error) {
-          console.warn("[PanelLayoutClient] Session error:", error);
-          if (error.message?.toLowerCase().includes("jwt does not exist") ||
-            error.message?.toLowerCase().includes("invalid jwt")) {
-            // JWT inválido - limpiar cookies y marcar como no autenticado
-            console.log("[PanelLayoutClient] JWT inválido detectado en verificación inicial, limpiando");
-            await supabase.auth.signOut({ scope: 'local' });
-            setAuthStatus("UNAUTHENTICATED");
-            setSessionLoading(false);
-            return;
-          }
-        }
-
-        if (!session) {
-          setAuthStatus("UNAUTHENTICATED");
-          setSessionLoading(false);
-          return;
-        }
-
-        setAuthStatus("AUTHENTICATED");
-        setSessionLoading(false);
-      } catch (err) {
-        console.error("[PanelLayoutClient] Error checking session:", err);
-        if (mounted) {
-          setAuthStatus("UNAUTHENTICATED");
-          setSessionLoading(false);
-        }
-      }
-    };
-
-    checkSession();
-    return () => {
-      mounted = false;
-    };
   }, [initialAuthStatus]);
-
-  // Safety Timeout: If auth status is stuck in UNKNOWN for > 4s, force redirect
-  useEffect(() => {
-    if (authStatus !== "UNKNOWN") return;
-
-    const timer = setTimeout(() => {
-      console.warn("[PanelLayoutClient] Auth check timed out. Forcing redirect to login.");
-      // Force hard redirect to clear any stale state
-      window.location.href = "/login?reason=timeout";
-    }, 4000);
-
-    return () => clearTimeout(timer);
-  }, [authStatus]);
 
   useEffect(() => {
     let mounted = true;
     const loadTenant = async () => {
-      // Si tenemos initialTenant del servidor, usarlo directamente
-      if (initialTenant && initialAuthStatus === "AUTHENTICATED") {
+      // 1. TRUST SERVER PROPS: If initialTenant exists, use it instantly.
+      if (initialTenant) {
         setTenant(initialTenant);
         setPermissionsTenantId(initialTenant.id);
         setAuthStatus("AUTHENTICATED");
@@ -217,111 +164,34 @@ function PanelLayoutContent({
         return;
       }
 
-      // Esperar a que la sesión esté verificada antes de cargar el tenant
-      if (sessionLoading || authStatus === "UNKNOWN") {
-        console.log("[PanelLayoutClient] Waiting for session...", { sessionLoading, authStatus });
+      // 2. IMPERSONATION EXCEPTION: If impersonating, we MUST fetch from client
+      // (because server layout might not have handled impersonation logic)
+      if (impersonateOrgId) {
+        console.log("[PanelLayoutClient] Impersonation detected, fetching tenant...");
+        setLoading(true);
+        try {
+          const result = await getCurrentTenant(impersonateOrgId);
+          if (!mounted) return;
+
+          if (result.tenant) {
+            setTenant(result.tenant);
+            setPermissionsTenantId(result.tenant.id);
+          }
+        } catch (e) {
+          console.error("Impersonation fetch failed", e);
+        } finally {
+          if (mounted) setLoading(false);
+        }
         return;
       }
 
-      if (authStatus === "UNAUTHENTICATED") {
-        console.log("[PanelLayoutClient] Unauthenticated, verify session failed.");
-        setLoading(false);
-        return;
-      }
+      // 3. FALLBACK / ERROR STATE
+      // If no initialTenant and no impersonation, we rely on bootstrapState from server.
+      // We do NOT fetch getCurrentTenant() again.
+      // Server should have set bootstrapState="NO_TENANT_SELECTED" or "NO_MEMBERSHIP"
+      setSessionLoading(false);
+      setLoading(false);
 
-      console.log("[PanelLayoutClient] Starting loadTenant...");
-      setLoading(true);
-      setPanelError(null);
-      setNoMembership(false);
-
-      // If initial tenant has been provided server-side, skip fetching again and set permissions
-      if (initialTenant && authStatus === "AUTHENTICATED") {
-        setTenant(initialTenant);
-        setPermissionsTenantId(initialTenant.id);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const result = await getCurrentTenant(impersonateOrgId);
-
-        if (!mounted) {
-          return;
-        }
-
-        if (result.status === "UNAUTHENTICATED") {
-          setAuthStatus("UNAUTHENTICATED");
-          setTenant(null);
-          setUserRole(null);
-          setIsImpersonating(false);
-          setLoading(false);
-          return;
-        }
-
-        setAuthStatus("AUTHENTICATED");
-
-        if (result.status === "NO_MEMBERSHIP") {
-          setTenant(null);
-          setUserRole(null);
-          setIsImpersonating(false);
-          setNoMembership(true);
-          setLoading(false);
-          return;
-        }
-
-        if (result.status === "ERROR") {
-          setTenant(null);
-          setUserRole(null);
-          setIsImpersonating(false);
-          setPanelError({
-            title: "Error al cargar la barbería",
-            description:
-              result.error?.message ||
-              "No pudimos cargar la información de tu cuenta. Inténtalo de nuevo en unos minutos.",
-          });
-          setLoading(false);
-          return;
-        }
-
-        if (result.tenant) {
-          setTenant(result.tenant);
-          setUserRole(result.role);
-          setIsImpersonating(result.isImpersonating);
-          // Setear el tenantId en el contexto de permisos para que se carguen una sola vez
-          setPermissionsTenantId(result.tenant.id);
-        } else {
-          // Caso defensivo: status OK pero sin tenant
-          setPanelError({
-            title: "No se pudo encontrar tu barbería",
-            description: "Contacta con soporte para revisar la configuración de tu cuenta.",
-          });
-        }
-      } catch (err: any) {
-        console.error("[PanelLayout] Error cargando tenant:", err);
-
-        if (!mounted) {
-          return;
-        }
-
-        if (err?.message && err.message.toLowerCase().includes("auth session missing")) {
-          setAuthStatus("UNAUTHENTICATED");
-        } else if (err?.message && err.message.toLowerCase().includes("jwt does not exist")) {
-          // Sesión JWT inválida - limpiar y redirigir
-          console.log("[PanelLayout] JWT inválido detectado, limpiando sesión");
-          const supabase = getSupabaseBrowser();
-          await supabase.auth.signOut({ scope: 'local' });
-          setAuthStatus("UNAUTHENTICATED");
-        } else {
-          setPanelError({
-            title: "Error al cargar la barbería",
-            description: err?.message || "Error inesperado al obtener los datos del tenant.",
-          });
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
     };
 
     loadTenant();
@@ -329,7 +199,7 @@ function PanelLayoutContent({
     return () => {
       mounted = false;
     };
-  }, [impersonateOrgId, sessionLoading, authStatus, initialTenant, initialAuthStatus]);
+  }, [impersonateOrgId, initialTenant]);
 
   useEffect(() => {
     if (authStatus !== "UNAUTHENTICATED" || authRedirectTriggered) {

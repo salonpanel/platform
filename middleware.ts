@@ -4,14 +4,15 @@ import { getHostType, parseSubdomain } from "@/lib/domains";
 
 export async function middleware(request: NextRequest) {
     // 0. STRICT ISOLATION PHASE
-    // Absolute bypass for root, login, and panel during debugging.
-    // No Supabase, no auth checks, no rewrites.
+    // Absolute bypass for root and login.
+    // REMOVED /panel from bypass to restore protection.
     const url = request.nextUrl;
     const path = url.pathname;
 
-    if (path === "/" || path.startsWith("/login") || path.startsWith("/panel")) {
+    if (path === "/" || path.startsWith("/login")) {
         return NextResponse.next();
     }
+
 
     // 1. Initialize Response
     let response = NextResponse.next({
@@ -80,8 +81,8 @@ export async function middleware(request: NextRequest) {
 
         // REWRITE: Mapear rutas limpias a la estructura real /panel
         // Si la ruta es raiz, ir al dashboard
-        // EXCLUSION SOLICITADA: No tocar root, login, ni panel. Dejar que la app maneje routing.
-        if (path === "/" || path.startsWith("/login") || path.startsWith("/auth") || path.startsWith("/panel")) {
+        // EXCLUSION SOLICITADA: No tocar root, login.
+        if (path === "/" || path.startsWith("/login") || path.startsWith("/auth")) {
             return response;
         }
 
@@ -105,8 +106,10 @@ export async function middleware(request: NextRequest) {
         ) {
             return NextResponse.rewrite(new URL(`/panel${path}`, request.url));
         }
+        */
 
         // GUARD: Proteger /panel (Auth Required)
+        // ENABLED FOR PHASE 1
         if (path.startsWith("/panel")) {
             if (!user) {
                 const loginUrl = new URL("/login", request.url);
@@ -114,7 +117,6 @@ export async function middleware(request: NextRequest) {
                 return NextResponse.redirect(loginUrl);
             }
         }
-        */
 
         // Allow normal routing for everything else
         return response;
