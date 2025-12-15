@@ -2,7 +2,7 @@ import { supabaseServer } from "@/lib/supabase";
 import { fetchDashboardDataset, DashboardDataset } from "@/lib/dashboard-data";
 import { createClientForServer } from "@/lib/supabase/server-client";
 import PanelHomeClient from "./PanelHomeClient";
-import { getTenantContext } from "@/lib/data/tenant-context";
+import { getTenantContextSafe } from "@/lib/data/tenant-context";
 import { cookies } from "next/headers";
 
 type Props = {
@@ -40,8 +40,10 @@ export default async function DashboardDataWrapper({ impersonateOrgId }: Props) 
 
     // If not impersonating, get from Context
     if (!targetTenantId) {
-        const { tenant } = await getTenantContext(sb, user.id, lastTenantId);
-        targetTenantId = tenant?.id || null;
+        const context = await getTenantContextSafe(sb, user.id, lastTenantId);
+        if (context.status === "OK" && context.tenant) {
+            targetTenantId = context.tenant.id;
+        }
     }
 
     if (!targetTenantId) {

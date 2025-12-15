@@ -1,10 +1,9 @@
 import { cache } from "react";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 
 // Define the shape of our context
 export type TenantContext = {
-    bootstrapState: "NO_MEMBERSHIP" | "NO_TENANT_SELECTED" | "AUTHENTICATED";
+    status: "OK" | "NO_TENANT_SELECTED" | "NO_MEMBERSHIP" | "ERROR";
     tenant: {
         id: string;
         name: string;
@@ -13,19 +12,15 @@ export type TenantContext = {
     } | null;
     role: string | null;
     permissions: any | null;
+    error?: string;
 };
 
-// Cached function to resolve tenant
-// We pass simple arguments to be cache-friendly (instances might break cache key comparison if not careful, but React.cache handles reference equality)
-// Better to pass userId and use a fresh client or pass the client if it's per-request.
-// In Next.js, the per-request cache is valid.
-export const getTenantContext = cache(async (
+// Internal worker function
+async function resolveContext(
     supabase: SupabaseClient,
     userId: string,
     lastTenantId: string | undefined
-): Promise<TenantContext> => {
-    console.log("[TenantContext] Resolving context for user:", userId);
-
+): Promise<TenantContext> {
     // 1. Fetch Memberships
     const { data: memberships, error: membershipError } = await supabase
         .from("memberships")
@@ -34,70 +29,108 @@ export const getTenantContext = cache(async (
         .order("created_at", { ascending: true })
         .limit(50);
 
-    let bootstrapState: "NO_MEMBERSHIP" | "NO_TENANT_SELECTED" | "AUTHENTICATED" = "AUTHENTICATED";
-    let activeTenantId: string | null = null;
-    let tenant = null;
-    let role = null;
-    let permissions = null;
+    if (membershipError) {
+        console.error("[TenantContext] Membership error:", membershipError);
+        return { status: "ERROR", tenant: null, role: null, permissions: null, error: membershipError.message };
+    }
 
     // CASE 0: No Memberships
-    if (membershipError || !memberships || memberships.length === 0) {
-        console.log("[TenantContext] No memberships found.");
-        return { bootstrapState: "NO_MEMBERSHIP", tenant: null, role: null, permissions: null };
+    if (!memberships || memberships.length === 0) {
+        return { status: "NO_MEMBERSHIP", tenant: null, role: null, permissions: null };
     }
+
+    let activeTenantId: string | null = null;
 
     // CASE 1-N: Resolve Active Tenant
     if (memberships.length === 1) {
         activeTenantId = memberships[0].tenant_id;
     } else {
         // Multi-tenant
+        // Check if lastTenantId is valid for this user
         const isValidCookie = lastTenantId && memberships.some(m => m.tenant_id === lastTenantId);
         if (isValidCookie) {
             activeTenantId = lastTenantId as string;
         } else {
-            console.log("[TenantContext] Multi-tenant ambiguity -> NO_TENANT_SELECTED");
-            return { bootstrapState: "NO_TENANT_SELECTED", tenant: null, role: null, permissions: null };
+            // Ambiguity -> Let client handle selection
+            return { status: "NO_TENANT_SELECTED", tenant: null, role: null, permissions: null };
         }
     }
 
     // 2. Fetch Tenant Details + Permissions
     if (activeTenantId) {
-        const { data: tenantData } = await supabase
+        const { data: tenantData, error: tenantError } = await supabase
             .from("tenants")
             .select("id, name, timezone, slug")
             .eq("id", activeTenantId)
             .maybeSingle();
 
-        if (tenantData) {
-            tenant = {
-                id: tenantData.id,
-                name: tenantData.name || "",
-                slug: tenantData.slug || "",
-                timezone: tenantData.timezone || "Europe/Madrid",
-            };
+        if (tenantError) {
+            console.error("[TenantContext] Tenant fetch error:", tenantError);
+            return { status: "ERROR", tenant: null, role: null, permissions: null, error: tenantError.message };
+        }
 
-            const { data: rp } = await supabase
+        if (tenantData) {
+            const { data: rp, error: rpError } = await supabase
                 .rpc("get_user_role_and_permissions", {
                     p_user_id: userId,
                     p_tenant_id: activeTenantId
                 })
                 .maybeSingle();
 
+            if (rpError) {
+                console.error("[TenantContext] Permissions fetch error:", rpError);
+                // We don't block access if permissions fail, but maybe we should? 
+                // For now, return what we have or ERROR? 
+                // Safety: Return ERROR to avoid partial state.
+                return { status: "ERROR", tenant: null, role: null, permissions: null, error: rpError.message };
+            }
+
+            let role = null;
+            let permissions = null;
+
             if (rp) {
                 const permissionsData = rp as any;
                 role = permissionsData.role ?? null;
                 permissions = permissionsData.permissions ?? null;
             }
+
+            return {
+                status: "OK",
+                tenant: {
+                    id: tenantData.id,
+                    name: tenantData.name || "",
+                    slug: tenantData.slug || "",
+                    timezone: tenantData.timezone || "Europe/Madrid",
+                },
+                role,
+                permissions
+            };
         } else {
             console.warn(`[TenantContext] Critical: Tenant ${activeTenantId} not found.`);
-            return { bootstrapState: "NO_TENANT_SELECTED", tenant: null, role: null, permissions: null };
+            // membership exists but tenant doesn't? Data inconsistency.
+            return { status: "ERROR", tenant: null, role: null, permissions: null, error: "Tenant not found" };
         }
     }
 
-    return {
-        bootstrapState,
-        tenant,
-        role,
-        permissions
-    };
+    return { status: "NO_TENANT_SELECTED", tenant: null, role: null, permissions: null };
+}
+
+// Cached Safe Wrapper
+export const getTenantContextSafe = cache(async (
+    supabase: SupabaseClient,
+    userId: string,
+    lastTenantId: string | undefined
+): Promise<TenantContext> => {
+    try {
+        return await resolveContext(supabase, userId, lastTenantId);
+    } catch (err: any) {
+        console.error("[TenantContext] Unexpected crash:", err);
+        return {
+            status: "ERROR",
+            tenant: null,
+            role: null,
+            permissions: null,
+            error: err.message || "Unknown context error"
+        };
+    }
 });

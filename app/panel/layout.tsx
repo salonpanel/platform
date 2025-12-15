@@ -12,79 +12,41 @@ import { supabaseServer } from "@/lib/supabase";
 import { BookingModalProvider } from "@/contexts/BookingModalContext";
 import { BookingCreateModal } from "@/modules/bookings/BookingCreateModal";
 import { BookingDetailModal } from "@/modules/bookings/BookingDetailModal";
-import { getTenantContext } from "@/lib/data/tenant-context";
+import { getTenantContextSafe } from "@/lib/data/tenant-context";
 
-// ... (imports)
+// Helper to map safe context status to client bootstrap state
+function mapStatusToClientState(status: "OK" | "NO_TENANT_SELECTED" | "NO_MEMBERSHIP" | "ERROR"): "AUTHENTICATED" | "NO_TENANT_SELECTED" | "NO_MEMBERSHIP" {
+  switch (status) {
+    case "OK": return "AUTHENTICATED";
+    case "NO_TENANT_SELECTED": return "NO_TENANT_SELECTED";
+    case "NO_MEMBERSHIP": return "NO_MEMBERSHIP";
+    case "ERROR": return "NO_TENANT_SELECTED"; // Fallback to safe implementation for errors
+    default: return "AUTHENTICATED";
+  }
+}
 
 export default async function PanelLayout({ children }: { children: ReactNode }) {
-  console.log("[PanelLayout Debug] START");
-  // Server-Side Authority for Session & Tenant Resolution
-  try {
-    const supabase = await createClientForServer();
-    const cookieStore = await cookies();
+  // 1. Auth Check (Server Side) - ALLOWED REDIRECT (Security)
+  // We trust Middleware, but we need the User ID.
+  const supabase = await createClientForServer();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+  if (authError || !user) {
+    console.log("[PanelLayout] Auth check failed (getUser):", authError?.message || "No user found");
+    redirect("/login?redirect=/panel");
+  }
 
-    if (authError || !user) {
-      console.log("[PanelLayout] Auth check failed (getUser):", authError?.message || "No user found");
-      redirect("/login?redirect=/panel");
-    }
+  // 2. Data Context (Pure Data - NO REDIRECTS)
+  const cookieStore = await cookies();
+  const sb = supabaseServer();
+  const lastTenantId = cookieStore.get("last_tenant_id")?.value;
 
-    console.log("[PanelLayout Debug] User verified via getUser:", user.id);
+  const context = await getTenantContextSafe(sb, user.id, lastTenantId);
+  const clientBootstrapState = mapStatusToClientState(context.status);
 
-    const sb = supabaseServer();
-    const lastTenantId = cookieStore.get("last_tenant_id")?.value;
-
-    console.log("[PanelLayout Debug] Fetching context...");
-
-    // ----------------------------------------------------------------------
-    // PHASE 15.1: USE SHARED CONTEXT (React Cache)
-    // ----------------------------------------------------------------------
-    const { bootstrapState, tenant: initialTenant, role: initialRole, permissions: initialPermissions } =
-      await getTenantContext(sb, user.id, lastTenantId);
-
-    // ----------------------------------------------------------------------
-    console.log("[PanelLayout] Final State:", {
-      bootstrapState,
-      hasInitialTenant: !!initialTenant,
-      tenantId: initialTenant?.id
-    });
-
-    console.log("[PanelLayout Debug] Returning JSX - START Render");
-
-    // 4. Passing State to Client
-    // Client Layout will enforce routing based on `bootstrapState`
-
-    return (
-      <BookingModalProvider>
-        <PanelLayoutClient
-          initialAuthStatus="AUTHENTICATED"
-          initialBootstrapState={bootstrapState}
-          initialTenant={initialTenant}
-          initialPermissions={initialPermissions}
-          initialRole={initialRole}
-        >
-          {children}
-        </PanelLayoutClient>
-        <BookingCreateModal />
-        <BookingDetailModal />
-      </BookingModalProvider>
-    );
-
-  } catch (err: any) {
-    // CRITICAL: Rethrow redirect errors so Next.js can handle them
-    if (err?.digest?.startsWith("NEXT_REDIRECT")) {
-      throw err;
-    }
-
-    // Error Barrier for actual errors
-    console.error("[PanelLayout] Error cargando contexto:", err);
-
-    // Devolvemos el cliente en un estado de error seguro, pero autenticado.
-    // ESTO ROMPE EL BUCLE INFINITO DE LOGIN
+  // 3. Error Handling - Render Error UI without redirecting
+  if (context.status === "ERROR") {
+    console.error("[PanelLayout] Context Error:", context.error);
     return (
       <BookingModalProvider>
         <PanelLayoutClient
@@ -99,33 +61,20 @@ export default async function PanelLayout({ children }: { children: ReactNode })
                   <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
                 </div>
                 <h2 className="text-lg font-bold text-white">
-                  Error cargando el panel
+                  Error de Sistema
                 </h2>
               </div>
-
               <p className="text-slate-400 mb-6 text-sm leading-relaxed">
-                Hemos detectado un problema al cargar tus datos. Tu sesión es válida, pero no pudimos recuperar la información de tu cuenta.
+                No pudimos cargar tu información de negocio.
               </p>
-
               <div className="bg-slate-950 rounded-lg p-3 mb-6 border border-slate-800 overflow-x-auto">
                 <code className="text-xs text-red-400 font-mono">
-                  {err.message || "Unknown Error"}
+                  {context.error || "Unknown Error"}
                 </code>
               </div>
-
               <div className="flex gap-3">
-                <a
-                  href="/panel"
-                  className="flex-1 px-4 py-2 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-700 transition-colors text-center"
-                >
-                  Reintentar
-                </a>
-                <a
-                  href="/login"
-                  className="px-4 py-2 bg-transparent text-slate-500 text-sm font-medium hover:text-white transition-colors"
-                >
-                  Cerrar sesión
-                </a>
+                <a href="/panel" className="flex-1 px-4 py-2 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-700 transition-colors text-center">Reintentar</a>
+                <a href="/login" className="px-4 py-2 bg-transparent text-slate-500 text-sm font-medium hover:text-white transition-colors">Salir</a>
               </div>
             </div>
           </div>
@@ -133,4 +82,21 @@ export default async function PanelLayout({ children }: { children: ReactNode })
       </BookingModalProvider>
     );
   }
+
+  // 4. Success Render
+  return (
+    <BookingModalProvider>
+      <PanelLayoutClient
+        initialAuthStatus="AUTHENTICATED"
+        initialBootstrapState={clientBootstrapState}
+        initialTenant={context.tenant}
+        initialPermissions={context.permissions}
+        initialRole={context.role}
+      >
+        {children}
+      </PanelLayoutClient>
+      <BookingCreateModal />
+      <BookingDetailModal />
+    </BookingModalProvider>
+  );
 }
