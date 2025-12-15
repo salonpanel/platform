@@ -93,75 +93,46 @@ export function validateDashboardKpis(kpis: DashboardKpis): DashboardKpis {
   return kpis;
 }
 
-export async function fetchDashboardDataset(
+export async function fetchDashboardKPIs(
   supabase: SupabaseClient,
-  tenant: TenantInfo
-): Promise<DashboardDataset | null> {
-  if (!tenant?.id) return null;
-
-  let validatedKpis: DashboardKpis;
-
-  // SECURE ANALYTICS RPC (Phase 3)
+  tenantId: string
+): Promise<DashboardKpis> {
   const { data: rpcData, error: rpcError } = await supabase.rpc("get_analytics_metrics_v1", {
-    p_tenant_id: tenant.id
+    p_tenant_id: tenantId
   });
 
   if (rpcError) {
     console.error("[Dashboard] Secure RPC get_analytics_metrics_v1 failed:", rpcError);
-    // In strict RPC mode, we fail or return empty. Fallback is removed.
-    validatedKpis = createEmptyDashboardKpis();
-  } else {
-    validatedKpis = validateDashboardKpis(rpcData as DashboardKpis);
+    return createEmptyDashboardKpis();
   }
 
-  // 📋 Queries adicionales solo para los listados de próximas reservas y staff
-  const [upcomingRes, staffRes] = await Promise.all([
-    supabase
-      .from("bookings")
-      .select(`
+  return validateDashboardKpis(rpcData as DashboardKpis);
+}
+
+export async function fetchUpcomingBookings(
+  supabase: SupabaseClient,
+  tenantId: string
+): Promise<UpcomingBooking[]> {
+  const { data, error } = await supabase
+    .from("bookings")
+    .select(`
         id, starts_at, ends_at, status,
         customer:customers(name, email),
         service:services!bookings_service_id_fkey(name, price_cents),
         staff:staff(name)
       `)
-      .eq("tenant_id", tenant.id)
-      .gte("starts_at", new Date().toISOString())
-      .not("status", "eq", "cancelled")
-      .order("starts_at", { ascending: true })
-      .limit(15),
-    supabase
-      .from("staff")
-      .select("id, name, color, avatar_url, active")
-      .eq("tenant_id", tenant.id)
-      .eq("active", true)
-      .order("name"),
-  ]);
+    .eq("tenant_id", tenantId)
+    .gte("starts_at", new Date().toISOString())
+    .not("status", "eq", "cancelled")
+    .order("starts_at", { ascending: true })
+    .limit(15);
 
-  // Verificación de errores
-  const resultsWithLabels = [
-    { label: "upcomingRes", res: upcomingRes },
-    { label: "staffRes", res: staffRes },
-  ];
-
-  for (const { label, res } of resultsWithLabels) {
-    if (res?.error) {
-      console.error("[DashboardData] Supabase error in query", {
-        query: label,
-        error: res.error,
-        code: res.error?.code || 'NO_CODE',
-        message: res.error?.message || 'NO_MESSAGE',
-        details: res.error?.details || 'NO_DETAILS',
-        hint: res.error?.hint || 'NO_HINT',
-        fullError: JSON.stringify(res.error, null, 2)
-      });
-      throw new Error(
-        `DashboardData query failed in ${label}: ${res.error.message || res.error.code || "unknown error"}`,
-      );
-    }
+  if (error) {
+    console.error("Error fetching upcoming bookings", error);
+    return [];
   }
 
-  // Próximas reservas
-  const upcomingBookings: UpcomingBooking[] = (upcomingRes.data || []).map((row: any) => {
+  return (data || []).map((row: any) => {
     const customer = Array.isArray(row.customer) ? row.customer[0] : row.customer;
     const service = Array.isArray(row.service) ? row.service[0] : row.service;
     const staff = Array.isArray(row.staff) ? row.staff[0] : row.staff;
@@ -176,17 +147,46 @@ export async function fetchDashboardDataset(
       staff: staff ? { name: staff?.name ?? null } : null,
     };
   });
+}
 
-  // Staff activo (sin ocupación individual, eso viene en kpisData)
-  const staffMembers: StaffMember[] = (staffRes.data || []).map((staff: any) => ({
+export async function fetchActiveStaff(
+  supabase: SupabaseClient,
+  tenantId: string
+): Promise<StaffMember[]> {
+  const { data, error } = await supabase
+    .from("staff")
+    .select("id, name, color, avatar_url, active")
+    .eq("tenant_id", tenantId)
+    .eq("active", true)
+    .order("name");
+
+  if (error) {
+    console.error("Error fetching active staff", error);
+    return [];
+  }
+
+  return (data || []).map((staff: any) => ({
     id: staff.id,
     name: staff.name || "Sin nombre",
     color: staff.color || null,
     avatar_url: staff.avatar_url || null,
-    bookingsToday: 0, // Dato no crítico para el dashboard
-    occupancyPercent: 0, // Dato no crítico para el dashboard
+    bookingsToday: 0,
+    occupancyPercent: 0,
     isActive: staff.active ?? true,
   }));
+}
+
+export async function fetchDashboardDataset(
+  supabase: SupabaseClient,
+  tenant: TenantInfo
+): Promise<DashboardDataset | null> {
+  if (!tenant?.id) return null;
+
+  const [kpis, upcomingBookings, staffMembers] = await Promise.all([
+    fetchDashboardKPIs(supabase, tenant.id),
+    fetchUpcomingBookings(supabase, tenant.id),
+    fetchActiveStaff(supabase, tenant.id)
+  ]);
 
   return {
     tenant: {
@@ -194,7 +194,7 @@ export async function fetchDashboardDataset(
       name: tenant.name || "Tu barbería",
       timezone: tenant.timezone || "Europe/Madrid"
     },
-    kpis: validatedKpis,
+    kpis,
     upcomingBookings,
     staffMembers,
   };

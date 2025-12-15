@@ -53,47 +53,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
   // Preferir tenantId del contexto (ya cargado por el layout) para evitar volver a resolver tenant
   const { tenantId: ctxTenantId } = usePermissions();
 
-  // 🔥 DETECTAR DATOS PREFETCHED POST-AUTENTICACIÓN
-  useEffect(() => {
-    // Si ya tenemos initialData del servidor, no necesitamos prefetch adicional
-    if (initialData) return;
-
-    // Si no tenemos tenantId aún, esperar
-    if (!ctxTenantId) return;
-
-    console.log('[PanelHome] 🔄 No hay initialData, intentando prefetch desde API...');
-
-    // Hacer petición al prefetch API para obtener datos frescos
-    fetch('/api/prefetch/panel-data', {
-      method: 'GET',
-      credentials: 'include',
-      cache: 'no-store'
-    })
-      .then(response => {
-        if (response.status === 401) {
-          console.log('[PanelHome] 🔄 Sesión expirada, redirigiendo a login...');
-          router.push('/login');
-          return;
-        }
-        return response.json();
-      })
-      .then(data => {
-        if (!data) return; // Si redirigió, no hay data
-        if (data.ok && data.data) {
-          console.log('[PanelHome] ✅ Datos prefetched obtenidos del API');
-          // Guardar en sessionStorage para uso inmediato
-          sessionStorage.setItem('prefetched-panel-data', JSON.stringify({
-            data: data.data,
-            timestamp: data.timestamp
-          }));
-          // Forzar re-render con los nuevos datos
-          setPrefetchedData(data.data);
-        }
-      })
-      .catch(error => {
-        console.warn('[PanelHome] Error en prefetch desde API:', error);
-      });
-  }, [initialData, ctxTenantId]);
+  // Prefetch logic removed (Phase 15.1)
 
   // Hook optimizado: obtiene tenant + datos en UNA llamada con caché
   const dashboardData = useDashboardData(currentImpersonation, {
@@ -440,14 +400,14 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
       // Devolver solo el primer nombre
       return fullName.split(' ')[0];
     }
-    
+
     // 2. Intentar desde el email (parte antes del @)
     if (user?.email) {
       const emailName = user.email.split('@')[0];
       // Capitalizar primera letra
       return emailName.charAt(0).toUpperCase() + emailName.slice(1);
     }
-    
+
     // 3. Fallback
     return 'Profesional';
   }, [user]);
@@ -467,7 +427,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
       >
         {/* Container principal - OPTIMIZADO para viewport */}
         <div className="w-full px-3 sm:px-4 lg:px-6 py-2 sm:py-3">
-          
+
           {/* ═══════════════════════════════════════════════════════════════
               FILA 1: HERO HEADER (flotante, sin card)
               ═══════════════════════════════════════════════════════════════ */}
@@ -521,7 +481,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mb-5"
           >
             {/* KPI: Reservas - Label dinámico según periodo */}
-            <motion.div 
+            <motion.div
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(79,227,193,0.12)" }}
               onClick={() => router.push("/panel/agenda")}
               className="cursor-pointer glass rounded-xl p-2.5 sm:p-3 border border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.03] transition-all duration-200"
@@ -533,7 +493,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                 <span className={cn(
                   "text-[11px] sm:text-[12px] ml-auto",
                   bookingsKPI.trend === 'up' ? "text-emerald-400" :
-                  bookingsKPI.trend === 'down' ? "text-red-400" : "text-[var(--text-secondary)]"
+                    bookingsKPI.trend === 'down' ? "text-red-400" : "text-[var(--text-secondary)]"
                 )}>
                   {bookingsKPI.trend === 'up' ? '↑' : bookingsKPI.trend === 'down' ? '↓' : '~'}
                 </span>
@@ -545,7 +505,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             </motion.div>
 
             {/* KPI: Ingresos - Label dinámico según periodo */}
-            <motion.div 
+            <motion.div
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(52,211,153,0.12)" }}
               onClick={() => router.push("/panel/monedero")}
               className="cursor-pointer glass rounded-xl p-3 sm:p-4 border border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.03] transition-all duration-200"
@@ -557,7 +517,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                 <span className={cn(
                   "text-[11px] sm:text-[12px] ml-auto",
                   revenueKPI.trend === 'up' ? "text-emerald-400" :
-                  revenueKPI.trend === 'down' ? "text-red-400" : "text-[var(--text-secondary)]"
+                    revenueKPI.trend === 'down' ? "text-red-400" : "text-[var(--text-secondary)]"
                 )}>
                   {revenueKPI.trend === 'up' ? '↑' : revenueKPI.trend === 'down' ? '↓' : '~'}
                 </span>
@@ -569,7 +529,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             </motion.div>
 
             {/* KPI: Ocupación - Siempre es de hoy */}
-            <motion.div 
+            <motion.div
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(59,130,246,0.12)" }}
               onClick={() => router.push("/panel/agenda")}
               className="cursor-pointer glass rounded-xl p-3 sm:p-4 border border-white/10 hover:border-blue-500/30 hover:bg-white/[0.03] transition-all duration-200"
@@ -589,7 +549,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             </motion.div>
 
             {/* KPI: Ticket medio - Siempre 7 días (referencia estable) */}
-            <motion.div 
+            <motion.div
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(168,85,247,0.12)" }}
               onClick={() => router.push("/panel/monedero")}
               className="cursor-pointer glass rounded-xl p-3 sm:p-4 border border-white/10 hover:border-purple-500/30 hover:bg-white/[0.03] transition-all duration-200"
@@ -608,11 +568,11 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
               GRID PRINCIPAL - Responsive: stack en móvil, 12 cols en desktop
               ═══════════════════════════════════════════════════════════════ */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 mb-4">
-            
+
             {/* ═══════════════════════════════════════════════════════════════
                 FILA 3: PRÓXIMAS RESERVAS (8/12) + STAFF (4/12)
                 ═══════════════════════════════════════════════════════════════ */}
-            
+
             {/* Próximas reservas */}
             {/* Próximas reservas - COMPACTADO */}
             <motion.div
@@ -689,8 +649,8 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                             <div className={cn(
                               "px-1 py-0.5 rounded text-[8px] sm:text-[9px] font-semibold",
                               booking.status === 'paid' ? "bg-emerald-500/20 text-emerald-400" :
-                              booking.status === 'confirmed' ? "bg-blue-500/20 text-blue-400" :
-                              "bg-amber-500/20 text-amber-400"
+                                booking.status === 'confirmed' ? "bg-blue-500/20 text-blue-400" :
+                                  "bg-amber-500/20 text-amber-400"
                             )}>
                               {booking.status === 'paid' ? "Pagado" : booking.status === 'confirmed' ? "Conf." : "Pend."}
                             </div>
@@ -780,14 +740,14 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                 <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
                   <h2 className="text-[14px] sm:text-[15px] font-semibold text-white">Performance</h2>
                   <div className="flex gap-0.5">
-                    <button 
+                    <button
                       onClick={() => setPerformancePeriod("7d")}
                       className={cn(
                         "px-1.5 py-0.5 text-[9px] sm:text-[10px] rounded-lg transition-colors",
                         performancePeriod === "7d" ? "bg-white/10 text-white font-medium" : "bg-white/5 text-[var(--text-secondary)] hover:bg-white/10"
                       )}
                     >7d</button>
-                    <button 
+                    <button
                       onClick={() => setPerformancePeriod("30d")}
                       className={cn(
                         "px-1.5 py-0.5 text-[9px] sm:text-[10px] rounded-lg transition-colors",
@@ -829,7 +789,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                                 style={{ minHeight: count > 0 ? "2px" : "0" }}
                               />
                               <span className="text-[7px] sm:text-[8px] text-[var(--text-secondary)] mt-0.5">
-                                {performancePeriod === "7d" 
+                                {performancePeriod === "7d"
                                   ? format(subDays(new Date(), 6 - index), "dd")
                                   : chartCalculations.chartLabels?.[index] || ""}
                               </span>
@@ -855,8 +815,8 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                     </div>
                     <div className="text-center">
                       <div className="text-[11px] sm:text-[12px] font-bold text-blue-400">
-                        {performancePeriod === "7d" 
-                          ? avgBookingsInRange.toFixed(1) 
+                        {performancePeriod === "7d"
+                          ? avgBookingsInRange.toFixed(1)
                           : (stats.totalBookingsLast30Days / 30).toFixed(1)}
                       </div>
                       <div className="text-[8px] sm:text-[9px] text-[var(--text-secondary)]">

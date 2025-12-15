@@ -12,6 +12,7 @@ import { supabaseServer } from "@/lib/supabase";
 import { BookingModalProvider } from "@/contexts/BookingModalContext";
 import { BookingCreateModal } from "@/modules/bookings/BookingCreateModal";
 import { BookingDetailModal } from "@/modules/bookings/BookingDetailModal";
+import { getTenantContext } from "@/lib/data/tenant-context";
 
 // ... (imports)
 
@@ -39,95 +40,15 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     }
 
     const sb = supabaseServer();
-    console.log("[PanelLayout Debug] Fetching memberships...");
+    const lastTenantId = cookieStore.get("last_tenant_id")?.value;
+
+    console.log("[PanelLayout Debug] Fetching context...");
 
     // ----------------------------------------------------------------------
-    // PHASE 14.2: DETERMINISTIC STATE RESOLUTION
+    // PHASE 15.1: USE SHARED CONTEXT (React Cache)
     // ----------------------------------------------------------------------
-
-    // 1. Fetch memberships to determine access level
-    const { data: memberships, error: membershipError } = await sb
-      .from("memberships")
-      .select("tenant_id")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: true })
-      .limit(50);
-
-    // Default State: Assume OK unless proven otherwise
-    let bootstrapState: "NO_MEMBERSHIP" | "NO_TENANT_SELECTED" | "AUTHENTICATED" = "AUTHENTICATED";
-    let activeTenantId: string | null = null;
-
-    // CASE 0: No Memberships -> Access Denied
-    if (membershipError || !memberships || memberships.length === 0) {
-      console.log("[PanelLayout] Deterministic State: NO_MEMBERSHIP");
-      bootstrapState = "NO_MEMBERSHIP";
-      // We pass this state to Client Layout. It renders "Access Denied".
-    } else {
-      // CASE 1-N: User has memberships. Resolve Active Tenant.
-      const lastTenantId = cookieStore.get("last_tenant_id")?.value;
-
-      // Strategy:
-      // A) Single Tenant -> Always wins.
-      // B) Multi Tenant + Valid Cookie -> Cookie wins.
-      // C) Multi Tenant + No/Invalid Cookie -> NO_TENANT_SELECTED (Force Picker).
-
-      if (memberships.length === 1) {
-        activeTenantId = memberships[0].tenant_id;
-      } else {
-        // Multi-tenant
-        const isValidCookie = lastTenantId && memberships.some(m => m.tenant_id === lastTenantId);
-
-        if (isValidCookie) {
-          activeTenantId = lastTenantId;
-        } else {
-          // Ambiguity -> Explicitly ask user to choose
-          console.log("[PanelLayout] Deterministic State: NO_TENANT_SELECTED (Multi-tenant ambiguity)");
-          bootstrapState = "NO_TENANT_SELECTED";
-        }
-      }
-    }
-
-    // 2. Fetch Tenant Details ONLY if we have an Active Tenant ID
-    let initialTenant = null;
-    let initialPermissions: any = null;
-    let initialRole: string | null = null;
-
-    if (activeTenantId) {
-      const { data: tenant } = await sb
-        .from("tenants")
-        .select("id, name, timezone, slug")
-        .eq("id", activeTenantId)
-        .maybeSingle();
-
-      if (tenant) {
-        initialTenant = {
-          id: tenant.id,
-          name: tenant.name || "",
-          slug: tenant.slug || "",
-          timezone: tenant.timezone || "Europe/Madrid",
-        };
-
-        // Fetch Permissions
-        const { data: rp } = await sb
-          .rpc("get_user_role_and_permissions", {
-            p_user_id: user.id,
-            p_tenant_id: activeTenantId
-          })
-          .maybeSingle();
-
-        if (rp) {
-          const permissionsData = rp as any;
-          initialRole = permissionsData.role ?? null;
-          initialPermissions = permissionsData.permissions ?? null;
-        }
-
-      } else {
-        // Critical Conflict: Membership points to deleted tenant?
-        // Fallback to NO_TENANT_SELECTED to force a fresh choice (or empty list if all bad)
-        console.warn(`[PanelLayout] Critical: Tenant ${activeTenantId} not found but membership exists.`);
-        bootstrapState = "NO_TENANT_SELECTED";
-      }
-    }
+    const { bootstrapState, tenant: initialTenant, role: initialRole, permissions: initialPermissions } =
+      await getTenantContext(sb, user.id, lastTenantId);
 
     // ----------------------------------------------------------------------
     console.log("[PanelLayout] Final State:", {
