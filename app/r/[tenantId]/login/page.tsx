@@ -5,7 +5,7 @@ import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { useParams, useRouter } from "next/navigation";
 
 export default function LoginPage() {
-    const { slug } = useParams();
+    const { tenantId } = useParams();
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
@@ -22,7 +22,7 @@ export default function LoginPage() {
             email,
             options: {
                 // Redirect back to "mis-citas" after login
-                emailRedirectTo: `${window.location.origin}/r/${slug}/mis-citas`,
+                emailRedirectTo: `${window.location.origin}/r/${tenantId}/mis-citas`,
             },
         });
 

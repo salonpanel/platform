@@ -5,9 +5,9 @@ import { Metadata } from "next";
 // Force dynamic because we rely on slug params and DB
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-    const { slug } = await params;
-    const tenant = await getPublicTenant(slug);
+export async function generateMetadata({ params }: { params: Promise<{ tenantId: string }> }): Promise<Metadata> {
+    const { tenantId } = await params;
+    const tenant = await getPublicTenant(tenantId);
 
     if (!tenant) {
         return { title: "BookFast" };
@@ -24,9 +24,9 @@ export default async function PublicTenantLayout({
     params,
 }: {
     children: React.ReactNode;
-    params: Promise<{ slug: string }>;
+    params: Promise<{ tenantId: string }>;
 }) {
-    const { slug } = await params;
+    const { tenantId } = await params;
 
     // 1. Feature Flag Check
     const pwaEnabled = process.env.NEXT_PUBLIC_PWA_ENABLED === "true";
@@ -44,7 +44,7 @@ export default async function PublicTenantLayout({
     }
 
     // 2. Resolve Tenant
-    const tenant = await getPublicTenant(slug);
+    const tenant = await getPublicTenant(tenantId);
 
     if (!tenant) {
         notFound(); // Triggers 404 page

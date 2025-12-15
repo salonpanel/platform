@@ -5,10 +5,10 @@ import { notFound } from "next/navigation";
 export default async function TenantHomePage({
     params,
 }: {
-    params: Promise<{ slug: string }>;
+    params: Promise<{ tenantId: string }>;
 }) {
-    const { slug } = await params;
-    const tenant = await getPublicTenant(slug);
+    const { tenantId } = await params;
+    const tenant = await getPublicTenant(tenantId);
 
     if (!tenant) notFound();
 
@@ -28,7 +28,7 @@ export default async function TenantHomePage({
             {/* Quick Actions */}
             <div className="flex-1 p-6 space-y-4">
                 <Link
-                    href={`/r/${slug}/reservar`}
+                    href={`/r/${tenantId}/reservar`}
                     className="block w-full text-center py-4 px-6 rounded-xl text-white font-semibold text-lg shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all"
                     style={{ backgroundColor: "var(--tenant-brand)" }}
                 >
@@ -36,7 +36,7 @@ export default async function TenantHomePage({
                 </Link>
 
                 <Link
-                    href={`/r/${slug}/servicios`}
+                    href={`/r/${tenantId}/servicios`}
                     className="block w-full text-center py-4 px-6 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 transition-colors"
                 >
                     Ver Servicios

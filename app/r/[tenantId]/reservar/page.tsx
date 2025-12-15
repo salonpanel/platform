@@ -9,13 +9,13 @@ export default async function BookingPage({
     params,
     searchParams,
 }: {
-    params: Promise<{ slug: string }>;
+    params: Promise<{ tenantId: string }>;
     searchParams: Promise<{ service_id?: string }>;
 }) {
-    const { slug } = await params;
+    const { tenantId } = await params;
     const { service_id } = await searchParams;
 
-    const tenant = await getPublicTenant(slug);
+    const tenant = await getPublicTenant(tenantId);
     if (!tenant) notFound();
 
     if (!service_id) {
@@ -23,7 +23,7 @@ export default async function BookingPage({
             <div className="max-w-md mx-auto min-h-screen bg-slate-50 flex flex-col p-6 text-center justify-center">
                 <h2 className="text-lg font-bold text-slate-900">Reserva no iniciada</h2>
                 <p className="text-slate-500 mb-4">Selecciona un servicio para comenzar.</p>
-                <Link href={`/r/${slug}/servicios`} className="text-blue-600 font-medium">Ver Servicios</Link>
+                <Link href={`/r/${tenantId}/servicios`} className="text-blue-600 font-medium">Ver Servicios</Link>
             </div>
         );
     }
@@ -36,7 +36,7 @@ export default async function BookingPage({
             <div className="max-w-md mx-auto min-h-screen bg-slate-50 flex flex-col p-6 text-center justify-center">
                 <h2 className="text-lg font-bold text-red-600">Servicio no encontrado</h2>
                 <p className="text-slate-500 mb-4">El servicio seleccionado no está disponible.</p>
-                <Link href={`/r/${slug}/servicios`} className="text-blue-600 font-medium">Volver</Link>
+                <Link href={`/r/${tenantId}/servicios`} className="text-blue-600 font-medium">Volver</Link>
             </div>
         );
     }
@@ -51,7 +51,7 @@ export default async function BookingPage({
     return (
         <div className="max-w-md mx-auto min-h-screen bg-slate-50 flex flex-col">
             <header className="bg-white p-4 border-b border-slate-100 flex items-center gap-4 sticky top-0 z-10">
-                <Link href={`/r/${slug}/servicios`} className="text-slate-400 hover:text-slate-900">
+                <Link href={`/r/${tenantId}/servicios`} className="text-slate-400 hover:text-slate-900">
                     ← Cancelar
                 </Link>
                 <h1 className="font-bold text-slate-900">Nueva Reserva</h1>

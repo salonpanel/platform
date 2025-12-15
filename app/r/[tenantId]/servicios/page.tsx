@@ -7,10 +7,10 @@ export const dynamic = "force-dynamic";
 export default async function ServicesPage({
     params,
 }: {
-    params: Promise<{ slug: string }>;
+    params: Promise<{ tenantId: string }>;
 }) {
-    const { slug } = await params;
-    const tenant = await getPublicTenant(slug);
+    const { tenantId } = await params;
+    const tenant = await getPublicTenant(tenantId);
 
     if (!tenant) notFound();
 
@@ -36,7 +36,7 @@ export default async function ServicesPage({
         <div className="max-w-md mx-auto min-h-screen bg-slate-50 flex flex-col pb-20">
             {/* Header */}
             <header className="bg-white p-4 border-b border-slate-100 flex items-center gap-4 sticky top-0 z-10 shadow-sm">
-                <Link href={`/r/${slug}`} className="p-2 -ml-2 text-slate-400 hover:text-slate-900 rounded-full hover:bg-slate-50 transition-colors">
+                <Link href={`/r/${tenantId}`} className="p-2 -ml-2 text-slate-400 hover:text-slate-900 rounded-full hover:bg-slate-50 transition-colors">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
@@ -66,7 +66,7 @@ export default async function ServicesPage({
                                 {items.map((service) => (
                                     <Link
                                         key={service.id}
-                                        href={`/r/${slug}/reservar?service_id=${service.id}`}
+                                        href={`/r/${tenantId}/reservar?service_id=${service.id}`}
                                         className="block bg-white p-4 rounded-xl shadow-sm border border-slate-100 active:scale-[0.99] transition-transform"
                                     >
                                         <div className="flex justify-between items-start gap-4">

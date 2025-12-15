@@ -8,20 +8,20 @@ export const dynamic = "force-dynamic";
 export default async function MyBookingsPage({
     params,
 }: {
-    params: Promise<{ slug: string }>;
+    params: Promise<{ tenantId: string }>;
 }) {
-    const { slug } = await params;
+    const { tenantId } = await params;
 
     // 1. Auth Guard (Customer Session)
     const supabase = await createClientForServer({ cookieName: "sb-customer-auth" });
     const { data: { user }, error } = await supabase.auth.getUser();
 
     if (error || !user) {
-        redirect(`/r/${slug}/login`);
+        redirect(`/r/${tenantId}/login`);
     }
 
     // 2. Fetch Tenant Context
-    const tenant = await getPublicTenant(slug);
+    const tenant = await getPublicTenant(tenantId);
     if (!tenant) return <div>Tenant not found</div>;
 
     // 3. Fetch Bookings (RPC)
@@ -67,7 +67,7 @@ export default async function MyBookingsPage({
                         </div>
                         <p className="text-slate-600 font-medium">No tienes citas programadas.</p>
                         <Link
-                            href={`/r/${slug}/servicios`}
+                            href={`/r/${tenantId}/servicios`}
                             className="mt-4 inline-block px-6 py-2 bg-slate-900 text-white rounded-full text-sm font-bold"
                             style={{ backgroundColor: "var(--tenant-brand)" }}
                         >
@@ -79,9 +79,9 @@ export default async function MyBookingsPage({
                         <div key={booking.booking_id} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-2">
                                 <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${booking.status === 'confirmed' ? 'bg-green-100 text-green-700' :
-                                        booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                                            booking.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                                                'bg-slate-100 text-slate-500'
+                                    booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                        booking.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                                            'bg-slate-100 text-slate-500'
                                     }`}>
                                     {booking.status === 'pending' ? 'Pendiente' :
                                         booking.status === 'confirmed' ? 'Confirmada' :
@@ -125,7 +125,7 @@ export default async function MyBookingsPage({
                                             target_booking_id: booking.booking_id,
                                             target_tenant_id: tenant.id
                                         });
-                                        redirect(`/r/${slug}/mis-citas`); // Refresh
+                                        redirect(`/r/${tenantId}/mis-citas`); // Refresh
                                     }} className="flex-1">
                                         <button type="submit" className="w-full py-2 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
                                             Cancelar
@@ -140,13 +140,13 @@ export default async function MyBookingsPage({
 
             {/* Floating Nav Placeholder */}
             <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-2 flex justify-around max-w-md mx-auto">
-                <Link href={`/r/${slug}`} className="p-2 text-slate-400 hover:text-slate-900 flex flex-col items-center">
+                <Link href={`/r/${tenantId}`} className="p-2 text-slate-400 hover:text-slate-900 flex flex-col items-center">
                     <span className="text-xs">Inicio</span>
                 </Link>
-                <Link href={`/r/${slug}/servicios`} className="p-2 text-slate-400 hover:text-slate-900 flex flex-col items-center">
+                <Link href={`/r/${tenantId}/servicios`} className="p-2 text-slate-400 hover:text-slate-900 flex flex-col items-center">
                     <span className="text-xs">Reservar</span>
                 </Link>
-                <Link href={`/r/${slug}/mis-citas`} className="p-2 text-blue-600 font-bold flex flex-col items-center">
+                <Link href={`/r/${tenantId}/mis-citas`} className="p-2 text-blue-600 font-bold flex flex-col items-center">
                     <span className="text-xs">Mis Citas</span>
                 </Link>
             </div>
