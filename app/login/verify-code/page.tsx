@@ -122,7 +122,10 @@ function VerifyCodeContent() {
 
         // 1. Prefetch de la ruta del panel (ya existe)
         const redirectParam = searchParams?.get("redirect");
-        const redirectPath = redirectParam || "/panel";
+        // Asegurar que nunca redirigimos a la raíz "/" o rutas inseguras
+        const redirectPath = (redirectParam && redirectParam !== "/" && redirectParam.startsWith("/"))
+          ? redirectParam
+          : "/panel";
 
         // 2. 🔥 NUEVO: Prefetch inteligente de datos críticos usando las cookies recién creadas
         // Esto permite que el servidor lea la sesión y prepare datos iniciales
@@ -157,7 +160,9 @@ function VerifyCodeContent() {
         console.warn('[VerifyCode] Error en prefetch, continuando con redirección normal:', prefetchError);
         // Si el prefetch falla, redirigir normalmente
         const redirectParam = searchParams?.get("redirect");
-        const redirectPath = redirectParam || "/panel";
+        const redirectPath = (redirectParam && redirectParam !== "/" && redirectParam.startsWith("/"))
+          ? redirectParam
+          : "/panel";
         setTimeout(() => {
           router.replace(redirectPath);
         }, 500);
