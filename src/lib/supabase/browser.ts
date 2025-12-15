@@ -3,7 +3,7 @@
 import { createBrowserClient } from "@supabase/ssr";
 import { SupabaseClient } from "@supabase/supabase-js";
 
-let client: SupabaseClient | null = null;
+const clients = new Map<string, SupabaseClient>();
 
 /**
  * Cliente Supabase en el navegador (simple y compatible con SSR)
@@ -11,9 +11,11 @@ let client: SupabaseClient | null = null;
  * - NO sobrescribir getAll() ni setAll()
  * - Supabase SSR sincroniza cookies vía route handlers
  */
-export function getSupabaseBrowser(): SupabaseClient {
-  if (!client) {
-    client = createBrowserClient(
+export function getSupabaseBrowser(options?: { cookieName?: string }): SupabaseClient {
+  const cookieName = options?.cookieName || "sb-panel-auth";
+
+  if (!clients.has(cookieName)) {
+    const client = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
@@ -23,12 +25,13 @@ export function getSupabaseBrowser(): SupabaseClient {
           detectSessionInUrl: true,
         },
         cookieOptions: {
-          name: "sb-panel-auth",
+          name: cookieName,
           path: "/",
         },
       }
     );
+    clients.set(cookieName, client);
   }
 
-  return client;
+  return clients.get(cookieName)!;
 }

@@ -31,9 +31,10 @@ export interface AvailableSlot {
  */
 export async function getStaffDaySchedule(
   staffId: string,
-  date: Date
+  date: Date,
+  client?: any // SupabaseClient
 ): Promise<StaffSchedule[]> {
-  const supabase = getSupabaseBrowser();
+  const supabase = client || getSupabaseBrowser();
 
   const startOfDay = new Date(date);
   startOfDay.setHours(0, 0, 0, 0);
@@ -62,9 +63,10 @@ export async function getStaffDaySchedule(
  */
 export async function getStaffBlockings(
   staffId: string,
-  date: Date
+  date: Date,
+  client?: any // SupabaseClient
 ): Promise<StaffBlocking[]> {
-  const supabase = getSupabaseBrowser();
+  const supabase = client || getSupabaseBrowser();
 
   const startOfDay = new Date(date);
   startOfDay.setHours(0, 0, 0, 0);
@@ -89,9 +91,75 @@ export async function getStaffBlockings(
 }
 
 /**
- * Apply split schedules logic (merge overlapping/adjacent schedules)
+ * Compute available slots for a staff member and service on a specific date
  */
-export function applySplitSchedules(schedules: StaffSchedule[]): StaffSchedule[] {
+export async function computeAvailableSlots(
+  staffId: string,
+  serviceId: string,
+  date: Date,
+  client?: any // SupabaseClient
+): Promise<AvailableSlot[]> {
+  const supabase = client || getSupabaseBrowser();
+
+  // Get service config
+  const { data: service, error: serviceError } = await supabase
+    .from("services")
+    .select("duration_min, buffer_min")
+    .eq("id", serviceId)
+    .single();
+
+  if (serviceError || !service) {
+    console.error("Error fetching service:", serviceError);
+    return [];
+  }
+
+  // Get schedules and blockings
+  const [schedules, blockings] = await Promise.all([
+    getStaffDaySchedule(staffId, date, supabase),
+    getStaffBlockings(staffId, date, supabase)
+  ]);
+
+  // Apply transformations
+  let availableSchedules = applySplitSchedules(schedules);
+  availableSchedules = applyBlockings(availableSchedules, blockings);
+  availableSchedules = applyBuffers(availableSchedules, service);
+
+  // Generate slots based on service duration
+  const slots: AvailableSlot[] = [];
+  const serviceDurationMs = service.duration_min * 60 * 1000;
+
+  for (const schedule of availableSchedules) {
+    const scheduleStart = new Date(schedule.start_time);
+    const scheduleEnd = new Date(schedule.end_time);
+
+    let currentTime = new Date(scheduleStart);
+
+    while (currentTime.getTime() + serviceDurationMs <= scheduleEnd.getTime()) {
+      slots.push({
+        staff_id: staffId,
+        start_time: new Date(currentTime),
+        end_time: new Date(currentTime.getTime() + serviceDurationMs)
+      });
+
+      // Move to next slot (assuming 15-minute intervals for now)
+      currentTime = new Date(currentTime.getTime() + 15 * 60 * 1000);
+    }
+  }
+
+  return slots;
+}
+
+/**
+ * Apply blockings to schedules (remove blocked time slots)
+ */
+
+/**
+ * Apply blockings to schedules (remove blocked time slots)
+ */
+/**
+ * Merge overlapping or adjacent schedules
+ */
+function applySplitSchedules(schedules: StaffSchedule[]): StaffSchedule[] {
   if (schedules.length === 0) return [];
 
   // Sort by start time
@@ -194,60 +262,7 @@ export function applyBuffers(
 /**
  * Compute available slots for a staff member and service on a specific date
  */
-export async function computeAvailableSlots(
-  staffId: string,
-  serviceId: string,
-  date: Date
-): Promise<AvailableSlot[]> {
-  const supabase = getSupabaseBrowser();
 
-  // Get service config
-  const { data: service, error: serviceError } = await supabase
-    .from("services")
-    .select("duration_min, buffer_min")
-    .eq("id", serviceId)
-    .single();
-
-  if (serviceError || !service) {
-    console.error("Error fetching service:", serviceError);
-    return [];
-  }
-
-  // Get schedules and blockings
-  const [schedules, blockings] = await Promise.all([
-    getStaffDaySchedule(staffId, date),
-    getStaffBlockings(staffId, date)
-  ]);
-
-  // Apply transformations
-  let availableSchedules = applySplitSchedules(schedules);
-  availableSchedules = applyBlockings(availableSchedules, blockings);
-  availableSchedules = applyBuffers(availableSchedules, service);
-
-  // Generate slots based on service duration
-  const slots: AvailableSlot[] = [];
-  const serviceDurationMs = service.duration_min * 60 * 1000;
-
-  for (const schedule of availableSchedules) {
-    const scheduleStart = new Date(schedule.start_time);
-    const scheduleEnd = new Date(schedule.end_time);
-
-    let currentTime = new Date(scheduleStart);
-
-    while (currentTime.getTime() + serviceDurationMs <= scheduleEnd.getTime()) {
-      slots.push({
-        staff_id: staffId,
-        start_time: new Date(currentTime),
-        end_time: new Date(currentTime.getTime() + serviceDurationMs)
-      });
-
-      // Move to next slot (assuming 15-minute intervals for now)
-      currentTime = new Date(currentTime.getTime() + 15 * 60 * 1000);
-    }
-  }
-
-  return slots;
-}
 
 /**
  * Get staff windows for a day (used by agenda)

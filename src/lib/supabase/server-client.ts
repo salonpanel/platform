@@ -5,8 +5,9 @@ import { cookies } from "next/headers";
  * Creates a Supabase client for Server Components, Route Handlers, and Server Actions.
  * Handles Next.js 15+ Async Cookies automatically.
  */
-export async function createClientForServer() {
+export async function createClientForServer(options?: { cookieName?: string }) {
     const cookieStore = await cookies();
+    const cookieName = options?.cookieName || "sb-panel-auth";
 
     return createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,7 +30,7 @@ export async function createClientForServer() {
                 },
             },
             cookieOptions: {
-                name: "sb-panel-auth",
+                name: cookieName,
             },
         }
     );

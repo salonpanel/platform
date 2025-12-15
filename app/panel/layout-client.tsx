@@ -17,6 +17,7 @@ import { PermissionsProvider, usePermissions } from "@/contexts/PermissionsConte
 import { usePrefetchRoutes, useSmartPrefetchData } from "@/hooks/usePrefetch";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
 import { useCacheWarmer } from "@/hooks/useCacheWarmer";
+import { TenantProvider } from "@/contexts/TenantContext";
 
 type TenantInfo = {
   id: string;
@@ -464,7 +465,9 @@ function PanelLayoutContent({
 
         {/* Page Content - Add bottom padding on mobile for bottom nav */}
         <main className="flex-1 overflow-y-auto bg-slate-950 pb-16 md:pb-0">
-          <PageContainer>{children}</PageContainer>
+          <TenantProvider tenant={tenant} isLoading={loading}>
+            <PageContainer>{children}</PageContainer>
+          </TenantProvider>
         </main>
       </div>
 

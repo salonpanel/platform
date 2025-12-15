@@ -145,7 +145,7 @@ export async function handleCheckoutSessionCompleted(
             // Actualizar booking a paid
             await supabase
               .from("bookings")
-              .update({ status: "paid", expires_at: null })
+              .update({ status: "confirmed", expires_at: null })
               .eq("id", booking.id);
           }
         }

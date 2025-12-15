@@ -2,7 +2,8 @@
 
 import { DashboardDataset, createEmptyDashboardKpis, fetchDashboardDataset } from "@/lib/dashboard-data";
 import { fetchAgendaDataset, getAgendaRange } from "@/lib/agenda-data";
-import { getCurrentTenant } from "@/lib/panel-tenant";
+// import { getCurrentTenant } from "@/lib/panel-tenant"; // Phase 13.1.3: Removed direct usage
+import { useTenant } from "@/contexts/TenantContext"; // Phase 13.1.2 Unified Context
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { useStaleWhileRevalidate, useRealtimeStaleWhileRevalidate } from "./useStaleWhileRevalidate";
 import { ViewMode } from "@/types/agenda";
@@ -15,41 +16,42 @@ export function useDashboardData(
   options?: { tenantId?: string | null; tenant?: any; timezone?: string | null; initialData?: DashboardDataset | null; enabled?: boolean }
 ) {
   const supabase = getSupabaseBrowser();
+  const { tenant: contextTenant } = useTenant();
 
-  const enabled = options?.enabled ?? true;
+  // Resolve tenant: Context > Options > null
+  const activeTenantId = contextTenant?.id || options?.tenantId;
+  const activeTenant = contextTenant || options?.tenant;
+
+  const enabled = (options?.enabled ?? true) && !!activeTenantId;
 
   // 🔥 REAL-TIME DASHBOARD: Actualiza automáticamente cuando llegan nuevas citas
-  const cacheKey = options?.tenantId ? `dashboard-full-tenant-${options.tenantId}` : `dashboard-full-${impersonateOrgId || 'default'}`;
+  // Key depends on the resolved tenant ID
+  const cacheKey = activeTenantId
+    ? `dashboard-full-tenant-${activeTenantId}-${impersonateOrgId || 'own'}`
+    : null;
 
   const { data, isLoading } = useRealtimeStaleWhileRevalidate(
     cacheKey,
     async () => {
-      // 1. Obtener tenant primero (si se pasó por opciones, no llamamos a getCurrentTenant)
-      let tenant = null as any;
+      if (!activeTenantId) return null;
+      const safeTenantId = activeTenantId as string;
 
-      if (options?.tenant) {
-        // Si ya tenemos tenant completo desde contexto, usarlo directamente
-        tenant = options.tenant;
-      } else if (options?.tenantId) {
-        tenant = { id: options.tenantId, name: "Tu barbería", timezone: options.timezone || "Europe/Madrid" };
-      } else {
-        const result = await getCurrentTenant(impersonateOrgId);
-        if (!result?.tenant) return null;
-        tenant = result.tenant;
-      }
+      // 1. Fetch using the resolved tenant directly
+      // Fallback object construction if context provides partial data (unlikely) or just ID passed in options
+      const tenantObj = activeTenant || { id: safeTenantId, name: "Tu barbería", timezone: options?.timezone || "Europe/Madrid" };
 
-      return fetchDashboardDataset(supabase, tenant);
+      return fetchDashboardDataset(supabase, tenantObj);
     },
     // 🔥 CONFIGURACIÓN REAL-TIME: Escucha cambios en bookings y metrics
     {
       table: 'bookings',
-      filter: options?.tenantId ? `tenant_id=eq.${options.tenantId}` : undefined,
+      filter: activeTenantId ? `tenant_id=eq.${activeTenantId}` : undefined,
       event: '*',
-      tenantId: options?.tenantId || 'default',
+      tenantId: activeTenantId || 'default',
       supabase: supabase,
     },
     {
-      enabled: enabled && !!options?.tenantId,
+      enabled: enabled,
       initialData: options?.initialData || undefined,
       persist: true,
       realtimeEnabled: true, // 🔥 HABILITADO: Actualiza en tiempo real
@@ -195,17 +197,23 @@ export function useServicesData(tenantId: string | null) {
 /**
  * Hook optimizado para página de Clientes - obtiene tenant + clientes en paralelo
  */
-export function useCustomersPageData(impersonateOrgId: string | null) {
+export function useCustomersPageData(
+  impersonateOrgId: string | null,
+  options?: { initialData?: any; enabled?: boolean }
+) {
   const supabase = getSupabaseBrowser();
+  const { tenant } = useTenant();
+  const activeTenantId = tenant?.id;
+
+  const enabled = (options?.enabled ?? true) && !!activeTenantId;
 
   return useStaleWhileRevalidate(
-    `customers-page-${impersonateOrgId || 'default'}`,
+    activeTenantId ? `customers-page-${activeTenantId}` : null,
     async () => {
       // 1. Obtener tenant
-      const { tenant } = await getCurrentTenant(impersonateOrgId);
-      if (!tenant) return null;
+      if (!activeTenantId || !tenant) throw new Error("No tenant in context");
 
-      const tenantId = tenant.id;
+      const tenantId = activeTenantId as string;
 
       // 2. Cargar clientes en paralelo
       const { data: customers, error } = await supabase
@@ -225,7 +233,7 @@ export function useCustomersPageData(impersonateOrgId: string | null) {
         customers: customers || [],
       };
     },
-    { enabled: true }
+    { enabled }
   );
 }
 
@@ -235,25 +243,31 @@ export function useCustomersPageData(impersonateOrgId: string | null) {
  */
 export function useServicesPageData(
   impersonateOrgId: string | null,
-  options?: { 
+  options?: {
     status?: 'active' | 'inactive' | 'all';
     limit?: number;
     offset?: number;
+    enabled?: boolean;
   }
 ) {
   const supabase = getSupabaseBrowser();
+  const { tenant } = useTenant();
+  const activeTenantId = tenant?.id;
+
+  const enabled = (options?.enabled ?? true) && !!activeTenantId;
+
+  // Key depends on resolved tenant
+  const cacheKey = activeTenantId
+    ? `services-page-${activeTenantId}-${options?.status || 'all'}-${options?.offset || 0}`
+    : null;
 
   return useStaleWhileRevalidate(
-    `services-page-${impersonateOrgId || 'default'}-${options?.status || 'all'}-${options?.offset || 0}`,
+    cacheKey,
     async () => {
-      // 1. Obtener tenant
-      const tenantResult = await getCurrentTenant(impersonateOrgId);
-      if (!tenantResult || tenantResult.status !== 'OK' || !tenantResult.tenant) {
-        throw new Error('No se pudo obtener el tenant');
-      }
+      // 1. Check Tenant
+      if (!activeTenantId || !tenant) throw new Error("No tenant in context");
 
-      const tenant = tenantResult.tenant;
-      const tenantId = tenant.id;
+      const tenantId = activeTenantId as string;
 
       // 🚀 OPTIMIZACIÓN: Intentar usar función RPC get_services_filtered
       const { data: servicesRpc, error: rpcError } = await supabase.rpc('get_services_filtered', {
@@ -276,8 +290,10 @@ export function useServicesPageData(
       }
 
       // 🔄 FALLBACK: Si la función no existe, usar query directa
-      console.warn('[useServicesPageData] RPC not available, using direct query:', rpcError);
-      
+      if (rpcError) {
+        console.warn('[useServicesPageData] RPC not available, using direct query:', rpcError);
+      }
+
       let query = supabase
         .from("services")
         .select("*")
@@ -315,7 +331,7 @@ export function useServicesPageData(
         services: services || [],
       };
     },
-    { enabled: true }
+    { enabled }
   );
 }
 
@@ -327,21 +343,27 @@ export function useStaffPageData(
   impersonateOrgId: string | null,
   options?: {
     includeInactive?: boolean;
+    enabled?: boolean;
   }
 ) {
   const supabase = getSupabaseBrowser();
+  const { tenant } = useTenant();
+  const activeTenantId = tenant?.id;
+
+  const enabled = (options?.enabled ?? true) && !!activeTenantId;
+
+  // Key depends on resolved tenant
+  const cacheKey = activeTenantId
+    ? `staff-page-${activeTenantId}-${options?.includeInactive ? 'all' : 'active'}`
+    : null;
 
   return useStaleWhileRevalidate(
-    `staff-page-${impersonateOrgId || 'default'}-${options?.includeInactive ? 'all' : 'active'}`,
+    cacheKey,
     async () => {
       // 1. Obtener tenant
-      const tenantResult = await getCurrentTenant(impersonateOrgId);
-      if (!tenantResult || tenantResult.status !== 'OK' || !tenantResult.tenant) {
-        throw new Error('No se pudo obtener el tenant');
-      }
+      if (!activeTenantId || !tenant) throw new Error("No tenant in context");
 
-      const tenant = tenantResult.tenant;
-      const tenantId = tenant.id;
+      const tenantId = activeTenantId as string;
 
       // 🚀 OPTIMIZACIÓN: Intentar usar función RPC get_staff_with_stats
       const { data: staffRpc, error: rpcError } = await supabase.rpc('get_staff_with_stats', {
@@ -362,7 +384,9 @@ export function useStaffPageData(
       }
 
       // 🔄 FALLBACK: Si la función no existe, usar query directa
-      console.warn('[useStaffPageData] RPC not available, using direct query:', rpcError);
+      if (rpcError) {
+        console.warn('[useStaffPageData] RPC not available, using direct query:', rpcError);
+      }
 
       let query = supabase
         .from("staff")
@@ -391,7 +415,7 @@ export function useStaffPageData(
         staff: staff || [],
       };
     },
-    { enabled: true }
+    { enabled }
   );
 }
 
@@ -401,34 +425,41 @@ export function useStaffPageData(
  */
 export function useAgendaPageData(
   impersonateOrgId: string | null,
-  options?: { selectedDate?: string; viewMode?: ViewMode; initialData?: any }
+  options?: { selectedDate?: string; viewMode?: ViewMode; initialData?: any; enabled?: boolean }
 ) {
   const supabase = getSupabaseBrowser();
+  const { tenant } = useTenant();
+  const activeTenantId = tenant?.id;
+
   const selectedDate = options?.selectedDate || new Date().toISOString().slice(0, 10);
   const viewMode = options?.viewMode || "day";
   const range = getAgendaRange(selectedDate, viewMode);
 
+  const enabled = (options?.enabled ?? true) && !!activeTenantId;
+
   // 🔥 REAL-TIME AGENDA: Actualiza automáticamente cuando llegan cambios
   return useRealtimeStaleWhileRevalidate(
-    `agenda-page-${impersonateOrgId || 'default'}-${range.viewMode}-${range.anchorDate}`,
+    activeTenantId
+      ? `agenda-page-${activeTenantId}-${range.viewMode}-${range.anchorDate}`
+      : null,
     async () => {
-      const { tenant } = await getCurrentTenant(impersonateOrgId);
       if (!tenant) return null;
 
+      // Uses tenant from closure, NO getCurrentTenant
       return fetchAgendaDataset(supabase, tenant, range, { includeUserRole: true });
     },
     // 🔥 CONFIGURACIÓN REAL-TIME: Escucha cambios en agenda (bookings, blockings, etc.)
     {
       table: 'bookings',
-      filter: `tenant_id=eq.${impersonateOrgId || 'default'}`, // TODO: Obtener tenantId real
+      filter: activeTenantId ? `tenant_id=eq.${activeTenantId}` : undefined,
       event: '*',
-      tenantId: impersonateOrgId || 'default',
+      tenantId: activeTenantId || 'default',
       supabase: supabase,
     },
     {
-      enabled: true,
-      staleTime: 60000, // 1 minuto para agenda (más agresivo)
-      realtimeEnabled: true, // 🔥 HABILITADO: Actualiza en tiempo real
+      enabled: enabled,
+      staleTime: 60000,
+      realtimeEnabled: true,
       initialData: options?.initialData
     }
   );
@@ -438,18 +469,24 @@ export function useAgendaPageData(
  * Hook optimizado para página de Chat - obtiene tenant + conversaciones + miembros en paralelo
  * 🔥 AHORA CON REAL-TIME UPDATES
  */
-export function useChatPageData(impersonateOrgId: string | null) {
+export function useChatPageData(
+  impersonateOrgId: string | null,
+  options?: { initialData?: any; enabled?: boolean }
+) {
   const supabase = getSupabaseBrowser();
+  const { tenant } = useTenant();
+  const activeTenantId = tenant?.id;
+
+  const enabled = (options?.enabled ?? true) && !!activeTenantId;
 
   // 🔥 REAL-TIME CHAT: Actualiza automáticamente cuando llegan nuevos mensajes/conversaciones
   return useRealtimeStaleWhileRevalidate(
-    `chat-page-${impersonateOrgId || 'default'}`,
+    activeTenantId ? `chat-page-${activeTenantId}` : null,
     async () => {
       // 1. Obtener tenant
-      const { tenant } = await getCurrentTenant(impersonateOrgId);
-      if (!tenant) return null;
+      if (!activeTenantId || !tenant) return null;
 
-      const tenantId = tenant.id;
+      const tenantId = activeTenantId as string;
 
       // 2. Cargar datos en paralelo: conversaciones + miembros
       const [conversationsResult, membersResult] = await Promise.all([
@@ -502,15 +539,16 @@ export function useChatPageData(impersonateOrgId: string | null) {
     // 🔥 CONFIGURACIÓN REAL-TIME: Escucha cambios en mensajes y conversaciones
     {
       table: 'team_messages',
-      filter: `tenant_id=eq.${impersonateOrgId || 'default'}`, // TODO: Obtener tenantId real
+      filter: activeTenantId ? `tenant_id=eq.${activeTenantId}` : undefined,
       event: '*',
-      tenantId: impersonateOrgId || 'default',
+      tenantId: activeTenantId || 'default',
       supabase: supabase,
     },
     {
-      enabled: true,
+      enabled: enabled,
       staleTime: 30000, // 30 segundos (chat necesita ser más fresco)
       realtimeEnabled: true, // 🔥 HABILITADO: Actualiza en tiempo real
+      initialData: options?.initialData
     }
   );
 }

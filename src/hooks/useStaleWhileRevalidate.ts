@@ -53,7 +53,7 @@ function persistToStorage<T>(key: string, entry: CacheEntry<T> | null) {
  * Muestra datos cacheados instantáneamente mientras revalida en segundo plano
  */
 export function useStaleWhileRevalidate<T>(
-  key: string,
+  key: string | null,
   fetcher: () => Promise<T>,
   options: {
     staleTime?: number;
@@ -76,6 +76,9 @@ export function useStaleWhileRevalidate<T>(
       return initialData;
     }
 
+    // Si key es null, no podemos buscar en caché
+    if (!key) return null;
+
     // Intentar obtener datos del caché al montar
     const cached = cache.get(key);
     const cachedAge = cached ? Date.now() - cached.timestamp : null;
@@ -94,12 +97,12 @@ export function useStaleWhileRevalidate<T>(
     return null;
   });
 
-  const [isLoading, setIsLoading] = useState(!data);
+  const [isLoading, setIsLoading] = useState(!data && !!key); // Solo loading si hay key y no hay data
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || !key) return; // Skip if no key
 
     if (initialData !== undefined && initialData !== null) {
       const entry = { data: initialData, timestamp: Date.now(), isStale: false } as CacheEntry<T>;
@@ -110,7 +113,7 @@ export function useStaleWhileRevalidate<T>(
   }, [key, initialData, enabled, persist]);
 
   const revalidate = useCallback(async () => {
-    if (!enabled) return;
+    if (!enabled || !key) return;
 
     try {
       setIsValidating(true);
@@ -137,7 +140,11 @@ export function useStaleWhileRevalidate<T>(
   }, [key, fetcher, enabled, persist]);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || !key) {
+      // If key becomes null, we might want to reset data or isLoading?
+      // Usually we keep old data or reset. For now, we do nothing.
+      return;
+    }
 
     const cached = cache.get(key);
     const now = Date.now();
@@ -228,7 +235,7 @@ export async function prefetchData<T>(key: string, fetcher: () => Promise<T>) {
  * Actualiza automáticamente cuando llegan cambios via Supabase realtime
  */
 export function useRealtimeStaleWhileRevalidate<T>(
-  key: string,
+  key: string | null,
   fetcher: () => Promise<T>,
   realtimeConfig: {
     table: string;
@@ -262,6 +269,8 @@ export function useRealtimeStaleWhileRevalidate<T>(
       return initialData;
     }
 
+    if (!key) return null;
+
     // Intentar obtener datos del caché al montar
     const cached = cache.get(key);
     const cachedAge = cached ? Date.now() - cached.timestamp : null;
@@ -280,13 +289,13 @@ export function useRealtimeStaleWhileRevalidate<T>(
     return null;
   });
 
-  const [isLoading, setIsLoading] = useState(!data);
+  const [isLoading, setIsLoading] = useState(!data && !!key);
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   // Función de revalidación
   const revalidate = useCallback(async () => {
-    if (!enabled) return;
+    if (!enabled || !key) return;
 
     try {
       setIsValidating(true);
@@ -314,7 +323,7 @@ export function useRealtimeStaleWhileRevalidate<T>(
 
   // Setup inicial
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || !key) return;
 
     if (initialData !== undefined && initialData !== null) {
       const entry = { data: initialData, timestamp: Date.now(), isStale: false } as CacheEntry<T>;
@@ -326,7 +335,7 @@ export function useRealtimeStaleWhileRevalidate<T>(
 
   // Lógica de SWR normal
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || !key) return;
 
     const cached = cache.get(key);
     const now = Date.now();
@@ -369,7 +378,7 @@ export function useRealtimeStaleWhileRevalidate<T>(
 
   // Real-time subscription
   useEffect(() => {
-    if (!enabled || !realtimeEnabled || !supabase || !tenantId) return;
+    if (!enabled || !realtimeEnabled || !supabase || !tenantId || !key) return;
 
     const channelName = `realtime-${key}-${tenantId}`;
     const channel = supabase
