@@ -1,0 +1,25 @@
+
+> platform@0.1.0 build
+> next build
+
+   Ôû▓ Next.js 16.0.8 (Turbopack)
+   - Environments: .env.local
+
+ ÔÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully in 3.5s
+   Running TypeScript ...
+Failed to compile.
+
+./src/components/customers/CustomersGrid.tsx:45:106
+Type error: Type '{ children: Element[]; className: string; borderOpacity: number; }' is not assignable to type 'IntrinsicAttributes & Omit<GlassCardProps, "ref"> & RefAttributes<HTMLDivElement>'.
+  Property 'borderOpacity' does not exist on type 'IntrinsicAttributes & Omit<GlassCardProps, "ref"> & RefAttributes<HTMLDivElement>'.
+
+  43 |     if (customers.length === 0) {
+  44 |         return (
+> 45 |             <GlassCard className="p-12 flex flex-col items-center justify-center text-center opacity-80" borderOpacity={10}>
+     |                                                                                                          ^
+  46 |                 <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+  47 |                     <LayoutList className="w-8 h-8 text-[var(--text-secondary)]" />
+  48 |                 </div>
+Next.js build worker exited with code: 1 and signal: null

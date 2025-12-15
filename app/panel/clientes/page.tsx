@@ -4,9 +4,10 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { UiModal, UiBadge, UiToast, UiButton, UiField, UiInput } from "@/components/ui/apple-ui-kit";
+import { UiModal, UiToast, UiButton, UiField, UiInput } from "@/components/ui/apple-ui-kit";
 import { GlassCard, GlassButton, GlassInput, GlassSelect, GlassSection } from "@/components/ui/glass";
 import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
+import { CustomersGrid } from "@/components/customers/CustomersGrid";
 // import { CustomerHistory } from "@/components/customers/CustomerHistory";
 import {
   Calendar,
@@ -602,170 +603,42 @@ export default function ClientesPage() {
           )
         }
 
-        <GlassCard className="glass border-white/10" noPadding>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-[var(--glass-border)]">
-                  <th className="text-left p-3 sm:p-4">
-                    <input
-                      type="checkbox"
-                      checked={selectAll}
-                      onChange={(e) => handleSelectAll(e.target.checked)}
-                      className="rounded border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] text-[var(--gradient-primary-start)] focus:ring-[var(--gradient-primary-start)]/30"
-                    />
-                  </th>
-                  <th className="text-left p-3 sm:p-4 text-xs sm:text-sm font-medium text-[var(--color-text-secondary)] uppercase tracking-wide">
-                    Cliente
-                  </th>
-                  <th className="text-left p-3 sm:p-4 text-xs sm:text-sm font-medium text-[var(--color-text-secondary)] uppercase tracking-wide">
-                    Contacto
-                  </th>
-                  <th className="text-left p-3 sm:p-4 text-xs sm:text-sm font-medium text-[var(--color-text-secondary)] uppercase tracking-wide">
-                    Visitas
-                  </th>
-                  <th className="text-left p-3 sm:p-4 text-xs sm:text-sm font-medium text-[var(--color-text-secondary)] uppercase tracking-wide">
-                    Última visita
-                  </th>
-                  <th className="text-left p-3 sm:p-4 text-xs sm:text-sm font-medium text-[var(--color-text-secondary)] uppercase tracking-wide">
-                    Segmento
-                  </th>
-                  <th className="text-left p-3 sm:p-4 text-xs sm:text-sm font-medium text-[var(--color-text-secondary)] uppercase tracking-wide">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedCustomers.map((customer) => (
-                  <tr
-                    key={customer.id}
-                    className={`border-b border-[var(--glass-border)] hover:bg-[rgba(255,255,255,0.02)] transition-colors ${selectedCustomers.includes(customer.id) ? "bg-[rgba(79,227,193,0.05)]" : ""
-                      }`}
-                  >
-                    <td className="p-3 sm:p-4">
-                      <input
-                        type="checkbox"
-                        checked={selectedCustomers.includes(customer.id)}
-                        onChange={(e) => handleSelectCustomer(customer.id, e.target.checked)}
-                        className="rounded border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] text-[var(--gradient-primary-start)] focus:ring-[var(--gradient-primary-start)]/30"
-                      />
-                    </td>
-                    <td className="p-3 sm:p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--gradient-primary-start)] to-[var(--gradient-primary-end)] flex items-center justify-center text-white text-xs font-bold">
-                          {customer.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                            {customer.name}
-                          </p>
-                          <p className="text-xs text-[var(--color-text-secondary)]">
-                            ID: {customer.id}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-3 sm:p-4">
-                      <div className="space-y-1">
-                        {customer.email && (
-                          <p className="text-sm text-[var(--color-text-primary)]">
-                            {customer.email}
-                          </p>
-                        )}
-                        {customer.phone && (
-                          <p className="text-sm text-[var(--color-text-secondary)]">
-                            {customer.phone}
-                          </p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-3 sm:p-4">
-                      <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                        {customer.visitCount || 0}
-                      </p>
-                    </td>
-                    <td className="p-3 sm:p-4">
-                      <p className="text-sm text-[var(--color-text-secondary)]">
-                        {customer.lastVisit
-                          ? format(new Date(customer.lastVisit), "dd MMM yyyy", { locale: es })
-                          : "Nunca"
-                        }
-                      </p>
-                    </td>
-                    <td className="p-3 sm:p-4">
-                      <UiBadge
-                        tone={
-                          customer.segment === "vip" ? "highlight" :
-                            customer.segment === "banned" ? "danger" :
-                              customer.segment === "marketing" ? "info" :
-                                "neutral"
-                        }
-                        soft
-                      >
-                        {customer.segment === "vip" ? "VIP" :
-                          customer.segment === "banned" ? "Baneado" :
-                            customer.segment === "marketing" ? "Marketing" :
-                              customer.segment === "no_contact" ? "Sin contacto" : "Normal"}
-                      </UiBadge>
-                    </td>
-                    <td className="p-3 sm:p-4">
-                      <div className="flex items-center gap-2">
-                        <UiButton
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewHistory(customer.id)}
-                        >
-                          <Calendar className="w-4 h-4" />
-                        </UiButton>
-                        <UiButton
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditCustomer(customer)}
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </UiButton>
-                        <UiButton
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteCustomer(customer.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </UiButton>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </GlassCard>
+        <CustomersGrid
+          customers={paginatedCustomers}
+          selectedCustomers={selectedCustomers}
+          onSelectCustomer={handleSelectCustomer}
+          onSelectAll={handleSelectAll}
+          onViewHistory={handleViewHistory}
+          onEdit={handleEditCustomer}
+          onDelete={handleDeleteCustomer}
+        />
 
         {
           totalPages > 1 && (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pt-4">
               <p className="text-sm text-[var(--color-text-secondary)]">
                 Mostrando {paginatedCustomers.length} de {customerStats.total} clientes
               </p>
               <div className="flex items-center gap-2">
-                <UiButton
+                <GlassButton
                   variant="secondary"
                   size="sm"
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
                 >
                   <ChevronLeft className="w-4 h-4" />
-                </UiButton>
-                <span className="text-sm text-[var(--color-text-primary)]">
+                </GlassButton>
+                <span className="text-sm text-[var(--color-text-primary)] font-medium bg-white/5 px-2 py-1 rounded">
                   Página {currentPage} de {totalPages}
                 </span>
-                <UiButton
+                <GlassButton
                   variant="secondary"
                   size="sm"
                   onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                   disabled={currentPage === totalPages}
                 >
                   <ChevronRight className="w-4 h-4" />
-                </UiButton>
+                </GlassButton>
               </div>
             </div>
           )
