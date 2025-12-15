@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSupabaseServer } from "@/lib/supabase/server";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 // GET /api/availability/combined?tenantId=<uuid|slug>&day=YYYY-MM-DD
 export async function GET(req: Request) {
@@ -16,7 +16,7 @@ export async function GET(req: Request) {
 		}
 
 		// Resolución de tenant: permitir UUID directo o slug
-		const supabase = getSupabaseServer();
+		const supabase = getSupabaseAdmin();
 		let resolvedTenantId: string | null = null;
 
 		// Intentar por UUID

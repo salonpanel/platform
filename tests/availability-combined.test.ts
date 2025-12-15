@@ -4,9 +4,9 @@
  */
 import { GET as availabilityCombinedGET } from "../app/api/availability/combined/route";
 
-jest.mock("@/lib/supabase/server", () => {
+jest.mock("@/lib/supabase/admin", () => {
   return {
-    getSupabaseServer: () => ({
+    getSupabaseAdmin: () => ({
       from: (table: string) => ({
         select: () => ({
           eq: () => ({

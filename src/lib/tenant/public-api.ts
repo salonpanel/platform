@@ -1,4 +1,4 @@
-import { getSupabaseServer } from "@/lib/supabase/server";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 export type PublicTenantProfile = {
     id: string;
@@ -20,7 +20,7 @@ export type PublicTenantProfile = {
  * regardless of RLS policies (simulating a 'System Read').
  */
 export async function getPublicTenant(slug: string): Promise<PublicTenantProfile | null> {
-    const supabase = getSupabaseServer();
+    const supabase = getSupabaseAdmin();
 
     try {
         const { data, error } = await supabase
@@ -72,7 +72,7 @@ export type PublicService = {
  * Fetches active services for a tenant using the secure RPC.
  */
 export async function getPublicServices(tenantId: string): Promise<PublicService[]> {
-    const supabase = getSupabaseServer();
+    const supabase = getSupabaseAdmin();
 
     const { data, error } = await supabase
         .rpc("get_public_services_v1", { target_tenant_id: tenantId });
@@ -98,7 +98,7 @@ export async function getPublicAvailability(
     serviceId: string,
     date: Date
 ): Promise<TimeSlot[]> {
-    const supabase = getSupabaseServer();
+    const supabase = getSupabaseAdmin();
 
     // Format date as YYYY-MM-DD
     const dateStr = date.toISOString().split('T')[0];
@@ -129,7 +129,7 @@ export async function createPublicBooking(payload: {
     customerName: string;
     customerPhone?: string;
 }): Promise<{ success: boolean; bookingId?: string; error?: string }> {
-    const supabase = getSupabaseServer();
+    const supabase = getSupabaseAdmin();
 
     const { data, error } = await supabase
         .rpc("create_public_booking_v1", {

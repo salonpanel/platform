@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClientForServer } from "@/lib/supabase/server-client";
-import { getSupabaseServer } from "@/lib/supabase/server";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 /**
  * POST /api/auth/dev-login
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const supabaseAdmin = getSupabaseServer();
+    const supabaseAdmin = getSupabaseAdmin();
 
     // Buscar el usuario existente primero
     const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();

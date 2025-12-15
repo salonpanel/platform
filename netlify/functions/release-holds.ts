@@ -1,4 +1,4 @@
-import { getSupabaseServer } from "../../src/lib/supabase/server";
+import { getSupabaseAdmin } from "../../src/lib/supabase/admin";
 
 export const handler = async (event: any) => {
   try {
@@ -21,7 +21,7 @@ export const handler = async (event: any) => {
       };
     }
 
-    const sb = getSupabaseServer();
+    const sb = getSupabaseAdmin();
 
     // Direct call to release expired holds function
     const { data, error } = await sb.rpc("release_expired_holds");

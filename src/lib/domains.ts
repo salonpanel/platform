@@ -64,7 +64,7 @@ export function parseSubdomain(host: string): string | null {
 
   // En producción, extraer subdominio de bookfast.es
   const parts = hostWithoutPort.split(".");
-  
+
   // Si tiene al menos 3 partes (subdominio.bookfast.es)
   if (parts.length >= 3) {
     const subdomain = parts[0];
@@ -219,7 +219,7 @@ export function getTenantSubdomain(host: string): string | null {
  */
 export function getAppContextFromHost(host: string): AppContext {
   const hostType = getHostType(host);
-  
+
   // Mapear HostType a AppContext para compatibilidad
   switch (hostType) {
     case "marketing":
@@ -261,8 +261,8 @@ export async function resolveTenantByHost(host: string): Promise<{ slug: string;
   // Consultar Supabase para obtener el tenant por slug o public_subdomain
   try {
     // Importación dinámica para evitar problemas de circular dependency
-    const { getSupabaseServer } = await import("./supabase/server");
-    const supabase = getSupabaseServer();
+    const { getSupabaseAdmin } = await import("./supabase/admin");
+    const supabase = getSupabaseAdmin();
 
     // Primero buscar por slug
     let { data: tenant, error } = await supabase

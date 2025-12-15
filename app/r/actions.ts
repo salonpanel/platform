@@ -2,11 +2,11 @@
 
 import { createPublicBooking } from "@/lib/tenant/public-api";
 import { computeAvailableSlots } from "@/lib/availability";
-import { getSupabaseServer } from "@/lib/supabase/server";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 export async function fetchAvailabilityAction(tenantId: string, serviceId: string, dateIso: string) {
     const date = new Date(dateIso);
-    const supabase = getSupabaseServer();
+    const supabase = getSupabaseAdmin();
 
     // 1. Get Staff for this Tenant (Simplification: Get ALL staff for now, or those assigned to service)
     // Ideally we check service_assignments, but strict Phase 12.3 just needs "Real" availability.
@@ -64,7 +64,7 @@ export async function submitBookingAction(formData: {
 import { headers } from "next/headers";
 
 export async function createCheckoutSessionAction(bookingId: string) {
-    const supabase = getSupabaseServer();
+    const supabase = getSupabaseAdmin();
     const headersList = await headers();
     const origin = headersList.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "https://barberia.bookfast.es";
 
