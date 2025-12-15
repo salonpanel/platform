@@ -199,13 +199,17 @@ function PanelLayoutContent({
 
       // Esperar a que la sesión esté verificada antes de cargar el tenant
       if (sessionLoading || authStatus === "UNKNOWN") {
+        console.log("[PanelLayoutClient] Waiting for session...", { sessionLoading, authStatus });
         return;
       }
 
       if (authStatus === "UNAUTHENTICATED") {
+        console.log("[PanelLayoutClient] Unauthenticated, verify session failed.");
         setLoading(false);
         return;
       }
+
+      console.log("[PanelLayoutClient] Starting loadTenant...");
       setLoading(true);
       setPanelError(null);
       setNoMembership(false);
@@ -394,6 +398,21 @@ function PanelLayoutContent({
   }
 
   if (!tenant) {
+    if (!loading) {
+      console.warn("[PanelLayoutClient] Valid session BUT no tenant and not loading. Force redirect to select-business.");
+      // This prevents infinite loading loop
+      // We use window.location for hard redirect as fallback
+      if (typeof window !== "undefined") {
+        window.location.href = "/panel/select-business";
+      }
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-slate-950">
+          <Spinner size="lg" />
+          <p className="mt-4 text-slate-400">Redirigiendo...</p>
+        </div>
+      );
+    }
+
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-950">
         <div className="text-center">

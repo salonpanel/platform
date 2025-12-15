@@ -13,6 +13,8 @@ import { BookingModalProvider } from "@/contexts/BookingModalContext";
 import { BookingCreateModal } from "@/modules/bookings/BookingCreateModal";
 import { BookingDetailModal } from "@/modules/bookings/BookingDetailModal";
 
+// ... (imports)
+
 export default async function PanelLayout({ children }: { children: ReactNode }) {
   // Server-Side Authority for Session & Tenant Resolution
   try {
@@ -24,13 +26,13 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     } = await supabase.auth.getSession();
 
     if (!session) {
+      console.log("[PanelLayout] No session, redirecting to login");
       redirect("/login?redirect=/panel");
     }
 
     const user = session.user;
 
     if (!user) {
-      // Should be covered by session check, but for TS safety
       redirect("/login");
     }
 
@@ -44,6 +46,8 @@ export default async function PanelLayout({ children }: { children: ReactNode })
       .order("created_at", { ascending: true }) // Default order
       .limit(50);
 
+    console.log("[PanelLayout] Memberships found:", memberships?.length);
+
     // Default State
     let authStatus = "AUTHENTICATED";
     let bootstrapState: "NO_MEMBERSHIP" | "NO_TENANT_SELECTED" | "AUTHENTICATED" = "AUTHENTICATED";
@@ -51,23 +55,28 @@ export default async function PanelLayout({ children }: { children: ReactNode })
 
     if (membershipError || !memberships || memberships.length === 0) {
       // CASE 0: No Memberships -> Access Denied / Onboarding
+      console.log("[PanelLayout] No memberships found for user");
       bootstrapState = "NO_MEMBERSHIP";
       // We do NOT redirect here to avoid loops. We let Client Layout handle it.
     } else {
       // 2. Resolve Active Tenant
       const lastTenantId = cookieStore.get("last_tenant_id")?.value;
+      console.log("[PanelLayout] Resolving tenant. LastTenantId:", lastTenantId);
 
       // CASE 1: Single Tenant
       if (memberships.length === 1) {
         activeTenantId = memberships[0].tenant_id;
+        console.log("[PanelLayout] Single tenant detected:", activeTenantId);
       }
       // CASE N: Multi Tenant
       else {
         // If we have a preference cookie AND user is still a member of it
         if (lastTenantId && memberships.some(m => m.tenant_id === lastTenantId)) {
           activeTenantId = lastTenantId;
+          console.log("[PanelLayout] Multi-tenant using cookie preference:", activeTenantId);
         } else {
           // No preference or invalid -> Force Selection
+          console.log("[PanelLayout] Multi-tenant NO preference (or invalid). Forcing selection.");
           bootstrapState = "NO_TENANT_SELECTED";
           // activeTenantId remains null
         }
@@ -115,6 +124,12 @@ export default async function PanelLayout({ children }: { children: ReactNode })
         initialPermissions = rp.permissions ?? null;
       }
     }
+
+    console.log("[PanelLayout] Final State:", {
+      bootstrapState,
+      hasInitialTenant: !!initialTenant,
+      tenantId: initialTenant?.id
+    });
 
     // 4. Passing State to Client
     // Client Layout will enforce routing based on `bootstrapState`
