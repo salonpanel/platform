@@ -129,17 +129,19 @@ function VerifyCodeContent() {
 
         // 2. 🔥 NUEVO: Prefetch inteligente de datos críticos usando las cookies recién creadas
         // Esto permite que el servidor lea la sesión y prepare datos iniciales
-        const prefetchPromises = [
-          // Prefetch básico de ruta (ya existe)
-          fetch(redirectPath, { method: "GET", credentials: "include", cache: "no-store" }).catch(() => { }),
+        // Disable prefetch to avoid deadlocks
+        const prefetchPromises: Promise<any>[] = [];
 
-          // 🔥 Prefetch de datos del panel DESACTIVADO TEMPORALMENTE (Causa Deadlock)
-          // fetch("/api/prefetch/panel-data", {
-          //   method: "GET",
-          //   credentials: "include",
-          //   cache: "no-store"
-          // }).catch(() => { }),
-        ];
+        // Prefetch básico de ruta DESACTIVADO (Causa Deadlock con SSR)
+        // fetch(redirectPath, { method: "GET", credentials: "include", cache: "no-store" }).catch(() => { }),
+
+        // 🔥 Prefetch de datos del panel DESACTIVADO TEMPORALMENTE (Causa Deadlock)
+        // fetch("/api/prefetch/panel-data", {
+        //   method: "GET",
+        //   credentials: "include",
+        //   cache: "no-store"
+        // }).catch(() => { }),
+        // ];
 
         // Ejecutar prefetches en paralelo sin bloquear
         Promise.all(prefetchPromises).then(() => {
