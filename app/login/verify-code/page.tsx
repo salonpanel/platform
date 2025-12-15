@@ -133,13 +133,12 @@ function VerifyCodeContent() {
           // Prefetch básico de ruta (ya existe)
           fetch(redirectPath, { method: "GET", credentials: "include", cache: "no-store" }).catch(() => { }),
 
-          // 🔥 Prefetch de datos del panel con credenciales (nuevo)
-          // El servidor ahora puede leer las cookies de sesión y hacer SSR optimizado
-          fetch("/api/prefetch/panel-data", {
-            method: "GET",
-            credentials: "include",
-            cache: "no-store"
-          }).catch(() => { }),
+          // 🔥 Prefetch de datos del panel DESACTIVADO TEMPORALMENTE (Causa Deadlock)
+          // fetch("/api/prefetch/panel-data", {
+          //   method: "GET",
+          //   credentials: "include",
+          //   cache: "no-store"
+          // }).catch(() => { }),
         ];
 
         // Ejecutar prefetches en paralelo sin bloquear
