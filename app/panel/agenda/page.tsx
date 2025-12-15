@@ -1,4 +1,6 @@
 import { cookies } from "next/headers";
+import { Suspense } from "react";
+import { AgendaSkeleton } from "@/components/skeletons/AgendaSkeleton";
 import { createServerClient } from "@supabase/ssr";
 import { supabaseServer } from "@/lib/supabase";
 import { fetchAgendaDataset, getAgendaRange } from "@/lib/agenda-data";
@@ -15,7 +17,7 @@ async function getInitialAgendaData(impersonateOrgId: string | null, selectedDat
         getAll() {
           return cookieStore.getAll();
         },
-        setAll() {},
+        setAll() { },
       },
     }
   );
@@ -78,11 +80,13 @@ export default async function AgendaPage({
   const initialData = await getInitialAgendaData(impersonateOrgId, initialDate, initialViewMode);
 
   return (
-    <AgendaPageClient
-      initialData={initialData}
-      impersonateOrgId={impersonateOrgId}
-      initialDate={initialDate}
-      initialViewMode={initialViewMode}
-    />
+    <Suspense fallback={<AgendaSkeleton />}>
+      <AgendaPageClient
+        initialData={initialData}
+        impersonateOrgId={impersonateOrgId}
+        initialDate={initialDate}
+        initialViewMode={initialViewMode}
+      />
+    </Suspense>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getCurrentTenant } from "@/lib/panel-tenant";
+import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
@@ -165,12 +166,12 @@ function AjustesContent() {
 
       setTenant({ ...tenant, name: form.name.trim(), timezone: form.timezone.trim() });
       setSuccess("Configuración actualizada correctamente");
-      
+
       // Actualizar CSS variables si cambió el color primario
       if (form.primary_color) {
         document.documentElement.style.setProperty("--color-accent", form.primary_color);
       }
-      
+
       // Limpiar mensaje de éxito después de 3 segundos
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
@@ -335,7 +336,7 @@ function AjustesContent() {
                     }
                     setSuccess("Sincronización iniciada");
                     // refrescar estado
-                    const status = await fetch("/api/payments/stripe/status").then(r=>r.ok?r.json():null).catch(()=>null);
+                    const status = await fetch("/api/payments/stripe/status").then(r => r.ok ? r.json() : null).catch(() => null);
                     if (status) setStripeStatus(status);
                   } catch (e: any) {
                     setError(e?.message || "No se pudo sincronizar el catálogo");
@@ -396,53 +397,53 @@ function AjustesContent() {
           border: "1px solid rgba(255, 255, 255, 0.05)",
         }}
       >
-          <h2 className="mb-4 text-lg font-semibold text-[var(--color-text-primary)] font-satoshi">Información General</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)] font-satoshi">
-                Nombre de la Barbería <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="text"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
-                style={{ borderRadius: "var(--radius-md)" }}
-                placeholder="Nombre de tu barbería"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)] font-satoshi">
-                Zona Horaria <span className="text-red-400">*</span>
-              </label>
-              <select
-                value={form.timezone}
-                onChange={(e) => setForm({ ...form, timezone: e.target.value })}
-                className="w-full rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
-                style={{ borderRadius: "var(--radius-md)" }}
-              >
-                {timezones.map((tz) => (
-                  <option key={tz.value} value={tz.value}>
-                    {tz.label}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
-                La zona horaria afecta a cómo se muestran las fechas y horas en toda la aplicación.
-              </p>
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                onClick={updateTenant}
-                disabled={saving || !form.name.trim() || !form.timezone.trim()}
-                isLoading={saving}
-              >
-                {saving ? "Guardando..." : "Guardar Cambios"}
-              </Button>
-            </div>
+        <h2 className="mb-4 text-lg font-semibold text-[var(--color-text-primary)] font-satoshi">Información General</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)] font-satoshi">
+              Nombre de la Barbería <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="w-full rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
+              style={{ borderRadius: "var(--radius-md)" }}
+              placeholder="Nombre de tu barbería"
+            />
           </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)] font-satoshi">
+              Zona Horaria <span className="text-red-400">*</span>
+            </label>
+            <select
+              value={form.timezone}
+              onChange={(e) => setForm({ ...form, timezone: e.target.value })}
+              className="w-full rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
+              style={{ borderRadius: "var(--radius-md)" }}
+            >
+              {timezones.map((tz) => (
+                <option key={tz.value} value={tz.value}>
+                  {tz.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
+              La zona horaria afecta a cómo se muestran las fechas y horas en toda la aplicación.
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              onClick={updateTenant}
+              disabled={saving || !form.name.trim() || !form.timezone.trim()}
+              isLoading={saving}
+            >
+              {saving ? "Guardando..." : "Guardar Cambios"}
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Branding - integrado sin caja */}
@@ -455,48 +456,48 @@ function AjustesContent() {
           border: "1px solid rgba(255, 255, 255, 0.05)",
         }}
       >
-          <h2 className="mb-4 text-lg font-semibold text-[var(--color-text-primary)] font-satoshi">Branding</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)] font-satoshi">
-                Logo (URL)
-              </label>
-              <input
-                type="url"
-                value={form.logo_url}
-                onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
-                className="w-full rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
-                style={{ borderRadius: "var(--radius-md)" }}
-                placeholder="https://ejemplo.com/logo.png"
-              />
-              {form.logo_url && (
-                <img src={form.logo_url} alt="Logo preview" className="mt-2 h-16 w-16 rounded object-contain" />
-              )}
-            </div>
+        <h2 className="mb-4 text-lg font-semibold text-[var(--color-text-primary)] font-satoshi">Branding</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)] font-satoshi">
+              Logo (URL)
+            </label>
+            <input
+              type="url"
+              value={form.logo_url}
+              onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
+              className="w-full rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
+              style={{ borderRadius: "var(--radius-md)" }}
+              placeholder="https://ejemplo.com/logo.png"
+            />
+            {form.logo_url && (
+              <img src={form.logo_url} alt="Logo preview" className="mt-2 h-16 w-16 rounded object-contain" />
+            )}
+          </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)] font-satoshi">
-                Color Primario
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="color"
-                  value={form.primary_color}
-                  onChange={(e) => setForm({ ...form, primary_color: e.target.value })}
-                  className="h-10 w-20 rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] cursor-pointer transition-smooth"
-                  style={{ borderRadius: "var(--radius-md)" }}
-                />
-                <input
-                  type="text"
-                  value={form.primary_color}
-                  onChange={(e) => setForm({ ...form, primary_color: e.target.value })}
-                  className="flex-1 rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
-                  style={{ borderRadius: "var(--radius-md)" }}
-                  placeholder="#4cb3ff"
-                />
-              </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)] font-satoshi">
+              Color Primario
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="color"
+                value={form.primary_color}
+                onChange={(e) => setForm({ ...form, primary_color: e.target.value })}
+                className="h-10 w-20 rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] cursor-pointer transition-smooth"
+                style={{ borderRadius: "var(--radius-md)" }}
+              />
+              <input
+                type="text"
+                value={form.primary_color}
+                onChange={(e) => setForm({ ...form, primary_color: e.target.value })}
+                className="flex-1 rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
+                style={{ borderRadius: "var(--radius-md)" }}
+                placeholder="#4cb3ff"
+              />
             </div>
           </div>
+        </div>
       </div>
 
       {/* Contacto - integrado sin caja */}
@@ -509,50 +510,50 @@ function AjustesContent() {
           border: "1px solid rgba(255, 255, 255, 0.05)",
         }}
       >
-          <h2 className="mb-4 text-lg font-semibold text-[var(--color-text-primary)] font-satoshi">Contacto</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)] font-satoshi">
-                Email de Contacto
-              </label>
-              <input
-                type="email"
-                value={form.contact_email}
-                onChange={(e) => setForm({ ...form, contact_email: e.target.value })}
-                className="w-full rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
-                style={{ borderRadius: "var(--radius-md)" }}
-                placeholder="contacto@barberia.com"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)] font-satoshi">
-                Teléfono de Contacto
-              </label>
-              <input
-                type="tel"
-                value={form.contact_phone}
-                onChange={(e) => setForm({ ...form, contact_phone: e.target.value })}
-                className="w-full rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
-                style={{ borderRadius: "var(--radius-md)" }}
-                placeholder="+34 600 000 000"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)] font-satoshi">
-                Dirección
-              </label>
-              <textarea
-                value={form.address}
-                onChange={(e) => setForm({ ...form, address: e.target.value })}
-                rows={3}
-                className="w-full rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth resize-none"
-                style={{ borderRadius: "var(--radius-md)" }}
-                placeholder="Calle, Número, Ciudad, Código Postal"
-              />
-            </div>
+        <h2 className="mb-4 text-lg font-semibold text-[var(--color-text-primary)] font-satoshi">Contacto</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)] font-satoshi">
+              Email de Contacto
+            </label>
+            <input
+              type="email"
+              value={form.contact_email}
+              onChange={(e) => setForm({ ...form, contact_email: e.target.value })}
+              className="w-full rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
+              style={{ borderRadius: "var(--radius-md)" }}
+              placeholder="contacto@barberia.com"
+            />
           </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)] font-satoshi">
+              Teléfono de Contacto
+            </label>
+            <input
+              type="tel"
+              value={form.contact_phone}
+              onChange={(e) => setForm({ ...form, contact_phone: e.target.value })}
+              className="w-full rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
+              style={{ borderRadius: "var(--radius-md)" }}
+              placeholder="+34 600 000 000"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)] font-satoshi">
+              Dirección
+            </label>
+            <textarea
+              value={form.address}
+              onChange={(e) => setForm({ ...form, address: e.target.value })}
+              rows={3}
+              className="w-full rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth resize-none"
+              style={{ borderRadius: "var(--radius-md)" }}
+              placeholder="Calle, Número, Ciudad, Código Postal"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Portal - integrado sin caja */}
@@ -565,38 +566,38 @@ function AjustesContent() {
           border: "1px solid rgba(255, 255, 255, 0.05)",
         }}
       >
-          <h2 className="mb-4 text-lg font-semibold text-[var(--color-text-primary)] font-satoshi">Portal de Reservas</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)] font-satoshi">
-                URL del Portal
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={form.portal_url}
-                  onChange={(e) => setForm({ ...form, portal_url: e.target.value })}
-                  className="flex-1 rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
+        <h2 className="mb-4 text-lg font-semibold text-[var(--color-text-primary)] font-satoshi">Portal de Reservas</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)] font-satoshi">
+              URL del Portal
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={form.portal_url}
+                onChange={(e) => setForm({ ...form, portal_url: e.target.value })}
+                className="flex-1 rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
+                style={{ borderRadius: "var(--radius-md)" }}
+                placeholder="/r/mi-barberia"
+              />
+              {form.portal_url && (
+                <a
+                  href={form.portal_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-4 py-2 text-sm text-[var(--gradient-primary-start)] hover:bg-[rgba(123,92,255,0.1)] transition-colors font-satoshi"
                   style={{ borderRadius: "var(--radius-md)" }}
-                  placeholder="/r/mi-barberia"
-                />
-                {form.portal_url && (
-                  <a
-                    href={form.portal_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-[var(--radius-md)] glass border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-4 py-2 text-sm text-[var(--gradient-primary-start)] hover:bg-[rgba(123,92,255,0.1)] transition-colors font-satoshi"
-                    style={{ borderRadius: "var(--radius-md)" }}
-                  >
-                    Abrir →
-                  </a>
-                )}
-              </div>
-              <p className="mt-1 text-xs text-[var(--color-text-secondary)] font-medium">
-                Esta es la URL pública donde tus clientes pueden hacer reservas.
-              </p>
+                >
+                  Abrir →
+                </a>
+              )}
             </div>
+            <p className="mt-1 text-xs text-[var(--color-text-secondary)] font-medium">
+              Esta es la URL pública donde tus clientes pueden hacer reservas.
+            </p>
           </div>
+        </div>
       </div>
 
       {/* Información del Sistema - integrado sin caja */}
@@ -609,17 +610,17 @@ function AjustesContent() {
           border: "1px solid rgba(255, 255, 255, 0.05)",
         }}
       >
-          <h2 className="mb-4 text-lg font-semibold text-[var(--color-text-primary)] font-satoshi">Información del Sistema</h2>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-[var(--color-text-secondary)]">ID del Tenant:</span>
-              <span className="font-mono text-[var(--color-text-primary)]">{tenant?.id}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[var(--color-text-secondary)]">Timezone Actual:</span>
-              <span className="font-mono text-[var(--color-text-primary)]">{tenant?.timezone || "No configurado"}</span>
-            </div>
+        <h2 className="mb-4 text-lg font-semibold text-[var(--color-text-primary)] font-satoshi">Información del Sistema</h2>
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-[var(--color-text-secondary)]">ID del Tenant:</span>
+            <span className="font-mono text-[var(--color-text-primary)]">{tenant?.id}</span>
           </div>
+          <div className="flex justify-between">
+            <span className="text-[var(--color-text-secondary)]">Timezone Actual:</span>
+            <span className="font-mono text-[var(--color-text-primary)]">{tenant?.timezone || "No configurado"}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -628,16 +629,7 @@ function AjustesContent() {
 export default function AjustesPage() {
   return (
     <ProtectedRoute requiredPermission="ajustes">
-      <Suspense
-        fallback={
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-              <p className="text-gray-600">Cargando...</p>
-            </div>
-          </div>
-        }
-      >
+      <Suspense fallback={<TableSkeleton rows={6} />}>
         <AjustesContent />
       </Suspense>
     </ProtectedRoute>

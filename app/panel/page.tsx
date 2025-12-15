@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import DashboardDataWrapper from "./DashboardDataWrapper";
-import { DashboardSkeleton } from "@/components/ui/Skeletons";
+import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 
 export default async function PanelHomePage({
   searchParams,

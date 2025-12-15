@@ -21,7 +21,7 @@ import { DashboardDataset, validateDashboardKpis } from "@/lib/dashboard-data";
 import { useDashboardData } from "@/hooks/useOptimizedData";
 import { usePermissions } from "@/contexts/PermissionsContext";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
-import { DashboardSkeleton } from "@/components/ui/Skeletons";
+import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 import { useBookingModal } from "@/contexts/BookingModalContext";
 
 // Variantes de animación para secciones

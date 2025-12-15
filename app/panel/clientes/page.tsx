@@ -4,7 +4,8 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { UiButton, UiCard, UiModal, UiInput, UiField, UiBadge, UiToast } from "@/components/ui/apple-ui-kit";
+import { UiModal, UiBadge, UiToast, UiButton, UiField, UiInput } from "@/components/ui/apple-ui-kit";
+import { GlassCard, GlassButton, GlassInput, GlassSelect, GlassSection } from "@/components/ui/glass";
 import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
 // import { CustomerHistory } from "@/components/customers/CustomerHistory";
 import {
@@ -12,11 +13,17 @@ import {
   Edit2,
   Trash2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Download,
+  Plus,
+  Users,
+  Star,
+  CheckSquare
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useCustomersPageData } from "@/hooks/useOptimizedData";
 import { invalidateCache } from "@/hooks/useStaleWhileRevalidate";
+import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 
 interface Customer {
   id: string;
@@ -38,6 +45,18 @@ export default function ClientesPage() {
 
   // Hook optimizado: obtiene tenant + clientes en UNA llamada con caché
   const { data: pageData, isLoading, error } = useCustomersPageData(impersonateOrgId);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between">
+          <div className="h-10 w-32 bg-white/5 rounded animate-pulse" />
+          <div className="h-10 w-32 bg-white/5 rounded animate-pulse" />
+        </div>
+        <TableSkeleton rows={10} />
+      </div>
+    );
+  }
 
   // Extraer datos del hook
   const tenantId = pageData?.tenant?.id || null;
@@ -386,223 +405,204 @@ export default function ClientesPage() {
   return (
     <ProtectedRoute requiredPermission="clientes">
       <div className="space-y-6">
-        {/* Controles principales */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
+        {/* Header Glass */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center pt-2">
+          <div>
+            <h1 className="text-[22px] sm:text-[26px] font-semibold text-white tracking-tight leading-[1.2]">
+              Clientes
+            </h1>
+            <p className="text-[11px] sm:text-[12px] text-[var(--text-secondary)]">
+              Gestiona tu base de datos de clientes y visitas
+            </p>
+          </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <UiButton
+            <GlassButton
               variant="secondary"
               onClick={handleExportCsv}
               disabled={isLoading}
               className="w-full sm:w-auto"
+              leftIcon={<Download className="w-4 h-4" />}
             >
               Exportar CSV
-            </UiButton>
-            <UiButton
+            </GlassButton>
+            <GlassButton
               variant="primary"
               onClick={openNewModal}
               className="w-full sm:w-auto"
+              leftIcon={<Plus className="w-4 h-4" />}
             >
-              + Nuevo Cliente
-            </UiButton>
+              Nuevo Cliente
+            </GlassButton>
           </div>
         </div>
 
-        <div className="space-y-4">
-          <UiInput
-            type="text"
-            placeholder="Buscar por nombre, email o teléfono..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        {/* KPIs Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <GlassCard className="p-4" noPadding={false}>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-1.5 rounded-lg bg-emerald-500/10">
+                <Users className="h-4 w-4 text-emerald-400" />
+              </div>
+              <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Total Clientes</span>
+            </div>
+            <div className="text-2xl font-bold text-white">{customerStats.total}</div>
+          </GlassCard>
 
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
-            <UiField label="Visitas">
-              <select
+          <GlassCard className="p-4" noPadding={false}>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-1.5 rounded-lg bg-blue-500/10">
+                <Calendar className="h-4 w-4 text-blue-400" />
+              </div>
+              <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Con Reservas</span>
+            </div>
+            <div className="text-2xl font-bold text-white">{customerStats.withBookings}</div>
+          </GlassCard>
+
+          <GlassCard className="p-4" noPadding={false}>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-1.5 rounded-lg bg-purple-500/10">
+                <Star className="h-4 w-4 text-purple-400" />
+              </div>
+              <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">VIP</span>
+            </div>
+            <div className="text-2xl font-bold text-white">{customerStats.vip}</div>
+          </GlassCard>
+
+          <GlassCard className="p-4" noPadding={false}>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-1.5 rounded-lg bg-amber-500/10">
+                <Users className="h-4 w-4 text-amber-400" />
+              </div>
+              <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Sin Contacto</span>
+            </div>
+            <div className="text-2xl font-bold text-white">{customerStats.withoutContact}</div>
+          </GlassCard>
+        </div>
+
+        {/* Filters Section */}
+        <GlassSection title="Filtros y Búsqueda" containerClassName="bg-white/[0.02]">
+          <div className="space-y-4">
+            <GlassInput
+              placeholder="Buscar por nombre, email o teléfono..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-white/5 border-white/10"
+            />
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
+              <GlassSelect
+                label="Visitas"
                 value={visitFilter}
                 onChange={(e) => setVisitFilter(e.target.value as typeof visitFilter)}
-                className="w-full rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-2.5 sm:px-3 py-2 text-xs sm:text-sm text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
-                style={{ borderRadius: "var(--radius-md)" }}
               >
                 <option value="all">Todas</option>
                 <option value="with">Con reservas</option>
                 <option value="without">Sin reservas</option>
-              </select>
-            </UiField>
+              </GlassSelect>
 
-            <UiField label="Actividad">
-              <select
+              <GlassSelect
+                label="Actividad"
                 value={activityFilter}
                 onChange={(e) => setActivityFilter(e.target.value as typeof activityFilter)}
-                className="w-full rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-2.5 sm:px-3 py-2 text-xs sm:text-sm text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
-                style={{ borderRadius: "var(--radius-md)" }}
               >
                 <option value="all">Todas</option>
                 <option value="active90">Activas 90d</option>
                 <option value="inactive90">Inactivas +90d</option>
-              </select>
-            </UiField>
+              </GlassSelect>
 
-            <UiField label="Segmento">
-              <select
+              <GlassSelect
+                label="Segmento"
                 value={segmentFilter}
                 onChange={(e) => setSegmentFilter(e.target.value as typeof segmentFilter)}
-                className="w-full rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-2.5 sm:px-3 py-2 text-xs sm:text-sm text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
-                style={{ borderRadius: "var(--radius-md)" }}
               >
                 <option value="all">Todos</option>
                 <option value="vip">VIP</option>
                 <option value="banned">Baneados</option>
                 <option value="marketing">Marketing</option>
                 <option value="no_contact">Sin contacto</option>
-              </select>
-            </UiField>
+              </GlassSelect>
 
-            <UiField label="Ordenar">
-              <select
+              <GlassSelect
+                label="Ordenar"
                 value={sortOption}
                 onChange={(e) => setSortOption(e.target.value as typeof sortOption)}
-                className="w-full rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-2.5 sm:px-3 py-2 text-xs sm:text-sm text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
-                style={{ borderRadius: "var(--radius-md)" }}
               >
                 <option value="recent">Recientes</option>
                 <option value="value">Mayor gasto</option>
-              </select>
-            </UiField>
-          </div>
-        </div>
+              </GlassSelect>
+            </div>
 
-        <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            <div>
-              <p className="text-[10px] sm:text-xs uppercase tracking-wide text-[var(--color-text-secondary)] font-satoshi">
-                Total
-              </p>
-              <p className="mt-1 text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] font-satoshi">
-                {customerStats.total}
-              </p>
-            </div>
-            <div>
-              <p className="text-[10px] sm:text-xs uppercase tracking-wide text-[var(--color-text-secondary)] font-satoshi">
-                Con reservas
-              </p>
-              <p className="mt-1 text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] font-satoshi">
-                {customerStats.withBookings}
-              </p>
-            </div>
-            <div>
-              <p className="text-[10px] sm:text-xs uppercase tracking-wide text-[var(--color-text-secondary)] font-satoshi">
-                Sin contacto
-              </p>
-              <p className="mt-1 text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] font-satoshi">
-                {customerStats.withoutContact}
-              </p>
-            </div>
-          </div>
-
-          {(filteredStats.total !== customerStats.total ||
-            searchTerm ||
-            visitFilter !== "all" ||
-            activityFilter !== "all" ||
-            segmentFilter !== "all") && (
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-                <div>
-                  <p className="text-[9px] sm:text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)] font-satoshi">
-                    Visibles
-                  </p>
-                  <p className="mt-0.5 text-base sm:text-lg font-bold text-[var(--color-text-primary)] font-satoshi">
-                    {filteredStats.total}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[9px] sm:text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)] font-satoshi">
-                    VIP
-                  </p>
-                  <p className="mt-0.5 text-base sm:text-lg font-bold text-[var(--color-text-primary)] font-satoshi">
-                    {filteredStats.vip}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[9px] sm:text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)] font-satoshi">
-                    Baneados
-                  </p>
-                  <p className="mt-0.5 text-base sm:text-lg font-bold text-[var(--color-text-primary)] font-satoshi">
-                    {filteredStats.banned}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[9px] sm:text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)] font-satoshi">
-                    Marketing
-                  </p>
-                  <p className="mt-0.5 text-base sm:text-lg font-bold text-[var(--color-text-primary)] font-satoshi">
-                    {filteredStats.marketing}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[9px] sm:text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)] font-satoshi">
-                    Reservas
-                  </p>
-                  <p className="mt-0.5 text-base sm:text-lg font-bold text-[var(--color-text-primary)] font-satoshi">
-                    {filteredStats.withBookings}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[9px] sm:text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)] font-satoshi">
-                    Sin contacto
-                  </p>
-                  <p className="mt-0.5 text-base sm:text-lg font-bold text-[var(--color-text-primary)] font-satoshi">
-                    {filteredStats.withoutContact}
-                  </p>
-                </div>
+            {/* Filtered Stats Summary */}
+            {(filteredStats.total !== customerStats.total || searchTerm || visitFilter !== "all" || activityFilter !== "all" || segmentFilter !== "all") && (
+              <div className="pt-4 border-t border-white/5 grid grid-cols-3 gap-2 sm:grid-cols-6">
+                {Object.entries(filteredStats).map(([key, value]) => (
+                  <div key={key}>
+                    <p className="text-[9px] uppercase tracking-wide text-[var(--text-secondary)]">{key === 'withBookings' ? 'Reservas' : key === 'withoutContact' ? 'Sin contacto' : key}</p>
+                    <p className="font-mono font-bold text-white text-sm">{value}</p>
+                  </div>
+                ))}
               </div>
             )}
+          </div>
+        </GlassSection>
 
-          {/* Toast Notifications */}
-          {showToast && toastMessage && (
+        {/* Toast Notifications */}
+        {
+          showToast && toastMessage && (
             <UiToast
               message={toastMessage}
               tone={toastType === "error" ? "danger" : toastType}
               onClose={() => setShowToast(false)}
             />
-          )}
-        </div>
+          )
+        }
 
-        {selectionActive && (
-          <div className="rounded-[var(--radius-lg)] border border-[var(--glass-border)] bg-[rgba(15,23,42,0.65)] p-3 sm:p-4">
-            <div className="flex flex-col gap-3">
-              <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] font-medium">
-                {selectionCount} {selectionCount === 1 ? "cliente seleccionado" : "clientes seleccionados"}
-              </p>
-              <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
-                <UiButton
-                  variant="secondary"
-                  onClick={handleBulkExport}
-                  disabled={bulkActionLoading}
-                  className="w-full sm:w-auto"
-                >
-                  {bulkActionLoading ? "Exportando..." : "Exportar seleccionados"}
-                </UiButton>
-                <UiButton
-                  variant="danger"
-                  onClick={handleBulkDelete}
-                  disabled={bulkActionLoading}
-                  className="w-full sm:w-auto"
-                >
-                  {bulkActionLoading ? "Eliminando..." : "Eliminar seleccionados"}
-                </UiButton>
-                <UiButton
-                  variant="secondary"
-                  onClick={clearSelection}
-                  disabled={bulkActionLoading}
-                  className="w-full sm:w-auto"
-                >
-                  Cancelar selección
-                </UiButton>
+        {/* Bulk Actions Bar */}
+        {
+          selectionActive && (
+            <GlassCard className="bg-emerald-500/10 border-emerald-500/20 sticky bottom-4 z-20 backdrop-blur-xl">
+              <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <CheckSquare className="w-4 h-4" />
+                  </div>
+                  <p className="text-sm text-white font-medium">
+                    {selectionCount} clientes seleccionados
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2 justify-end w-full sm:w-auto">
+                  <GlassButton
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleBulkExport}
+                    disabled={bulkActionLoading}
+                  >
+                    {bulkActionLoading ? "..." : "Exportar"}
+                  </GlassButton>
+                  <GlassButton
+                    variant="danger"
+                    size="sm"
+                    onClick={handleBulkDelete}
+                    disabled={bulkActionLoading}
+                  >
+                    {bulkActionLoading ? "Eliminando..." : "Eliminar"}
+                  </GlassButton>
+                  <GlassButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearSelection}
+                    disabled={bulkActionLoading}
+                  >
+                    Cancelar
+                  </GlassButton>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            </GlassCard>
+          )
+        }
 
-        <UiCard className="border-[var(--glass-border)] bg-[rgba(15,23,42,0.65)]">
+        <GlassCard className="glass border-white/10" noPadding>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -738,119 +738,125 @@ export default function ClientesPage() {
               </tbody>
             </table>
           </div>
-        </UiCard>
+        </GlassCard>
 
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-[var(--color-text-secondary)]">
-              Mostrando {paginatedCustomers.length} de {customerStats.total} clientes
-            </p>
-            <div className="flex items-center gap-2">
-              <UiButton
-                variant="secondary"
-                size="sm"
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </UiButton>
-              <span className="text-sm text-[var(--color-text-primary)]">
-                Página {currentPage} de {totalPages}
-              </span>
-              <UiButton
-                variant="secondary"
-                size="sm"
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </UiButton>
-            </div>
-          </div>
-        )}
-
-        {showNewModal && (
-          <UiModal
-            open={showNewModal}
-            onClose={closeNewModal}
-            title={editingCustomer ? "Editar cliente" : "Nuevo cliente"}
-            footer={
-              <div className="flex items-center justify-end gap-3">
+        {
+          totalPages > 1 && (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                Mostrando {paginatedCustomers.length} de {customerStats.total} clientes
+              </p>
+              <div className="flex items-center gap-2">
                 <UiButton
                   variant="secondary"
-                  onClick={closeNewModal}
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
                 >
-                  Cancelar
+                  <ChevronLeft className="w-4 h-4" />
                 </UiButton>
+                <span className="text-sm text-[var(--color-text-primary)]">
+                  Página {currentPage} de {totalPages}
+                </span>
                 <UiButton
-                  variant="primary"
-                  type="submit"
-                  form="customer-form"
-                  disabled={loading}
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
                 >
-                  {loading ? "Guardando..." : editingCustomer ? "Actualizar" : "Crear cliente"}
+                  <ChevronRight className="w-4 h-4" />
                 </UiButton>
               </div>
-            }
-          >
-            <form id="customer-form" onSubmit={handleNewCustomer} className="space-y-6">
-              <UiField label="Nombre completo" required>
-                <UiInput
-                  type="text"
-                  value={newCustomer.name}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
-                  placeholder="Juan Pérez"
-                  required
-                />
-              </UiField>
-
-              <UiField label="Email">
-                <UiInput
-                  type="email"
-                  value={newCustomer.email}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
-                  placeholder="juan@ejemplo.com"
-                />
-              </UiField>
-
-              <UiField label="Teléfono">
-                <UiInput
-                  type="tel"
-                  value={newCustomer.phone}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
-                  placeholder="+34 600 000 000"
-                />
-              </UiField>
-
-              <UiField label="Segmento">
-                <select
-                  value={newCustomer.segment}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, segment: e.target.value as any })}
-                  className="w-full rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
-                >
-                  <option value="normal">Normal</option>
-                  <option value="vip">VIP</option>
-                  <option value="marketing">Marketing</option>
-                  <option value="no_contact">Sin contacto</option>
-                </select>
-              </UiField>
-            </form>
-          </UiModal>
-        )}
-
-        {showHistory && (
-          <UiModal
-            open={!!showHistory}
-            onClose={() => setShowHistory(null)}
-            title="Historial de reservas"
-            size="lg"
-          >
-            <div className="p-4 text-center text-slate-400">
-              Historial de reservas (Componente en desarrollo)
             </div>
-          </UiModal>
-        )}
-      </div>
-    </ProtectedRoute>
+          )
+        }
+
+        {
+          showNewModal && (
+            <UiModal
+              open={showNewModal}
+              onClose={closeNewModal}
+              title={editingCustomer ? "Editar cliente" : "Nuevo cliente"}
+              footer={
+                <div className="flex items-center justify-end gap-3">
+                  <UiButton
+                    variant="secondary"
+                    onClick={closeNewModal}
+                  >
+                    Cancelar
+                  </UiButton>
+                  <UiButton
+                    variant="primary"
+                    type="submit"
+                    form="customer-form"
+                    disabled={loading}
+                  >
+                    {loading ? "Guardando..." : editingCustomer ? "Actualizar" : "Crear cliente"}
+                  </UiButton>
+                </div>
+              }
+            >
+              <form id="customer-form" onSubmit={handleNewCustomer} className="space-y-6">
+                <UiField label="Nombre completo" required>
+                  <UiInput
+                    type="text"
+                    value={newCustomer.name}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
+                    placeholder="Juan Pérez"
+                    required
+                  />
+                </UiField>
+
+                <UiField label="Email">
+                  <UiInput
+                    type="email"
+                    value={newCustomer.email}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
+                    placeholder="juan@ejemplo.com"
+                  />
+                </UiField>
+
+                <UiField label="Teléfono">
+                  <UiInput
+                    type="tel"
+                    value={newCustomer.phone}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
+                    placeholder="+34 600 000 000"
+                  />
+                </UiField>
+
+                <UiField label="Segmento">
+                  <select
+                    value={newCustomer.segment}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, segment: e.target.value as any })}
+                    className="w-full rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--gradient-primary-start)] focus:outline-none focus:ring-2 focus:ring-[var(--gradient-primary-start)]/30 transition-smooth"
+                  >
+                    <option value="normal">Normal</option>
+                    <option value="vip">VIP</option>
+                    <option value="marketing">Marketing</option>
+                    <option value="no_contact">Sin contacto</option>
+                  </select>
+                </UiField>
+              </form>
+            </UiModal>
+          )
+        }
+
+        {
+          showHistory && (
+            <UiModal
+              open={!!showHistory}
+              onClose={() => setShowHistory(null)}
+              title="Historial de reservas"
+              size="lg"
+            >
+              <div className="p-4 text-center text-slate-400">
+                Historial de reservas (Componente en desarrollo)
+              </div>
+            </UiModal>
+          )
+        }
+      </div >
+    </ProtectedRoute >
   );
 }
