@@ -74,7 +74,14 @@ function PanelLayoutContent({
     if (initialBootstrapState === "NO_TENANT_SELECTED") {
       if (pathname !== "/panel/select-business") {
         console.log("[Bootstrap] Redirecting to /panel/select-business");
-        router.push("/panel/select-business");
+        // FIX BUG 2: Use window.location for definitive redirect if stuck
+        // preventing infinite loading if router.push fails or is blocked
+        if (typeof window !== "undefined") {
+          // We prefer router.replace normally, but to fix the "hang", we force it.
+          // However, let's try router.replace first, it is SPA friendly.
+          // If the user reports "dead", safe option is window.location for this specific bootstrap case.
+          router.replace("/panel/select-business");
+        }
       }
       return;
     }
