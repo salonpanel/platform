@@ -130,6 +130,7 @@ export function BookingCreateModal() {
       customers={customers}
       selectedDate={modalState.initialDate ? modalState.initialDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
       isLoading={loading}
+      tenantId={tenantId || ""}
     />
   );
 }
