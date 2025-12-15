@@ -113,7 +113,7 @@ function VerifyCodeContent() {
       setVerifying(false);
       setSuccess(true);
       // Redirigir inmediatamente sin leer cookies manualmente
-      router.replace("/panel");
+      // router.replace("/panel"); // REMOVED: Conflicto con window.location posterior
 
       // 🔥 OPTIMIZACIÓN: Después de verificación exitosa, hacer prefetch inteligente
       // para calentar datos críticos antes de redirigir
@@ -150,22 +150,23 @@ function VerifyCodeContent() {
           // Silenciar errores - es prefetch, no crítico
         });
 
+        // Redirección robusta usando window.location para evitar bloqueos del router de Next.js
         console.log("[VerifyCode] Redirigiendo a:", redirectPath);
 
-        // Redirección ya ejecutada; mantener por seguridad si aún no navegó
+        // Pequeño delay para feedback visual
         setTimeout(() => {
-          router.replace(redirectPath);
+          window.location.href = redirectPath;
         }, 500);
 
       } catch (prefetchError) {
-        console.warn('[VerifyCode] Error en prefetch, continuando con redirección normal:', prefetchError);
-        // Si el prefetch falla, redirigir normalmente
+        console.warn('[VerifyCode] Error en post-proceso, forzando redirección:', prefetchError);
         const redirectParam = searchParams?.get("redirect");
         const redirectPath = (redirectParam && redirectParam !== "/" && redirectParam.startsWith("/"))
           ? redirectParam
           : "/panel";
+
         setTimeout(() => {
-          router.replace(redirectPath);
+          window.location.href = redirectPath;
         }, 500);
       }
     } catch (err: any) {
