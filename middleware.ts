@@ -3,6 +3,16 @@ import { createServerClient } from "@supabase/ssr";
 import { getHostType, parseSubdomain } from "@/lib/domains";
 
 export async function middleware(request: NextRequest) {
+    // 0. STRICT ISOLATION PHASE
+    // Absolute bypass for root, login, and panel during debugging.
+    // No Supabase, no auth checks, no rewrites.
+    const url = request.nextUrl;
+    const path = url.pathname;
+
+    if (path === "/" || path.startsWith("/login") || path.startsWith("/panel")) {
+        return NextResponse.next();
+    }
+
     // 1. Initialize Response
     let response = NextResponse.next({
         request: {
@@ -45,11 +55,13 @@ export async function middleware(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     // 3. Subdomain Resolution
+    // 3. Subdomain Resolution
     const host = request.headers.get("host") || "";
     const hostType = getHostType(host);
     const subdomain = parseSubdomain(host);
-    const url = request.nextUrl;
-    const path = url.pathname;
+    // url and path already declared at top
+    // const url = request.nextUrl;
+    // const path = url.pathname;
 
     // ----------------------------------------------------------------------
     // TRAFFIC POLICE : ROUTING RULES (Based on MIDDLEWARE_PRODUCCION_FINAL.md)
