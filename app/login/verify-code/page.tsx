@@ -38,6 +38,9 @@ function VerifyCodeContent() {
   // Verificar código OTP
   // CRÍTICO: Ahora la verificación se hace en el servidor (Route Handler)
   // Esto escribe las cookies de sesión que el servidor puede leer
+  // Verificar código OTP
+  // CRÍTICO: Ahora la verificación se hace en el servidor (Route Handler)
+  // Esto escribe las cookies de sesión que el servidor puede leer
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -50,7 +53,8 @@ function VerifyCodeContent() {
     }
 
     // Permite códigos de 6 u 8 dígitos (Supabase puede enviar ambos dependiendo de la config)
-    if (code.length !== 6 && code.length !== 8) {
+    const cleanCode = code.trim();
+    if (cleanCode.length !== 6 && cleanCode.length !== 8) {
       setError("El código debe tener 6 u 8 dígitos");
       setVerifying(false);
       return;
@@ -59,7 +63,7 @@ function VerifyCodeContent() {
     try {
       console.log("[VerifyCode] Enviando OTP al API...", {
         email: email ? email.substring(0, 5) + "..." : "missing",
-        codeLength: code.length,
+        codeLength: cleanCode.length,
       });
 
       // CRÍTICO: Llamar al endpoint del servidor que usa createRouteHandlerClient
@@ -72,7 +76,7 @@ function VerifyCodeContent() {
         credentials: "include", // Asegurar que las cookies se incluyan
         body: JSON.stringify({
           email: email.toLowerCase().trim(),
-          token: code.trim(), // El route handler espera 'token', no 'code'
+          token: cleanCode,
         }),
       });
 
@@ -81,98 +85,37 @@ function VerifyCodeContent() {
         data = await res.json();
       } catch (jsonError) {
         console.error("[VerifyCode] Error parseando respuesta JSON:", jsonError);
-        setError("Error al procesar la respuesta del servidor. Por favor, inténtalo de nuevo.");
-        setCode("");
+        setError("Error al procesar la respuesta del servidor.");
         setVerifying(false);
         return;
       }
 
       if (!res.ok || !data.ok) {
-        console.error("[VerifyCode] Error en verificación:", {
-          status: res.status,
-          statusText: res.statusText,
-          data,
-        });
-        setError(
-          data?.error ||
-          "No hemos podido verificar el código. Por favor, inténtalo de nuevo."
-        );
-        setCode(""); // Limpiar campo por seguridad
+        console.error("[VerifyCode] Error en verificación:", data);
+        setError(data?.error || "Código inválido.");
         setVerifying(false);
         return;
       }
 
-      console.log("[VerifyCode] OTP verificado correctamente:", {
-        userId: data.user?.id,
-        email: data.user?.email,
-      });
+      console.log("[VerifyCode] ✅ Éxito. Redirigiendo ATÓMICAMENTE.");
 
-      // ✅ En este punto, las cookies ya están escritas en la respuesta del route handler
-      // Ahora el middleware y el layout verán la sesión.
-      // Esperar un momento para asegurar que las cookies se establezcan antes de redirigir
+      // Feedback visual inmediato
       setVerifying(false);
       setSuccess(true);
-      // Redirigir inmediatamente sin leer cookies manualmente
-      // router.replace("/panel"); // REMOVED: Conflicto con window.location posterior
 
-      // 🔥 OPTIMIZACIÓN: Después de verificación exitosa, hacer prefetch inteligente
-      // para calentar datos críticos antes de redirigir
-      try {
-        console.log('[VerifyCode] 🔥 Iniciando prefetch inteligente post-verificación...');
+      // 🚀 REDIRECCIÓN ATÓMICA
+      // Sin prefetch. Sin espera. Sin router.replace.
+      // Window location força una navegación limpia y recarga el contexto desde el servidor.
+      const redirectParam = searchParams?.get("redirect");
+      const target = (redirectParam && redirectParam.startsWith("/") && redirectParam !== "/")
+        ? redirectParam
+        : "/panel";
 
-        // 1. Prefetch de la ruta del panel (ya existe)
-        const redirectParam = searchParams?.get("redirect");
-        // Asegurar que nunca redirigimos a la raíz "/" o rutas inseguras
-        const redirectPath = (redirectParam && redirectParam !== "/" && redirectParam.startsWith("/"))
-          ? redirectParam
-          : "/panel";
+      window.location.href = target;
 
-        // 2. 🔥 NUEVO: Prefetch inteligente de datos críticos usando las cookies recién creadas
-        // Esto permite que el servidor lea la sesión y prepare datos iniciales
-        // Disable prefetch to avoid deadlocks
-        const prefetchPromises: Promise<any>[] = [];
-
-        // Prefetch básico de ruta DESACTIVADO (Causa Deadlock con SSR)
-        // fetch(redirectPath, { method: "GET", credentials: "include", cache: "no-store" }).catch(() => { }),
-
-        // 🔥 Prefetch de datos del panel DESACTIVADO TEMPORALMENTE (Causa Deadlock)
-        // fetch("/api/prefetch/panel-data", {
-        //   method: "GET",
-        //   credentials: "include",
-        //   cache: "no-store"
-        // }).catch(() => { }),
-        // ];
-
-        // Ejecutar prefetches en paralelo sin bloquear
-        Promise.all(prefetchPromises).then(() => {
-          console.log('[VerifyCode] ✅ Prefetch inteligente completado');
-        }).catch(() => {
-          // Silenciar errores - es prefetch, no crítico
-        });
-
-        // Redirección robusta usando window.location para evitar bloqueos del router de Next.js
-        console.log("[VerifyCode] Redirigiendo a:", redirectPath);
-
-        // Pequeño delay para feedback visual
-        setTimeout(() => {
-          window.location.href = redirectPath;
-        }, 500);
-
-      } catch (prefetchError) {
-        console.warn('[VerifyCode] Error en post-proceso, forzando redirección:', prefetchError);
-        const redirectParam = searchParams?.get("redirect");
-        const redirectPath = (redirectParam && redirectParam !== "/" && redirectParam.startsWith("/"))
-          ? redirectParam
-          : "/panel";
-
-        setTimeout(() => {
-          window.location.href = redirectPath;
-        }, 500);
-      }
     } catch (err: any) {
       console.error("[VerifyCode] Error inesperado:", err);
-      setError("Ha ocurrido un error inesperado. Inténtalo de nuevo.");
-      setCode(""); // Limpiar campo
+      setError("Ha ocurrido un error inesperado.");
       setVerifying(false);
     }
   };
