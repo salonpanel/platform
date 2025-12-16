@@ -2,6 +2,7 @@
 
 import { format, parseISO } from "date-fns";
 import { GlassBadge } from "@/components/ui/glass/GlassBadge";
+import { GlassCard } from "@/components/ui/glass/GlassCard";
 import { GlassEmptyState } from "@/components/ui/glass/GlassEmptyState";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
