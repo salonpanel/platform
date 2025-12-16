@@ -1,0 +1,24 @@
+
+> platform@0.1.0 build
+> next build
+
+   Ôû▓ Next.js 16.0.8 (Turbopack)
+   - Environments: .env.local
+
+ ÔÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully in 3.5s
+   Running TypeScript ...
+Failed to compile.
+
+./src/components/panel/AgendaTimeline.tsx:178:44
+Type error: This comparison appears to be unintentional because the types '"paid" | "cancelled" | "pending" | "no_show" | "completed" | "hold"' and '"confirmed"' have no overlap.
+
+  176 |                         {formatInTenantTz(booking.ends_at, timezone, "HH:mm")}
+  177 |                       </span>
+> 178 |                       <GlassBadge variant={booking.status === 'confirmed' || booking.status === 'completed' || booking.status === 'paid' ? 'success' : booking.status === 'cancelled' || booking.status === 'no_show' ? 'danger' : 'warning'} size="sm">
+      |                                            ^
+  179 |                         {booking.status}
+  180 |                       </GlassBadge>
+  181 |                     </div>
+Next.js build worker exited with code: 1 and signal: null

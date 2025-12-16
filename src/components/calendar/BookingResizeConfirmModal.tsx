@@ -1,7 +1,7 @@
 "use client";
 
-import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
+import { GlassModal } from "@/components/ui/glass/GlassModal";
+import { GlassButton } from "@/components/ui/glass/GlassButton";
 import { format } from "date-fns";
 import { Clock, User, Bell, Timer } from "lucide-react";
 import { motion } from "framer-motion";
@@ -34,7 +34,7 @@ export function BookingResizeConfirmModal({
   const originalDuration = Math.round((originalEnd.getTime() - originalStart.getTime()) / (1000 * 60)); // minutos
   const originalTime = format(originalStart, "HH:mm");
   const originalEndTime = format(originalEnd, "HH:mm");
-  
+
   // Parsear newStartTime y newEndTime (pueden ser ISO strings o ya formateados)
   let newStart = "";
   let newEnd = "";
@@ -64,26 +64,26 @@ export function BookingResizeConfirmModal({
   }
 
   const durationChange = newDuration > 0 ? newDuration - originalDuration : 0;
-  const durationChangeText = durationChange > 0 
+  const durationChangeText = durationChange > 0
     ? `+${durationChange} min`
-    : durationChange < 0 
-    ? `${Math.abs(durationChange)} min menos`
-    : "sin cambios";
+    : durationChange < 0
+      ? `${Math.abs(durationChange)} min menos`
+      : "sin cambios";
 
   return (
-    <Modal
+    <GlassModal
       isOpen={isOpen}
       onClose={onClose}
       title="Confirmar cambio de duración"
       size="md"
       footer={
         <div className="flex items-center justify-end gap-3 w-full">
-          <Button variant="secondary" onClick={onClose}>
+          <GlassButton variant="secondary" onClick={onClose}>
             Cancelar
-          </Button>
-          <Button onClick={onConfirm}>
+          </GlassButton>
+          <GlassButton onClick={onConfirm}>
             Confirmar cambio
-          </Button>
+          </GlassButton>
         </div>
       }
     >
@@ -161,7 +161,7 @@ export function BookingResizeConfirmModal({
           ¿Estás seguro de que deseas modificar la duración de esta reserva?
         </p>
       </div>
-    </Modal>
+    </GlassModal>
   );
 }
 

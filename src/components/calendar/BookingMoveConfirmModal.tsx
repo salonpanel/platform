@@ -1,7 +1,7 @@
 "use client";
 
-import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
+import { GlassModal } from "@/components/ui/glass/GlassModal";
+import { GlassButton } from "@/components/ui/glass/GlassButton";
 import { format } from "date-fns";
 import { Calendar, Clock, User, Bell } from "lucide-react";
 import { motion } from "framer-motion";
@@ -32,7 +32,7 @@ export function BookingMoveConfirmModal({
   const originalStart = new Date(booking.starts_at);
   const originalEnd = new Date(booking.ends_at);
   const originalTime = format(originalStart, "HH:mm");
-  
+
   // Parsear newStartTime (puede ser ISO string o ya formateado)
   let newTime = "";
   try {
@@ -47,19 +47,19 @@ export function BookingMoveConfirmModal({
   }
 
   return (
-    <Modal
+    <GlassModal
       isOpen={isOpen}
       onClose={onClose}
       title="Confirmar cambio de horario"
       size="md"
       footer={
         <div className="flex items-center justify-end gap-3 w-full">
-          <Button variant="secondary" onClick={onClose}>
+          <GlassButton variant="secondary" onClick={onClose}>
             Cancelar
-          </Button>
-          <Button onClick={onConfirm}>
+          </GlassButton>
+          <GlassButton onClick={onConfirm}>
             Confirmar cambio
-          </Button>
+          </GlassButton>
         </div>
       }
     >
@@ -125,7 +125,7 @@ export function BookingMoveConfirmModal({
           ¿Estás seguro de que deseas modificar esta reserva?
         </p>
       </div>
-    </Modal>
+    </GlassModal>
   );
 }
 

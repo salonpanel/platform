@@ -2,7 +2,8 @@
 
 import { useState, Suspense, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { Spinner, Card, Button, EmptyState, Alert, SearchInput, useToast } from "@/components/ui";
+import { Spinner, Card, Button, Alert, SearchInput, useToast } from "@/components/ui";
+import { GlassEmptyState } from "@/components/ui/glass";
 import { StaffEditModal } from "@/components/panel/StaffEditModal";
 import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
 import { motion } from "framer-motion";
@@ -23,27 +24,27 @@ type Staff = {
   profile_photo_url?: string | null;
   weekly_hours?: number | null;
   provides_services?: boolean;
-  
+
   // 🚀 ESTADÍSTICAS PRECALCULADAS DEL RPC get_staff_with_stats
   bookings_today?: number;
   bookings_this_week?: number;
   bookings_this_month?: number;
   bookings_all_time?: number;
-  
+
   revenue_today?: bigint;
   revenue_this_week?: bigint;
   revenue_this_month?: bigint;
   revenue_all_time?: bigint;
-  
+
   occupancy_today_percent?: number;
   occupancy_this_week_percent?: number;
-  
+
   no_shows_this_month?: number;
   cancellations_this_month?: number;
   avg_service_duration_min?: number;
-  
+
   services_count?: number;
-  
+
   // Retrocompatibilidad
   bookings_count?: number;
 };
@@ -77,9 +78,9 @@ function StaffContent() {
     setShowEditModal(true);
   };
 
-  const handleSaveStaff = async (staffData: Partial<Staff> & { 
-    createUser?: boolean; 
-    email?: string; 
+  const handleSaveStaff = async (staffData: Partial<Staff> & {
+    createUser?: boolean;
+    email?: string;
     userRole?: string;
     schedules?: Array<{
       day_of_week: number;
@@ -419,9 +420,11 @@ function StaffContent() {
       {filteredStaff.length === 0 ? (
         <motion.div variants={itemVariants}>
           <Card variant="default">
-            <EmptyState
+            <GlassEmptyState
+              icon={User}
               title={searchTerm ? "No se encontró staff" : "No hay staff registrado"}
               description={searchTerm ? "Intenta con otro criterio de búsqueda" : "Crea tu primer miembro del staff"}
+              variant="compact"
             />
           </Card>
         </motion.div>

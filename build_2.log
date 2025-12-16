@@ -1,0 +1,24 @@
+
+> platform@0.1.0 build
+> next build
+
+   Ôû▓ Next.js 16.0.8 (Turbopack)
+   - Environments: .env.local
+
+ ÔÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully in 3.8s
+   Running TypeScript ...
+Failed to compile.
+
+./src/components/agenda/AgendaContent.tsx:89:8
+Type error: Cannot find name 'GlassCard'.
+
+  87 |   if (error) {
+  88 |     return (
+> 89 |       <GlassCard className="border-[var(--color-danger)]/50 bg-[var(--color-danger-glass)]">
+     |        ^
+  90 |         <div className="text-[var(--color-danger)]">
+  91 |           <h3 className="mb-2 font-semibold" style={{ fontFamily: "var(--font-heading)" }}>
+  92 |             Error
+Next.js build worker exited with code: 1 and signal: null

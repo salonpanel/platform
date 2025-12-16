@@ -4,7 +4,8 @@ import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, Check, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/Card";
+import { GlassModal } from "@/components/ui/glass/GlassModal";
+import { GlassButton } from "@/components/ui/glass";
 import { Button } from "@/components/ui/Button";
 import { Booking, Staff } from "@/types/agenda";
 
@@ -280,7 +281,7 @@ export function SmartModal({
             <div className="flex gap-2">
               {variant === "guided" && steps.length > 0 && (
                 <>
-                  <Button
+                  <GlassButton
                     variant="ghost"
                     onClick={() => handleStepChange(localStep - 1)}
                     disabled={!canGoPrev}
@@ -288,16 +289,16 @@ export function SmartModal({
                   >
                     <ChevronLeft className="h-4 w-4" />
                     Anterior
-                  </Button>
+                  </GlassButton>
 
-                  <Button
+                  <GlassButton
                     onClick={() => handleStepChange(localStep + 1)}
                     disabled={!canGoNext}
                     className="flex items-center gap-2"
                   >
                     Siguiente
                     <ChevronRight className="h-4 w-4" />
-                  </Button>
+                  </GlassButton>
                 </>
               )}
             </div>
@@ -307,20 +308,20 @@ export function SmartModal({
                 actions
               ) : (
                 variant !== "guided" && (
-                  <Button variant="ghost" onClick={onClose}>
+                  <GlassButton variant="ghost" onClick={onClose}>
                     Cancelar
-                  </Button>
+                  </GlassButton>
                 )
               )}
 
               {variant === "guided" && localStep === steps.length - 1 && (
-                <Button
+                <GlassButton
                   onClick={onClose}
                   className="bg-gradient-to-r from-[var(--accent-blue)] to-[var(--accent-aqua)] text-white border-0"
                 >
                   <Check className="h-4 w-4 mr-2" />
                   Completar
-                </Button>
+                </GlassButton>
               )}
             </div>
           </div>

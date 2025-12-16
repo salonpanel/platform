@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { GlassCard } from "@/components/ui/glass";
+import { Loader2, ArrowRight } from "lucide-react";
 
 export default function SelectBusinessClient({ memberships }: { memberships: any[] }) {
     const router = useRouter();
@@ -17,22 +19,44 @@ export default function SelectBusinessClient({ memberships }: { memberships: any
     };
 
     return (
-        <>
+        <div className="grid gap-4">
             {memberships.map((m) => {
                 const tenant = m.tenants;
                 if (!tenant) return null;
+                const isLoading = loading === tenant.id;
+
                 return (
-                    <button
+                    <GlassCard
                         key={tenant.id}
-                        onClick={() => handleSelect(tenant.id)}
-                        disabled={loading !== null}
-                        className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors disabled:opacity-50"
+                        variant="clickable"
+                        onClick={() => !isLoading && handleSelect(tenant.id)}
+                        className={`flex items-center justify-between p-5 group ${isLoading ? "opacity-70 pointer-events-none" : ""}`}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                if (!isLoading) handleSelect(tenant.id);
+                            }
+                        }}
                     >
-                        <span className="font-medium text-white">{tenant.name}</span>
-                        <span className="text-xs text-slate-500 uppercase">{tenant.slug}</span>
-                    </button>
+                        <div className="flex flex-col items-start gap-1">
+                            <span className="font-semibold text-lg text-white group-hover:text-[var(--color-accent)] transition-colors">
+                                {tenant.name}
+                            </span>
+                            <span className="text-xs text-[var(--text-secondary)] uppercase tracking-wider font-medium">
+                                {tenant.slug}
+                            </span>
+                        </div>
+
+                        {isLoading ? (
+                            <Loader2 className="h-5 w-5 text-[var(--text-secondary)] animate-spin" />
+                        ) : (
+                            <ArrowRight className="h-5 w-5 text-[var(--text-secondary)] group-hover:text-white group-hover:translate-x-1 transition-all" />
+                        )}
+                    </GlassCard>
                 );
             })}
-        </>
+        </div>
     );
 }

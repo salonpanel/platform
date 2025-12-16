@@ -3,6 +3,7 @@
 import { Phone, Mail, Calendar, TrendingUp, AlertCircle, X } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { GlassCard, GlassButton } from "@/components/ui/glass";
 import { format } from "date-fns";
 
 interface Customer {
@@ -54,7 +55,7 @@ export function CustomerQuickView({
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-2xl bg-[#15171A] border border-white/10 rounded-2xl shadow-[0px_8px_32px_rgba(0,0,0,0.5)] max-h-[90vh] overflow-hidden flex flex-col">
+      <GlassCard className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-white/10 shadow-[0px_8px_32px_rgba(0,0,0,0.5)] bg-[#15171A]">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/5">
           <div className="flex items-center gap-3">
@@ -84,12 +85,14 @@ export function CustomerQuickView({
               </div>
             </div>
           </div>
-          <button
+          <GlassButton
             onClick={onClose}
-            className="p-2 rounded-[10px] text-[#d1d4dc] hover:text-white hover:bg-white/5 transition-all duration-150"
+            variant="ghost"
+            size="icon"
+            className="text-[#d1d4dc] hover:text-white"
           >
             <X className="h-5 w-5" />
-          </button>
+          </GlassButton>
         </div>
 
         {/* Content */}
@@ -234,16 +237,16 @@ export function CustomerQuickView({
 
         {/* Footer con acciones */}
         <div className="flex items-center justify-end gap-2 p-6 border-t border-white/5">
-          <Button variant="secondary" onClick={onClose}>
+          <GlassButton variant="secondary" onClick={onClose}>
             Cerrar
-          </Button>
+          </GlassButton>
           {onCreateBooking && (
-            <Button onClick={onCreateBooking}>
+            <GlassButton onClick={onCreateBooking}>
               Crear cita ahora
-            </Button>
+            </GlassButton>
           )}
         </div>
-      </div>
+      </GlassCard>
     </div>
   );
 }

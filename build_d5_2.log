@@ -1,0 +1,25 @@
+
+> platform@0.1.0 build
+> next build
+
+   Ôû▓ Next.js 16.0.8 (Turbopack)
+   - Environments: .env.local
+
+ ÔÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully in 4.2s
+   Running TypeScript ...
+Failed to compile.
+
+./src/components/calendar/SearchPanel.tsx:69:17
+Type error: Type '{ value: string; onChange: (e: ChangeEvent<HTMLInputElement>) => void; placeholder: string; startIcon: Element; className: string; autoFocus: true; }' is not assignable to type 'IntrinsicAttributes & GlassInputProps & RefAttributes<HTMLInputElement>'.
+  Property 'startIcon' does not exist on type 'IntrinsicAttributes & GlassInputProps & RefAttributes<HTMLInputElement>'.
+
+  67 |                 onChange={(e) => onSearchChange(e.target.value)}
+  68 |                 placeholder="Buscar por cliente, tel├®fono o servicio..."
+> 69 |                 startIcon={<Search className="h-4 w-4 text-[var(--text-secondary)]" />}
+     |                 ^
+  70 |                 className="w-full"
+  71 |                 autoFocus
+  72 |               />
+Next.js build worker exited with code: 1 and signal: null

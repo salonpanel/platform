@@ -14,6 +14,7 @@ import {
   GlassModal,
   GlassToast,
   GlassSection,
+  GlassEmptyState,
 } from "@/components/ui/glass";
 import { Loader2, Plus, X, Search, AlertCircle } from "lucide-react";
 import { ServiceCard } from "./components/ServiceCard";
@@ -859,7 +860,7 @@ export function ServiciosClient({
                     ? "bg-white text-black shadow-sm"
                     : "text-[var(--text-secondary)] hover:text-white hover:bg-white/5"
                 )}
-                aria-pressed={filterStatus === option.value}
+                aria-pressed={filterStatus === option.value ? "true" : "false"}
               >
                 {option.label}
               </button>
@@ -883,7 +884,7 @@ export function ServiciosClient({
                   ? "bg-emerald-500/10 border-emerald-500/50 text-emerald-400"
                   : "bg-white/5 border-white/10 text-[var(--text-secondary)] hover:bg-white/10 hover:text-white"
               )}
-              aria-pressed={filterCategory === category}
+              aria-pressed={filterCategory === category ? "true" : "false"}
             >
               {category === "all" ? "Todas" : category}
             </button>
@@ -907,6 +908,7 @@ export function ServiciosClient({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <GlassInput
               label="Mínimo (€)"
+              placeholder="0"
               type="number"
               min={priceBounds.min}
               max={priceRange[1]}
@@ -921,6 +923,7 @@ export function ServiciosClient({
             />
             <GlassInput
               label="Máximo (€)"
+              placeholder="100"
               type="number"
               min={priceRange[0]}
               max={priceBounds.max || priceRange[1]}
@@ -998,39 +1001,23 @@ export function ServiciosClient({
 
       {/* Service List State Logic */}
       {!hasServices && !loading && !filteredIsEmpty ? (
-        <GlassCard className="py-16 flex flex-col items-center justify-center text-center border-dashed border-2 border-white/10 bg-white/[0.02]">
-          <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-            <Plus className="w-8 h-8 text-white/40" />
-          </div>
-          <h3 className="text-xl font-bold text-white mb-2 font-satoshi">Comienza añadiendo servicios</h3>
-          <p className="text-[var(--text-secondary)] max-w-md mx-auto mb-6">
-            Crea tu primer servicio para que los clientes puedan empezar a reservar citas.
-          </p>
-          <GlassButton
-            onClick={() => openNewModal()}
-            size="lg"
-            leftIcon={<Plus className="w-5 h-5 ml-1" />}
-          >
-            Crear Primer Servicio
-          </GlassButton>
-        </GlassCard>
+        <GlassEmptyState
+          icon={Plus}
+          title="Comienza añadiendo servicios"
+          description="Crea tu primer servicio para que los clientes puedan empezar a reservar citas."
+          actionLabel="Crear Primer Servicio"
+          onAction={() => openNewModal()}
+          variant="default"
+        />
       ) : filteredIsEmpty ? (
-        <GlassCard className="py-12 bg-white/[0.02]">
-          <div className="flex flex-col items-center justify-center text-center">
-            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-4">
-              <Search className="w-6 h-6 text-white/40" />
-            </div>
-            <h3 className="text-lg font-medium text-white mb-2">Sin resultados</h3>
-            <p className="text-[var(--text-secondary)] text-sm max-w-sm mb-6">
-              No se encontraron servicios que coincidan con los filtros actuales.
-            </p>
-            {hasFiltersApplied && (
-              <GlassButton variant="secondary" onClick={clearFilters}>
-                Limpiar filtros
-              </GlassButton>
-            )}
-          </div>
-        </GlassCard>
+        <GlassEmptyState
+          icon={Search}
+          title="Sin resultados"
+          description="No se encontraron servicios que coincidan con los filtros actuales."
+          actionLabel={hasFiltersApplied ? "Limpiar filtros" : undefined}
+          onAction={hasFiltersApplied ? clearFilters : undefined}
+          variant="default"
+        />
       ) : (
         <>
           <div className="relative">
@@ -1100,7 +1087,13 @@ export function ServiciosClient({
           <GlassCard className="border-red-500/50 bg-red-500/10 mb-6 p-4">
             <div className="flex justify-between items-start">
               <p className="text-sm text-red-400">{modalError}</p>
-              <button onClick={() => setModalError(null)} className="text-red-400 hover:text-red-300"><X className="h-4 w-4" /></button>
+              <button
+                onClick={() => setModalError(null)}
+                className="text-red-400 hover:text-red-300"
+                aria-label="Cerrar error"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
           </GlassCard>
         )}

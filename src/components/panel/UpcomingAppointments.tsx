@@ -1,11 +1,13 @@
 "use client";
 
 import { format, parseISO } from "date-fns";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { GlassBadge } from "@/components/ui/glass/GlassBadge";
+import { GlassEmptyState } from "@/components/ui/glass/GlassEmptyState";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowRight, User } from "lucide-react";
+import { ArrowRight, User, Calendar } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type Booking = {
   id: string;
@@ -46,27 +48,51 @@ export function UpcomingAppointments({
     .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
     .slice(0, limit);
 
-  const cardBaseClass = "relative rounded-2xl border border-white/5 bg-[rgba(15,23,42,0.85)] backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] px-4 py-3 sm:px-5 sm:py-4 transition-transform transition-shadow duration-150 ease-out hover:-translate-y-[1px] hover:shadow-[0_22px_55px_rgba(0,0,0,0.6)]";
+  // Helper to map booking status to GlassBadge variant
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case "confirmed":
+      case "paid":
+      case "completed":
+        return "success";
+      case "pending":
+      case "hold":
+        return "warning";
+      case "cancelled":
+      case "no_show":
+        return "danger";
+      default:
+        return "default";
+    }
+  };
+
+  const statusLabels: Record<string, string> = {
+    confirmed: "Confirmado",
+    paid: "Pagado",
+    pending: "Pendiente",
+    completed: "Completado",
+    cancelled: "Cancelado",
+    no_show: "No show",
+    hold: "Reservado",
+  };
+
+  const router = useRouter();
 
   if (upcoming.length === 0) {
     return (
-      <div className={cardBaseClass}>
-        <div className="mb-4">
-          <h3 className="text-sm font-medium text-[var(--text-primary)] font-satoshi mb-1">
-            Próximas Reservas
-          </h3>
-          <p className="text-xs text-[var(--text-secondary)]">Próximas {limit} citas programadas</p>
-        </div>
-        <EmptyState
-          title="No hay reservas próximas"
-          description="Las próximas reservas aparecerán aquí"
-        />
-      </div>
+      <GlassEmptyState
+        icon={Calendar}
+        title="Sin reservas próximas"
+        description="No tienes citas programadas para los próximos días."
+        actionLabel="Ver Agenda Completa"
+        onAction={() => router.push("/panel/agenda")}
+        className="h-full"
+      />
     );
   }
 
   return (
-    <div className={cardBaseClass}>
+    <GlassCard className="relative p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm font-medium text-[var(--text-primary)] font-satoshi mb-1">
@@ -92,11 +118,10 @@ export function UpcomingAppointments({
           >
             <Link
               href={`/panel/agenda?date=${format(parseISO(booking.starts_at), "yyyy-MM-dd")}`}
-              className="block p-3 rounded-xl relative overflow-hidden group transition-all duration-150"
-              style={{
-                background: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid rgba(255, 255, 255, 0.05)",
-              }}
+              className={cn(
+                "block p-3 rounded-xl relative overflow-hidden group transition-all duration-150",
+                "bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-white/10"
+              )}
             >
               <motion.div
                 className="absolute inset-0 gradient-aurora-1 opacity-0 group-hover:opacity-5 transition-opacity duration-300"
@@ -107,7 +132,9 @@ export function UpcomingAppointments({
                     <span className="text-xs font-mono font-semibold text-[var(--text-primary)] font-satoshi bg-white/5 px-2 py-0.5 rounded">
                       {timeFormatter.format(new Date(booking.starts_at))}
                     </span>
-                    <StatusBadge status={booking.status} />
+                    <GlassBadge variant={getStatusVariant(booking.status)} size="sm">
+                      {statusLabels[booking.status] || booking.status}
+                    </GlassBadge>
                   </div>
                   <p className="text-sm font-medium text-[var(--text-primary)] font-satoshi mb-0.5 truncate">
                     {booking.customer?.name || "Sin cliente"}
@@ -128,6 +155,6 @@ export function UpcomingAppointments({
           </motion.div>
         ))}
       </div>
-    </div>
+    </GlassCard>
   );
 }

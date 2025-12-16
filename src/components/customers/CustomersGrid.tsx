@@ -1,8 +1,10 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/glass/GlassCard";
 import { GlassButton } from "@/components/ui/glass/GlassButton";
 import { GlassBadge } from "@/components/ui/glass/GlassBadge";
+import { GlassEmptyState } from "@/components/ui/glass/GlassEmptyState";
 import { Calendar, Edit2, Trash2, LayoutList, Phone, Mail, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -27,6 +29,8 @@ interface CustomersGridProps {
     onViewHistory: (id: string) => void;
     onEdit: (customer: Customer) => void;
     onDelete: (id: string) => void;
+    isFiltered?: boolean;
+    onNewCustomer?: () => void;
 }
 
 export function CustomersGrid({
@@ -37,25 +41,35 @@ export function CustomersGrid({
     onViewHistory,
     onEdit,
     onDelete,
+    isFiltered = false,
+    onNewCustomer,
 }: CustomersGridProps) {
     const allSelected = customers.length > 0 && selectedCustomers.length === customers.length;
 
     if (customers.length === 0) {
         return (
-            <GlassCard className="p-12 flex flex-col items-center justify-center text-center opacity-80">
-                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-                    <LayoutList className="w-8 h-8 text-[var(--text-secondary)]" />
-                </div>
-                <h3 className="text-lg font-medium text-white mb-2">No hay clientes</h3>
-                <p className="text-sm text-[var(--text-secondary)] max-w-sm">
-                    No se encontraron clientes que coincidan con los filtros seleccionados o tu base de datos está vacía.
-                </p>
-            </GlassCard>
+            <GlassEmptyState
+                icon={LayoutList}
+                title={isFiltered ? "No se encontraron clientes" : "No tienes clientes"}
+                description={
+                    isFiltered
+                        ? "Intenta ajustar los filtros o la búsqueda para encontrar lo que buscas."
+                        : "Comienza añadiendo tu primer cliente para gestionar sus citas e historial."
+                }
+                actionLabel={!isFiltered ? "Crear Cliente" : undefined}
+                onAction={!isFiltered && onNewCustomer ? onNewCustomer : undefined}
+                variant="default"
+            />
         );
     }
 
     return (
-        <div className="space-y-4">
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-4"
+        >
             {/* Desktop Header Row */}
             <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold tracking-wider text-[var(--text-secondary)] uppercase">
                 <div className="col-span-1 flex items-center">
@@ -225,6 +239,6 @@ export function CustomersGrid({
                     );
                 })}
             </div>
-        </div>
+        </motion.div>
     );
 }

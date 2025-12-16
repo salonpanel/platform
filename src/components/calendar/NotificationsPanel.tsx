@@ -1,8 +1,8 @@
 "use client";
 
 import { X, CheckCircle2, XCircle, AlertCircle, Info } from "lucide-react";
-import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
+import { GlassButton } from "@/components/ui/glass/GlassButton";
 
 interface Notification {
   id: string;
@@ -75,7 +75,7 @@ export function NotificationsPanel({
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
-      
+
       {/* Drawer - funciona en móvil y desktop */}
       <div className="absolute right-0 top-0 bottom-0 w-80 md:w-96 bg-[#15171A] border-l border-white/5 flex flex-col shadow-[0px_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-md">
         {/* Header */}
@@ -83,12 +83,14 @@ export function NotificationsPanel({
           <h3 className="text-lg font-semibold text-white font-['Plus_Jakarta_Sans']">
             Notificaciones
           </h3>
-          <button
+          <GlassButton
             onClick={onClose}
-            className="p-2 rounded-[10px] text-[#d1d4dc] hover:text-white hover:bg-white/5 transition-all duration-150"
+            variant="ghost"
+            size="icon"
+            className="text-[#d1d4dc] hover:text-white"
           >
             <X className="h-5 w-5" />
-          </button>
+          </GlassButton>
         </div>
 
         {/* Lista de notificaciones */}
@@ -143,7 +145,3 @@ export function NotificationsPanel({
     </div>
   );
 }
-
-
-
-

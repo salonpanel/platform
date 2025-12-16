@@ -6,3 +6,4 @@ export * from "./GlassBadge";
 export * from "./GlassSection";
 export * from "./GlassModal";
 export * from "./GlassToast";
+export * from "./GlassEmptyState";

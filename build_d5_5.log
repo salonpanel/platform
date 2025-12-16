@@ -1,0 +1,25 @@
+
+> platform@0.1.0 build
+> next build
+
+   Ôû▓ Next.js 16.0.8 (Turbopack)
+   - Environments: .env.local
+
+ ÔÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully in 3.4s
+   Running TypeScript ...
+Failed to compile.
+
+./src/components/panel/AgendaTimeline.tsx:160:21
+Type error: Element implicitly has an 'any' type because expression of type '"paid" | "cancelled" | "pending" | "no_show" | "completed" | "hold" | "confirmed"' can't be used to index type '{ hold: string; pending: string; paid: string; completed: string; cancelled: string; no_show: string; }'.
+  Property 'confirmed' does not exist on type '{ hold: string; pending: string; paid: string; completed: string; cancelled: string; no_show: string; }'.
+
+  158 |                 className={`
+  159 |                   absolute left-2 right-2 rounded-lg border-l-4 p-3
+> 160 |                   ${statusColors[booking.status] || statusColors.pending}
+      |                     ^
+  161 |                   cursor-pointer backdrop-blur-sm transition-all duration-200
+  162 |                   z-10 group
+  163 |                 `}
+Next.js build worker exited with code: 1 and signal: null

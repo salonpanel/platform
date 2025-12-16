@@ -3,7 +3,9 @@
 import { ReactNode } from "react";
 import { formatInTimeZone } from "date-fns-tz";
 import { es } from "date-fns/locale";
-import { StatusBadge } from "@/components/ui/StatusBadge";
+import { GlassBadge } from "@/components/ui/glass/GlassBadge";
+import { GlassCard } from "@/components/agenda/primitives/GlassCard";
+import { cn } from "@/lib/utils";
 
 export type CustomerBookingStatus =
   | "hold"
@@ -37,6 +39,34 @@ interface CustomerBookingsTimelineProps {
 const formatBookingDate = (date: string, timezone: string) =>
   formatInTimeZone(date, timezone, "EEEE d 'de' MMMM · HH:mm", { locale: es });
 
+// Helper to map booking status to GlassBadge variant
+const getStatusVariant = (status: string) => {
+  switch (status) {
+    case "confirmed":
+    case "paid":
+    case "completed":
+      return "success";
+    case "pending":
+    case "hold":
+      return "warning";
+    case "cancelled":
+    case "no_show":
+      return "danger";
+    default:
+      return "default";
+  }
+};
+
+const statusLabels: Record<string, string> = {
+  confirmed: "Confirmado",
+  paid: "Pagado",
+  pending: "Pendiente",
+  completed: "Completado",
+  cancelled: "Cancelado",
+  no_show: "No show",
+  hold: "Reservado",
+};
+
 export function CustomerBookingsTimeline({
   bookings,
   tenantTimezone = "Europe/Madrid",
@@ -51,12 +81,12 @@ export function CustomerBookingsTimeline({
       {bookings.map((booking) => {
         const isNoShow = booking.status === "no_show";
         return (
-          <div
+          <GlassCard
             key={booking.id}
-            className={`p-4 rounded-[var(--radius-lg)] glass hover:shadow-glass transition-smooth ${
-              isNoShow ? "border-2 border-dashed border-amber-500/30 bg-amber-500/5" : ""
-            }`}
-            style={{ borderRadius: "var(--radius-lg)" }}
+            className={cn(
+              "relative transition-smooth",
+              isNoShow && "border-2 border-dashed border-[var(--status-warning-border)] bg-[var(--status-warning-glass)]"
+            )}
           >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex-1">
@@ -64,30 +94,32 @@ export function CustomerBookingsTimeline({
                   <span className="text-sm font-semibold text-[var(--color-text-primary)] font-satoshi">
                     {formatBookingDate(booking.starts_at, tenantTimezone)}
                   </span>
-                  <StatusBadge status={booking.status === "confirmed" ? "paid" : booking.status} size="sm" />
+                  <GlassBadge variant={getStatusVariant(booking.status)} size="sm">
+                    {statusLabels[booking.status] || booking.status}
+                  </GlassBadge>
                   {isNoShow && (
-                    <span className="text-xs text-amber-400 font-medium">⚠️ No-show</span>
+                    <span className="text-xs text-[var(--status-warning)] font-medium">⚠️ No-show</span>
                   )}
                 </div>
-              {booking.service?.name && (
-                <p className="text-sm text-[var(--color-text-secondary)]">
-                  {booking.service.name}
-                </p>
-              )}
-              {booking.staff?.name && (
-                <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                  👤 {booking.staff.name}
-                </p>
-              )}
-              {typeof booking.service?.price_cents === "number" && (
-                <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                  💰 {(booking.service.price_cents / 100).toFixed(2)} €
-                </p>
-              )}
+                {booking.service?.name && (
+                  <p className="text-sm text-[var(--color-text-secondary)]">
+                    {booking.service.name}
+                  </p>
+                )}
+                {booking.staff?.name && (
+                  <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                    👤 {booking.staff.name}
+                  </p>
+                )}
+                {typeof booking.service?.price_cents === "number" && (
+                  <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                    💰 {(booking.service.price_cents / 100).toFixed(2)} €
+                  </p>
+                )}
+              </div>
+              {renderAction && <div className="flex-shrink-0">{renderAction(booking)}</div>}
             </div>
-            {renderAction && <div className="flex-shrink-0">{renderAction(booking)}</div>}
-          </div>
-        </div>
+          </GlassCard>
         );
       })}
     </div>

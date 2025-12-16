@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
-import { Button } from "@/components/ui/Button";
+import { GlassButton } from "@/components/ui/glass/GlassButton";
 import { cn } from "@/lib/utils";
 
 export interface ModalAction {
@@ -56,19 +56,19 @@ export function ModalActions({
     )}>
       {/* Cancel button */}
       {showCancel && onCancel && (
-        <Button
+        <GlassButton
           variant="ghost"
           onClick={onCancel}
           size={size === "sm" ? "sm" : "md"}
         >
           {cancelLabel}
-        </Button>
+        </GlassButton>
       )}
 
       {/* Custom actions */}
       <div className="flex gap-2">
         {actions.map((action) => (
-          <Button
+          <GlassButton
             key={action.id}
             variant={action.variant || "secondary"}
             onClick={action.onClick}
@@ -82,7 +82,7 @@ export function ModalActions({
           >
             {action.icon && <span className="mr-2">{action.icon}</span>}
             {action.label}
-          </Button>
+          </GlassButton>
         ))}
       </div>
     </div>

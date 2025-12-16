@@ -1,0 +1,111 @@
+
+> platform@0.1.0 build
+> next build
+
+   Ôû▓ Next.js 16.0.8 (Turbopack)
+   - Environments: .env.local
+
+ ÔÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully in 3.4s
+   Running TypeScript ...
+   Collecting page data using 23 workers ...
+ ÔÜá Using edge runtime on a page currently disables static generation for that page
+   Generating static pages using 23 workers (0/55) ...
+   Generating static pages using 23 workers (13/55) 
+   Generating static pages using 23 workers (27/55) 
+   Generating static pages using 23 workers (41/55) 
+ Ô£ô Generating static pages using 23 workers (55/55) in 629.7ms
+   Finalizing page optimization ...
+
+Route (app)
+Ôöî Ôùï /
+Ôö£ Ôùï /_not-found
+Ôö£ Ôùï /admin
+Ôö£ Ôùï /admin/new-tenant
+Ôö£ Ôùï /admin/platform-users
+Ôö£ ãÆ /api/admin/features
+Ôö£ ãÆ /api/admin/plans
+Ôö£ ãÆ /api/admin/platform-users
+Ôö£ ãÆ /api/admin/tenants
+Ôö£ ãÆ /api/admin/tenants/[orgId]/features
+Ôö£ ãÆ /api/admin/tenants/[orgId]/impersonate
+Ôö£ ãÆ /api/admin/tenants/[orgId]/plan
+Ôö£ ãÆ /api/admin/tenants/[orgId]/timezone
+Ôö£ ãÆ /api/auth-proxy/[...path]
+Ôö£ ãÆ /api/auth/dev-login
+Ôö£ ãÆ /api/auth/send-otp
+Ôö£ ãÆ /api/auth/send-otp-resend
+Ôö£ ãÆ /api/auth/verify-otp
+Ôö£ ãÆ /api/availability
+Ôö£ ãÆ /api/availability/combined
+Ôö£ ãÆ /api/checkout
+Ôö£ ãÆ /api/checkout/confirm
+Ôö£ ãÆ /api/checkout/intent
+Ôö£ ãÆ /api/health
+Ôö£ ãÆ /api/health/cron
+Ôö£ ãÆ /api/health/db
+Ôö£ ãÆ /api/health/payments
+Ôö£ ãÆ /api/health/webhooks
+Ôö£ ãÆ /api/internal/cron/calculate-metrics
+Ôö£ ãÆ /api/internal/cron/release-holds
+Ôö£ ãÆ /api/internal/test-checkout
+Ôö£ ãÆ /api/logout
+Ôö£ ãÆ /api/panel/customers/export
+Ôö£ ãÆ /api/payments/checkout/create
+Ôö£ ãÆ /api/payments/services/sync
+Ôö£ ãÆ /api/payments/stripe/connect
+Ôö£ ãÆ /api/payments/stripe/status
+Ôö£ ãÆ /api/payments/wallet/balance
+Ôö£ ãÆ /api/payments/wallet/payouts
+Ôö£ ãÆ /api/payments/wallet/transactions
+Ôö£ ãÆ /api/preload/user-session
+Ôö£ ãÆ /api/reservations/hold
+Ôö£ ãÆ /api/services
+Ôö£ ãÆ /api/services/[id]
+Ôö£ ãÆ /api/services/[id]/sync
+Ôö£ ãÆ /api/services/migrate
+Ôö£ ãÆ /api/staff/create-user
+Ôö£ ãÆ /api/staff/sync
+Ôö£ ãÆ /api/tenants/[tenantId]/timezone
+Ôö£ ãÆ /api/test-email
+Ôö£ ãÆ /api/webhooks/stripe
+Ôö£ ãÆ /api/webhooks/supabase-auth
+Ôö£ ãÆ /auth/callback
+Ôö£ ãÆ /auth/magic-link
+Ôö£ Ôùï /icon.png
+Ôö£ Ôùï /legal/privacidad
+Ôö£ Ôùï /login
+Ôö£ Ôùï /login/verify-code
+Ôö£ Ôùï /logout
+Ôö£ ãÆ /panel
+Ôö£ ãÆ /panel/agenda
+Ôö£ ãÆ /panel/ajustes
+Ôö£ ãÆ /panel/ajustes/calendario
+Ôö£ ãÆ /panel/ajustes/no-show
+Ôö£ ãÆ /panel/chat
+Ôö£ ãÆ /panel/clientes
+Ôö£ ãÆ /panel/clientes/[id]
+Ôö£ ãÆ /panel/config/payments
+Ôö£ ãÆ /panel/marketing
+Ôö£ ãÆ /panel/monedero
+Ôö£ ãÆ /panel/pagos
+Ôö£ ãÆ /panel/pagos/conectado
+Ôö£ ãÆ /panel/select-business
+Ôö£ ãÆ /panel/servicios
+Ôö£ ãÆ /panel/sin-permisos
+Ôö£ ãÆ /panel/staff
+Ôö£ ãÆ /r/[tenantId]
+Ôö£ ãÆ /r/[tenantId]/login
+Ôö£ ãÆ /r/[tenantId]/mis-citas
+Ôö£ ãÆ /r/[tenantId]/reservar
+Ôö£ ãÆ /r/[tenantId]/servicios
+Ôö£ ãÆ /robots.txt
+Ôöö ãÆ /sitemap.xml
+
+
+ãÆ Proxy (Middleware)
+
+Ôùï  (Static)   prerendered as static content
+ãÆ  (Dynamic)  server-rendered on demand
+

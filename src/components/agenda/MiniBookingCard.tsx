@@ -2,16 +2,16 @@
 
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { StatusBadge } from "@/components/ui";
+import { GlassBadge } from "@/components/ui/glass/GlassBadge";
 import { format } from "date-fns";
-import { Clock, User, Scissors, Phone, Mail } from "lucide-react";
+import { Clock, User, Scissors } from "lucide-react";
 
 interface MiniBookingCardProps {
   booking: {
     id: string;
     starts_at: string;
     ends_at: string;
-    status: "hold" | "pending" | "paid" | "completed" | "cancelled" | "no_show";
+    status: "hold" | "pending" | "paid" | "completed" | "cancelled" | "no_show" | "confirmed";
     customer?: {
       name: string;
       email?: string;
@@ -30,24 +30,27 @@ interface MiniBookingCardProps {
  * Componente premium para mostrar una reserva en el timeline
  * Diseño glassmórfico con micro-interacciones y detalles de alto valor
  */
-export function MiniBookingCard({ 
-  booking, 
-  density = "default", 
-  onClick, 
+export function MiniBookingCard({
+  booking,
+  density = "default",
+  onClick,
   className,
-  showActions = true 
+  showActions = true
 }: MiniBookingCardProps) {
   const startTime = format(new Date(booking.starts_at), "HH:mm");
   const endTime = format(new Date(booking.ends_at), "HH:mm");
   const duration = booking.service?.duration_min || 0;
   const price = booking.service?.price_cents ? (booking.service.price_cents / 100).toFixed(2) : null;
-  
+
   // Variantes de diseño según densidad
   const paddingClass = density === "ultra-compact" ? "p-2" : density === "compact" ? "p-2.5" : "p-3";
   const textSize = density === "ultra-compact" ? "text-[10px]" : density === "compact" ? "text-xs" : "text-sm";
   const nameSize = density === "ultra-compact" ? "text-xs" : density === "compact" ? "text-sm" : "text-base";
   const iconSize = density === "ultra-compact" ? "h-3 w-3" : density === "compact" ? "h-3.5 w-3.5" : "h-4 w-4";
-  
+
+  // Transform density to GlassBadge size
+  const badgeSize = density === "ultra-compact" ? "xs" : density === "compact" ? "xs" : "sm";
+
   // Color de borde según estado
   const getStatusBorder = () => {
     switch (booking.status) {
@@ -64,15 +67,15 @@ export function MiniBookingCard({
     <motion.div
       initial={{ opacity: 0, scale: 0.95, y: 10 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      whileHover={onClick ? { 
-        scale: 1.02, 
+      whileHover={onClick ? {
+        scale: 1.02,
         y: -2,
         boxShadow: "0 8px 25px -8px rgba(79, 227, 193, 0.25), 0 4px 6px -1px rgba(0, 0, 0, 0.1)"
       } : undefined}
       whileTap={onClick ? { scale: 0.98 } : undefined}
       onClick={onClick}
       className={cn(
-        "group relative rounded-[var(--radius-lg) border backdrop-blur-sm transition-all duration-200",
+        "group relative rounded-[var(--radius-lg)] border backdrop-blur-sm transition-all duration-200",
         "hover:shadow-lg hover:shadow-[var(--accent-aqua)]/10",
         paddingClass,
         getStatusBorder(),
@@ -93,7 +96,7 @@ export function MiniBookingCard({
         booking.status === "cancelled" && "bg-[var(--status-cancelled)]",
         booking.status === "no_show" && "bg-[var(--status-noshow)]"
       )} />
-      
+
       <div className="flex items-start justify-between gap-3">
         {/* Información principal */}
         <div className="flex-1 min-w-0">
@@ -113,7 +116,7 @@ export function MiniBookingCard({
               {booking.customer?.name || "Sin cliente"}
             </div>
           </div>
-          
+
           {/* Servicio */}
           {booking.service && (
             <div className="flex items-center gap-2 mb-2">
@@ -140,7 +143,7 @@ export function MiniBookingCard({
               )}
             </div>
           )}
-          
+
           {/* Hora y precio */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
@@ -158,7 +161,7 @@ export function MiniBookingCard({
                 {startTime} - {endTime}
               </div>
             </div>
-            
+
             {price && (
               <div className={cn(
                 "px-2 py-0.5 rounded-md font-semibold text-xs",
@@ -169,7 +172,7 @@ export function MiniBookingCard({
               </div>
             )}
           </div>
-          
+
           {/* Staff */}
           {booking.staff && density !== "ultra-compact" && (
             <div className="flex items-center gap-1.5 mt-1.5">
@@ -193,11 +196,28 @@ export function MiniBookingCard({
             </div>
           )}
         </div>
-        
+
         {/* Badge de estado y acciones */}
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <StatusBadge status={booking.status} density={density} size="xs" />
-          
+          <GlassBadge
+            variant={
+              booking.status === "paid" ? "success" :
+                booking.status === "confirmed" ? "success" :
+                  booking.status === "cancelled" ? "danger" :
+                    booking.status === "no_show" ? "danger" :
+                      booking.status === "completed" ? "default" :
+                        "warning"
+            }
+            size={badgeSize}
+          >
+            {booking.status === "no_show" ? "No Show" :
+              booking.status === "paid" ? "Pagado" :
+                booking.status === "pending" ? "Pendiente" :
+                  booking.status === "completed" ? "Completado" :
+                    booking.status === "cancelled" ? "Cancelado" :
+                      "Confirmado"}
+          </GlassBadge>
+
           {showActions && onClick && (
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -218,7 +238,7 @@ export function MiniBookingCard({
           )}
         </div>
       </div>
-      
+
       {/* Efecto de brillo sutil en hover */}
       <div className="absolute inset-0 rounded-[var(--radius-lg)] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent" />

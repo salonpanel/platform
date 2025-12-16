@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Edit, X, MessageSquare, CheckCircle2, Circle } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { GlassButton } from "@/components/ui/glass/GlassButton";
 import { motion, AnimatePresence } from "framer-motion";
 import { BookingStatus, BOOKING_STATUS_CONFIG } from "@/types/agenda";
 import { GlassCard } from "@/components/agenda/primitives/GlassCard";

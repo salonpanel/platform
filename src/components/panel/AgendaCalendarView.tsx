@@ -2,9 +2,7 @@
 
 import { useMemo, useEffect, useRef, useState, useCallback } from "react";
 import { format, parseISO, startOfDay, addMinutes } from "date-fns";
-import { Card } from "@/components/ui/Card";
 import { devLog } from "@/lib/dev-logger";
-import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CheckCircle2, MessageSquare, Star, CreditCard, AlertCircle } from "lucide-react";
 import { AgendaActionPopover } from "@/components/calendar/AgendaActionPopover";
 import { BookingActionPopover } from "@/components/calendar/BookingActionPopover";
@@ -120,7 +118,7 @@ export function AgendaCalendarView({
   const displayBookings = bookings;
   const displayStaffBlockings = staffBlockings;
   const displayStaffSchedules = staffSchedules;
-  
+
   // Calcular rango horario basado en horarios operativos del staff
   const { startHour, endHour, startMinutes } = useMemo(() => {
     if (staffSchedules.length === 0) {
@@ -135,7 +133,7 @@ export function AgendaCalendarView({
     staffSchedules.forEach((schedule) => {
       const [startH, startM] = schedule.start_time.split(":").map(Number);
       const [endH, endM] = schedule.end_time.split(":").map(Number);
-      
+
       const startHourDecimal = startH + startM / 60;
       const endHourDecimal = endH + endM / 60;
 
@@ -206,15 +204,15 @@ export function AgendaCalendarView({
     currentHeight: number;
   } | null>(null);
   const resizingRef = useRef<typeof resizingBooking>(null);
-  
+
   // Flags para prevenir onClick después de drag/resize
   const justFinishedDragRef = useRef(false);
   const justFinishedResizeRef = useRef(false);
-  
+
   // Referencias para navegación por teclado
   const bookingRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [focusedBookingId, setFocusedBookingId] = useState<string | null>(null);
-  
+
   // Estado para modal de confirmación de movimiento
   const [moveConfirmModal, setMoveConfirmModal] = useState<{
     isOpen: boolean;
@@ -229,7 +227,7 @@ export function AgendaCalendarView({
     newEndTime: "",
     newStaffId: "",
   });
-  
+
   // Estado para modal de confirmación de redimensionamiento
   const [resizeConfirmModal, setResizeConfirmModal] = useState<{
     isOpen: boolean;
@@ -242,7 +240,7 @@ export function AgendaCalendarView({
     newStartTime: "",
     newEndTime: "",
   });
-  
+
   // Filtrar staff según selección
   const visibleStaff = useMemo(() => {
     if (selectedStaffIds.length === 0 || selectedStaffIds.includes("all")) {
@@ -254,21 +252,21 @@ export function AgendaCalendarView({
   // Sincronizar scroll entre columna de horas y columnas de staff
   useEffect(() => {
     let cleanup: (() => void) | null = null;
-    
+
     // Esperar a que el DOM se renderice completamente
     const timeoutId = setTimeout(() => {
       const timeColumn = timeColumnRef.current;
       const staffColumns = Array.from(staffColumnsRefs.current.values());
-      
+
       if (!timeColumn || staffColumns.length === 0) return;
 
       const syncScroll = (source: HTMLDivElement, targetScrollTop: number) => {
         // Evitar bucles infinitos - si ya estamos sincronizando, salir
         if (isScrollingRef.current) return;
-        
+
         // Marcar que estamos sincronizando ANTES de hacer cambios
         isScrollingRef.current = true;
-        
+
         // Usar requestAnimationFrame para sincronizar en el siguiente frame
         requestAnimationFrame(() => {
           // Sincronizar columna de horas si no es la fuente
@@ -278,7 +276,7 @@ export function AgendaCalendarView({
               timeColumn.scrollTop = targetScrollTop;
             }
           }
-          
+
           // Sincronizar todas las columnas de staff si no son la fuente
           staffColumns.forEach((col) => {
             if (col && col !== source) {
@@ -288,7 +286,7 @@ export function AgendaCalendarView({
               }
             }
           });
-          
+
           // Resetear el flag después de sincronizar
           requestAnimationFrame(() => {
             isScrollingRef.current = false;
@@ -345,17 +343,17 @@ export function AgendaCalendarView({
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
     const currentMinutes = currentHour * 60 + currentMinute;
-    
+
     // Solo hacer scroll si estamos viendo el día actual
     // selectedDate está en formato "yyyy-MM-dd"
     const [year, month, day] = selectedDate.split("-").map(Number);
     const selectedDateObj = new Date(year, month - 1, day);
     const today = new Date();
-    const isToday = 
+    const isToday =
       selectedDateObj.getFullYear() === today.getFullYear() &&
       selectedDateObj.getMonth() === today.getMonth() &&
       selectedDateObj.getDate() === today.getDate();
-    
+
     if (isToday) {
       // Calcular posición relativa al inicio del día visible
       const relativeMinutes = currentMinutes - startMinutes;
@@ -363,7 +361,7 @@ export function AgendaCalendarView({
         // Usar constantes centralizadas: cada 15 min = 60px
         const scrollPosition = (relativeMinutes / SLOT_DURATION_MINUTES) * SLOT_HEIGHT_PX - 200; // 200px de offset para ver mejor
         const targetScroll = Math.max(0, scrollPosition);
-        
+
         // Aplicar scroll a todos los elementos sincronizadamente
         isScrollingRef.current = true;
         scrollableElements.forEach((el) => {
@@ -382,13 +380,13 @@ export function AgendaCalendarView({
     visibleStaff.forEach((staff) => {
       map.set(staff.id, []);
     });
-    
+
     bookings.forEach((booking) => {
       if (booking.staff_id && map.has(booking.staff_id)) {
         map.get(booking.staff_id)!.push(booking);
       }
     });
-    
+
     return map;
   }, [bookings, visibleStaff]);
 
@@ -398,13 +396,13 @@ export function AgendaCalendarView({
     visibleStaff.forEach((staff) => {
       map.set(staff.id, []);
     });
-    
+
     staffBlockings.forEach((blocking) => {
       if (blocking.staff_id && map.has(blocking.staff_id)) {
         map.get(blocking.staff_id)!.push(blocking);
       }
     });
-    
+
     return map;
   }, [staffBlockings, visibleStaff]);
 
@@ -412,33 +410,33 @@ export function AgendaCalendarView({
   const getBookingPosition = (booking: Booking) => {
     const startsAt = new Date(booking.starts_at);
     const endsAt = new Date(booking.ends_at);
-    
+
     // Convertir a timezone del tenant
     const localStartsAt = toTenantLocalDate(startsAt, timezone);
     const localEndsAt = toTenantLocalDate(endsAt, timezone);
-    
+
     // Calcular minutos desde medianoche
     const startMinutesFromMidnight = localStartsAt.getHours() * 60 + localStartsAt.getMinutes();
     const endMinutesFromMidnight = localEndsAt.getHours() * 60 + localEndsAt.getMinutes();
-    
+
     // Calcular minutos relativos al inicio del día visible (startMinutes calculado dinámicamente)
     const relativeStartMinutes = startMinutesFromMidnight - startMinutes;
     const relativeEndMinutes = endMinutesFromMidnight - startMinutes;
     const duration = relativeEndMinutes - relativeStartMinutes;
-    
+
     // Posición en píxeles usando constantes centralizadas
     // Cada slot de 15 minutos = 60px de altura
     const slotIndex = Math.round(relativeStartMinutes / SLOT_DURATION_MINUTES);
     const top = Math.max(0, slotIndex * SLOT_HEIGHT_PX);
     const height = Math.max(MIN_BOOKING_HEIGHT_PX, Math.ceil(duration / SLOT_DURATION_MINUTES) * SLOT_HEIGHT_PX);
-    
+
     return { top, height, startMinutes: startMinutesFromMidnight, endMinutes: endMinutesFromMidnight };
   };
 
   // Lista ordenada de bookings para navegación por teclado (por staff y luego por hora)
   const orderedBookings = useMemo(() => {
     const allBookings: Array<{ booking: Booking; staffIndex: number; position: { top: number; startMinutes: number } }> = [];
-    
+
     visibleStaff.forEach((staff, staffIndex) => {
       const staffBookings = bookingsByStaff.get(staff.id) || [];
       staffBookings.forEach((booking) => {
@@ -452,7 +450,7 @@ export function AgendaCalendarView({
         }
       });
     });
-    
+
     // Ordenar por staff (columna) y luego por hora (top)
     return allBookings.sort((a, b) => {
       if (a.staffIndex !== b.staffIndex) {
@@ -461,102 +459,102 @@ export function AgendaCalendarView({
       return a.position.startMinutes - b.position.startMinutes;
     });
   }, [visibleStaff, bookingsByStaff, bookings, startMinutes, timezone]);
-  
+
   // Función para encontrar el siguiente booking en la dirección especificada
   const findNextBooking = useCallback((currentBookingId: string, direction: "up" | "down" | "left" | "right") => {
     const currentIndex = orderedBookings.findIndex(
       (item) => item.booking.id === currentBookingId
     );
-      if (currentIndex === -1) return null;
-      
-      const current = orderedBookings[currentIndex];
-      
-      if (direction === "up" || direction === "down") {
-        // Buscar en la misma columna (staff)
-        const sameColumnBookings = orderedBookings.filter((item) => item.staffIndex === current.staffIndex);
-        const currentColIndex = sameColumnBookings.findIndex((item) => item.booking.id === currentBookingId);
-        
-        if (direction === "up" && currentColIndex > 0) {
-          return sameColumnBookings[currentColIndex - 1].booking.id;
-        } else if (direction === "down" && currentColIndex < sameColumnBookings.length - 1) {
-          return sameColumnBookings[currentColIndex + 1].booking.id;
-        }
-      } else if (direction === "left" || direction === "right") {
-        // Buscar en columna adyacente con hora similar
-        const targetStaffIndex = direction === "left" ? current.staffIndex - 1 : current.staffIndex + 1;
-        
-        if (targetStaffIndex >= 0 && targetStaffIndex < visibleStaff.length) {
-          // Buscar booking más cercano en la columna adyacente
-          const adjacentBookings = orderedBookings.filter((item) => item.staffIndex === targetStaffIndex);
-          if (adjacentBookings.length > 0) {
-            // Encontrar el booking más cercano en tiempo
-            const closest = adjacentBookings.reduce((prev, curr) => {
-              const prevDiff = Math.abs(prev.position.startMinutes - current.position.startMinutes);
-              const currDiff = Math.abs(curr.position.startMinutes - current.position.startMinutes);
-              return currDiff < prevDiff ? curr : prev;
-            });
-            return closest.booking.id;
-          }
+    if (currentIndex === -1) return null;
+
+    const current = orderedBookings[currentIndex];
+
+    if (direction === "up" || direction === "down") {
+      // Buscar en la misma columna (staff)
+      const sameColumnBookings = orderedBookings.filter((item) => item.staffIndex === current.staffIndex);
+      const currentColIndex = sameColumnBookings.findIndex((item) => item.booking.id === currentBookingId);
+
+      if (direction === "up" && currentColIndex > 0) {
+        return sameColumnBookings[currentColIndex - 1].booking.id;
+      } else if (direction === "down" && currentColIndex < sameColumnBookings.length - 1) {
+        return sameColumnBookings[currentColIndex + 1].booking.id;
+      }
+    } else if (direction === "left" || direction === "right") {
+      // Buscar en columna adyacente con hora similar
+      const targetStaffIndex = direction === "left" ? current.staffIndex - 1 : current.staffIndex + 1;
+
+      if (targetStaffIndex >= 0 && targetStaffIndex < visibleStaff.length) {
+        // Buscar booking más cercano en la columna adyacente
+        const adjacentBookings = orderedBookings.filter((item) => item.staffIndex === targetStaffIndex);
+        if (adjacentBookings.length > 0) {
+          // Encontrar el booking más cercano en tiempo
+          const closest = adjacentBookings.reduce((prev, curr) => {
+            const prevDiff = Math.abs(prev.position.startMinutes - current.position.startMinutes);
+            const currDiff = Math.abs(curr.position.startMinutes - current.position.startMinutes);
+            return currDiff < prevDiff ? curr : prev;
+          });
+          return closest.booking.id;
         }
       }
-      
-      return null;
+    }
+
+    return null;
   }, [orderedBookings, visibleStaff]);
 
   // Calcular posición y altura de cada bloqueo
   const getBlockingPosition = (blocking: StaffBlocking) => {
     const startsAt = new Date(blocking.start_at);
     const endsAt = new Date(blocking.end_at);
-    
+
     // Convertir a timezone del tenant
     const localStartsAt = toTenantLocalDate(startsAt, timezone);
     const localEndsAt = toTenantLocalDate(endsAt, timezone);
-    
+
     // Verificar que el bloqueo es del día seleccionado
     // selectedDate está en formato "yyyy-MM-dd"
     const [year, month, day] = selectedDate.split("-").map(Number);
     const selectedDateObj = new Date(year, month - 1, day);
     const blockingDate = new Date(localStartsAt);
-    const isSameDay = 
+    const isSameDay =
       blockingDate.getFullYear() === selectedDateObj.getFullYear() &&
       blockingDate.getMonth() === selectedDateObj.getMonth() &&
       blockingDate.getDate() === selectedDateObj.getDate();
-    
+
     if (!isSameDay) {
       return null;
     }
-    
+
     // Calcular minutos desde medianoche
     const startMinutesFromMidnight = localStartsAt.getHours() * 60 + localStartsAt.getMinutes();
     const endMinutesFromMidnight = localEndsAt.getHours() * 60 + localEndsAt.getMinutes();
-    
+
     // Calcular minutos relativos al inicio del día visible (startMinutes calculado dinámicamente)
     const relativeStartMinutes = startMinutesFromMidnight - startMinutes;
     const relativeEndMinutes = endMinutesFromMidnight - startMinutes;
     const duration = relativeEndMinutes - relativeStartMinutes;
-    
+
     // Posición en píxeles usando constantes centralizadas
     // Cada slot de 15 minutos = 60px de altura
     const slotIndex = Math.round(relativeStartMinutes / SLOT_DURATION_MINUTES);
     const top = Math.max(0, slotIndex * SLOT_HEIGHT_PX);
     const height = Math.max(MIN_BOOKING_HEIGHT_PX, Math.ceil(duration / SLOT_DURATION_MINUTES) * SLOT_HEIGHT_PX);
-    
+
     return { top, height, startMinutes: startMinutesFromMidnight, endMinutes: endMinutesFromMidnight };
   };
 
   // Calcular gaps libres para cada staff (solo cuando showFreeSlots está activo)
   const freeSlotsByStaff = useMemo(() => {
     if (!showFreeSlots) return new Map<string, Array<{ startMinutes: number; endMinutes: number; duration: number }>>();
-    
+
     const gapsMap = new Map<string, Array<{ startMinutes: number; endMinutes: number; duration: number }>>();
     const MIN_GAP_DURATION = 30; // Mínimo 30 minutos para mostrar un gap destacado
 
     visibleStaff.forEach((staff) => {
       const gaps: Array<{ startMinutes: number; endMinutes: number; duration: number }> = [];
-      
+
       // Obtener horario del staff para este día
       const schedule = staffSchedules.find(s => s.staff_id === staff.id);
-      const dayStartMinutes = schedule 
+      const dayStartMinutes = schedule
         ? (parseInt(schedule.start_time.split(":")[0]) * 60 + parseInt(schedule.start_time.split(":")[1]))
         : startMinutes;
       const dayEndMinutes = schedule
@@ -569,14 +567,14 @@ export function AgendaCalendarView({
 
       // Combinar bookings y bloqueos y ordenar por hora de inicio
       const allOccupied: Array<{ startMinutes: number; endMinutes: number }> = [];
-      
+
       staffBookings.forEach(booking => {
         const pos = getBookingPosition(booking);
         if (pos) {
           allOccupied.push({ startMinutes: pos.startMinutes, endMinutes: pos.endMinutes });
         }
       });
-      
+
       staffBlockingsList.forEach(blocking => {
         const pos = getBlockingPosition(blocking);
         if (pos) {
@@ -619,7 +617,7 @@ export function AgendaCalendarView({
           const gapStart = current.endMinutes;
           const gapEnd = next.startMinutes;
           const duration = gapEnd - gapStart;
-          
+
           if (duration >= MIN_GAP_DURATION) {
             gaps.push({
               startMinutes: gapStart,
@@ -660,7 +658,7 @@ export function AgendaCalendarView({
       const { startMinutes: bookingStart, endMinutes: bookingEnd } = getBookingPosition(booking);
       return startMinutes >= bookingStart && startMinutes < bookingEnd;
     });
-    
+
     // También verificar bloqueos
     const staffBlockings = blockingsByStaff.get(staffId) || [];
     const hasBlocking = staffBlockings.some((blocking) => {
@@ -668,7 +666,7 @@ export function AgendaCalendarView({
       if (!pos) return false;
       return startMinutes >= pos.startMinutes && startMinutes < pos.endMinutes;
     });
-    
+
     return hasBooking || hasBlocking;
   };
 
@@ -692,17 +690,17 @@ export function AgendaCalendarView({
     if (typeof minutes !== "number" || isNaN(minutes) || !isFinite(minutes)) {
       return "09:00"; // Hora por defecto
     }
-    
+
     // Asegurar que esté en el rango válido (0-1439 minutos = 0-23:59)
     const clampedMinutes = Math.max(0, Math.min(1439, Math.floor(minutes)));
     const hours = Math.floor(clampedMinutes / 60);
     const mins = clampedMinutes % 60;
-    
+
     // Validar que hours y mins sean números válidos
     if (isNaN(hours) || isNaN(mins)) {
       return "09:00"; // Hora por defecto
     }
-    
+
     return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
   };
 
@@ -724,11 +722,11 @@ export function AgendaCalendarView({
   ) => {
     // Solo permitir drag con botón izquierdo
     if (e.button !== 0) return;
-    
+
     // Prevenir el comportamiento por defecto para evitar selección de texto
     e.preventDefault();
     e.stopPropagation();
-    
+
     // Verificar si el booking está protegido (paid/completed) - no permitir drag en estos casos
     if (booking.status === "paid" || booking.status === "completed") {
       return;
@@ -739,7 +737,7 @@ export function AgendaCalendarView({
       devLog.warn("El booking no tiene staff_id asignado");
       return;
     }
-    
+
     const staffColumnElement = staffColumnsRefs.current.get(booking.staff_id);
     if (!staffColumnElement) {
       devLog.warn("No se encontró la columna de staff para el drag:", booking.staff_id);
@@ -751,14 +749,14 @@ export function AgendaCalendarView({
     const bookingRect = bookingElement.getBoundingClientRect();
     const columnRect = staffColumnElement.getBoundingClientRect();
     const columnScrollTop = staffColumnElement.scrollTop;
-    
+
     // Calcular la posición del click relativa a la columna (considerando scroll)
     const clickYInColumn = e.clientY - columnRect.top + columnScrollTop;
-    
+
     // Calcular el offset del click relativo al top del booking dentro de la columna
     // Esto nos permite mantener la posición relativa del click mientras arrastramos
     const dragOffsetY = clickYInColumn - top;
-    
+
     const dragOffset = {
       x: e.clientX - bookingRect.left,
       y: dragOffsetY,
@@ -788,10 +786,10 @@ export function AgendaCalendarView({
         // Obtener staffId desde el elemento bajo el mouse primero
         const elementUnderMouse = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY) as HTMLElement;
         const newStaffId = getStaffIdFromElement(elementUnderMouse) || currentDrag.originalStaffId;
-        
+
         // Obtener la columna del staff usando la referencia correcta (preferir la nueva si cambió)
         let staffColumnElement: HTMLElement | null = staffColumnsRefs.current.get(newStaffId) || null;
-        
+
         // Si no encontramos la columna del nuevo staff, usar la columna original
         if (!staffColumnElement) {
           staffColumnElement = staffColumnsRefs.current.get(currentDrag.originalStaffId) || null;
@@ -800,10 +798,10 @@ export function AgendaCalendarView({
             return;
           }
         }
-        
+
         const staffColumnRect = staffColumnElement.getBoundingClientRect();
         const actualScrollTop = staffColumnElement.scrollTop;
-        
+
         // Calcular posición relativa dentro de la columna de staff
         const mouseYRelativeToColumn = moveEvent.clientY - staffColumnRect.top + actualScrollTop;
         const relativeY = mouseYRelativeToColumn - currentDrag.dragOffset.y;
@@ -828,7 +826,7 @@ export function AgendaCalendarView({
           currentTop: clampedY,
           currentStaffId: newStaffId,
         };
-        
+
         setDraggingBooking(updatedDrag);
         draggingRef.current = updatedDrag;
       } catch (error) {
@@ -860,7 +858,7 @@ export function AgendaCalendarView({
           document.removeEventListener("mouseup", handleMouseUp);
           return;
         }
-        
+
         // Solo marcar justFinishedDragRef si realmente hubo movimiento
         justFinishedDragRef.current = true;
         setTimeout(() => {
@@ -916,17 +914,17 @@ export function AgendaCalendarView({
           // Construir fechas completas usando la fecha seleccionada y las horas calculadas
           const [startHour, startMinute] = newTime.split(":").map(Number);
           const [endHour, endMinute] = newEndTime.split(":").map(Number);
-          
+
           // Crear fechas en la timezone del tenant
           // selectedDate está en formato "yyyy-MM-dd", necesitamos crear un Date object correctamente
           const [year, month, day] = selectedDate.split("-").map(Number);
           const selectedDateObj = new Date(year, month - 1, day);
           const newStartsAt = new Date(selectedDateObj);
           newStartsAt.setHours(startHour, startMinute, 0, 0);
-          
+
           const newEndsAt = new Date(selectedDateObj);
           newEndsAt.setHours(endHour, endMinute, 0, 0);
-          
+
           // Si la hora de fin es menor que la de inicio, significa que pasó a otro día
           if (newEndsAt <= newStartsAt) {
             newEndsAt.setDate(newEndsAt.getDate() + 1);
@@ -974,7 +972,7 @@ export function AgendaCalendarView({
       devLog.warn("El booking no tiene staff_id asignado");
       return;
     }
-    
+
     const staffColumnElement = staffColumnsRefs.current.get(booking.staff_id);
     if (!staffColumnElement) {
       devLog.warn("No se encontró la columna del staff para el booking:", booking.staff_id);
@@ -1016,7 +1014,7 @@ export function AgendaCalendarView({
         const snappedY = slotIndex * SLOT_HEIGHT_PX;
         const newBottom = Math.max(originalTop + SLOT_HEIGHT_PX, snappedY); // Mínimo 1 slot (15 min)
         const newHeight = newBottom - originalTop;
-        
+
         const updatedResize = {
           ...currentResize,
           currentHeight: newHeight,
@@ -1030,7 +1028,7 @@ export function AgendaCalendarView({
         const snappedY = slotIndex * SLOT_HEIGHT_PX;
         const newTop = Math.min(originalBottom - SLOT_HEIGHT_PX, snappedY); // Mínimo 1 slot (15 min)
         const newHeight = originalBottom - newTop;
-        
+
         const updatedResize = {
           ...currentResize,
           currentHeight: newHeight,
@@ -1051,13 +1049,13 @@ export function AgendaCalendarView({
 
         // Obtener la posición del booking original para calcular tiempos
         const { startMinutes: originalStartMinutesFromMidnight, endMinutes: originalEndMinutesFromMidnight } = getBookingPosition(bookingToResize);
-        
+
         if (currentResize.resizeType === "end") {
           // Solo cambia el tiempo de fin
           // La altura actual está en píxeles, convertirla a minutos usando las constantes
           const slots = Math.round(currentResize.currentHeight / SLOT_HEIGHT_PX);
           const newDurationMinutes = slots * SLOT_DURATION_MINUTES;
-          
+
           newStartTime = minutesToTime(originalStartMinutesFromMidnight);
           const newEndMinutes = originalStartMinutesFromMidnight + newDurationMinutes;
           newEndTime = minutesToTime(newEndMinutes);
@@ -1067,7 +1065,7 @@ export function AgendaCalendarView({
           const slots = Math.round(currentResize.currentHeight / SLOT_HEIGHT_PX);
           const newDurationMinutes = slots * SLOT_DURATION_MINUTES;
           const newStartMinutesFromMidnight = originalEndMinutesFromMidnight - newDurationMinutes;
-          
+
           // Asegurar que no se vaya antes del inicio del día visible
           const clampedStartMinutes = Math.max(startMinutes, newStartMinutesFromMidnight);
           newStartTime = minutesToTime(clampedStartMinutes);
@@ -1077,17 +1075,17 @@ export function AgendaCalendarView({
         // Construir fechas completas usando la fecha seleccionada y las horas calculadas
         const [startHour, startMinute] = newStartTime.split(":").map(Number);
         const [endHour, endMinute] = newEndTime.split(":").map(Number);
-        
+
         // Crear fechas en la timezone del tenant
         // selectedDate está en formato "yyyy-MM-dd", necesitamos crear un Date object correctamente
         const [year, month, day] = selectedDate.split("-").map(Number);
         const selectedDateObj = new Date(year, month - 1, day);
         const newStartsAt = new Date(selectedDateObj);
         newStartsAt.setHours(startHour, startMinute, 0, 0);
-        
+
         const newEndsAt = new Date(selectedDateObj);
         newEndsAt.setHours(endHour, endMinute, 0, 0);
-        
+
         // Si la hora de fin es menor que la de inicio, significa que pasó a otro día
         if (newEndsAt <= newStartsAt) {
           newEndsAt.setDate(newEndsAt.getDate() + 1);
@@ -1104,12 +1102,12 @@ export function AgendaCalendarView({
 
       // Verificar si realmente hubo un resize significativo antes de marcar el flag
       const finalResize = resizingRef.current;
-      const wasActualResize = finalResize && 
+      const wasActualResize = finalResize &&
         Math.abs((finalResize.currentHeight || 0) - (finalResize.originalHeight || 0)) > 5;
-      
+
       setResizingBooking(null);
       resizingRef.current = null;
-      
+
       // Solo marcar justFinishedResizeRef si realmente hubo movimiento
       if (wasActualResize) {
         justFinishedResizeRef.current = true;
@@ -1117,7 +1115,7 @@ export function AgendaCalendarView({
           justFinishedResizeRef.current = false;
         }, 100);
       }
-      
+
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
@@ -1177,7 +1175,7 @@ export function AgendaCalendarView({
     const totalSlots = Math.ceil(totalMinutes / SLOT_DURATION_MINUTES);
     return totalSlots * SLOT_HEIGHT_PX; // Usar constantes centralizadas
   }, [startHour, endHour]);
-  
+
   // Verificar si estamos en el día de hoy
   const isToday = useMemo(() => {
     const today = new Date();
@@ -1188,7 +1186,7 @@ export function AgendaCalendarView({
       selectedDateObj.getDate() === today.getDate()
     );
   }, [selectedDate]);
-  
+
   // Calcular minutos actuales del día (para línea roja)
   const currentMinutes = useMemo(() => {
     if (!isToday) return null;
@@ -1196,12 +1194,12 @@ export function AgendaCalendarView({
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const totalMinutes = hours * 60 + minutes;
-    
+
     // Si la hora actual está fuera del rango visible, retornar null
     if (totalMinutes < startMinutes || totalMinutes > (endHour * 60 + 60)) {
       return null;
     }
-    
+
     // Calcular posición relativa al inicio del timeline
     const relativeMinutes = totalMinutes - startMinutes;
     return relativeMinutes;
@@ -1211,7 +1209,7 @@ export function AgendaCalendarView({
   const nowLineTop = useMemo(() => {
     const now = new Date();
     const [y, m, d] = selectedDate.split("-").map(Number);
-    const isSameDay = now.getFullYear() === y && (now.getMonth()+1) === m && now.getDate() === d;
+    const isSameDay = now.getFullYear() === y && (now.getMonth() + 1) === m && now.getDate() === d;
     if (!isSameDay) return null;
     const minutesFromMidnight = now.getHours() * 60 + now.getMinutes();
     const relativeMinutes = minutesFromMidnight - startMinutes;
@@ -1222,43 +1220,43 @@ export function AgendaCalendarView({
 
   if (visibleStaff.length === 0) {
     return (
-      <Card className="p-12 text-center">
-        <p className="text-gray-500">No hay staff seleccionado</p>
-      </Card>
+      <GlassCard variant="default" padding="xl" className="text-center">
+        <p className="text-white/60">No hay staff seleccionado</p>
+      </GlassCard>
     );
   }
 
   return (
     <div className="h-full w-full flex flex-col min-h-0">
       <DayView
-          bookings={displayBookings}
-          staffBlockings={displayStaffBlockings}
-          staffList={visibleStaff}
-          staffSchedules={displayStaffSchedules}
-          selectedDate={selectedDate}
-          timezone={timezone}
-          showFreeSlots={showFreeSlots}
-          onBookingClick={onBookingClick}
-          onSlotClick={handleSlotClick}
-          onFreeSlotClick={(slot) => onNewBooking?.(slot)}
-          onBookingMove={onBookingMove}
-          onBookingResize={onBookingResize}
-          onPopoverShow={(position, slot, booking) => {
-            if (booking) {
-              setBookingActionPopover({
-                isOpen: true,
-                position,
-                booking,
-              });
-            } else if (slot) {
-              setPopoverState({
-                isOpen: true,
-                position,
-                slot,
-              });
-            }
-          }}
-        />
+        bookings={displayBookings}
+        staffBlockings={displayStaffBlockings}
+        staffList={visibleStaff}
+        staffSchedules={displayStaffSchedules}
+        selectedDate={selectedDate}
+        timezone={timezone}
+        showFreeSlots={showFreeSlots}
+        onBookingClick={onBookingClick}
+        onSlotClick={handleSlotClick}
+        onFreeSlotClick={(slot) => onNewBooking?.(slot)}
+        onBookingMove={onBookingMove}
+        onBookingResize={onBookingResize}
+        onPopoverShow={(position, slot, booking) => {
+          if (booking) {
+            setBookingActionPopover({
+              isOpen: true,
+              position,
+              booking,
+            });
+          } else if (slot) {
+            setPopoverState({
+              isOpen: true,
+              position,
+              slot,
+            });
+          }
+        }}
+      />
 
       {/* Popover de acciones para slots vacíos */}
       {popoverState.isOpen && popoverState.slot && (

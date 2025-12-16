@@ -19,7 +19,7 @@ export { Tooltip } from "./Tooltip";
 
 export { Badge } from "./Badge";
 
-export { StatusBadge } from "./StatusBadge";
+
 
 export { Avatar } from "./Avatar";
 

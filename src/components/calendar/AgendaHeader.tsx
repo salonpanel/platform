@@ -2,7 +2,6 @@
 
 import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parseISO } from "date-fns";
 import { Settings, Bell, Search, Filter, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Menu, X } from "lucide-react";
-import { Button } from "@/components/ui/Button";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,6 +10,7 @@ import { GlassCard } from "@/components/agenda/primitives/GlassCard";
 import { theme } from "@/theme/ui";
 import { useState } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
+import { GlassButton } from "@/components/ui/glass/GlassButton";
 
 type ViewMode = "day" | "week" | "month" | "list";
 
@@ -153,13 +153,15 @@ export function AgendaHeader({
           <div className="flex items-center justify-between gap-3">
             {/* Left: Menu & Date (Compact) */}
             <div className="flex items-center gap-3">
-              <button
+              <GlassButton
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 -ml-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                variant="ghost"
+                size="icon"
+                className="-ml-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 aria-label="Menu"
               >
                 {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </button>
+              </GlassButton>
 
               <div className="flex flex-col">
                 <span className="text-sm font-bold text-[var(--text-primary)] font-[var(--font-heading)] leading-none">
@@ -173,13 +175,15 @@ export function AgendaHeader({
 
             {/* Right: Actions (New Booking + Search) */}
             <div className="flex items-center gap-1">
-              <button
+              <GlassButton
                 onClick={onSearchClick}
-                className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                variant="ghost"
+                size="icon"
+                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 aria-label="Buscar"
               >
                 <Search className="h-5 w-5" />
-              </button>
+              </GlassButton>
               {/* Primary Action Button (Add) could be added here if not handled by FAB */}
             </div>
           </div>
@@ -218,33 +222,26 @@ export function AgendaHeader({
                 {/* Secondary Actions Row */}
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={handlePrevious}
-                      className="p-2 rounded-lg bg-[var(--glass-bg-subtle)] text-[var(--text-secondary)]"
-                    >
+                    <GlassButton onClick={handlePrevious} variant="secondary" size="icon" className="h-8 w-8">
                       <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={handleToday}
-                      className="px-3 py-1.5 rounded-lg bg-[var(--glass-bg-subtle)] text-xs font-semibold text-[var(--text-primary)]"
-                    >
+                    </GlassButton>
+                    <GlassButton onClick={handleToday} variant="secondary" size="sm" className="h-8 text-xs">
                       Hoy
-                    </button>
-                    <button
-                      onClick={handleNext}
-                      className="p-2 rounded-lg bg-[var(--glass-bg-subtle)] text-[var(--text-secondary)]"
-                    >
+                    </GlassButton>
+                    <GlassButton onClick={handleNext} variant="secondary" size="icon" className="h-8 w-8">
                       <ChevronRight className="h-4 w-4" />
-                    </button>
+                    </GlassButton>
                   </div>
 
-                  <button
+                  <GlassButton
                     onClick={onNotificationsClick}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--glass-bg-subtle)] text-xs text-[var(--text-secondary)]"
+                    variant="secondary"
+                    size="sm"
+                    className="h-8 text-xs gap-2"
                   >
                     <Bell className="h-4 w-4" />
                     <span>Avisos</span>
-                  </button>
+                  </GlassButton>
                 </div>
               </motion.div>
             )}
@@ -280,54 +277,45 @@ export function AgendaHeader({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             {/* Date Navigation Controls */}
             <div className="flex items-center justify-center sm:justify-start gap-2 min-w-0 flex-1">
-              <button
+              <GlassButton
                 onClick={handlePrevious}
-                className={cn(
-                  "p-2.5 rounded-xl transition-all duration-200",
-                  "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]",
-                  "active:scale-95"
-                )}
+                variant="ghost"
+                size="icon"
+                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 aria-label="Fecha anterior"
               >
                 <ChevronLeft className="h-5 w-5" />
-              </button>
+              </GlassButton>
 
-              <button
+              <GlassButton
                 onClick={handleToday}
-                className={cn(
-                  "px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-200",
-                  "text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)] font-[var(--font-heading)]",
-                  "bg-[var(--glass-bg-default)] border border-[var(--glass-border)]",
-                  "active:scale-95"
-                )}
+                variant="secondary"
+                size="sm"
+                className="font-[var(--font-heading)]"
               >
                 Hoy
-              </button>
+              </GlassButton>
 
-              <button
+              <GlassButton
                 onClick={handleNext}
-                className={cn(
-                  "p-2.5 rounded-xl transition-all duration-200",
-                  "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]",
-                  "active:scale-95"
-                )}
+                variant="ghost"
+                size="icon"
+                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 aria-label="Fecha siguiente"
               >
                 <ChevronRight className="h-5 w-5" />
-              </button>
+              </GlassButton>
 
               {/* Calendar Picker */}
-              <button
+              <GlassButton
                 onClick={onCalendarClick}
-                className={cn(
-                  "p-2.5 rounded-xl transition-all duration-200",
-                  "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]",
-                  "active:scale-95"
-                )}
+                variant="ghost"
+                size="icon"
+                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 aria-label="Seleccionar fecha"
               >
                 <CalendarIcon className="h-5 w-5" />
-              </button>
+              </GlassButton>
 
               {/* Date Badge - Premium styling */}
               <motion.div
@@ -358,51 +346,43 @@ export function AgendaHeader({
             </div>
 
             {/* Mobile Menu Toggle */}
-            <button
+            <GlassButton
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className={cn(
-                "sm:hidden p-2.5 rounded-xl transition-all duration-200",
-                "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]",
-                "active:scale-95"
-              )}
+              variant="ghost"
+              size="icon"
+              className="sm:hidden text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               aria-label="Menu"
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
+            </GlassButton>
 
             {/* Desktop Actions */}
             <div className="hidden sm:flex items-center gap-2">
               {showFiltersButton && (
-                <button
+                <GlassButton
                   onClick={onFiltersClick}
-                  className={cn(
-                    "p-2.5 rounded-xl transition-all duration-200",
-                    "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]",
-                    "active:scale-95"
-                  )}
+                  variant="ghost"
+                  size="icon"
+                  className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                   aria-label="Filtros"
                 >
                   <Filter className="h-5 w-5" />
-                </button>
+                </GlassButton>
               )}
-              <button
+              <GlassButton
                 onClick={onSearchClick}
-                className={cn(
-                  "p-2.5 rounded-xl transition-all duration-200",
-                  "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]",
-                  "active:scale-95"
-                )}
+                variant="ghost"
+                size="icon"
+                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 aria-label="Buscar"
               >
                 <Search className="h-5 w-5" />
-              </button>
-              <button
+              </GlassButton>
+              <GlassButton
                 onClick={onNotificationsClick}
-                className={cn(
-                  "p-2.5 rounded-xl transition-all duration-200 relative",
-                  "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]",
-                  "active:scale-95"
-                )}
+                variant="ghost"
+                size="icon"
+                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] relative"
                 aria-label="Notificaciones"
               >
                 <Bell className="h-5 w-5" />
@@ -410,18 +390,16 @@ export function AgendaHeader({
                   "absolute top-1.5 right-1.5 w-2 h-2 rounded-full border-2",
                   "bg-[var(--status-cancelled)] border-[var(--bg-primary)]"
                 )} />
-              </button>
-              <button
+              </GlassButton>
+              <GlassButton
                 onClick={() => router.push("/panel/ajustes")}
-                className={cn(
-                  "p-2.5 rounded-xl transition-all duration-200",
-                  "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]",
-                  "active:scale-95"
-                )}
+                variant="ghost"
+                size="icon"
+                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 aria-label="Ajustes"
               >
                 <Settings className="h-5 w-5" />
-              </button>
+              </GlassButton>
             </div>
           </div>
 
@@ -436,56 +414,27 @@ export function AgendaHeader({
                 className="sm:hidden overflow-hidden"
               >
                 <div className="flex items-center justify-center gap-3 py-2 border-t border-[var(--glass-border-subtle)]">
+                  {/* Actions in drawer */}
                   {showFiltersButton && (
-                    <button
+                    <GlassButton
                       onClick={onFiltersClick}
-                      className={cn(
-                        "p-2.5 rounded-xl transition-all duration-200",
-                        "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]",
-                        "active:scale-95"
-                      )}
+                      variant="ghost"
+                      size="icon"
+                      className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                       aria-label="Filtros"
                     >
                       <Filter className="h-5 w-5" />
-                    </button>
+                    </GlassButton>
                   )}
-                  <button
-                    onClick={onSearchClick}
-                    className={cn(
-                      "p-2.5 rounded-xl transition-all duration-200",
-                      "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]",
-                      "active:scale-95"
-                    )}
-                    aria-label="Buscar"
-                  >
-                    <Search className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={onNotificationsClick}
-                    className={cn(
-                      "p-2.5 rounded-xl transition-all duration-200 relative",
-                      "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]",
-                      "active:scale-95"
-                    )}
-                    aria-label="Notificaciones"
-                  >
+                  <GlassButton onClick={onSearchClick} variant="ghost" size="icon" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"><Search className="h-5 w-5" /></GlassButton>
+                  <GlassButton onClick={onNotificationsClick} variant="ghost" size="icon" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] relative">
                     <Bell className="h-5 w-5" />
                     <span className={cn(
                       "absolute top-1.5 right-1.5 w-2 h-2 rounded-full border-2",
                       "bg-[var(--status-cancelled)] border-[var(--bg-primary)]"
                     )} />
-                  </button>
-                  <button
-                    onClick={() => router.push("/panel/ajustes")}
-                    className={cn(
-                      "p-2.5 rounded-xl transition-all duration-200",
-                      "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]",
-                      "active:scale-95"
-                    )}
-                    aria-label="Ajustes"
-                  >
-                    <Settings className="h-5 w-5" />
-                  </button>
+                  </GlassButton>
+                  <GlassButton onClick={() => router.push("/panel/ajustes")} variant="ghost" size="icon" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"><Settings className="h-5 w-5" /></GlassButton>
                 </div>
               </motion.div>
             )}

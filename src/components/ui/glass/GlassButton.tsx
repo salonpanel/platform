@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 
 interface GlassButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: "primary" | "secondary" | "danger" | "ghost";
-    size?: "sm" | "md" | "lg";
+    size?: "sm" | "md" | "lg" | "icon";
     isLoading?: boolean;
     leftIcon?: React.ReactNode;
     rightIcon?: React.ReactNode;
@@ -13,7 +13,7 @@ interface GlassButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export const GlassButton = forwardRef<HTMLButtonElement, GlassButtonProps>(
     ({ className, variant = "secondary", size = "md", isLoading, leftIcon, rightIcon, children, disabled, ...props }, ref) => {
 
-        const baseStyles = "inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none";
+        const baseStyles = "inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-white/20 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100";
 
         const variants = {
             primary: "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 focus:ring-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.1)] hover:shadow-[0_0_15px_rgba(16,185,129,0.2)]",
@@ -26,6 +26,7 @@ export const GlassButton = forwardRef<HTMLButtonElement, GlassButtonProps>(
             sm: "h-7 px-2.5 text-xs rounded-lg gap-1.5",
             md: "h-9 px-4 text-sm rounded-lg gap-2",
             lg: "h-11 px-6 text-base rounded-xl gap-2.5",
+            icon: "h-9 w-9 p-0 rounded-lg justify-center",
         };
 
         return (

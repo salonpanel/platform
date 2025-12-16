@@ -1,0 +1,24 @@
+
+> platform@0.1.0 build
+> next build
+
+   Ôû▓ Next.js 16.0.8 (Turbopack)
+   - Environments: .env.local
+
+ ÔÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully in 3.6s
+   Running TypeScript ...
+Failed to compile.
+
+./src/components/agenda/MiniBookingCard.tsx:205:17
+Type error: This comparison appears to be unintentional because the types '"cancelled" | "pending" | "no_show" | "completed" | "hold"' and '"confirmed"' have no overlap.
+
+  203 |             variant={
+  204 |               booking.status === "paid" ? "success" :
+> 205 |                 booking.status === "confirmed" ? "success" :
+      |                 ^
+  206 |                   booking.status === "cancelled" ? "danger" :
+  207 |                     booking.status === "no_show" ? "danger" :
+  208 |                       booking.status === "completed" ? "default" :
+Next.js build worker exited with code: 1 and signal: null

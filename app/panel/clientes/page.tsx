@@ -614,6 +614,8 @@ export default function ClientesPage() {
           onViewHistory={handleViewHistory}
           onEdit={handleEditCustomer}
           onDelete={handleDeleteCustomer}
+          isFiltered={searchTerm !== "" || visitFilter !== "all" || activityFilter !== "all" || segmentFilter !== "all"}
+          onNewCustomer={openNewModal}
         />
 
         {

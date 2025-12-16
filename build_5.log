@@ -1,0 +1,24 @@
+
+> platform@0.1.0 build
+> next build
+
+   Ôû▓ Next.js 16.0.8 (Turbopack)
+   - Environments: .env.local
+
+ ÔÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully in 3.6s
+   Running TypeScript ...
+Failed to compile.
+
+./src/components/agenda/SmartModal.tsx:283:20
+Type error: Cannot find name 'GlassButton'.
+
+  281 |               {variant === "guided" && steps.length > 0 && (
+  282 |                 <>
+> 283 |                   <GlassButton
+      |                    ^
+  284 |                     variant="ghost"
+  285 |                     onClick={() => handleStepChange(localStep - 1)}
+  286 |                     disabled={!canGoPrev}
+Next.js build worker exited with code: 1 and signal: null

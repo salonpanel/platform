@@ -6,8 +6,6 @@ import { useRouter } from "next/navigation";
 import { format, parseISO, isFuture, isPast } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import { es } from "date-fns/locale";
-import { formatInTimeZone } from "date-fns-tz";
-import { es } from "date-fns/locale";
 import { GlassCard, GlassButton, GlassSection } from "@/components/ui/glass";
 import { Loader2, ArrowLeft, Mail, Phone, Calendar, AlertTriangle, X, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
@@ -415,9 +413,10 @@ function ClienteDetailContent() {
   };
 
   if (loadingTenant || loading) {
-    <div className="flex items-center justify-center py-12">
-      <Loader2 className="h-8 w-8 animate-spin text-white/20" />
-    </div>
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-white/20" />
+      </div>
     );
   }
 

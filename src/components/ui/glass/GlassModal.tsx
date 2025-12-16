@@ -71,19 +71,20 @@ export function GlassModal({
                     />
 
                     {/* Modal Container */}
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+                    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 pointer-events-none">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
                             transition={{ duration: 0.2 }}
                             className={cn(
-                                "w-full pointer-events-auto",
-                                sizes[size]
+                                "w-full h-full md:h-auto pointer-events-auto",
+                                sizes[size],
+                                "md:rounded-xl rounded-t-xl overflow-hidden"
                             )}
                         >
                             <GlassCard
-                                className={cn("flex flex-col max-h-[85vh]", className)}
+                                className={cn("flex flex-col h-full md:max-h-[85vh]", className)}
                                 noPadding
                             >
                                 {/* Header */}

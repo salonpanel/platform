@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Spinner } from "@/components/ui/Spinner";
+import { GlassCard, GlassButton } from "@/components/ui/glass";
+import { Loader2 } from "lucide-react";
 
 type ViewMode = "day" | "week" | "month" | "list";
 type DisplayMode = "compact" | "comfortable";
@@ -42,7 +41,7 @@ export default function CalendarSettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Spinner size="lg" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--color-accent)]" />
       </div>
     );
   }
@@ -50,17 +49,17 @@ export default function CalendarSettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-[var(--color-text-primary)]">
+        <h1 className="text-2xl font-semibold text-white">
           Configuración del calendario
         </h1>
-        <p className="text-sm text-[var(--color-text-secondary)] mt-1">
+        <p className="text-sm text-[var(--text-secondary)] mt-1">
           Personaliza cómo se muestra tu agenda
         </p>
       </div>
 
       {/* Vista predeterminada */}
-      <Card className="p-6">
-        <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
+      <GlassCard className="p-6">
+        <h2 className="text-lg font-semibold text-white mb-4">
           Vista predeterminada
         </h2>
         <div className="space-y-2">
@@ -72,7 +71,7 @@ export default function CalendarSettingsPage() {
           ].map((view) => (
             <label
               key={view.value}
-              className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-[var(--color-bg-tertiary)] transition-colors"
+              className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-white/5 transition-colors"
             >
               <input
                 type="radio"
@@ -82,17 +81,17 @@ export default function CalendarSettingsPage() {
                 onChange={(e) =>
                   setSettings({ ...settings, defaultView: e.target.value as ViewMode })
                 }
-                className="text-[var(--color-accent)]"
+                className="text-[var(--color-accent)] focus:ring-[var(--color-accent)]"
               />
-              <span className="text-[var(--color-text-primary)]">{view.label}</span>
+              <span className="text-[var(--text-primary)]">{view.label}</span>
             </label>
           ))}
         </div>
-      </Card>
+      </GlassCard>
 
       {/* Modo de visualización */}
-      <Card className="p-6">
-        <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
+      <GlassCard className="p-6">
+        <h2 className="text-lg font-semibold text-white mb-4">
           Modo de visualización
         </h2>
         <div className="space-y-2">
@@ -102,7 +101,7 @@ export default function CalendarSettingsPage() {
           ].map((mode) => (
             <label
               key={mode.value}
-              className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-[var(--color-bg-tertiary)] transition-colors"
+              className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-white/5 transition-colors"
             >
               <input
                 type="radio"
@@ -112,20 +111,20 @@ export default function CalendarSettingsPage() {
                 onChange={(e) =>
                   setSettings({ ...settings, displayMode: e.target.value as DisplayMode })
                 }
-                className="text-[var(--color-accent)]"
+                className="text-[var(--color-accent)] focus:ring-[var(--color-accent)]"
               />
               <div>
-                <div className="text-[var(--color-text-primary)] font-medium">{mode.label}</div>
-                <div className="text-xs text-[var(--color-text-secondary)]">{mode.desc}</div>
+                <div className="text-[var(--text-primary)] font-medium">{mode.label}</div>
+                <div className="text-xs text-[var(--text-secondary)]">{mode.desc}</div>
               </div>
             </label>
           ))}
         </div>
-      </Card>
+      </GlassCard>
 
       {/* Esquema de colores */}
-      <Card className="p-6">
-        <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
+      <GlassCard className="p-6">
+        <h2 className="text-lg font-semibold text-white mb-4">
           Esquema de colores
         </h2>
         <div className="space-y-2">
@@ -135,7 +134,7 @@ export default function CalendarSettingsPage() {
           ].map((scheme) => (
             <label
               key={scheme.value}
-              className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-[var(--color-bg-tertiary)] transition-colors"
+              className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-white/5 transition-colors"
             >
               <input
                 type="radio"
@@ -145,26 +144,26 @@ export default function CalendarSettingsPage() {
                 onChange={(e) =>
                   setSettings({ ...settings, colorScheme: e.target.value as ColorScheme })
                 }
-                className="text-[var(--color-accent)]"
+                className="text-[var(--color-accent)] focus:ring-[var(--color-accent)]"
               />
               <div>
-                <div className="text-[var(--color-text-primary)] font-medium">{scheme.label}</div>
-                <div className="text-xs text-[var(--color-text-secondary)]">{scheme.desc}</div>
+                <div className="text-[var(--text-primary)] font-medium">{scheme.label}</div>
+                <div className="text-xs text-[var(--text-secondary)]">{scheme.desc}</div>
               </div>
             </label>
           ))}
         </div>
-      </Card>
+      </GlassCard>
 
       {/* Horarios y turnos */}
-      <Card className="p-6">
-        <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
+      <GlassCard className="p-6">
+        <h2 className="text-lg font-semibold text-white mb-4">
           Horarios y turnos
         </h2>
-        <p className="text-sm text-[var(--color-text-secondary)] mb-4">
+        <p className="text-sm text-[var(--text-secondary)] mb-4">
           Configura los horarios de trabajo y disponibilidad del personal
         </p>
-        <Button
+        <GlassButton
           variant="secondary"
           onClick={() => {
             // TODO: Navegar a página de staff/horarios
@@ -172,31 +171,31 @@ export default function CalendarSettingsPage() {
           }}
         >
           Configurar horarios
-        </Button>
-      </Card>
+        </GlassButton>
+      </GlassCard>
 
       {/* Importar calendario */}
-      <Card className="p-6">
-        <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
+      <GlassCard className="p-6">
+        <h2 className="text-lg font-semibold text-white mb-4">
           Importar calendario
         </h2>
-        <p className="text-sm text-[var(--color-text-secondary)] mb-4">
+        <p className="text-sm text-[var(--text-secondary)] mb-4">
           Importa eventos desde un archivo .ics (iCalendar)
         </p>
-        <Button
+        <GlassButton
           variant="secondary"
           disabled
           className="opacity-50 cursor-not-allowed"
         >
           Próximamente
-        </Button>
-      </Card>
+        </GlassButton>
+      </GlassCard>
 
       {/* Botón guardar */}
       <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={saving} isLoading={saving}>
+        <GlassButton onClick={handleSave} disabled={saving} isLoading={saving}>
           Guardar configuración
-        </Button>
+        </GlassButton>
       </div>
     </div>
   );

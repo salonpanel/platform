@@ -4,7 +4,7 @@ import { useState, useEffect, createContext, useContext, ReactNode } from "react
 import { motion, AnimatePresence } from "framer-motion";
 import { X, CheckCircle, AlertCircle, Info, Bell, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/Button";
+import { GlassButton } from "@/components/ui/glass/GlassButton";
 
 type NotificationType = "success" | "error" | "warning" | "info" | "achievement";
 
@@ -250,8 +250,8 @@ function NotificationToast({ notification, onDismiss, index }: NotificationToast
                     notification.context.priority === "high"
                       ? "bg-[var(--status-error)]/10 text-[var(--status-error)]"
                       : notification.context.priority === "medium"
-                      ? "bg-[var(--status-warning)]/10 text-[var(--status-warning)]"
-                      : "bg-[var(--text-tertiary)]/10 text-[var(--text-tertiary)]"
+                        ? "bg-[var(--status-warning)]/10 text-[var(--status-warning)]"
+                        : "bg-[var(--text-tertiary)]/10 text-[var(--text-tertiary)]"
                   )}>
                     {notification.context.priority}
                   </span>
@@ -273,14 +273,14 @@ function NotificationToast({ notification, onDismiss, index }: NotificationToast
         {/* Action button */}
         {notification.action && (
           <div className="mt-3 pt-3 border-t border-[var(--glass-border-subtle)]">
-            <Button
+            <GlassButton
               size="sm"
-              variant={notification.action.variant === "destructive" ? "destructive" : "primary"}
+              variant={notification.action.variant === "destructive" ? "danger" : "primary"}
               onClick={notification.action.onClick}
               className="w-full"
             >
               {notification.action.label}
-            </Button>
+            </GlassButton>
           </div>
         )}
 

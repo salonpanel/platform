@@ -1,0 +1,24 @@
+
+> platform@0.1.0 build
+> next build
+
+   Ôû▓ Next.js 16.0.8 (Turbopack)
+   - Environments: .env.local
+
+ ÔÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully in 3.7s
+   Running TypeScript ...
+Failed to compile.
+
+./src/components/calendar/CustomerQuickView.tsx:57:8
+Type error: Cannot find name 'GlassCard'.
+
+  55 |         onClick={onClose}
+  56 |       />
+> 57 |       <GlassCard className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-white/10 shadow-[0px_8px_32px_rgba(0,0,0,0.5)] bg-[#15171A]">
+     |        ^
+  58 |         {/* Header */}
+  59 |         <div className="flex items-center justify-between p-6 border-b border-white/5">
+  60 |           <div className="flex items-center gap-3">
+Next.js build worker exited with code: 1 and signal: null

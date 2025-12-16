@@ -1,0 +1,24 @@
+
+> platform@0.1.0 build
+> next build
+
+   Ôû▓ Next.js 16.0.8 (Turbopack)
+   - Environments: .env.local
+
+ ÔÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully in 3.7s
+   Running TypeScript ...
+Failed to compile.
+
+./src/components/calendar/CustomerQuickView.tsx:88:12
+Type error: Cannot find name 'GlassButton'.
+
+  86 |             </div>
+  87 |           </div>
+> 88 |           <GlassButton
+     |            ^
+  89 |             onClick={onClose}
+  90 |             variant="ghost"
+  91 |             size="icon"
+Next.js build worker exited with code: 1 and signal: null

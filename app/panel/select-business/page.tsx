@@ -27,15 +27,15 @@ export default async function SelectBusinessPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4">
+        <div className="min-h-screen flex items-center justify-center p-4">
             <div className="max-w-md w-full space-y-8">
                 <div className="text-center">
-                    <h2 className="mt-6 text-3xl font-bold text-white">Selecciona tu negocio</h2>
-                    <p className="mt-2 text-sm text-slate-400">
+                    <h2 className="mt-6 text-3xl font-bold text-white tracking-tight">Selecciona tu negocio</h2>
+                    <p className="mt-2 text-sm text-[var(--text-secondary)]">
                         Tienes acceso a {memberships.length} organizaciones
                     </p>
                 </div>
-                <div className="mt-8 space-y-4">
+                <div className="mt-8">
                     <SelectBusinessClient memberships={memberships} />
                 </div>
             </div>

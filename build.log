@@ -1,0 +1,150 @@
+
+> platform@0.1.0 build
+> next build
+
+   Ôû▓ Next.js 16.0.8 (Turbopack)
+   - Environments: .env.local
+
+ ÔÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+   Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 7 errors:
+./app/panel/clientes/[id]/page.tsx:10:10
+Ecmascript file had an error
+   8 | import { es } from "date-fns/locale";
+   9 | import { formatInTimeZone } from "date-fns-tz";
+> 10 | import { es } from "date-fns/locale";
+     |          ^^
+  11 | import { GlassCard, GlassButton, GlassSection } from "@/components/ui/glass";
+  12 | import { Loader2, ArrowLeft, Mail, Phone, Calendar, AlertTriangle, X, ChevronDown, ChevronUp } from "lucide-react";
+  13 | import Link from "next/link";
+
+the name `es` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./app/panel/clientes/[id]/page.tsx [Client Component Browser]
+    ./app/panel/clientes/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/panel/clientes/[id]/page.tsx [Client Component SSR]
+    ./app/panel/clientes/[id]/page.tsx [Server Component]
+
+
+./app/panel/clientes/[id]/page.tsx:9:10
+Ecmascript file had an error
+   7 | import { formatInTimeZone } from "date-fns-tz";
+   8 | import { es } from "date-fns/locale";
+>  9 | import { formatInTimeZone } from "date-fns-tz";
+     |          ^^^^^^^^^^^^^^^^
+  10 | import { es } from "date-fns/locale";
+  11 | import { GlassCard, GlassButton, GlassSection } from "@/components/ui/glass";
+  12 | import { Loader2, ArrowLeft, Mail, Phone, Calendar, AlertTriangle, X, ChevronDown, ChevronUp } from "lucide-react";
+
+the name `formatInTimeZone` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./app/panel/clientes/[id]/page.tsx [Client Component Browser]
+    ./app/panel/clientes/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/panel/clientes/[id]/page.tsx [Client Component SSR]
+    ./app/panel/clientes/[id]/page.tsx [Server Component]
+
+
+./app/panel/marketing/page.tsx:1:10
+Ecmascript file had an error
+> 1 | import { useEffect, useState, Suspense, useMemo } from "react";
+    |          ^^^^^^^^^
+  2 | import { useSearchParams } from "next/navigation";
+  3 | import { getCurrentTenant } from "@/lib/panel-tenant";
+  4 | import { GlassCard, GlassButton } from "@/components/ui/glass";
+
+You're importing a component that needs `useEffect`. This React Hook only works in a Client Component. To fix, mark the file (or its parent) with the `"use client"` directive.
+
+ Learn more: https://nextjs.org/docs/app/api-reference/directives/use-client
+
+
+
+
+./app/panel/marketing/page.tsx:2:10
+Ecmascript file had an error
+  1 | import { useEffect, useState, Suspense, useMemo } from "react";
+> 2 | import { useSearchParams } from "next/navigation";
+    |          ^^^^^^^^^^^^^^^
+  3 | import { getCurrentTenant } from "@/lib/panel-tenant";
+  4 | import { GlassCard, GlassButton } from "@/components/ui/glass";
+  5 | import { Loader2, Megaphone, Users, Calendar, TrendingUp } from "lucide-react";
+
+You're importing a component that needs `useSearchParams`. This React Hook only works in a Client Component. To fix, mark the file (or its parent) with the `"use client"` directive.
+
+ Learn more: https://nextjs.org/docs/app/api-reference/directives/use-client
+
+
+
+
+./app/panel/marketing/page.tsx:1:21
+Ecmascript file had an error
+> 1 | import { useEffect, useState, Suspense, useMemo } from "react";
+    |                     ^^^^^^^^
+  2 | import { useSearchParams } from "next/navigation";
+  3 | import { getCurrentTenant } from "@/lib/panel-tenant";
+  4 | import { GlassCard, GlassButton } from "@/components/ui/glass";
+
+You're importing a component that needs `useState`. This React Hook only works in a Client Component. To fix, mark the file (or its parent) with the `"use client"` directive.
+
+ Learn more: https://nextjs.org/docs/app/api-reference/directives/use-client
+
+
+
+
+./app/panel/select-business/client.tsx:1:10
+Ecmascript file had an error
+> 1 | import { useRouter } from "next/navigation";
+    |          ^^^^^^^^^
+  2 | import { useState } from "react";
+  3 | import { GlassCard } from "@/components/ui/glass";
+  4 | import { Loader2, ArrowRight } from "lucide-react";
+
+You're importing a component that needs `useRouter`. This React Hook only works in a Client Component. To fix, mark the file (or its parent) with the `"use client"` directive.
+
+ Learn more: https://nextjs.org/docs/app/api-reference/directives/use-client
+
+
+
+Import trace:
+  Server Component:
+    ./app/panel/select-business/client.tsx
+    ./app/panel/select-business/page.tsx
+
+
+./app/panel/select-business/client.tsx:2:10
+Ecmascript file had an error
+  1 | import { useRouter } from "next/navigation";
+> 2 | import { useState } from "react";
+    |          ^^^^^^^^
+  3 | import { GlassCard } from "@/components/ui/glass";
+  4 | import { Loader2, ArrowRight } from "lucide-react";
+  5 |
+
+You're importing a component that needs `useState`. This React Hook only works in a Client Component. To fix, mark the file (or its parent) with the `"use client"` directive.
+
+ Learn more: https://nextjs.org/docs/app/api-reference/directives/use-client
+
+
+
+Import trace:
+  Server Component:
+    ./app/panel/select-business/client.tsx
+    ./app/panel/select-business/page.tsx
+
+
+    at <unknown> (./app/panel/clientes/[id]/page.tsx:10:10)
+    at <unknown> (./app/panel/clientes/[id]/page.tsx:9:10)
+    at <unknown> (./app/panel/marketing/page.tsx:1:10)
+    at <unknown> (./app/panel/marketing/page.tsx:2:10)
+    at <unknown> (./app/panel/marketing/page.tsx:1:21)
+    at <unknown> (./app/panel/select-business/client.tsx:1:10)
+    at <unknown> (./app/panel/select-business/client.tsx:2:10)

@@ -1,7 +1,6 @@
 "use client";
 
-import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
+import { GlassModal } from "@/components/ui/glass/GlassModal";
 import { AlertTriangle, Clock, User, X } from "lucide-react";
 import { formatInTenantTz } from "@/lib/timezone";
 import { motion } from "framer-motion";
@@ -49,7 +48,7 @@ export function ConflictResolutionModal({
     if (!dateStr || dateStr.trim() === "") {
       return "--:--";
     }
-    
+
     try {
       return formatInTenantTz(dateStr, timezone, "HH:mm");
     } catch (error) {
@@ -61,7 +60,7 @@ export function ConflictResolutionModal({
   const canForce = userRole === "owner" || userRole === "admin" || userRole === "manager";
 
   return (
-    <Modal
+    <GlassModal
       isOpen={isOpen}
       onClose={onClose}
       title="Conflicto de horario detectado"
@@ -143,8 +142,8 @@ export function ConflictResolutionModal({
                           {conflict.blocking_type === "block"
                             ? "Bloqueo"
                             : conflict.blocking_type === "absence"
-                            ? "Ausencia"
-                            : "Vacaciones"}
+                              ? "Ausencia"
+                              : "Vacaciones"}
                         </strong>
                       </p>
                       {conflict.blocking_reason && (
@@ -163,7 +162,7 @@ export function ConflictResolutionModal({
         {/* Opciones de resolución */}
         <div className="pt-4 border-t border-white/5 space-y-2">
           <p className="text-sm font-semibold text-white mb-3 font-['Plus_Jakarta_Sans']">¿Cómo quieres resolverlo?</p>
-          
+
           <div className="grid grid-cols-1 gap-2">
             <motion.button
               whileHover={{ scale: 1.01 }}
@@ -176,7 +175,7 @@ export function ConflictResolutionModal({
               </div>
               <span>Cambiar la hora de la nueva cita</span>
             </motion.button>
-            
+
             <motion.button
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
@@ -202,7 +201,7 @@ export function ConflictResolutionModal({
                 <span>Forzar solape (solo administradores)</span>
               </motion.button>
             )}
-            
+
             <motion.button
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
@@ -214,7 +213,7 @@ export function ConflictResolutionModal({
           </div>
         </div>
       </div>
-    </Modal>
+    </GlassModal>
   );
 }
 
