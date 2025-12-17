@@ -1,5 +1,8 @@
--- Phase H.5.3: Harden Agenda RPC
--- Goal: Handle "No Staff" and "Empty" states explicitly instead of ERROR or generic OK.
+-- Phase H.5.3 V3: Harden Agenda RPC + Fix Customer Column + Fix Aggregation Ordering
+-- Goal: 
+-- 1. Handle "No Staff" explicitly.
+-- 2. Fix "first_name does not exist" -> use "name".
+-- 3. Fix "must appear in GROUP BY" -> move ORDER BY inside jsonb_agg.
 
 CREATE OR REPLACE FUNCTION panel_fetch_agenda_dataset_v1(
     p_tenant_id uuid,
@@ -54,7 +57,6 @@ BEGIN
     WHERE tenant_id = p_tenant_id AND active = true;
 
     IF v_staff_count = 0 THEN
-         -- Return early with EMPTY_NO_STAFF status
          RETURN jsonb_build_object(
             'status', 'EMPTY_NO_STAFF',
             'tenant', jsonb_build_object(
@@ -70,18 +72,19 @@ BEGIN
         );
     END IF;
 
-    -- Fetch proper staff JSON
+    -- Fetch proper staff JSON with deterministic ordering
     SELECT jsonb_agg(
         jsonb_build_object(
             'id', id,
             'name', name,
             'active', active
         )
+        ORDER BY name ASC
     ) INTO v_staff
     FROM staff
     WHERE tenant_id = p_tenant_id AND active = true;
     
-    -- 4. Fetch Services (Active)
+    -- 4. Fetch Services (Active) with deterministic ordering
     SELECT jsonb_agg(
         jsonb_build_object(
             'id', id,
@@ -90,6 +93,7 @@ BEGIN
             'price_cents', price_cents,
             'buffer_min', COALESCE(buffer_min, 0)
         )
+        ORDER BY name ASC
     ) INTO v_services
     FROM services
     WHERE tenant_id = p_tenant_id AND active = true;
@@ -107,6 +111,7 @@ BEGIN
             'reason', reason,
             'notes', notes
         )
+        ORDER BY start_at ASC
     ) INTO v_blockings
     FROM staff_blockings
     WHERE tenant_id = p_tenant_id 
@@ -122,13 +127,14 @@ BEGIN
             'start_time', start_time,
             'end_time', end_time
         )
+        ORDER BY staff_id, start_time
     ) INTO v_schedules
     FROM staff_schedules
     WHERE tenant_id = p_tenant_id AND is_active = true;
 
     IF v_schedules IS NULL THEN v_schedules := '[]'::jsonb; END IF;
 
-    -- 7. Fetch Bookings with Relations
+    -- 7. Fetch Bookings with Relations AND Correct Aggregation Ordering
     SELECT jsonb_agg(
         jsonb_build_object(
             'id', b.id,
@@ -143,7 +149,7 @@ BEGIN
             'staff_id', b.staff_id,
             'customer', jsonb_build_object(
                 'id', c.id,
-                'name', COALESCE(c.first_name, 'Cliente'),
+                'name', COALESCE(c.name, 'Cliente'),
                 'phone', c.phone,
                 'email', c.email
             ),
@@ -157,6 +163,7 @@ BEGIN
                 'name', st.name
             )
         )
+        ORDER BY b.starts_at ASC
     ) INTO v_bookings
     FROM bookings b
     LEFT JOIN customers c ON b.customer_id = c.id
@@ -164,8 +171,7 @@ BEGIN
     LEFT JOIN staff st ON b.staff_id = st.id
     WHERE b.tenant_id = p_tenant_id
       AND b.starts_at >= p_start_date::timestamptz
-      AND b.ends_at <= p_end_date::timestamptz
-    ORDER BY b.starts_at ASC;
+      AND b.ends_at <= p_end_date::timestamptz;
 
     IF v_bookings IS NULL THEN v_bookings := '[]'::jsonb; END IF;
 

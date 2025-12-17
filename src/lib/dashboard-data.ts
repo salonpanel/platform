@@ -152,8 +152,30 @@ export async function fetchUpcomingBookings(
   supabase: SupabaseClient,
   tenantId: string
 ): Promise<UpcomingBooking[]> {
-  // Disabled until RPC is consolidated or legacy query is fixed
-  return [];
+  const { data, error } = await supabase.rpc("panel_fetch_upcoming_bookings_v1", {
+    p_tenant_id: tenantId,
+    p_limit: 15
+  });
+
+  if (error) {
+    console.error("Error fetching upcoming bookings (RPC):", error);
+    return [];
+  }
+
+  // Map RPC result to UpcomingBooking type if needed, or if RPC matches exactly:
+  // RPC returns: { id, starts_at, ends_at, status, customer: {name, email}, service: {name}, staff: {name} }
+  // This matches our type almost exactly.
+  // We just need to handle nulls safely as per the type definition.
+
+  return (data || []).map((row: any) => ({
+    id: row.id,
+    starts_at: row.starts_at,
+    ends_at: row.ends_at ?? null,
+    status: row.status ?? null,
+    customer: row.customer ? { name: row.customer.name, email: row.customer.email } : null,
+    service: row.service ? { name: row.service.name } : null,
+    staff: row.staff ? { name: row.staff.name } : null,
+  }));
 }
 
 export async function fetchActiveStaff(
