@@ -109,44 +109,51 @@ export async function fetchDashboardKPIs(
   return validateDashboardKpis(rpcData as DashboardKpis);
 }
 
+// export async function fetchUpcomingBookings(
+//   supabase: SupabaseClient,
+//   tenantId: string
+// ): Promise<UpcomingBooking[]> {
+//   const { data, error } = await supabase
+//     .from("bookings")
+//     .select(`
+//         id, starts_at, ends_at, status,
+//         customer:customers(name, email),
+//         service:services!bookings_service_id_fkey(name, price_cents),
+//         staff:staff!bookings_staff_id_fkey(name)
+//       `)
+//     .eq("tenant_id", tenantId)
+//     .gte("starts_at", new Date().toISOString())
+//     .not("status", "eq", "cancelled")
+//     .order("starts_at", { ascending: true })
+//     .limit(15);
+
+//   if (error) {
+//     console.error("Error fetching upcoming bookings", error);
+//     return [];
+//   }
+
+//   return (data || []).map((row: any) => {
+//     const customer = Array.isArray(row.customer) ? row.customer[0] : row.customer;
+//     const service = Array.isArray(row.service) ? row.service[0] : row.service;
+//     const staff = Array.isArray(row.staff) ? row.staff[0] : row.staff;
+
+//     return {
+//       id: row.id,
+//       starts_at: row.starts_at,
+//       ends_at: row.ends_at ?? null,
+//       status: row.status ?? null,
+//       customer: customer ? { name: customer?.name ?? null, email: customer?.email ?? null } : null,
+//       service: service ? { name: service?.name ?? null } : null,
+//       staff: staff ? { name: staff?.name ?? null } : null,
+//     };
+//   });
+// }
 export async function fetchUpcomingBookings(
   supabase: SupabaseClient,
   tenantId: string
 ): Promise<UpcomingBooking[]> {
-  const { data, error } = await supabase
-    .from("bookings")
-    .select(`
-        id, starts_at, ends_at, status,
-        customer:customers(name, email),
-        service:services!bookings_service_id_fkey(name, price_cents),
-        staff:staff!bookings_staff_id_fkey(name)
-      `)
-    .eq("tenant_id", tenantId)
-    .gte("starts_at", new Date().toISOString())
-    .not("status", "eq", "cancelled")
-    .order("starts_at", { ascending: true })
-    .limit(15);
-
-  if (error) {
-    console.error("Error fetching upcoming bookings", error);
-    return [];
-  }
-
-  return (data || []).map((row: any) => {
-    const customer = Array.isArray(row.customer) ? row.customer[0] : row.customer;
-    const service = Array.isArray(row.service) ? row.service[0] : row.service;
-    const staff = Array.isArray(row.staff) ? row.staff[0] : row.staff;
-
-    return {
-      id: row.id,
-      starts_at: row.starts_at,
-      ends_at: row.ends_at ?? null,
-      status: row.status ?? null,
-      customer: customer ? { name: customer?.name ?? null, email: customer?.email ?? null } : null,
-      service: service ? { name: service?.name ?? null } : null,
-      staff: staff ? { name: staff?.name ?? null } : null,
-    };
-  });
+  // Disabled until RPC is consolidated or legacy query is fixed
+  return [];
 }
 
 export async function fetchActiveStaff(

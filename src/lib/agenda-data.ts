@@ -75,14 +75,15 @@ export async function fetchAgendaDataset(
     throw new Error(`Error loading agenda: ${data.error?.message || "Internal RPC Error"}`);
   }
 
-  // Parse result
-  // If status is OK, data contains the fields directly at that level?
-  // Let's check the SQL: v_result := jsonb_build_object('status', 'OK', 'tenant', ..., 'staff', ...)
-  // So data.staff, data.services, etc.
-
-  if (!data || data.status !== "OK") {
+  // Phase H.5.2: Handling Special Statuses
+  const status = data?.status;
+  if (!data || (status !== "OK" && status !== "EMPTY_NO_STAFF")) {
+    // Unexpected status or missing data
     throw new Error("Invalid response from Agenda RPC");
   }
+
+  // NOTE: If status is EMPTY_NO_STAFF, the arrays will be empty as per RPC definition.
+  // We can let it flow through or add specific metadata if needed.
 
   // Helper to ensure array
   const safeArray = (arr: any) => Array.isArray(arr) ? arr : [];

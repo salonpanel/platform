@@ -159,7 +159,7 @@ export function useAgendaData({ tenantId, selectedDate, viewMode, initialData }:
       throw new Error(`Error loading agenda: ${data.error?.message || "Internal RPC Error"}`);
     }
 
-    if (!data || data.status !== "OK") {
+    if (!data || (data.status !== "OK" && data.status !== "EMPTY_NO_STAFF")) {
       throw new Error("Invalid response from Agenda RPC");
     }
 
@@ -167,6 +167,7 @@ export function useAgendaData({ tenantId, selectedDate, viewMode, initialData }:
     // Use safeArray helper or similar logic
     const safeArray = (arr: any) => Array.isArray(arr) ? arr : [];
 
+    // If EMPTY_NO_STAFF, these will be empty
     setBookings(safeArray(data.bookings));
     setStaffBlockings(safeArray(data.blockings));
     setStaffSchedules(safeArray(data.schedules));
