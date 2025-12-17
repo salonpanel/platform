@@ -47,7 +47,8 @@ export function useStaffHandlers(
                 p_display_name: params.display_name,
                 p_weekly_hours: params.weekly_hours,
                 p_user_id: params.user_id,
-                p_role: params.role,
+                // SAFETY FIX: Ensure no 'admin' is ever sent, forcing 'manager' if so.
+                p_role: params.role === 'admin' ? 'manager' : (params.role || 'staff'),
                 p_schedules: params.schedules || [],
                 p_service_ids: params.service_ids || []
             });

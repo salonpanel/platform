@@ -19,16 +19,20 @@ SET search_path = public
 AS $$
 DECLARE
     v_new_staff_id uuid;
-    v_new_staff jsonb;
-    v_schedule jsonb;
-    v_service_id uuid;
+    v_safe_role text;
 BEGIN
+    -- 0. Sanitization (The Fix)
+    v_safe_role := p_role;
+    IF v_safe_role = 'admin' THEN
+        v_safe_role := 'manager';
+    END IF;
+
     -- 1. Validate Access
     IF NOT EXISTS (
         SELECT 1 FROM memberships 
         WHERE user_id = auth.uid() 
         AND tenant_id = p_tenant_id
-        AND role IN ('owner', 'admin') -- strict role check for mutations
+        AND role IN ('owner', 'admin', 'manager') -- strict role check for mutations
     ) THEN
         RAISE EXCEPTION 'Access denied';
     END IF;
@@ -50,7 +54,7 @@ BEGIN
         true, -- default active
         COALESCE(p_weekly_hours, 40),
         p_user_id,
-        COALESCE(p_role, 'staff'),
+        COALESCE(v_safe_role, 'staff')::app_role,
         true -- default provides_services
     )
     RETURNING id INTO v_new_staff_id;
