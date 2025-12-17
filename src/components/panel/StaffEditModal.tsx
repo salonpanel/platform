@@ -454,12 +454,12 @@ export function StaffEditModal({
                     className="w-full appearance-none rounded-lg glass border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white transition-all duration-200 focus:border-emerald-500/50 focus:bg-white/[0.05] focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
                   >
                     <option value="staff" className="bg-gray-900 text-white">Staff - Solo puede ver su agenda</option>
-                    <option value="admin" className="bg-gray-900 text-white">Admin - Puede gestionar todo excepto configuración</option>
+                    <option value="manager" className="bg-gray-900 text-white">Manager - Puede gestionar todo excepto configuración</option>
                     <option value="owner" className="bg-gray-900 text-white">Owner - Acceso completo</option>
                   </select>
                   <p className="text-[10px] sm:text-xs ml-0.5 text-[var(--text-secondary)]">
                     {form.userRole === "staff" && "Podrá ver y gestionar su propia agenda de citas"}
-                    {form.userRole === "admin" && "Podrá gestionar staff, servicios y ver todas las citas"}
+                    {form.userRole === "manager" && "Podrá gestionar staff, servicios y ver todas las citas"}
                     {form.userRole === "owner" && "Tendrá acceso completo a todas las funcionalidades"}
                   </p>
                 </div>
