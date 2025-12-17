@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { User, UserPlus, Scissors, Calendar, Edit, Power } from "lucide-react";
 import { useStaffPageData } from "@/hooks/useOptimizedData";
-import { useStaffHandlers } from "@/hooks/useStaffHandlers";
+import { useStaffHandlers } from "@/hooks/useStaffHandlersV2";
 
 type Staff = {
   id: string;
