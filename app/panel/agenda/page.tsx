@@ -1,26 +1,15 @@
 import { cookies } from "next/headers";
 import { Suspense } from "react";
 import { AgendaSkeleton } from "@/components/skeletons/AgendaSkeleton";
-import { createServerClient } from "@supabase/ssr";
 import { supabaseServer } from "@/lib/supabase";
 import { fetchAgendaDataset, getAgendaRange } from "@/lib/agenda-data";
 import AgendaPageClient from "./AgendaPageClient";
 import { ViewMode } from "@/types/agenda";
+import { createClientForServer } from "@/lib/supabase/server-client";
 
 async function getInitialAgendaData(impersonateOrgId: string | null, selectedDate: string, viewMode: ViewMode) {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll() { },
-      },
-    }
-  );
+  // Use shared server client helper to ensure correct cookie settings (sb-panel-auth)
+  const supabase = await createClientForServer();
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
