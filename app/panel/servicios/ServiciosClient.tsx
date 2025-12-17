@@ -8,11 +8,9 @@ import { updateServiceStaff } from "@/lib/staff/staffServicesRelations";
 import {
   GlassButton,
   GlassCard,
-  GlassInput,
   GlassSelect,
   GlassBadge,
   GlassModal,
-  GlassToast,
   GlassSection,
   GlassEmptyState,
 } from "@/components/ui/glass";
@@ -34,6 +32,10 @@ import type {
   SortOption,
 } from "./types";
 
+
+
+import { useServicesHandlers } from "@/hooks/useServicesHandlers";
+
 const PAGE_SIZE_OPTIONS = [8, 12, 24, 48];
 
 const STATUS_OPTIONS: Array<{ value: ServiceFilters["status"]; label: string }> =
@@ -54,13 +56,6 @@ const CATEGORY_OPTIONS = [
   "Otros",
 ];
 
-const STRIPE_OPTIONS: Array<{ value: ServiceFilters["stripe"]; label: string }> =
-  [
-    { value: "all", label: "Stripe (todos)" },
-    { value: "synced", label: "Sincronizados" },
-    { value: "pending", label: "Pendientes" },
-  ];
-
 const SORT_OPTIONS: Array<{ value: SortOption; label: string }> = [
   { value: "name", label: "Nombre (A-Z)" },
   { value: "duration", label: "Duración asc." },
@@ -69,7 +64,7 @@ const SORT_OPTIONS: Array<{ value: SortOption; label: string }> = [
 
 const formatEuros = (value: number) => `${value.toFixed(2)} €`;
 
-type QuickFilterId = "noCategory" | "noStripe" | "noBuffer";
+type QuickFilterId = "noCategory" | "noBuffer";
 
 type ServiciosClientProps = {
   tenantId: string;
@@ -97,21 +92,21 @@ export function ServiciosClient({
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [previewService, setPreviewService] = useState<Service | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
-  const [syncingStripe, setSyncingStripe] = useState(false);
-  const [syncingServiceId, setSyncingServiceId] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [servicePendingArchive, setServicePendingArchive] =
-    useState<Service | null>(null);
-  const [servicePendingHardDelete, setServicePendingHardDelete] =
-    useState<Service | null>(null);
-  const [staffOptions, setStaffOptions] = useState<Array<{ id: string; name: string }>>([]);
-  const [staffOptionsLoading, setStaffOptionsLoading] = useState(false);
   const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
+  // UI State for modals
+  const [servicePendingArchive, setServicePendingArchive] = useState<Service | null>(null);
+  const [servicePendingHardDelete, setServicePendingHardDelete] = useState<Service | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [staffOptions, setStaffOptions] = useState<
+    Array<{ id: string; name: string }>
+  >([]);
+  const [staffOptionsLoading, setStaffOptionsLoading] = useState(false);
+
+  // Hook Handlers
+  const { saveService, duplicateService: duplicateServiceHandler, deleteService } = useServicesHandlers({ tenantId, onAfterMutation: () => loadServices() });
 
   const [filterStatus, setFilterStatus] =
     useState<ServiceFilters["status"]>("active");
-  const [filterStripe, setFilterStripe] =
-    useState<ServiceFilters["stripe"]>("all");
   const [filterCategory, setFilterCategory] = useState("all");
   const [bufferFilter, setBufferFilter] =
     useState<ServiceFilters["buffer"]>("all");
@@ -167,20 +162,14 @@ export function ServiciosClient({
       try {
         setPageError(null);
 
-        // 🚀 OPTIMIZACIÓN: Usar get_services_filtered con filtros del servidor
-        const { data, error } = await supabase.rpc('get_services_filtered', {
+        // 🚀 OPTIMIZACIÓN: Usar manage_list_services con filtros del servidor
+        const { data, error } = await supabase.rpc('manage_list_services', {
           p_tenant_id: tenantId,
           p_status: filterStatus,
           p_category: filterCategory !== 'all' ? filterCategory : null,
-          p_min_price: priceRange[0] > 0 ? Math.round(priceRange[0] * 100) : null,
-          p_max_price: priceRange[1] > 0 ? Math.round(priceRange[1] * 100) : null,
-          p_has_buffer: bufferFilter === 'no_buffer' ? false : null,
-          p_stripe_synced: filterStripe === 'synced' ? true : (filterStripe === 'pending' ? false : null),
           p_search_term: searchTerm || null,
           p_sort_by: sortBy,
-          p_sort_direction: 'ASC',
-          p_limit: 1000, // Cargar todos inicialmente (optimizar después con paginación real)
-          p_offset: 0,
+          p_sort_direction: 'asc',
         });
 
         if (error) {
@@ -206,7 +195,7 @@ export function ServiciosClient({
         }
       }
     },
-    [supabase, tenantId, filterStatus, filterCategory, priceRange, bufferFilter, filterStripe, searchTerm, sortBy, services.length]
+    [supabase, tenantId, filterStatus, filterCategory, searchTerm, sortBy, services.length]
   );
 
   // Cargar servicios inicialmente cuando el componente se monta o tenantId cambia
@@ -225,7 +214,7 @@ export function ServiciosClient({
     }, 300); // Debounce de 300ms
 
     return () => clearTimeout(timer);
-  }, [filterStatus, filterCategory, priceRange, bufferFilter, filterStripe, searchTerm, sortBy, tenantId, loadServices]);
+  }, [filterStatus, filterCategory, priceRange, bufferFilter, searchTerm, sortBy, tenantId, loadServices]);
 
   const openNewModal = useCallback(
     (defaults?: Partial<ServiceFormState>) => {
@@ -353,159 +342,68 @@ export function ServiciosClient({
       active: form.active,
       category: form.category.trim() || DEFAULT_CATEGORY,
       pricing_levels: form.pricing_levels,
-      // ...existing code...
+      description: form.description,
+      // media_url: form.media_url, // TODO: Add support for media in RPC if needed
+      // vip_tier: form.vip_tier,
+      // combo_service_ids: form.combo_service_ids,
+      // duration_variants: form.duration_variants
     };
 
+    setSaving(true);
     try {
-      let response: Response;
-      if (editingService) {
-        response = await fetch(`/api/services/${editingService.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-      } else {
-        response = await fetch("/api/services", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            tenant_id: tenantId,
-            ...payload,
-          }),
-        });
+      // 1. Save Service
+      const result = await saveService({
+        id: editingService?.id,
+        ...payload
+      });
+
+      if (!result.success || !result.serviceId) {
+        // Error is handled by hook toast
+        return;
       }
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Error al guardar servicio");
-      }
+      // 2. Handle Staff Assignments
+      // Update staff assignments using the returned serviceId
+      await updateServiceStaff(tenantId, result.serviceId, selectedStaffIds);
 
-      // Handle service-staff assignments
-      if (editingService) {
-        // For existing services, update staff assignments
-        await updateServiceStaff(tenantId, editingService.id, selectedStaffIds);
-      } else {
-        // For new services, assign staff after creation
-        await updateServiceStaff(tenantId, data.id, selectedStaffIds);
-      }
-
-      // Update lista local sin depender de recarga completa
-      if (editingService) {
-        setServices((prev) =>
-          prev.map((service) =>
-            service.id === editingService.id
-              ? normalizeService(data as Service)
-              : service
-          )
-        );
-      } else {
-        setServices((prev) => [
-          ...prev,
-          normalizeService(data as Service),
-        ]);
-      }
+      // 3. Success
       closeModal();
-      setSuccessMessage(
-        editingService
-          ? "Servicio actualizado correctamente"
-          : "Servicio creado correctamente"
-      );
-      setTimeout(() => setSuccessMessage(null), 3000);
+      // loadServices is called automatically via onAfterMutation in hook
     } catch (err: any) {
       setModalError(err?.message || "Error al guardar servicio");
     } finally {
       setSaving(false);
     }
-  }, [tenantId, form, saving, editingService, loadServices, closeModal]);
+  }, [tenantId, form, saving, editingService, selectedStaffIds, saveService, closeModal]);
 
   const toggleActive = useCallback(
     async (id: string, currentActive: boolean) => {
+      const service = services.find((s) => s.id === id);
+      if (!service) return;
+
       setTogglingId(id);
       try {
-        const response = await fetch(`/api/services/${id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ active: !currentActive }),
+        await saveService({
+          ...mapServiceToForm(service),
+          id: service.id,
+          active: !currentActive,
         });
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error || "Error al actualizar servicio");
-        }
-        setServices((prev) =>
-          prev.map((service) =>
-            service.id === id ? normalizeService(data as Service) : service
-          )
-        );
-        setSuccessMessage(
-          `Servicio ${!currentActive ? "activado" : "desactivado"} correctamente`
-        );
-        setTimeout(() => setSuccessMessage(null), 3000);
       } catch (err: any) {
         setPageError(err?.message || "Error al actualizar servicio");
       } finally {
         setTogglingId(null);
       }
     },
-    []
+    [services, mapServiceToForm, saveService]
   );
 
-  const handleSyncStripe = useCallback(async () => {
-    if (!tenantId || syncingStripe) return;
-    setSyncingStripe(true);
-    setPageError(null);
-    try {
-      const response = await fetch("/api/services/migrate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tenant_id: tenantId }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Error al sincronizar con Stripe");
-      }
-      const synced = data.syncedCount ?? data.migrated ?? 0;
-      await loadServices();
-      setSuccessMessage(
-        synced === 0
-          ? "No había servicios pendientes de Stripe."
-          : `Se han sincronizado ${synced} servicio${synced === 1 ? "" : "s"
-          } con Stripe.`
-      );
-      setTimeout(() => setSuccessMessage(null), 3000);
-    } catch (err: any) {
-      setPageError(err?.message || "Error al sincronizar con Stripe");
-    } finally {
-      setSyncingStripe(false);
-    }
-  }, [tenantId, syncingStripe, loadServices]);
-
-  const handleSyncService = useCallback(
+  const handleDuplicateService = useCallback(
     async (service: Service) => {
-      if (syncingServiceId) return;
-      setSyncingServiceId(service.id);
-      setPageError(null);
-      try {
-        const response = await fetch(`/api/services/${service.id}/sync`, {
-          method: "POST",
-        });
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error || "No se pudo sincronizar con Stripe");
-        }
-        setServices((prev) =>
-          prev.map((item) =>
-            item.id === service.id ? normalizeService(data as Service) : item
-          )
-        );
-        setSuccessMessage("Servicio sincronizado con Stripe.");
-        setTimeout(() => setSuccessMessage(null), 3000);
-      } catch (err: any) {
-        setPageError(err?.message || "No se pudo sincronizar con Stripe");
-      } finally {
-        setSyncingServiceId(null);
-      }
+      // Usar el handler del hook
+      await duplicateServiceHandler(service.id);
+      // El hook ya maneja toast y onAfterMutation llama a loadServices
     },
-    [syncingServiceId]
+    [duplicateServiceHandler]
   );
 
   const handleRequestArchiveService = useCallback((service: Service) => {
@@ -523,40 +421,21 @@ export function ServiciosClient({
   const handleConfirmArchiveService = useCallback(async () => {
     if (!servicePendingArchive) return;
 
-    const service = servicePendingArchive;
-    setDeletingId(service.id);
-    setPageError(null);
-
+    setDeletingId(servicePendingArchive.id);
     try {
-      const response = await fetch(`/api/services/${service.id}`, {
-        method: "DELETE",
+      await saveService({
+        ...mapServiceToForm(servicePendingArchive),
+        id: servicePendingArchive.id,
+        active: false
       });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "No se pudo archivar el servicio");
-      }
-
-      setServices((prev) =>
-        prev.map((item) =>
-          item.id === service.id ? normalizeService(data as Service) : item
-        )
-      );
-
-      setPreviewService((prev) =>
-        prev && prev.id === service.id
-          ? (normalizeService(data as Service) as Service)
-          : prev
-      );
-
-      setSuccessMessage("Servicio archivado correctamente.");
-      setTimeout(() => setSuccessMessage(null), 3000);
-    } catch (err: any) {
-      setPageError(err?.message || "No se pudo archivar el servicio");
+      // Hook maneja toast y reload
+      setServicePendingArchive(null);
+    } catch (error) {
+      console.error(error);
     } finally {
       setDeletingId(null);
-      setServicePendingArchive(null);
     }
-  }, [servicePendingArchive]);
+  }, [servicePendingArchive, saveService, mapServiceToForm]);
 
   const handleCancelHardDeleteService = useCallback(() => {
     setServicePendingHardDelete(null);
@@ -565,37 +444,17 @@ export function ServiciosClient({
   const handleConfirmHardDeleteService = useCallback(async () => {
     if (!servicePendingHardDelete) return;
 
-    const service = servicePendingHardDelete;
-    setDeletingId(service.id);
-    setPageError(null);
-
+    setDeletingId(servicePendingHardDelete.id);
     try {
-      const response = await fetch(`/api/services/${service.id}?hard=true`, {
-        method: "DELETE",
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(
-          data.error || "No se pudo eliminar el servicio de forma definitiva"
-        );
-      }
-
-      setServices((prev) => prev.filter((item) => item.id !== service.id));
-      setPreviewService((prev) =>
-        prev && prev.id === service.id ? null : prev
-      );
-
-      setSuccessMessage("Servicio eliminado definitivamente.");
-      setTimeout(() => setSuccessMessage(null), 3000);
-    } catch (err: any) {
-      setPageError(
-        err?.message || "No se pudo eliminar el servicio de forma definitiva"
-      );
+      await deleteService(servicePendingHardDelete.id);
+      // Hook maneja toast y reload
+      setServicePendingHardDelete(null);
+    } catch (error) {
+      console.error(error);
     } finally {
       setDeletingId(null);
-      setServicePendingHardDelete(null);
     }
-  }, [servicePendingHardDelete]);
+  }, [servicePendingHardDelete, deleteService]);
 
   const handleRetry = useCallback(() => {
     // En reintentos, no vaciar la lista actual si la recarga devuelve 0
@@ -605,7 +464,6 @@ export function ServiciosClient({
 
   const clearFilters = useCallback(() => {
     setFilterStatus("all");
-    setFilterStripe("all");
     setFilterCategory("all");
     setBufferFilter("all");
     setSortBy("name");
@@ -719,7 +577,6 @@ export function ServiciosClient({
   const hasServices = services.length > 0;
   const hasFiltersApplied =
     filterStatus !== "all" ||
-    filterStripe !== "all" ||
     filterCategory !== "all" ||
     bufferFilter !== "all" ||
     Boolean(searchTerm) ||
@@ -736,12 +593,6 @@ export function ServiciosClient({
           ? "Activos"
           : "Inactivos"
       }`,
-      `Stripe: ${filterStripe === "all"
-        ? "Todos"
-        : filterStripe === "synced"
-          ? "Sincronizados"
-          : "Pendientes"
-      }`,
       `Categoría: ${filterCategory === "all" ? "Todas" : filterCategory}`,
     ];
     if (bufferFilter === "no_buffer") {
@@ -751,7 +602,7 @@ export function ServiciosClient({
       parts.push(`Búsqueda: "${searchTerm}"`);
     }
     return parts.join(" · ");
-  }, [filterStatus, filterStripe, filterCategory, bufferFilter, searchTerm]);
+  }, [filterStatus, filterCategory, bufferFilter, searchTerm]);
 
   const quickAlerts = useMemo(() => {
     const alerts: Array<{
@@ -768,14 +619,6 @@ export function ServiciosClient({
         active: filterCategory === DEFAULT_CATEGORY,
       });
     }
-    if (stats.pendingCount > 0) {
-      alerts.push({
-        id: "noStripe",
-        label: `${stats.pendingCount} sin Stripe`,
-        count: stats.pendingCount,
-        active: filterStripe === "pending",
-      });
-    }
     if (stats.withoutBuffer > 0) {
       alerts.push({
         id: "noBuffer",
@@ -785,7 +628,7 @@ export function ServiciosClient({
       });
     }
     return alerts;
-  }, [stats, filterCategory, filterStripe, bufferFilter]);
+  }, [stats, filterCategory, bufferFilter]);
 
   const handleQuickFilter = useCallback(
     (id: QuickFilterId) => {
@@ -794,9 +637,6 @@ export function ServiciosClient({
           setFilterCategory((prev) =>
             prev === DEFAULT_CATEGORY ? "all" : DEFAULT_CATEGORY
           );
-          break;
-        case "noStripe":
-          setFilterStripe((prev) => (prev === "pending" ? "all" : "pending"));
           break;
         case "noBuffer":
           setBufferFilter((prev) =>
@@ -822,15 +662,6 @@ export function ServiciosClient({
           >
             Nuevo Servicio
           </GlassButton>
-          <GlassButton
-            variant="secondary"
-            onClick={handleSyncStripe}
-            disabled={!tenantId || syncingStripe}
-            isLoading={syncingStripe}
-            className="w-full sm:w-auto"
-          >
-            Sincronizar con Stripe
-          </GlassButton>
         </div>
       </div>
 
@@ -841,130 +672,33 @@ export function ServiciosClient({
             {filterSummaryText}
           </p>
           <GlassButton variant="ghost" size="sm" onClick={clearFilters}>
-            Reiniciar filtros
+            Limpiar filtros
           </GlassButton>
         </div>
-      </GlassCard>
-
-      <GlassCard className="p-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <p className="text-sm font-medium text-white">Estado de servicios</p>
-          <div className="inline-flex rounded-lg bg-white/5 p-1 border border-white/10">
-            {STATUS_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => setFilterStatus(option.value)}
-                className={cn(
-                  "px-3 py-1 text-xs rounded-md transition-all duration-200 font-medium",
-                  filterStatus === option.value
-                    ? "bg-white text-black shadow-sm"
-                    : "text-[var(--text-secondary)] hover:text-white hover:bg-white/5"
-                )}
-                aria-pressed={filterStatus === option.value ? "true" : "false"}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </GlassCard>
-
-      <GlassCard className="p-4">
-        <p className="mb-3 text-sm font-medium text-white">
-          Filtrar por categoría
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {["all", ...categoryOptions].map((category) => (
-            <button
-              key={category}
-              onClick={() => setFilterCategory(category)}
-              className={cn(
-                "rounded-lg px-3 py-1.5 text-xs font-medium border transition-all duration-200",
-                filterCategory === category
-                  ? "bg-emerald-500/10 border-emerald-500/50 text-emerald-400"
-                  : "bg-white/5 border-white/10 text-[var(--text-secondary)] hover:bg-white/10 hover:text-white"
-              )}
-              aria-pressed={filterCategory === category ? "true" : "false"}
-            >
-              {category === "all" ? "Todas" : category}
-            </button>
-          ))}
-        </div>
-      </GlassCard>
-
-      <GlassCard className="p-4">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-white">Rango de precio</p>
-              <p className="text-xs text-[var(--text-secondary)]">
-                {formatEuros(priceRange[0])} – {formatEuros(priceRange[1])}
-              </p>
-            </div>
-            <GlassButton variant="ghost" size="sm" onClick={clearFilters}>
-              Limpiar filtros
-            </GlassButton>
-          </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <GlassInput
-              label="Mínimo (€)"
-              placeholder="0"
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 pt-2">
+          {/* Price Range Inputs would go here but we should use proper components */}
+          <div className="flex flex-col gap-2">
+            <label className="text-xs text-[var(--text-secondary)]">Mínimo (€)</label>
+            <input
               type="number"
               min={priceBounds.min}
               max={priceRange[1]}
               value={priceRange[0]}
               disabled={priceSliderDisabled}
-              onChange={(event) =>
-                setPriceRange((prev) => [
-                  Math.min(Number(event.target.value), prev[1]),
-                  prev[1],
-                ])
-              }
-            />
-            <GlassInput
-              label="Máximo (€)"
-              placeholder="100"
-              type="number"
-              min={priceRange[0]}
-              max={priceBounds.max || priceRange[1]}
-              value={priceRange[1]}
-              disabled={priceSliderDisabled}
-              onChange={(event) =>
-                setPriceRange((prev) => [
-                  prev[0],
-                  Math.max(Number(event.target.value), prev[0]),
-                ])
-              }
+              onChange={(e) => setPriceRange(prev => [Math.min(Number(e.target.value), prev[1]), prev[1]])}
+              className="bg-white/5 border border-white/10 rounded px-2 py-1 text-white"
             />
           </div>
-          <div className="flex flex-col gap-3 md:flex-row md:items-center pt-2">
+          <div className="flex flex-col gap-2">
+            <label className="text-xs text-[var(--text-secondary)]">Máximo (€)</label>
             <input
-              type="range"
-              min={priceBounds.min}
-              max={priceBounds.max || priceBounds.min + 1}
-              value={priceRange[0]}
-              disabled={priceSliderDisabled}
-              onChange={(event) =>
-                setPriceRange((prev) => [
-                  Math.min(Number(event.target.value), prev[1]),
-                  prev[1],
-                ])
-              }
-              className="flex-1 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-emerald-500 [&::-webkit-slider-thumb]:rounded-full"
-            />
-            <input
-              type="range"
-              min={priceBounds.min}
-              max={priceBounds.max || priceBounds.min + 1}
+              type="number"
+              min={priceRange[0]}
+              max={priceBounds.max || 100}
               value={priceRange[1]}
               disabled={priceSliderDisabled}
-              onChange={(event) =>
-                setPriceRange((prev) => [
-                  prev[0],
-                  Math.max(Number(event.target.value), prev[0]),
-                ])
-              }
-              className="flex-1 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-emerald-500 [&::-webkit-slider-thumb]:rounded-full"
+              onChange={(e) => setPriceRange(prev => [prev[0], Math.max(Number(e.target.value), prev[0])])}
+              className="bg-white/5 border border-white/10 rounded px-2 py-1 text-white"
             />
           </div>
         </div>
@@ -1000,81 +734,82 @@ export function ServiciosClient({
       }
 
       {/* Service List State Logic */}
-      {!hasServices && !loading && !filteredIsEmpty ? (
-        <GlassEmptyState
-          icon={Plus}
-          title="Comienza añadiendo servicios"
-          description="Crea tu primer servicio para que los clientes puedan empezar a reservar citas."
-          actionLabel="Crear Primer Servicio"
-          onAction={() => openNewModal()}
-          variant="default"
-        />
-      ) : filteredIsEmpty ? (
-        <GlassEmptyState
-          icon={Search}
-          title="Sin resultados"
-          description="No se encontraron servicios que coincidan con los filtros actuales."
-          actionLabel={hasFiltersApplied ? "Limpiar filtros" : undefined}
-          onAction={hasFiltersApplied ? clearFilters : undefined}
-          variant="default"
-        />
-      ) : (
-        <>
-          <div className="relative">
-            <div
-              className={`grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 ${gridLoading ? "opacity-60" : "opacity-100"
-                } transition`}
-            >
-              {paginatedItems.map((service) => (
-                <ServiceCard
-                  key={service.id}
-                  service={service}
-                  onPreview={setPreviewService}
-                  onEdit={openEditModal}
-                  onDuplicate={duplicateService}
-                  onToggleActive={toggleActive}
-                  onDelete={handleRequestArchiveService}
-                  isToggling={
-                    togglingId === service.id || deletingId === service.id
-                  }
-                />
-              ))}
-            </div>
-            {gridLoading && (
-              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+      {
+        !hasServices && !loading && !filteredIsEmpty ? (
+          <GlassEmptyState
+            icon={Plus}
+            title="Comienza añadiendo servicios"
+            description="Crea tu primer servicio para que los clientes puedan empezar a reservar citas."
+            actionLabel="Crear Primer Servicio"
+            onAction={() => openNewModal()}
+            variant="default"
+          />
+        ) : filteredIsEmpty ? (
+          <GlassEmptyState
+            icon={Search}
+            title="Sin resultados"
+            description="No se encontraron servicios que coincidan con los filtros actuales."
+            actionLabel={hasFiltersApplied ? "Limpiar filtros" : undefined}
+            onAction={hasFiltersApplied ? clearFilters : undefined}
+            variant="default"
+          />
+        ) : (
+          <>
+            <div className="relative">
+              <div
+                className={`grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 ${gridLoading ? "opacity-60" : "opacity-100"
+                  } transition`}
+              >
+                {paginatedItems.map((service) => (
+                  <ServiceCard
+                    key={service.id}
+                    service={service}
+                    onPreview={setPreviewService}
+                    onEdit={openEditModal}
+                    onDuplicate={handleDuplicateService}
+                    onToggleActive={toggleActive}
+                    onDelete={handleRequestArchiveService}
+                    isToggling={
+                      togglingId === service.id || deletingId === service.id
+                    }
+                  />
+                ))}
               </div>
-            )}
-          </div>
-          <div className="flex flex-col gap-3 rounded-[14px] border border-white/10 bg-white/5 p-4 shadow-glass md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-2">
-              <GlassButton
-                variant="ghost"
-                size="sm"
-                onClick={() => goToPage(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                Anterior
-              </GlassButton>
-              <GlassButton
-                variant="ghost"
-                size="sm"
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                Siguiente
-              </GlassButton>
-              <p className="text-sm text-white/70">
-                Página {currentPage} de {totalPages}
-              </p>
+              {gridLoading && (
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+                </div>
+              )}
             </div>
-            <div className="text-sm text-white/70">
-              Mostrando {paginatedItems.length} de {filteredServices.length} servicios
-              filtrados
+            <div className="flex flex-col gap-3 rounded-[14px] border border-white/10 bg-white/5 p-4 shadow-glass md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-2">
+                <GlassButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Anterior
+                </GlassButton>
+                <GlassButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Siguiente
+                </GlassButton>
+                <p className="text-sm text-white/70">
+                  Página {currentPage} de {totalPages}
+                </p>
+              </div>
+              <div className="text-sm text-white/70">
+                Mostrando {paginatedItems.length} de {filteredServices.length} servicios
+                filtrados
+              </div>
             </div>
-          </div>
-        </>
-      )
+          </>
+        )
       }
 
       <GlassModal
@@ -1182,12 +917,10 @@ export function ServiciosClient({
         isOpen={Boolean(previewService)}
         onClose={() => setPreviewService(null)}
         onEdit={openEditModal}
-        onDuplicate={duplicateService}
+        onDuplicate={handleDuplicateService}
         onToggleActive={toggleActive}
-        onSyncStripe={handleSyncService}
-        syncingServiceId={syncingServiceId}
         onDelete={handleRequestArchiveService}
       />
-    </div>
+    </div >
   );
 }

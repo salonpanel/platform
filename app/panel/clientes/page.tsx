@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { getSupabaseBrowser } from "@/lib/supabase/browser";
+// import { getSupabaseBrowser } from "@/lib/supabase/browser"; // No longer needed for mutations
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { GlassCard, GlassButton, GlassInput, GlassSelect, GlassSection, GlassModal, GlassToast } from "@/components/ui/glass";
@@ -24,6 +24,7 @@ import { useSearchParams } from "next/navigation";
 import { useCustomersPageData } from "@/hooks/useOptimizedData";
 import { invalidateCache } from "@/hooks/useStaleWhileRevalidate";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
+import { useCustomersHandlers } from "@/hooks/useCustomersHandlers";
 
 interface Customer {
   id: string;
@@ -39,7 +40,7 @@ interface Customer {
 
 export default function ClientesPage() {
   const searchParams = useSearchParams();
-  const supabase = getSupabaseBrowser();
+  // const supabase = getSupabaseBrowser(); // Use hook instead
 
   const impersonateOrgId = useMemo(() => searchParams?.get("impersonate") || null, [searchParams?.toString()]);
 
@@ -64,16 +65,16 @@ export default function ClientesPage() {
   const customers = pageData?.customers || [];
 
   // Estados principales (mantener para funcionalidad)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(error ? "Error al cargar los clientes" : null);
+  // const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  // const [errorMessage, setErrorMessage] = useState<string | null>(error ? "Error al cargar los clientes" : null);
 
   // Estados de loading
   const [loading, setLoading] = useState(false); // Para operaciones específicas (crear/editar)
 
-  // Estados de toast
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [toastType, setToastType] = useState<"success" | "error" | "info">("success");
+  // Estados de toast (Manejados globalmente por useToast dentro de useCustomersHandlers, pero mantenemos local si se requiere feedback extra)
+  // const [showToast, setShowToast] = useState(false);
+  // const [toastMessage, setToastMessage] = useState<string | null>(null);
+  // const [toastType, setToastType] = useState<"success" | "error" | "info">("success");
 
   // Estados de filtrado y búsqueda
   const [searchTerm, setSearchTerm] = useState("");
@@ -101,8 +102,19 @@ export default function ClientesPage() {
     name: "",
     email: "",
     phone: "",
-    segment: "normal" as "normal" | "vip" | "marketing" | "no_contact"
+    segment: "normal" as "normal" | "vip" | "marketing" | "no_contact" | "banned",
+    notes: ""
   });
+
+  // Init Handlers
+  const { saveCustomer, deleteCustomers } = useCustomersHandlers({
+    tenantId,
+    onAfterMutation: () => {
+      // Invalidar cache después de la operación
+      invalidateCache(`customers-page-${impersonateOrgId || 'default'}`);
+    }
+  });
+
 
   // Estadísticas de clientes
   const customerStats = useMemo(() => {
@@ -234,48 +246,17 @@ export default function ClientesPage() {
 
     setBulkActionLoading(true);
     try {
-      console.log("Eliminando clientes seleccionados:", selectedCustomers);
+      const { success } = await deleteCustomers(selectedCustomers);
 
-      // Eliminar clientes uno por uno (podríamos optimizar esto con una query batch si Supabase lo soporta)
-      const deletePromises = selectedCustomers.map(customerId =>
-        supabase
-          .from("customers")
-          .delete()
-          .eq("id", customerId)
-      );
-
-      const results = await Promise.all(deletePromises);
-
-      // Verificar si alguna eliminación falló
-      const errors = results.filter(result => result.error);
-      if (errors.length > 0) {
-        console.error("Errores al eliminar clientes:", errors);
-        throw new Error(`Error al eliminar ${errors.length} cliente(s)`);
+      if (success) {
+        // Limpiar selección
+        setSelectedCustomers([]);
+        setSelectionActive(false);
       }
-
-      console.log(`✅ Eliminados ${selectedCustomers.length} clientes exitosamente`);
-
-      // Invalidar el cache para forzar recarga de datos
-      invalidateCache(`customers-page-${impersonateOrgId || 'default'}`);
-
-      // Limpiar selección
-      setSelectedCustomers([]);
-      setSelectionActive(false);
-
-      // Mostrar mensaje de éxito
-      setToastMessage(`${selectedCustomers.length} ${selectedCustomers.length === 1 ? 'cliente eliminado' : 'clientes eliminados'} exitosamente`);
-      setToastType("success");
-      setShowToast(true);
-
-    } catch (err) {
-      console.error("Error en eliminación masiva:", err);
-      setToastMessage("Error al eliminar los clientes seleccionados");
-      setToastType("error");
-      setShowToast(true);
     } finally {
       setBulkActionLoading(false);
     }
-  }, [selectedCustomers, supabase, impersonateOrgId]);
+  }, [selectedCustomers, deleteCustomers]);
 
   const handleExportCsv = useCallback(() => {
     console.log("Exportando todos los clientes a CSV");
@@ -287,87 +268,51 @@ export default function ClientesPage() {
 
     setLoading(true);
     try {
-      const customerData = editingCustomer ? {
-        ...newCustomer,
-        id: editingCustomer.id
-      } : {
-        ...newCustomer,
-        tenant_id: tenantId,
-        created_at: new Date().toISOString()
+      const payload = {
+        id: editingCustomer?.id,
+        full_name: newCustomer.name,
+        email: newCustomer.email,
+        phone: newCustomer.phone,
+        segment: newCustomer.segment,
+        notes: newCustomer.notes
       };
 
-      const { data, error } = editingCustomer
-        ? await supabase
-          .from("customers")
-          .update(customerData)
-          .eq("id", editingCustomer.id)
-          .select()
-          .single()
-        : await supabase
-          .from("customers")
-          .insert([customerData])
-          .select()
-          .single();
+      const result = await saveCustomer(payload);
 
-      if (error) throw error;
-
-      // Actualizar la lista de clientes (esto debería invalidar el caché del hook)
-      // Por ahora, forzamos una recarga del hook invalidando el caché
-
-      setToastMessage(editingCustomer ? "Cliente actualizado exitosamente" : "Cliente creado exitosamente");
-      setToastType("success");
-      setShowToast(true);
-      setShowNewModal(false);
-      setEditingCustomer(null);
-      setNewCustomer({
-        name: "",
-        email: "",
-        phone: "",
-        segment: "normal"
-      });
-
-      // Invalidar cache después de la operación
-      invalidateCache(`customers-page-${impersonateOrgId || 'default'}`);
-    } catch (err) {
-      console.error("Error saving customer:", err);
-      setToastMessage("Error al guardar el cliente");
-      setToastType("error");
-      setShowToast(true);
+      if (result.success) {
+        setShowNewModal(false);
+        setEditingCustomer(null);
+        setNewCustomer({
+          name: "",
+          email: "",
+          phone: "",
+          segment: "normal",
+          notes: ""
+        });
+      }
     } finally {
       setLoading(false);
     }
-  }, [newCustomer, tenantId, supabase, editingCustomer, impersonateOrgId]);
+  }, [newCustomer, tenantId, editingCustomer, saveCustomer]);
 
   const handleEditCustomer = useCallback((customer: Customer) => {
     setEditingCustomer(customer);
+    // TODO: Include notes if available in customer object
+    setNewCustomer({
+      name: customer.name,
+      email: customer.email || "",
+      phone: customer.phone || "",
+      segment: customer.segment,
+      notes: ""
+    });
     setShowNewModal(true);
   }, []);
 
   const handleDeleteCustomer = useCallback(async (customerId: string) => {
     if (!confirm("¿Estás seguro de que quieres eliminar este cliente?")) return;
 
-    try {
-      const { error } = await supabase
-        .from("customers")
-        .delete()
-        .eq("id", customerId);
-
-      if (error) throw error;
-
-      // Invalidar el cache para forzar recarga de datos
-      invalidateCache(`customers-page-${impersonateOrgId || 'default'}`);
-
-      // La lista se actualizará automáticamente cuando el hook invalide el caché
-      setToastMessage("Cliente eliminado exitosamente");
-      setToastType("success");
-      setShowToast(true);
-    } catch (err) {
-      console.error("Error deleting customer:", err);
-      setToastMessage("Error al eliminar el cliente");
-      setToastType("error");
-      setShowToast(true);
-    }
-  }, [supabase, impersonateOrgId]);
+    await deleteCustomers([customerId]);
+  }, [deleteCustomers]);
 
   const handleViewHistory = useCallback((customerId: string) => {
     setShowHistory(customerId);
@@ -375,6 +320,13 @@ export default function ClientesPage() {
 
   const openNewModal = useCallback(() => {
     setEditingCustomer(null);
+    setNewCustomer({
+      name: "",
+      email: "",
+      phone: "",
+      segment: "normal",
+      notes: ""
+    });
     setShowNewModal(true);
   }, []);
 
@@ -550,8 +502,8 @@ export default function ClientesPage() {
           </div>
         </GlassSection>
 
-        {/* Toast Notifications */}
-        {
+        {/* Toast Notifications - handled globally now, but keeping component if strictly needed for other non-hook errors */}
+        {/*
           showToast && toastMessage && (
             <GlassToast
               message={toastMessage}
@@ -559,7 +511,7 @@ export default function ClientesPage() {
               onClose={() => setShowToast(false)}
             />
           )
-        }
+        */}
 
         {/* Bulk Actions Bar */}
         {

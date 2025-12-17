@@ -269,12 +269,12 @@ export function useServicesPageData(
 
       const tenantId = activeTenantId as string;
 
-      // 🚀 OPTIMIZACIÓN: Intentar usar función RPC get_services_filtered
-      const { data: servicesRpc, error: rpcError } = await supabase.rpc('get_services_filtered', {
+      // 🚀 OPTIMIZACIÓN: Intentar usar función RPC manage_list_services
+      const { data: servicesRpc, error: rpcError } = await supabase.rpc('manage_list_services', {
         p_tenant_id: tenantId,
         p_status: options?.status || 'all',
-        p_limit: options?.limit || 100,
-        p_offset: options?.offset || 0,
+        p_category: null, // Initial load fetches all categories
+        p_search_term: null,
       });
 
       // Si la función RPC existe y funciona, usarla

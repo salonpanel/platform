@@ -64,7 +64,8 @@ async function getInitialAgendaData(impersonateOrgId: string | null, selectedDat
 
   const range = getAgendaRange(selectedDate, viewMode);
 
-  return fetchAgendaDataset(serviceClient, tenant, range, { includeUserRole: true, userId: user.id });
+  // Phase H.5: Use supabase (User Client) instead of serviceClient to allow RPC auth.uid() check
+  return fetchAgendaDataset(supabase, tenant, range, { includeUserRole: true, userId: user.id });
 }
 
 export default async function AgendaPage({

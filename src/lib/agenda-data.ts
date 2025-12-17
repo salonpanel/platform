@@ -57,77 +57,82 @@ export async function fetchAgendaDataset(
     throw new Error("Invalid tenant object provided to fetchAgendaDataset");
   }
 
-  const [staffRes, servicesRes, customersRes, blockingsRes, schedulesRes, roleRes, bookingsRpcRes] = await Promise.all([
-    supabase
-      .from("staff")
-      .select("id, name, active")
-      .eq("tenant_id", tenant.id)
-      .eq("active", true)
-      .order("name"),
-    supabase
-      .from("services")
-      .select("id, name, duration_min, price_cents, buffer_min")
-      .eq("tenant_id", tenant.id)
-      .eq("active", true)
-      .order("name"),
-    supabase.from("customers").select("id").limit(0), // No-op, we don't fetch customers initially anymore
-    supabase
-      .from("staff_blockings")
-      .select("*")
-      .eq("tenant_id", tenant.id)
-      .gte("start_at", range.startISO)
-      .lte("end_at", range.endISO)
-      .order("start_at"),
-    supabase
-      .from("staff_schedules")
-      .select("staff_id, start_time, end_time")
-      .eq("tenant_id", tenant.id)
-      .eq("is_active", true),
-    options?.includeUserRole
-      ? (async () => {
-        const userId = options.userId || (await supabase.auth.getUser()).data.user?.id || null;
-        if (!userId) return null;
-        const { data } = await supabase
-          .from("memberships")
-          .select("role")
-          .eq("tenant_id", tenant.id)
-          .eq("user_id", userId)
-          .maybeSingle();
-        return data?.role || null;
-      })()
-      : Promise.resolve(null),
-    supabase
-      .from("bookings")
-      .select("*, customer:customers(id, name, phone), service:services(id, name), staff:staff(id, name)")
-      .eq("tenant_id", tenant.id)
-      .gte("starts_at", range.startISO)
-      .lte("ends_at", range.endISO)
-      .order("starts_at")
-  ]);
+  // Phase H.5: Unified RPC Call
+  const { data, error } = await supabase.rpc("panel_fetch_agenda_dataset_v1", {
+    p_tenant_id: tenant.id,
+    p_start_date: range.startISO,
+    p_end_date: range.endISO,
+  });
 
-  if (staffRes.error) throw staffRes.error;
-  if (servicesRes.error) throw servicesRes.error;
-  // if (customersRes.error) throw customersRes.error; // Ignored
-  if (blockingsRes.error) throw blockingsRes.error;
-  if (schedulesRes.error) throw schedulesRes.error;
-  if (bookingsRpcRes.error) throw bookingsRpcRes.error;
-  logTenantQueryResult(bookingsRpcRes.data?.length || 0, "fetchAgendaDataset:bookings");
+  if (error) {
+    console.error("RPC panel_fetch_agenda_dataset_v1 error:", error);
+    throw new Error(`Error loading agenda: ${error.message}`);
+  }
+
+  // Handle RPC-level error object
+  if (data?.status === "ERROR") {
+    console.error("RPC logic error:", data.error);
+    throw new Error(`Error loading agenda: ${data.error?.message || "Internal RPC Error"}`);
+  }
+
+  // Parse result
+  // If status is OK, data contains the fields directly at that level?
+  // Let's check the SQL: v_result := jsonb_build_object('status', 'OK', 'tenant', ..., 'staff', ...)
+  // So data.staff, data.services, etc.
+
+  if (!data || data.status !== "OK") {
+    throw new Error("Invalid response from Agenda RPC");
+  }
+
+  // Helper to ensure array
+  const safeArray = (arr: any) => Array.isArray(arr) ? arr : [];
 
   return {
     tenant: {
       id: tenant.id,
-      name: tenant.name || "Tu barbería",
-      timezone: tenant.timezone || "Europe/Madrid",
+      name: data.tenant?.name || tenant.name || "Tu barbería",
+      timezone: data.tenant?.timezone || tenant.timezone || "Europe/Madrid",
     },
-    staff: staffRes.data || [],
-    services: (servicesRes.data || []).map(s => ({ ...s, buffer_min: s.buffer_min ?? 0 })),
-    customers: [], // Async loaded now
-    bookings: bookingsRpcRes.data || [],
-    blockings: blockingsRes.data || [],
-    schedules: schedulesRes.data || [],
-    userRole: await roleRes,
+    staff: safeArray(data.staff),
+    services: safeArray(data.services).map((s: any) => ({ ...s, buffer_min: s.buffer_min ?? 0 })),
+    customers: [], // Async loaded
+    bookings: safeArray(data.bookings),
+    blockings: safeArray(data.blockings),
+    schedules: safeArray(data.schedules),
+    // For userRole, we might still need to fetch it if it's not in the RPC? 
+    // The RPC validates membership but doesn't explicitly return role in the v1 signature.
+    // If strict role check is needed, we can keep the separate call or add it to RPC later.
+    // For now, let's keep the option logic if needed, OR just assume it's separate.
+    // The previous implementation fetched it in parallel.
+    // To match "ONE RPC", we should ideally include it, but let's stick to the H.5 plan strict scope.
+    // The plan said: "Retain helper functions".
+    // If getting the role is minimal cost, we can do it separately or just null it if not critical.
+    // Let's check where userRole is used.
+    // It's used likely for permission checks in UI.
+    // Let's keep the existing role fetch if options.includeUserRole is true, to avoid breaking UI permissions.
+    // But since we want to avoid multiple queries...
+    // The RPC checks membership, so the user IS a member.
+    // Let's do a quick separate fetch ONLY if requested, or better:
+    // User Instructions: "fetchAgendaDataset orchestrates 6-7 queries ... duplicate ... replace with ONE RPC".
+    // I will remove the Promise.all. If role is needed, I'll fetch it separately quickly or modify RPC.
+    // Modifying RPC is safer but I already applied it.
+    // Actually, I can just fetch the role separately or assume the UI can handle null/re-fetch.
+    // Let's keep the role fetch simple if requested.
+    userRole: options?.includeUserRole ? await fetchUserRole(supabase, tenant.id, options.userId) : null,
     range,
   };
+}
+
+async function fetchUserRole(supabase: SupabaseClient, tenantId: string, userId?: string | null) {
+  const uid = userId || (await supabase.auth.getUser()).data.user?.id;
+  if (!uid) return null;
+  const { data } = await supabase
+    .from("memberships")
+    .select("role")
+    .eq("tenant_id", tenantId)
+    .eq("user_id", uid)
+    .maybeSingle();
+  return data?.role || null;
 }
 
 export function extendRangeForPrefetch(range: { startISO: string; endISO: string }) {
