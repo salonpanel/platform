@@ -28,7 +28,13 @@ export type AgendaDataset = {
 };
 
 export function getAgendaRange(selectedDate: string, viewMode: ViewMode) {
-  const anchorDate = new Date(selectedDate);
+  let anchorDate = new Date(selectedDate);
+
+  // Validation: Prevent "Invalid time value" crash
+  if (isNaN(anchorDate.getTime())) {
+    console.warn(`[getAgendaRange] Invalid date received: "${selectedDate}". Falling back to today.`);
+    anchorDate = new Date();
+  }
 
   if (viewMode === "week") {
     const start = startOfWeek(anchorDate, { weekStartsOn: 1 });
