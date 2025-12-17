@@ -145,8 +145,8 @@ export function useAgendaData({ tenantId, selectedDate, viewMode, initialData }:
 
   // New RPC Data Fetcher
   const fetchWithRpc = async (range: { startISO: string; endISO: string }) => {
-    // Call the consolidated RPC
-    const { data, error } = await supabase.rpc("get_agenda_v1", {
+    // Call the unified RPC
+    const { data, error } = await supabase.rpc("panel_fetch_agenda_dataset_v1", {
       p_tenant_id: tenantId,
       p_start_date: range.startISO,
       p_end_date: range.endISO,
@@ -154,26 +154,35 @@ export function useAgendaData({ tenantId, selectedDate, viewMode, initialData }:
 
     if (error) throw error;
 
-    // The RPC returns a single JSON object. Map it to state.
-    // Ensure types match what state expects.
-    const rpcData = data as any; // Type assertion since RPC return type is generic JSON
+    // Handle RPC-level error object
+    if (data?.status === "ERROR") {
+      throw new Error(`Error loading agenda: ${data.error?.message || "Internal RPC Error"}`);
+    }
 
-    // 1. Bookings: RPC returns them with nested objects. 
-    // We map them to ensure they match 'Booking' interface if needed, 
-    // or rely on RPC shape matching.
-    setBookings(rpcData.bookings || []);
+    if (!data || data.status !== "OK") {
+      throw new Error("Invalid response from Agenda RPC");
+    }
 
-    // 2. Blockings
-    setStaffBlockings(rpcData.blockings || []);
+    // Map response to state
+    // Use safeArray helper or similar logic
+    const safeArray = (arr: any) => Array.isArray(arr) ? arr : [];
 
-    // 3. Schedules
-    setStaffSchedules(rpcData.schedules || []);
+    setBookings(safeArray(data.bookings));
+    setStaffBlockings(safeArray(data.blockings));
+    setStaffSchedules(safeArray(data.schedules));
 
-    // 4. Stats
-    setStats(rpcData.stats || null);
+    // Stats might need mapping if structure differs, but typically it's { total_bookings, ... }
+    setStats(data.stats || null);
 
-    // Log success
-    logTenantQueryResult(rpcData.bookings?.length || 0, "fetchWithRpc:bookings");
+    // Services/Staff are static catalogs loaded separately in loadStaticCatalogs,
+    // but the RPC returns them too. We could update them here to ensure sync.
+    // For now, let's keep catalogs static to avoid flicker, or update if changed.
+    // The RPC returns { staff, services, ... }
+    // Let's update them to be safe and fully synced.
+    // setStaffList(normalizeStaffList(data.staff));
+    // setServices(safeArray(data.services).map((s: any) => ({ ...s, buffer_min: s.buffer_min ?? 0 })));
+
+    logTenantQueryResult(safeArray(data.bookings).length, "fetchWithRpc:bookings");
   };
 
   const fetchRangeData = useCallback(
