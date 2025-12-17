@@ -211,21 +211,31 @@ export async function fetchDashboardDataset(
 ): Promise<DashboardDataset | null> {
   if (!tenant?.id) return null;
 
-  const [kpis, upcomingBookings, staffMembers] = await Promise.all([
-    fetchDashboardKPIs(supabase, tenant.id),
-    fetchUpcomingBookings(supabase, tenant.id),
-    fetchActiveStaff(supabase, tenant.id)
-  ]);
+  // Use the new unified RPC for fast, atomic data loading
+  const { data, error } = await supabase.rpc("panel_fetch_dashboard_dataset_v1", {
+    p_tenant_id: tenant.id,
+  });
 
-  return {
-    tenant: {
-      id: tenant.id,
-      name: tenant.name || "Tu barbería",
-      timezone: tenant.timezone || "Europe/Madrid"
-    },
-    kpis,
-    upcomingBookings,
-    staffMembers,
-  };
+  if (error) {
+    console.error("[Dashboard] Error loading dataset:", error);
+    return null;
+  }
+
+  if (data?.status === "ERROR") {
+    console.error("[Dashboard] RPC returned error:", data.error);
+    return null;
+  }
+
+  // If successful, return the dataset
+  if (data?.status === "OK") {
+    return {
+      tenant: data.tenant,
+      kpis: validateDashboardKpis(data.kpis),
+      upcomingBookings: data.upcomingBookings || [],
+      staffMembers: data.staffMembers || [],
+    };
+  }
+
+  return null;
 }
 

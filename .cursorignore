@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+dist
+build
+coverage
+.turbo
+*.log
+*.cache
+.env*
+supabase/.branches
+supabase/.temp

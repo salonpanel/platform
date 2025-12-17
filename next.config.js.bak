@@ -1,0 +1,9 @@
+// ⚠️ MIGRADO A next.config.ts ⚠️
+// Todos los ajustes de este archivo han sido consolidados en next.config.ts
+// Puedes borrar este archivo de forma segura.
+
+/*
+module.exports = {
+  // ... contenido previo comentado para referencia ...
+}
+*/

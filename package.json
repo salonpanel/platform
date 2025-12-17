@@ -13,6 +13,7 @@
     "vercel-build": "next build",
     "clean": "rm -rf .next",
     "type-check": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
