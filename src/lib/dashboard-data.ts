@@ -119,7 +119,7 @@ export async function fetchUpcomingBookings(
         id, starts_at, ends_at, status,
         customer:customers(name, email),
         service:services!bookings_service_id_fkey(name, price_cents),
-        staff:staff(name)
+        staff:staff!bookings_staff_id_fkey(name)
       `)
     .eq("tenant_id", tenantId)
     .gte("starts_at", new Date().toISOString())

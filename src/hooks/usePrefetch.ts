@@ -252,7 +252,7 @@ export function useSmartPrefetchData(tenantId: string | null, impersonateOrgId: 
               .from("staff")
               .select(`
                 *,
-                bookings_count:bookings(count)
+                bookings_count:bookings!bookings_staff_id_fkey(count)
               `)
               .eq("tenant_id", tenantIdLocal)
               .order("name");
