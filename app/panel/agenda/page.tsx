@@ -22,11 +22,12 @@ async function getInitialAgendaData(impersonateOrgId: string | null, selectedDat
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-  if (!user) return null;
+  if (!user || authError) {
+    console.error("[Agenda] Auth failed:", authError);
+    return { error: "No authenticated user found" };
+  }
 
   const serviceClient = supabaseServer();
   let targetTenantId: string | null = null;
@@ -35,7 +36,6 @@ async function getInitialAgendaData(impersonateOrgId: string | null, selectedDat
     const { data: isAdmin } = await serviceClient.rpc("check_platform_admin", {
       p_user_id: user.id,
     });
-
     if (isAdmin) {
       targetTenantId = impersonateOrgId;
     }
@@ -52,7 +52,9 @@ async function getInitialAgendaData(impersonateOrgId: string | null, selectedDat
     targetTenantId = membership?.tenant_id || null;
   }
 
-  if (!targetTenantId) return null;
+  if (!targetTenantId) {
+    return { error: "No membership found for this user" };
+  }
 
   const { data: tenant } = await serviceClient
     .from("tenants")
@@ -60,12 +62,19 @@ async function getInitialAgendaData(impersonateOrgId: string | null, selectedDat
     .eq("id", targetTenantId)
     .maybeSingle();
 
-  if (!tenant) return null;
+  if (!tenant) {
+    return { error: "Tenant record not found" };
+  }
 
   const range = getAgendaRange(selectedDate, viewMode);
 
-  // Phase H.5: Use supabase (User Client) instead of serviceClient to allow RPC auth.uid() check
-  return fetchAgendaDataset(supabase, tenant, range, { includeUserRole: true, userId: user.id });
+  try {
+    const data = await fetchAgendaDataset(supabase, tenant, range, { includeUserRole: true, userId: user.id });
+    return { data };
+  } catch (error: any) {
+    console.error("[AgendaPage] fetchAgendaDataset failed:", error);
+    return { error: error.message || "Error fetching agenda data" };
+  }
 }
 
 export default async function AgendaPage({
@@ -78,12 +87,13 @@ export default async function AgendaPage({
   const initialDate = (resolvedSearchParams?.date as string) || new Date().toISOString().slice(0, 10);
   const initialViewMode = ((resolvedSearchParams?.view as ViewMode) || "day") as ViewMode;
 
-  const initialData = await getInitialAgendaData(impersonateOrgId, initialDate, initialViewMode);
+  const result = await getInitialAgendaData(impersonateOrgId, initialDate, initialViewMode);
 
   return (
     <Suspense fallback={<AgendaSkeleton />}>
       <AgendaPageClient
-        initialData={initialData}
+        initialData={result?.data || null}
+        error={result?.error || null}
         impersonateOrgId={impersonateOrgId}
         initialDate={initialDate}
         initialViewMode={initialViewMode}

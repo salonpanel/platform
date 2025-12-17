@@ -24,6 +24,7 @@ import type { Booking, CalendarSlot, ViewMode } from "@/types/agenda";
 
 interface AgendaPageClientProps {
   initialData: AgendaDataset | null;
+  error?: string | null;
   impersonateOrgId: string | null;
   initialDate: string;
   initialViewMode: ViewMode;
@@ -45,6 +46,7 @@ const DEFAULT_FILTERS: AgendaFiltersState = {
 
 export default function AgendaPageClient({
   initialData,
+  error: serverError,
   impersonateOrgId,
   initialDate,
   initialViewMode,
@@ -267,10 +269,12 @@ export default function AgendaPageClient({
     endTime: "10:30",
   };
 
-  if (!tenantId) {
+  if (!tenantId || serverError) {
     return (
       <div className="p-6 rounded-2xl border border-red-500/40 bg-red-500/5 text-red-200">
-        No se pudo cargar la agenda para este usuario.
+        <h3 className="font-bold text-lg mb-2">Error cargando agenda</h3>
+        <p>{serverError || "No se pudo cargar la agenda para este usuario (Tenant ID missing)."}</p>
+        <p className="text-sm opacity-75 mt-2">Si el problema persiste, contacta a soporte.</p>
       </div>
     );
   }
