@@ -319,12 +319,16 @@ export function useDragDropManager({
           const newEndsAt = new Date(originalStart);
           newEndsAt.setHours(endHour, endMinute, 0, 0);
 
-          onBookingMove(
-            currentDrag.bookingId,
-            currentDrag.currentStaffId,
-            newStartsAt.toISOString(),
-            newEndsAt.toISOString()
-          );
+          if (!isNaN(newStartsAt.getTime()) && !isNaN(newEndsAt.getTime())) {
+            onBookingMove(
+              currentDrag.bookingId,
+              currentDrag.currentStaffId,
+              newStartsAt.toISOString(),
+              newEndsAt.toISOString()
+            );
+          } else {
+            console.error("DragDropManager: Invalid date calculated", { newStartsAt, newEndsAt });
+          }
         }
 
         setDraggingBooking(null);
@@ -433,7 +437,11 @@ export function useDragDropManager({
             const [endHour, endMinute] = newEndTime.split(":").map(Number);
             newEndDate.setHours(endHour, endMinute);
 
-            onBookingResize(currentResize.bookingId, originalStart.toISOString(), newEndDate.toISOString());
+            if (!isNaN(newEndDate.getTime()) && !isNaN(originalStart.getTime())) {
+              onBookingResize(currentResize.bookingId, originalStart.toISOString(), newEndDate.toISOString());
+            } else {
+              console.error("DragDropManager: Invalid end date calculated during resize", { newEndDate });
+            }
           } else {
             // Resize start time, clamped to availability windows for this staff
             // Keep the original end fixed and adjust the start within the containing window
@@ -498,11 +506,15 @@ export function useDragDropManager({
             const [startHour, startMinute] = newStartTime.split(":").map(Number);
             newStartDate.setHours(startHour, startMinute, 0, 0);
 
-            onBookingResize(
-              currentResize.bookingId,
-              newStartDate.toISOString(),
-              originalEnd.toISOString()
-            );
+            if (!isNaN(newStartDate.getTime()) && !isNaN(originalEnd.getTime())) {
+              onBookingResize(
+                currentResize.bookingId,
+                newStartDate.toISOString(),
+                originalEnd.toISOString()
+              );
+            } else {
+              console.error("DragDropManager: Invalid start date calculated during resize", { newStartDate });
+            }
           }
         }
 
