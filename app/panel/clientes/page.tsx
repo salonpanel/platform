@@ -325,7 +325,8 @@ export default function ClientesPage() {
       email: customer.email || "",
       phone: customer.phone || "",
       segment: customer.segment,
-      notes: ""
+      notes: "",
+      internal_notes: (customer as any).internal_notes || ""
     });
     setShowNewModal(true);
   }, []);
