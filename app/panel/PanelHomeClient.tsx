@@ -92,7 +92,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
       currency: "EUR",
       maximumFractionDigits: 2,
     }).format(valueInCents / 100);
-  const tenantName = tenant?.name || "Tu barbería";
+  const tenantName = tenant?.name || "Tu negocio";
 
   // Normalizar KPIs → use a defensive cast to support both legacy & full shapes
   const kp = currentKpis as any;

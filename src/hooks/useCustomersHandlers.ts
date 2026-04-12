@@ -11,6 +11,7 @@ export interface CustomerMutationPayload {
     phone?: string;
     segment?: string;
     notes?: string;
+    internal_notes?: string;
 }
 
 export function useCustomersHandlers({ tenantId, onAfterMutation }: { tenantId: string | null; onAfterMutation?: () => void }) {
@@ -37,6 +38,7 @@ export function useCustomersHandlers({ tenantId, onAfterMutation }: { tenantId: 
                         p_phone: payload.phone || null,
                         p_segment: payload.segment || 'normal',
                         p_notes: payload.notes || null,
+                        p_internal_notes: payload.internal_notes || null,
                     });
 
                     if (error) throw error;
@@ -50,6 +52,7 @@ export function useCustomersHandlers({ tenantId, onAfterMutation }: { tenantId: 
                         p_phone: payload.phone || null,
                         p_segment: payload.segment || 'normal',
                         p_notes: payload.notes || null,
+                        p_internal_notes: payload.internal_notes || null,
                     });
 
                     if (error) throw error;

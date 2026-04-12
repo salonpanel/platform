@@ -97,7 +97,7 @@ export async function fetchAgendaDataset(
   return {
     tenant: {
       id: tenant.id,
-      name: data.tenant?.name || tenant.name || "Tu barbería",
+      name: data.tenant?.name || tenant.name || "Tu negocio",
       timezone: data.tenant?.timezone || tenant.timezone || "Europe/Madrid",
     },
     staff: safeArray(data.staff),

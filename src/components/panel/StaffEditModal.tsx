@@ -17,6 +17,9 @@ type Staff = {
   active: boolean;
   skills: string[] | null;
   profile_photo_url?: string | null;
+  avatar_url?: string | null;
+  color?: string | null;
+  bio?: string | null;
   weekly_hours?: number | null;
   user_id?: string | null;
   provides_services?: boolean;
@@ -35,23 +38,23 @@ interface StaffEditModalProps {
   onClose: () => void;
   onSave: (data: {
     name: string;
+    display_name?: string;
     skills: string[];
     profile_photo_url?: string;
     weekly_hours?: number;
+    color?: string;
+    bio?: string;
     schedules?: Array<{
       day_of_week: number;
       start_time: string;
       end_time: string;
       is_active: boolean;
     }>;
-    // Nuevos campos para crear usuario
     createUser?: boolean;
     email?: string;
     userRole?: string;
-    // Permisos
     permissions?: UserPermissions;
     provides_services?: boolean;
-    // Servicios asignados (IDs)
     serviceIds?: string[];
   }) => Promise<void>;
   staff: Staff | null;
@@ -88,6 +91,8 @@ export function StaffEditModal({
     userRole: "staff",
     createUser: false,
     providesServices: true,
+    color: "#4cb3ff",
+    bio: "",
   });
   const [schedules, setSchedules] = useState<DaySchedule[]>([]);
   const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS);
@@ -239,6 +244,8 @@ export function StaffEditModal({
         userRole: "staff",
         createUser: false,
         providesServices: true,
+        color: "#4cb3ff",
+        bio: "",
       });
       setSchedules(DAYS_OF_WEEK.map((day) => ({
         day: day.day,
@@ -257,12 +264,14 @@ export function StaffEditModal({
       setForm({
         name: staff.display_name || staff.name,
         skills: staff.skills?.join(", ") || "",
-        profile_photo_url: staff.profile_photo_url || "",
+        profile_photo_url: staff.profile_photo_url || staff.avatar_url || "",
         weekly_hours: staff.weekly_hours || 40,
         email: "",
         userRole: "staff",
         createUser: false,
         providesServices: staff.provides_services ?? true,
+        color: staff.color || "#4cb3ff",
+        bio: staff.bio || "",
       });
 
       // Cargar servicios seleccionados
@@ -319,17 +328,19 @@ export function StaffEditModal({
 
       await onSave({
         name: form.name.trim(),
+        display_name: form.name.trim(),
         skills: skillsArray,
         profile_photo_url: form.profile_photo_url.trim() || undefined,
         weekly_hours: form.weekly_hours || undefined,
+        color: form.color || undefined,
+        bio: form.bio.trim() || undefined,
         schedules: schedulesData,
-        // Siempre crear usuario para nuevo staff (obligatorio)
-        createUser: !staff, // true si es nuevo, false si estás editando
+        createUser: !staff,
         email: !staff ? form.email.trim() : undefined,
         provides_services: form.providesServices,
         userRole: !staff ? form.userRole : undefined,
-        permissions: staff?.user_id ? permissions : undefined, // Solo enviar permisos si el staff tiene user_id
-        serviceIds: selectedServices, // Pasar IDs de servicios asignados
+        permissions: staff?.user_id ? permissions : undefined,
+        serviceIds: selectedServices,
       });
     } catch (err) {
       console.error("Error al guardar:", err);
@@ -347,7 +358,7 @@ export function StaffEditModal({
     <GlassModal
       isOpen={isOpen}
       onClose={onClose}
-      title={staff ? "Editar Barbero" : "Nuevo Barbero"}
+      title={staff ? "Editar Miembro" : "Nuevo Miembro"}
       size="lg"
       footer={
         <div className="flex gap-2 justify-end">
@@ -418,7 +429,7 @@ export function StaffEditModal({
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
-              placeholder="Nombre del barbero"
+              placeholder="Nombre del miembro"
             />
 
             {/* Sección de creación de usuario - OBLIGATORIO para nuevo staff */}
@@ -440,7 +451,7 @@ export function StaffEditModal({
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   required
-                  placeholder="barbero@ejemplo.com"
+                  placeholder="miembro@ejemplo.com"
                   helperText="Se enviará un email de bienvenida con instrucciones de acceso"
                 />
 
@@ -486,6 +497,57 @@ export function StaffEditModal({
                 />
               </div>
             )}
+
+            {/* Color picker for agenda */}
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-white">
+                Color en la agenda
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={form.color}
+                  onChange={(e) => setForm({ ...form, color: e.target.value })}
+                  className="h-10 w-14 rounded-lg border border-white/10 bg-white/5 cursor-pointer p-1"
+                />
+                <div className="flex gap-1.5 flex-wrap">
+                  {["#4cb3ff", "#a78bfa", "#34d399", "#f59e0b", "#f87171", "#fb923c", "#e879f9", "#2dd4bf"].map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setForm({ ...form, color: c })}
+                      className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${
+                        form.color === c ? "border-white scale-110" : "border-transparent"
+                      }`}
+                      style={{ backgroundColor: c }}
+                      title={c}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs text-[var(--text-secondary)] font-mono">{form.color}</span>
+              </div>
+              <p className="text-xs text-[var(--text-secondary)]">
+                Color que identifica a este miembro en la vista de agenda.
+              </p>
+            </div>
+
+            {/* Bio */}
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-white">
+                Bio / descripción
+              </label>
+              <textarea
+                value={form.bio}
+                onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                rows={2}
+                maxLength={200}
+                placeholder="Especialista en cortes clásicos y degradados…"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-[var(--text-secondary)]/50 focus:border-[var(--accent-blue)]/40 focus:outline-none resize-none transition-colors"
+              />
+              <p className="text-xs text-[var(--text-secondary)]">
+                Visible en el portal de reservas al elegir miembro. Máx. 200 caracteres.
+              </p>
+            </div>
 
             <div className="rounded-xl p-4 border border-white/10 bg-white/5 space-y-3">
               <div className="flex items-center justify-between">
@@ -672,7 +734,7 @@ export function StaffEditModal({
                     { key: "agenda", label: "Agenda", desc: "Calendario y citas" },
                     { key: "clientes", label: "Clientes", desc: "Base de datos de clientes" },
                     { key: "servicios", label: "Servicios", desc: "Gestión de servicios" },
-                    { key: "staff", label: "Staff", desc: "Equipo y barberos" },
+                    { key: "staff", label: "Staff", desc: "Equipo y miembros" },
                     { key: "marketing", label: "Marketing", desc: "Campañas y promociones" },
                     { key: "reportes", label: "Reportes", desc: "Informes y análisis" },
                     { key: "ajustes", label: "Ajustes", desc: "Configuración del sistema" },

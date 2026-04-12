@@ -38,7 +38,7 @@ export function useDashboardData(
 
       // 1. Fetch using the resolved tenant directly
       // Fallback object construction if context provides partial data (unlikely) or just ID passed in options
-      const tenantObj = activeTenant || { id: safeTenantId, name: "Tu barbería", timezone: options?.timezone || "Europe/Madrid" };
+      const tenantObj = activeTenant || { id: safeTenantId, name: "Tu negocio", timezone: options?.timezone || "Europe/Madrid" };
 
       return fetchDashboardDataset(supabase, tenantObj);
     },
@@ -227,7 +227,7 @@ export function useCustomersPageData(
       return {
         tenant: {
           id: tenant.id,
-          name: tenant.name || "Tu barbería",
+          name: tenant.name || "Tu negocio",
           timezone: tenant.timezone || "Europe/Madrid",
         },
         customers: customers || [],
@@ -282,7 +282,7 @@ export function useServicesPageData(
         return {
           tenant: {
             id: tenant.id,
-            name: tenant.name || "Tu barbería",
+            name: tenant.name || "Tu negocio",
             timezone: tenant.timezone || "Europe/Madrid",
           },
           services: servicesRpc || [],
@@ -325,7 +325,7 @@ export function useServicesPageData(
       return {
         tenant: {
           id: tenant.id,
-          name: tenant.name || "Tu barbería",
+          name: tenant.name || "Tu negocio",
           timezone: tenant.timezone || "Europe/Madrid",
         },
         services: services || [],
@@ -376,7 +376,7 @@ export function useStaffPageData(
         return {
           tenant: {
             id: tenant.id,
-            name: tenant.name || "Tu barbería",
+            name: tenant.name || "Tu negocio",
             timezone: tenant.timezone || "Europe/Madrid",
           },
           staff: staffRpc || [],
@@ -409,7 +409,7 @@ export function useStaffPageData(
       return {
         tenant: {
           id: tenant.id,
-          name: tenant.name || "Tu barbería",
+          name: tenant.name || "Tu negocio",
           timezone: tenant.timezone || "Europe/Madrid",
         },
         staff: staff || [],
@@ -517,7 +517,7 @@ export function useChatPageData(
       return {
         tenant: {
           id: tenant.id,
-          name: tenant.name || "Tu barbería",
+          name: tenant.name || "Tu negocio",
           timezone: tenant.timezone || "Europe/Madrid",
         },
         conversations: conversations.map((conv: any) => ({

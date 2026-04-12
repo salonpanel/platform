@@ -17,6 +17,8 @@ type CreateStaffParams = {
     role?: string;
     schedules?: StaffSchedule[];
     service_ids?: string[];
+    color?: string;
+    bio?: string;
 };
 
 type UpdateStaffParams = {
@@ -26,6 +28,8 @@ type UpdateStaffParams = {
     weekly_hours?: number;
     schedules?: StaffSchedule[];
     service_ids?: string[];
+    color?: string;
+    bio?: string;
 };
 
 export function useStaffHandlers(
@@ -55,6 +59,15 @@ export function useStaffHandlers(
 
             if (error) throw error;
             if (data?.status === "ERROR") throw new Error(data.error);
+
+            // Update color/bio on the newly created staff record
+            const newStaffId = data?.data?.id;
+            if (newStaffId && (params.color !== undefined || params.bio !== undefined)) {
+                const patch: Record<string, string> = {};
+                if (params.color !== undefined) patch.color = params.color;
+                if (params.bio !== undefined) patch.bio = params.bio;
+                await supabase.from("staff").update(patch).eq("id", newStaffId).eq("tenant_id", tenantId);
+            }
 
             toast.showToast({
                 type: "success",
@@ -94,6 +107,14 @@ export function useStaffHandlers(
 
             if (error) throw error;
             if (data?.status === "ERROR") throw new Error(data.error);
+
+            // Update color/bio directly (not in RPC)
+            if (params.color !== undefined || params.bio !== undefined) {
+                const patch: Record<string, string> = {};
+                if (params.color !== undefined) patch.color = params.color;
+                if (params.bio !== undefined) patch.bio = params.bio;
+                await supabase.from("staff").update(patch).eq("id", params.id).eq("tenant_id", tenantId);
+            }
 
             toast.showToast({
                 type: "success",

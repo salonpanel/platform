@@ -1,16 +1,12 @@
 "use client";
 
 import { GlassInput } from "@/components/ui/glass";
-
-import {
-  SERVICE_PRESET_CATEGORIES,
-} from "../hooks";
+import { SERVICE_PRESET_CATEGORIES } from "../hooks";
 import type { ServiceFormState } from "../types";
-import { useState, useEffect } from "react";
-import { getServiceStaff } from "@/lib/staff/staffServicesRelations";
+import { ImageIcon, FileText } from "lucide-react";
 
 interface Props {
-  initialData?: ServiceFormState; // Optional for create mode
+  initialData?: ServiceFormState;
   form: ServiceFormState;
   onChange: (patch: Partial<ServiceFormState>) => void;
   saving?: boolean;
@@ -19,353 +15,217 @@ interface Props {
   staffOptions?: Array<{ id: string; name: string }>;
   staffOptionsLoading?: boolean;
   tenantId: string;
-  serviceId?: string; // For editing existing services
-  onStaffChange?: (staffIds: string[]) => void; // Callback for staff assignment changes
+  serviceId?: string;
+  onStaffChange?: (staffIds: string[]) => void;
 }
 
 const formatPriceField = (value: number) => (value / 100).toFixed(2);
 
-export function ServiceForm({ form, onChange, categoryOptions, staffOptions, staffOptionsLoading, tenantId, serviceId, onStaffChange }: Props) {
-  const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
-  const [loadingStaff, setLoadingStaff] = useState(false);
+const PRICING_LEVELS = [
+  { key: "junior",   label: "Nivel junior" },
+  { key: "standard", label: "Nivel estándar" },
+  { key: "senior",   label: "Nivel senior" },
+  { key: "master",   label: "Nivel master" },
+] as const;
 
-  // Callback when staff selection changes
-  useEffect(() => {
-    onStaffChange?.(selectedStaffIds);
-  }, [selectedStaffIds, onStaffChange]);
-
-  // Load current staff assignments when editing a service
-  useEffect(() => {
-    if (!serviceId || !tenantId) {
-      setSelectedStaffIds([]);
-      return;
-    }
-
-    const loadStaffAssignments = async () => {
-      setLoadingStaff(true);
-      try {
-        const staffIds = await getServiceStaff(serviceId, tenantId);
-        setSelectedStaffIds(staffIds);
-      } catch (error) {
-        console.error("Error loading staff assignments:", error);
-        setSelectedStaffIds([]);
-      } finally {
-        setLoadingStaff(false);
-      }
+export function ServiceForm({ form, onChange, categoryOptions }: Props) {
+  const handleInput =
+    (field: keyof ServiceFormState, parser: (value: string) => unknown = (v) => v) =>
+    (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+      onChange({ [field]: parser(event.target.value) } as Partial<ServiceFormState>);
     };
 
-    loadStaffAssignments();
-  }, [serviceId, tenantId]);
-
-  const handleInput =
-    (field: keyof ServiceFormState, parser: (value: string) => any = (value) => value) =>
-      (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        onChange({ [field]: parser(event.target.value) } as Partial<ServiceFormState>);
-      };
-
-  const pricingLevels = [
-    { key: "standard", label: "Nivel estándar" },
-    { key: "junior", label: "Nivel junior" },
-    { key: "senior", label: "Nivel senior" },
-    { key: "master", label: "Nivel master" },
-  ] as const;
-
-  const parseNumber = (value: string, min = 0) =>
-    Math.max(min, Number(value) || 0);
-
-  const parsePriceToCents = (value: string) =>
-    Math.max(0, Math.round((Number(value) || 0) * 100));
+  const parseNumber = (value: string, min = 0) => Math.max(min, Number(value) || 0);
+  const parsePriceToCents = (value: string) => Math.max(0, Math.round((Number(value) || 0) * 100));
 
   return (
-    <div className="space-y-5">
-      <div className="space-y-3">
-        <p className="text-xs uppercase tracking-wide text-white/60">
+    <div className="space-y-6">
+
+      {/* ── Información básica ─────────────────────────────────────────────── */}
+      <div className="space-y-4">
+        <p className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold">
           Información básica
         </p>
-        <div className="grid gap-4">
-          <GlassInput
-            label="Nombre"
-            value={form.name}
-            onChange={handleInput("name")}
-            placeholder="Corte premium, diseño, afeitado..."
-            required
-          />
-        </div>
+
+        <GlassInput
+          label="Nombre del servicio"
+          value={form.name}
+          onChange={handleInput("name")}
+          placeholder="Corte clásico, Afeitado navaja, Color completo…"
+          required
+        />
+
+        {/* Category with datalist */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-white">
+          <label className="mb-1.5 block text-sm font-medium text-white">
             Categoría
           </label>
           <input
             list="service-category-options"
             value={form.category}
             onChange={handleInput("category")}
-            placeholder="Corte, Barba, Color..."
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all font-satoshi"
+            placeholder="Corte, Barba, Color…"
+            className="w-full h-10 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white placeholder:text-[var(--text-secondary)]/50 focus:border-[var(--accent-blue)]/40 focus:outline-none transition-colors"
           />
           <datalist id="service-category-options">
             {[...new Set([...SERVICE_PRESET_CATEGORIES, ...categoryOptions])]
               .filter(Boolean)
-              .map((category) => (
-                <option value={category} key={category} />
-              ))}
+              .map((cat) => <option value={cat} key={cat} />)}
           </datalist>
           <p className="mt-1 text-xs text-[var(--text-secondary)]">
-            Selecciona una sugerencia o escribe una categoría personalizada.
+            Elige una categoría o escribe una personalizada.
+          </p>
+        </div>
+
+        {/* Description — active, shown in booking portal */}
+        <div>
+          <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-white">
+            <FileText className="w-3.5 h-3.5 text-[var(--accent-blue)]" />
+            Descripción
+            <span className="text-[10px] font-normal text-[var(--accent-blue)] bg-[var(--accent-blue)]/10 px-1.5 py-0.5 rounded-full">
+              Visible en el portal
+            </span>
+          </label>
+          <textarea
+            value={form.description ?? ""}
+            onChange={handleInput("description")}
+            rows={3}
+            placeholder="Descripción que verá el cliente al elegir este servicio. Incluye qué trae, duración real, qué productos se usan…"
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-[var(--text-secondary)]/50 focus:border-[var(--accent-blue)]/40 focus:outline-none focus:ring-1 focus:ring-[var(--accent-blue)]/20 transition-colors resize-none"
+          />
+        </div>
+
+        {/* Media URL */}
+        <div>
+          <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-white">
+            <ImageIcon className="w-3.5 h-3.5 text-[var(--accent-blue)]" />
+            Imagen del servicio (URL)
+          </label>
+          <GlassInput
+            value={form.media_url ?? ""}
+            onChange={handleInput("media_url")}
+            placeholder="https://ejemplo.com/imagen-corte.jpg"
+          />
+          {form.media_url && (
+            <div className="mt-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={form.media_url}
+                alt="Vista previa"
+                className="h-24 w-full object-cover rounded-xl border border-white/10"
+                onError={(e) => (e.currentTarget.style.display = "none")}
+              />
+            </div>
+          )}
+          <p className="mt-1 text-xs text-[var(--text-secondary)]">
+            Imagen decorativa que aparece en el portal de reservas.
           </p>
         </div>
       </div>
 
-      <div className="space-y-3">
-        <p className="text-xs uppercase tracking-wide text-[var(--text-secondary)] font-semibold">
-          Asignación de staff
+      {/* ── Configuración de tiempo y precio ──────────────────────────────── */}
+      <div className="space-y-4 pt-2 border-t border-white/5">
+        <p className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold">
+          Tiempo y precio
         </p>
-        <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium text-white mb-3">
-              Miembros del staff que pueden prestar este servicio
-            </label>
-            {staffOptionsLoading ? (
-              <div className="p-3 rounded-lg border border-white/10 bg-white/5">
-                <p className="text-sm text-[var(--text-secondary)]">Cargando miembros del staff...</p>
-              </div>
-            ) : staffOptions && staffOptions.length > 0 ? (
-              <div className="space-y-2 max-h-48 overflow-y-auto glass p-3 rounded-lg border border-white/10 bg-black/20">
-                {loadingStaff ? (
-                  <p className="text-sm text-[var(--text-secondary)]">Cargando asignaciones...</p>
-                ) : (
-                  staffOptions.map((staff) => (
-                    <label
-                      key={staff.id}
-                      className="flex items-center gap-3 p-2 rounded-md hover:bg-white/5 transition-colors cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedStaffIds.includes(staff.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedStaffIds([...selectedStaffIds, staff.id]);
-                          } else {
-                            setSelectedStaffIds(selectedStaffIds.filter(id => id !== staff.id));
-                          }
-                        }}
-                        className="w-4 h-4 rounded border-white/30 bg-black/40 text-emerald-500 focus:ring-emerald-500/50"
-                      />
-                      <span className="text-sm text-white font-medium">
-                        {staff.name}
-                      </span>
-                    </label>
-                  ))
-                )}
-              </div>
-            ) : (
-              <p className="text-sm text-[var(--text-secondary)]">
-                No hay miembros del staff disponibles. Ve a la sección Staff para añadir miembros.
-              </p>
-            )}
-            <p className="text-xs text-[var(--text-secondary)] mt-2">
-              {selectedStaffIds.length === 0
-                ? "Si no seleccionas ninguno, cualquier miembro del staff podrá prestar este servicio."
-                : `Solo ${selectedStaffIds.length} miembro${selectedStaffIds.length === 1 ? '' : 's'} del staff puede${selectedStaffIds.length === 1 ? '' : 'n'} prestar este servicio.`}
-            </p>
-          </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <GlassInput
+            label="Duración (min)"
+            type="number"
+            min={5}
+            step={5}
+            value={form.duration_min}
+            onChange={handleInput("duration_min", (v) => parseNumber(v, 5))}
+            helperText="Mínimo 5 min"
+          />
+          <GlassInput
+            label="Buffer adicional (min)"
+            type="number"
+            min={0}
+            step={5}
+            value={form.buffer_min}
+            onChange={handleInput("buffer_min", (v) => parseNumber(v, 0))}
+            helperText="Limpieza / preparación"
+          />
+          <GlassInput
+            label="Precio base (€)"
+            type="number"
+            min={0}
+            step={0.5}
+            value={formatPriceField(form.price_cents)}
+            onChange={handleInput("price_cents", parsePriceToCents)}
+            helperText="IVA incluido"
+          />
         </div>
       </div>
 
-      <div className="space-y-3">
-        <p className="text-xs uppercase tracking-wide text-[var(--text-secondary)] font-semibold">
-          Configuración
-        </p>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
+      {/* ── Precios por nivel de staff ────────────────────────────────────── */}
+      <div className="space-y-3 pt-2 border-t border-white/5">
+        <div>
+          <p className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold">
+            Precios por nivel de staff
+          </p>
+          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+            Opcional. Si se deja vacío, se usa el precio base para ese nivel.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {PRICING_LEVELS.map(({ key, label }) => (
             <GlassInput
-              label="Duración (min)"
-              type="number"
-              min={5}
-              step={5}
-              value={form.duration_min}
-              onChange={handleInput("duration_min", (value) => parseNumber(value, 5))}
-              helperText="Mínimo 5 minutos. Usa múltiplos de 5 para cuadrar la agenda."
-            />
-          </div>
-          <div>
-            <GlassInput
-              label="Buffer adicional (min)"
-              type="number"
-              min={0}
-              step={5}
-              value={form.buffer_min}
-              onChange={handleInput("buffer_min", (value) => parseNumber(value, 0))}
-              helperText="Tiempo extra para limpieza o preparación entre citas."
-            />
-          </div>
-          <div>
-            <GlassInput
-              label="Precio base (€)"
+              key={key}
+              label={label}
               type="number"
               min={0}
               step={0.5}
-              value={formatPriceField(form.price_cents)}
-              onChange={handleInput("price_cents", parsePriceToCents)}
-              helperText="Se convierte automáticamente a céntimos para Stripe y reportes."
+              value={
+                form.pricing_levels[key] !== null && form.pricing_levels[key] !== undefined
+                  ? formatPriceField(form.pricing_levels[key]!)
+                  : ""
+              }
+              onChange={(event) => {
+                const val = event.target.value;
+                onChange({
+                  pricing_levels: {
+                    ...form.pricing_levels,
+                    [key]: val === "" ? null : parsePriceToCents(val),
+                  },
+                });
+              }}
+              placeholder="—"
             />
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <p className="text-xs uppercase tracking-wide text-[var(--text-secondary)] font-semibold">
-          Precios por nivel
-        </p>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          {pricingLevels.map(({ key, label }) => (
-            <div key={key}>
-              <GlassInput
-                label={label}
-                type="number"
-                min={0}
-                step={0.5}
-                value={
-                  form.pricing_levels[key] !== null
-                    ? formatPriceField(form.pricing_levels[key]!)
-                    : ""
-                }
-                onChange={(event) => {
-                  const value = event.target.value;
-                  onChange({
-                    pricing_levels: {
-                      ...form.pricing_levels,
-                      [key]: value === ""
-                        ? null
-                        : parsePriceToCents(value),
-                    },
-                  });
-                }}
-                placeholder="Ej. 25"
-                helperText="Opcional. Si se deja vacío, se usará el precio base."
-              />
-            </div>
           ))}
         </div>
       </div>
 
-      <div className="space-y-3">
-        <p className="text-xs uppercase tracking-wide text-white/60">
-          Próximamente (planificación)
-        </p>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-white">
-              Descripción larga
-            </label>
-            <textarea
-              value={form.description}
-              placeholder="Texto que verá el cliente cuando abramos la ficha..."
-              className="w-full rounded-[10px] border border-dashed border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
-              disabled
-              readOnly
+      {/* ── Estado ───────────────────────────────────────────────────────────── */}
+      <div className="pt-2 border-t border-white/5">
+        <label className="flex items-center gap-3 cursor-pointer group">
+          <div
+            onClick={() => onChange({ active: !form.active })}
+            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 cursor-pointer ${
+              form.active ? "bg-[var(--accent-blue)]" : "bg-white/20"
+            }`}
+          >
+            <span
+              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                form.active ? "translate-x-4.5" : "translate-x-0.5"
+              }`}
             />
-            <p className="mt-1 text-xs text-white/50">
-              Campo deshabilitado hasta desplegar la ficha detallada del
-              servicio.
-            </p>
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-white">
-              URL de imagen / icono
-            </label>
-            <input
-              type="text"
-              value={form.media_url}
-              placeholder="https://..."
-              className="w-full rounded-[10px] border border-dashed border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
-              disabled
-              readOnly
-            />
-            <p className="mt-1 text-xs text-white/50">
-              Reservado para la próxima iteración (galería visual).
+            <p className="text-sm font-medium text-white group-hover:text-white/80 transition-colors">
+              Servicio activo
+            </p>
+            <p className="text-xs text-[var(--text-secondary)]">
+              {form.active
+                ? "Visible para clientes en el portal de reservas"
+                : "Oculto — solo visible para el equipo interno"}
             </p>
           </div>
-        </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-white">
-              VIP tier
-            </label>
-            <select
-              value={form.vip_tier}
-              className="w-full rounded-[10px] border border-dashed border-white/15 bg-white/5 px-4 py-3 text-white focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
-              disabled
-            >
-              <option value="standard">Standard</option>
-              <option value="vip">VIP</option>
-              <option value="premium">Premium</option>
-            </select>
-            <p className="mt-1 text-xs text-white/50">
-              Se activará cuando lancemos los planes VIP y precios dinámicos.
-            </p>
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-white">
-              Servicios combinados
-            </label>
-            <input
-              type="text"
-              value={form.combo_service_ids.join(", ")}
-              placeholder="IDs relacionados"
-              className="w-full rounded-[10px] border border-dashed border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
-              disabled
-              readOnly
-            />
-            <p className="mt-1 text-xs text-white/50">
-              Placeholder para packs (Corte + Barba, tratamientos, etc.).
-            </p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-white">
-              Duración dinámica
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                value={form.duration_variants?.min ?? ""}
-                className="w-full rounded-[10px] border border-dashed border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
-                disabled
-                readOnly
-              />
-              <input
-                type="number"
-                value={form.duration_variants?.max ?? ""}
-                className="w-full rounded-[10px] border border-dashed border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
-                disabled
-                readOnly
-              />
-            </div>
-            <p className="mt-1 text-xs text-white/50">
-              Definiremos rangos (mín / máx) cuando habilitemos duración flexible.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-[12px] border border-white/10 bg-white/5 px-4 py-3">
-        <label className="flex items-center gap-3 text-sm text-white">
-          <input
-            type="checkbox"
-            checked={form.active}
-            onChange={(event) =>
-              onChange({ active: event.target.checked })
-            }
-            className="h-4 w-4 rounded border-white/30 bg-transparent text-white focus:ring-white/30"
-          />
-          Servicio activo
         </label>
-        <p className="mt-2 text-xs text-white/60">
-          Si está activo, tu equipo y clientes podrán reservarlo.
-        </p>
       </div>
     </div>
   );
 }
-

@@ -251,7 +251,7 @@ export function SidebarNav({
             ]);
 
             return {
-              tenant: { id: tId, name: "Tu barbería", timezone: "Europe/Madrid" },
+              tenant: { id: tId, name: "Tu negocio", timezone: "Europe/Madrid" },
               kpis: { bookingsToday: bookingsRes.count || 0, activeServices: servicesRes.count || 0, activeStaff: staffRes.count || 0 },
               upcomingBookings: upcomingRes.data || [],
             };
@@ -283,7 +283,7 @@ export function SidebarNav({
             return {
               tenant: {
                 id: tId,
-                name: tenantName || "Tu barbería",
+                name: tenantName || "Tu negocio",
                 timezone: "Europe/Madrid",
               },
               services: data || [],
@@ -327,7 +327,7 @@ export function SidebarNav({
             }
 
             return {
-              tenant: { id: tId, name: "Tu barbería", timezone: "Europe/Madrid" },
+              tenant: { id: tId, name: "Tu negocio", timezone: "Europe/Madrid" },
               conversations: conversations.map((conv: any) => ({
                 id: conv.id,
                 tenantId: conv.tenant_id,

@@ -10,8 +10,9 @@ import { es } from "date-fns/locale";
 import {
   Megaphone, Users, Mail, CheckCircle2, XCircle,
   Loader2, Search, X, ChevronDown, ChevronUp,
-  Sparkles, Send, Eye, EyeOff, RefreshCw, Filter
+  Sparkles, Send, Eye, EyeOff, RefreshCw, Filter, History, AlertCircle
 } from "lucide-react";
+import { getSupabaseBrowser } from "@/lib/supabase/browser";
 
 interface InactiveClient {
   id: string;
@@ -23,6 +24,18 @@ interface InactiveClient {
   total_spent_cents?: number | null;
   marketing_opt_in?: boolean | null;
   tags?: string[] | null;
+}
+
+interface CampaignRecord {
+  id: string;
+  name: string;
+  subject: string;
+  sent_count: number;
+  failed_count: number;
+  target_client_count: number;
+  status: string;
+  sent_at: string | null;
+  created_at: string;
 }
 
 // ─── Predefined campaign templates ───────────────────────────────────────────
@@ -96,8 +109,32 @@ function MarketingContent() {
   const [sending, setSending] = useState(false);
   const [campaignResult, setCampaignResult] = useState<{ sent: number; failed: number } | null>(null);
 
+  // Campaign history
+  const [campaigns, setCampaigns] = useState<CampaignRecord[]>([]);
+  const [loadingCampaigns, setLoadingCampaigns] = useState(false);
+
   // Toast
   const [toast, setToast] = useState<{ message: string; tone: "success" | "danger" } | null>(null);
+
+  const loadCampaigns = useCallback(async () => {
+    if (!tenantId) return;
+    setLoadingCampaigns(true);
+    try {
+      const supabase = getSupabaseBrowser();
+      const { data, error } = await supabase
+        .from("marketing_campaigns")
+        .select("id, name, subject, sent_count, failed_count, target_client_count, status, sent_at, created_at")
+        .eq("tenant_id", tenantId)
+        .order("created_at", { ascending: false })
+        .limit(10) as any;
+      if (error) throw error;
+      setCampaigns(data || []);
+    } catch {
+      // silently fail — history is non-critical
+    } finally {
+      setLoadingCampaigns(false);
+    }
+  }, [tenantId]);
 
   const loadInactiveClients = useCallback(async () => {
     if (!tenantId) return;
@@ -118,6 +155,10 @@ function MarketingContent() {
   useEffect(() => {
     if (tenantId) loadInactiveClients();
   }, [tenantId, inactiveDays]);
+
+  useEffect(() => {
+    if (tenantId) loadCampaigns();
+  }, [tenantId, loadCampaigns]);
 
   const filteredClients = useMemo(() => {
     if (!searchTerm) return clients;
@@ -167,6 +208,8 @@ function MarketingContent() {
       setToast({ message: `Campaña enviada: ${data.sent} emails enviados`, tone: "success" });
       setShowBuilder(false);
       setSelectedIds(new Set());
+      // Refresh history
+      loadCampaigns();
     } catch (err: any) {
       setToast({ message: err.message || "Error al enviar campaña", tone: "danger" });
     } finally {
@@ -223,6 +266,57 @@ function MarketingContent() {
           </GlassCard>
         ))}
       </div>
+
+      {/* Campaign history */}
+      {(campaigns.length > 0 || loadingCampaigns) && (
+        <GlassCard className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <History className="w-4 h-4 text-[var(--text-secondary)]" />
+              <h2 className="text-sm font-semibold text-white">Historial de campañas</h2>
+            </div>
+            <GlassButton variant="ghost" size="sm" onClick={loadCampaigns} isLoading={loadingCampaigns}>
+              <RefreshCw className="w-3 h-3" />
+            </GlassButton>
+          </div>
+
+          {loadingCampaigns ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="w-5 h-5 animate-spin text-white/30" />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {campaigns.map((c) => (
+                <div key={c.id} className="flex items-start justify-between gap-3 py-2.5 border-b border-white/5 last:border-0">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium text-white truncate">{c.name}</span>
+                      <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                        c.status === "sent" ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400"
+                      }`}>
+                        {c.status === "sent" ? <CheckCircle2 className="w-2.5 h-2.5" /> : <AlertCircle className="w-2.5 h-2.5" />}
+                        {c.status === "sent" ? "Enviada" : "Fallida"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[var(--text-secondary)] truncate mt-0.5">{c.subject}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm font-medium text-white">{c.sent_count} enviados</p>
+                    {c.failed_count > 0 && (
+                      <p className="text-xs text-red-400">{c.failed_count} fallidos</p>
+                    )}
+                    <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">
+                      {c.sent_at
+                        ? formatDistanceToNow(parseISO(c.sent_at), { addSuffix: true, locale: es })
+                        : format(parseISO(c.created_at), "dd MMM yyyy", { locale: es })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </GlassCard>
+      )}
 
       {/* Inactive clients table */}
       <GlassCard className="p-4">

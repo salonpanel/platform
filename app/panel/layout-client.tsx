@@ -217,6 +217,25 @@ function PanelLayoutContent({
     router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
   }, [authStatus, authRedirectTriggered, pathname, router]);
 
+  // Listen for tenant updates dispatched by Ajustes page after saving
+  useEffect(() => {
+    const handleTenantUpdated = (e: Event) => {
+      const detail = (e as CustomEvent<{ name?: string; timezone?: string }>).detail;
+      if (!detail) return;
+      setTenant((prev) =>
+        prev
+          ? {
+              ...prev,
+              name: typeof detail.name === "string" ? detail.name : prev.name,
+              timezone: typeof detail.timezone === "string" ? detail.timezone : prev.timezone,
+            }
+          : prev
+      );
+    };
+    window.addEventListener("bookfast:tenant-updated", handleTenantUpdated);
+    return () => window.removeEventListener("bookfast:tenant-updated", handleTenantUpdated);
+  }, []);
+
   const handleExitImpersonation = async () => {
     try {
       const response = await fetch("/api/admin/tenants/exit-impersonate", {

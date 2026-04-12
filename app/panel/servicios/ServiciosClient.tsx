@@ -8,13 +8,10 @@ import { updateServiceStaff } from "@/lib/staff/staffServicesRelations";
 import {
   GlassButton,
   GlassCard,
-  GlassSelect,
-  GlassBadge,
   GlassModal,
-  GlassSection,
   GlassEmptyState,
 } from "@/components/ui/glass";
-import { Loader2, Plus, X, Search, AlertCircle } from "lucide-react";
+import { Loader2, Plus, X, Search, AlertCircle, LayoutGrid, Tag } from "lucide-react";
 import { ServiceCard } from "./components/ServiceCard";
 import { ServiceForm } from "./components/ServiceForm";
 import { ServicePreviewModal } from "./components/ServicePreviewModal";
@@ -651,58 +648,128 @@ export function ServiciosClient({
   );
 
   return (
-    <div className="space-y-6">
-      {/* Controles principales */}
+    <div className="space-y-5">
+
+      {/* ── Top bar: title + CTA ─────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <GlassButton
-            onClick={() => openNewModal()}
-            className="flex-1 sm:flex-none h-11"
-            leftIcon={<Plus className="w-4 h-4" />}
-          >
-            Nuevo Servicio
-          </GlassButton>
+        <div>
+          <h1 className="text-2xl font-semibold text-white tracking-tight">Servicios</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-0.5">
+            {services.length} servicio{services.length !== 1 ? "s" : ""} · {stats.activeCount} activos · {stats.inactiveCount} archivados
+          </p>
         </div>
+        <GlassButton
+          onClick={() => openNewModal()}
+          className="shrink-0 h-10 px-5"
+          leftIcon={<Plus className="w-4 h-4" />}
+        >
+          Nuevo Servicio
+        </GlassButton>
       </div>
 
-      <GlassCard className="p-4">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <p className="text-sm text-[var(--text-secondary)]">
-            Mostrando {filteredServices.length} de {services.length} servicios ·{" "}
-            {filterSummaryText}
-          </p>
-          <GlassButton variant="ghost" size="sm" onClick={clearFilters}>
-            Limpiar filtros
-          </GlassButton>
+      {/* ── Quick alert pills ────────────────────────────────────────────── */}
+      {quickAlerts.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {quickAlerts.map((alert) => (
+            <button
+              key={alert.id}
+              onClick={() => handleQuickFilter(alert.id)}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                alert.active
+                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                  : "bg-amber-500/10 text-amber-400/80 border border-amber-500/20 hover:bg-amber-500/20"
+              }`}
+            >
+              <AlertCircle className="w-3 h-3" />
+              {alert.label}
+            </button>
+          ))}
         </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 pt-2">
-          {/* Price Range Inputs would go here but we should use proper components */}
-          <div className="flex flex-col gap-2">
-            <label className="text-xs text-[var(--text-secondary)]">Mínimo (€)</label>
+      )}
+
+      {/* ── Search + filters row ─────────────────────────────────────────── */}
+      <GlassCard className="p-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)] pointer-events-none" />
             <input
-              type="number"
-              min={priceBounds.min}
-              max={priceRange[1]}
-              value={priceRange[0]}
-              disabled={priceSliderDisabled}
-              onChange={(e) => setPriceRange(prev => [Math.min(Number(e.target.value), prev[1]), prev[1]])}
-              className="bg-white/5 border border-white/10 rounded px-2 py-1 text-white"
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Buscar servicio..."
+              className="w-full h-9 pl-9 pr-4 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder:text-[var(--text-secondary)]/60 focus:outline-none focus:border-[var(--accent-blue)]/40 transition-colors"
             />
+            {searchInput && (
+              <button onClick={() => setSearchInput("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-white">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-xs text-[var(--text-secondary)]">Máximo (€)</label>
-            <input
-              type="number"
-              min={priceRange[0]}
-              max={priceBounds.max || 100}
-              value={priceRange[1]}
-              disabled={priceSliderDisabled}
-              onChange={(e) => setPriceRange(prev => [prev[0], Math.max(Number(e.target.value), prev[0])])}
-              className="bg-white/5 border border-white/10 rounded px-2 py-1 text-white"
-            />
-          </div>
+
+          {/* Status filter */}
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value as ServiceFilters["status"])}
+            className="h-9 rounded-lg bg-white/5 border border-white/10 text-sm text-white px-3 focus:outline-none focus:border-[var(--accent-blue)]/40 transition-colors"
+          >
+            {STATUS_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value} className="bg-[#1a1a2e]">{opt.label}</option>
+            ))}
+          </select>
+
+          {/* Sort */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            className="h-9 rounded-lg bg-white/5 border border-white/10 text-sm text-white px-3 focus:outline-none focus:border-[var(--accent-blue)]/40 transition-colors"
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value} className="bg-[#1a1a2e]">{opt.label}</option>
+            ))}
+          </select>
+
+          {hasFiltersApplied && (
+            <button
+              onClick={clearFilters}
+              className="h-9 px-3 rounded-lg text-xs text-[var(--text-secondary)] hover:text-white bg-white/5 border border-white/10 hover:bg-white/10 transition-colors whitespace-nowrap"
+            >
+              Limpiar
+            </button>
+          )}
         </div>
       </GlassCard>
+
+      {/* ── Category pills ───────────────────────────────────────────────── */}
+      {categoryOptions.length > 1 && (
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => setFilterCategory("all")}
+            className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium transition-colors ${
+              filterCategory === "all"
+                ? "bg-[var(--accent-blue)] text-white"
+                : "bg-white/5 border border-white/10 text-[var(--text-secondary)] hover:text-white hover:bg-white/10"
+            }`}
+          >
+            <LayoutGrid className="w-3 h-3" />
+            Todos
+          </button>
+          {categoryOptions.filter(c => c !== "all").map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setFilterCategory(prev => prev === cat ? "all" : cat)}
+              className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium transition-colors ${
+                filterCategory === cat
+                  ? "bg-[var(--accent-blue)]/20 border border-[var(--accent-blue)]/40 text-[var(--accent-blue)]"
+                  : "bg-white/5 border border-white/10 text-[var(--text-secondary)] hover:text-white hover:bg-white/10"
+              }`}
+            >
+              <Tag className="w-3 h-3" />
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
 
       {
         successMessage && (
@@ -844,52 +911,62 @@ export function ServiciosClient({
           tenantId={tenantId}
         />
 
-        {/* Staff Assignment Section */}
-        <div className="mt-8 pt-8 border-t border-white/5">
-          <h3 className="text-lg font-semibold text-white mb-4 font-satoshi">Personal asignado</h3>
-          <p className="text-sm text-[var(--text-secondary)] mb-4">
-            Selecciona los empleados que pueden realizar este servicio.
-          </p>
+        {/* ── Staff assignment ─────────────────────────────────────────── */}
+        <div className="mt-6 pt-6 border-t border-white/5 space-y-3">
+          <div>
+            <p className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold">
+              Personal asignado
+            </p>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+              {selectedStaffIds.length === 0
+                ? "Sin restricción — cualquier miembro del staff puede realizarlo."
+                : `Solo ${selectedStaffIds.length} miembro${selectedStaffIds.length !== 1 ? "s" : ""} puede${selectedStaffIds.length !== 1 ? "n" : ""} realizar este servicio.`}
+            </p>
+          </div>
 
           {staffOptionsLoading ? (
-            <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-5 w-5 animate-spin text-white/20" />
+            <div className="flex items-center gap-2 py-3 text-[var(--text-secondary)]">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span className="text-sm">Cargando staff…</span>
             </div>
+          ) : staffOptions.length === 0 ? (
+            <p className="text-sm text-[var(--text-secondary)] italic">
+              No hay empleados. Ve a Staff para añadir miembros al equipo.
+            </p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {staffOptions.map(staff => (
-                <div
-                  key={staff.id}
-                  className={`
-                      relative flex items-center p-3 rounded-lg border cursor-pointer transition-all
-                      ${selectedStaffIds.includes(staff.id)
-                      ? 'bg-emerald-500/10 border-emerald-500/50'
-                      : 'bg-white/[0.03] border-white/10 hover:bg-white/[0.05]'}
-                   `}
-                  onClick={() => {
-                    setSelectedStaffIds(prev =>
-                      prev.includes(staff.id)
-                        ? prev.filter(id => id !== staff.id)
-                        : [...prev, staff.id]
-                    );
-                  }}
-                >
-                  <div className={`
-                    w-4 h-4 rounded border flex items-center justify-center mr-3 transition-colors
-                    ${selectedStaffIds.includes(staff.id)
-                      ? 'bg-emerald-500 border-emerald-500'
-                      : 'border-white/30'}
-                  `}>
-                    {selectedStaffIds.includes(staff.id) && <Plus className="w-3 h-3 text-white" />}
-                  </div>
-                  <span className={`text-sm ${selectedStaffIds.includes(staff.id) ? 'text-white font-medium' : 'text-[var(--text-secondary)]'}`}>
-                    {staff.name}
-                  </span>
-                </div>
-              ))}
-              {staffOptions.length === 0 && (
-                <p className="text-sm text-[var(--text-secondary)] italic col-span-2">No hay empleados disponibles.</p>
-              )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {staffOptions.map((staff) => {
+                const selected = selectedStaffIds.includes(staff.id);
+                return (
+                  <button
+                    key={staff.id}
+                    type="button"
+                    onClick={() =>
+                      setSelectedStaffIds((prev) =>
+                        selected ? prev.filter((id) => id !== staff.id) : [...prev, staff.id]
+                      )
+                    }
+                    className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-150 border ${
+                      selected
+                        ? "bg-[var(--accent-blue)]/10 border-[var(--accent-blue)]/30 text-white"
+                        : "bg-white/3 border-white/8 text-[var(--text-secondary)] hover:bg-white/6 hover:text-white"
+                    }`}
+                  >
+                    <div
+                      className={`w-4 h-4 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
+                        selected ? "bg-[var(--accent-blue)] border-[var(--accent-blue)]" : "border-white/25"
+                      }`}
+                    >
+                      {selected && (
+                        <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 10 8">
+                          <path d="M1 4l3 3 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className="text-sm font-medium truncate">{staff.name}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

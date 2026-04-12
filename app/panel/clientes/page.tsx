@@ -34,6 +34,8 @@ interface Customer {
   lastVisit?: string;
   totalSpent?: number;
   created_at: string;
+  notes?: string | null;
+  internal_notes?: string | null;
 }
 
 export default function ClientesPage() {
@@ -342,14 +344,13 @@ export default function ClientesPage() {
 
   const handleEditCustomer = useCallback((customer: Customer) => {
     setEditingCustomer(customer);
-    // TODO: Include notes if available in customer object
     setNewCustomer({
       name: customer.name,
       email: customer.email || "",
       phone: customer.phone || "",
       segment: customer.segment,
-      notes: "",
-      internal_notes: (customer as any).internal_notes || ""
+      notes: customer.notes || "",
+      internal_notes: customer.internal_notes || "",
     });
     setShowNewModal(true);
   }, []);

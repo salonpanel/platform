@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Wallet, RefreshCw, TrendingUp, DollarSign, BarChart3, Clock, CheckCircle2, AlertCircle, Info, Download } from "lucide-react";
-import { Card, Button, Spinner, EmptyState, Alert, TitleBar } from "@/components/ui";
+import { Spinner } from "@/components/ui";
+import { GlassCard, GlassButton, GlassEmptyState } from "@/components/ui/glass";
 import { BalanceCard, BalanceGrid } from "@/components/ui/BalanceCard";
 import { MetricCard, MetricsGrid } from "@/components/ui/MetricCard";
 import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
@@ -255,9 +256,11 @@ export default function MonederoPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <Alert type="error" onClose={() => setError(null)}>
-            {error}
-          </Alert>
+          <div className="flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+            <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-300 flex-1">{error}</p>
+            <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300 transition-colors text-xs ml-2">✕</button>
+          </div>
         </motion.div>
       )}
 
@@ -344,15 +347,15 @@ export default function MonederoPage() {
               <h3 className="text-lg font-semibold text-white mb-1">Métricas Clave</h3>
               <p className="text-sm text-slate-400">Análisis de rendimiento de tu cuenta</p>
             </div>
-            <Button
+            <GlassButton
               variant="ghost"
               size="sm"
               onClick={() => loadData(true)}
               isLoading={refreshing}
-              icon={<RefreshCw className="h-4 w-4" />}
+              leftIcon={<RefreshCw className="h-4 w-4" />}
             >
               Actualizar
-            </Button>
+            </GlassButton>
           </div>
           <MetricsGrid columns={4}>
             <MetricCard
@@ -412,7 +415,7 @@ export default function MonederoPage() {
         />
 
         {/* Tabs */}
-        <Card variant="glass" padding="none">
+        <GlassCard noPadding>
           <div className="border-b border-slate-700/50">
             <nav className="flex space-x-1 px-4">
               <button
@@ -522,25 +525,25 @@ export default function MonederoPage() {
                         <span className="text-sm text-slate-400">
                           {filteredTransactions.length} de {transactions.length} transacciones encontradas
                         </span>
-                        <Button
+                        <GlassButton
                           variant="ghost"
                           size="sm"
                           onClick={clearFilters}
                           className="text-xs"
                         >
                           Limpiar filtros
-                        </Button>
+                        </GlassButton>
                       </>
                     )}
                     {filteredTransactions.length > 0 && (
-                      <Button
+                      <GlassButton
                         variant="secondary"
                         size="sm"
                         onClick={exportToPdf}
-                        icon={<Download className="h-3.5 w-3.5" />}
+                        leftIcon={<Download className="h-3.5 w-3.5" />}
                       >
                         Exportar PDF
-                      </Button>
+                      </GlassButton>
                     )}
                   </div>
                 </div>
@@ -567,10 +570,10 @@ export default function MonederoPage() {
                 </div>
                 
                 {payouts.length === 0 ? (
-                  <EmptyState
+                  <GlassEmptyState
                     title="No hay payouts aún"
                     description="Los payouts aparecerán aquí cuando se procesen transferencias a tu cuenta bancaria"
-                    icon={<Wallet className="h-8 w-8" />}
+                    icon={Wallet}
                   />
                 ) : (
                   <div className="space-y-3">
@@ -578,7 +581,7 @@ export default function MonederoPage() {
                       const statusConfig = getStatusConfig(payout.status);
                       const StatusIcon = statusConfig.icon;
                       return (
-                        <Card key={payout.id} variant="default" padding="compact" className="cursor-default">
+                        <GlassCard key={payout.id} noPadding className="p-3 cursor-default">
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-2">
@@ -622,7 +625,7 @@ export default function MonederoPage() {
                               </p>
                             </div>
                           </div>
-                        </Card>
+                        </GlassCard>
                       );
                     })}
                   </div>
@@ -630,7 +633,7 @@ export default function MonederoPage() {
               </div>
             )}
           </div>
-        </Card>
+        </GlassCard>
       </motion.div>
 
       {/* Info Box */}
@@ -639,7 +642,7 @@ export default function MonederoPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.4 }}
       >
-        <Card variant="glass" padding="md">
+        <GlassCard>
           <div className="flex items-start gap-3">
             <div className="rounded-[var(--radius-md)] bg-blue-500/15 border border-blue-500/30 p-2 flex-shrink-0">
               <Info className="h-4 w-4 text-blue-400" />
@@ -668,7 +671,7 @@ export default function MonederoPage() {
               </ul>
             </div>
           </div>
-        </Card>
+        </GlassCard>
       </motion.div>
       </motion.div>
     </ProtectedRoute>
