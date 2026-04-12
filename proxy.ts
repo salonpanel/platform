@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { getHostType, parseSubdomain } from "@/lib/domains";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     // 0. STRICT ISOLATION PHASE
     // Absolute bypass for root and login.
     // REMOVED /panel from bypass to restore protection.
