@@ -210,10 +210,10 @@ function AjustesContent() {
     saveFields({ business_hours: businessHours }, "Horarios guardados correctamente");
 
   const saveReservas = () =>
-    saveFields(reservas, "Configuración de reservas guardada");
+    saveFields(reservas as unknown as Record<string, unknown>, "Configuración de reservas guardada");
 
   const saveNotificaciones = () =>
-    saveFields(notifPrefs as Record<string, unknown>, "Preferencias de notificaciones guardadas");
+    saveFields(notifPrefs as unknown as Record<string, unknown>, "Preferencias de notificaciones guardadas");
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
