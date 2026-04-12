@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { createClientForServer } from "@/lib/supabase/server-client";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -16,7 +16,7 @@ interface CampaignPayload {
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createSupabaseServer();
+    const supabase = await createClientForServer();
 
     // Verify session
     const { data: { user }, error: authError } = await supabase.auth.getUser();

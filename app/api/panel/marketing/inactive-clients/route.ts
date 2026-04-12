@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { createClientForServer } from "@/lib/supabase/server-client";
 
 export async function GET(req: NextRequest) {
   try {
-    const supabase = await createSupabaseServer();
+    const supabase = await createClientForServer();
     const { searchParams } = new URL(req.url);
     const tenantId = searchParams.get("tenant_id");
     const inactiveDays = parseInt(searchParams.get("days") || "60", 10);
