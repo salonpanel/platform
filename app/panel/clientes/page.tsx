@@ -231,9 +231,32 @@ export default function ClientesPage() {
     setSelectionActive(false);
   }, []);
 
-  const handleBulkExport = useCallback(async () => {
-    console.log("Exportando clientes seleccionados");
-  }, [selectedCustomers]);
+  const handleBulkExport = useCallback(() => {
+    if (selectedCustomers.length === 0) return;
+
+    const selectedData = filteredCustomers.filter(c => selectedCustomers.includes(c.id));
+    const headers = ["Nombre", "Email", "Teléfono", "Segmento", "Visitas", "Última visita", "Gasto total (€)", "Alta"];
+    const rows = selectedData.map(c => [
+      c.name,
+      c.email || "",
+      c.phone || "",
+      c.segment,
+      c.visitCount,
+      c.lastVisit ? format(new Date(c.lastVisit), "dd/MM/yyyy", { locale: es }) : "",
+      c.totalSpent !== undefined ? (c.totalSpent / 100).toFixed(2) : "",
+      format(new Date(c.created_at), "dd/MM/yyyy", { locale: es }),
+    ]);
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `clientes_seleccionados_${format(new Date(), "yyyyMMdd")}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [selectedCustomers, filteredCustomers]);
 
   const handleBulkDelete = useCallback(async () => {
     if (selectedCustomers.length === 0) return;

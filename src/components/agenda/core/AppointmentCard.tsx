@@ -10,6 +10,7 @@ import { getMotionSafeProps } from "../motion/presets";
 interface AppointmentCardProps {
   booking: Booking;
   position: { top: number; height: number };
+  timezone?: string;
   isDragging?: boolean;
   isGhost?: boolean;
   onClick?: (booking: Booking) => void;
@@ -32,6 +33,7 @@ const getStatusColor = (status: string) => {
 export const AppointmentCard = React.memo(function AppointmentCard({
   booking,
   position,
+  timezone = "Europe/Madrid",
   isDragging = false,
   isGhost = false,
   onClick,
@@ -39,14 +41,14 @@ export const AppointmentCard = React.memo(function AppointmentCard({
 }: AppointmentCardProps) {
   const { top, height } = position;
 
-  // Convert dates to local timezone
+  // Convert dates to tenant timezone
   const startsAt = new Date(booking.starts_at);
   const endsAt = new Date(booking.ends_at);
   const localStartsAt = new Date(
-    startsAt.toLocaleString("en-US", { timeZone: "Europe/Madrid" })
+    startsAt.toLocaleString("en-US", { timeZone: timezone })
   );
   const localEndsAt = new Date(
-    endsAt.toLocaleString("en-US", { timeZone: "Europe/Madrid" })
+    endsAt.toLocaleString("en-US", { timeZone: timezone })
   );
 
   const isPast = localEndsAt < new Date();

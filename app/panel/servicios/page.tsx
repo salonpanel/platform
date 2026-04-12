@@ -6,6 +6,7 @@ import { GlassCard } from "@/components/ui/glass";
 import type { Service } from "@/types/services";
 import { ServiciosClient } from "./ServiciosClient";
 import { useServicesPageData } from "@/hooks/useOptimizedData";
+import { ServiciosSkeleton } from "@/components/skeletons/ServiciosSkeleton";
 
 export default function ServiciosPage() {
   const searchParams = useSearchParams();
@@ -20,7 +21,7 @@ export default function ServiciosPage() {
   const services = pageData?.services || [];
 
   if (isLoading) {
-    return <div className="p-4">Cargando servicios...</div>;
+    return <ServiciosSkeleton />;
   }
 
   if (error) {

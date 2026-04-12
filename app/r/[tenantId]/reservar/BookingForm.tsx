@@ -18,6 +18,7 @@ export default function BookingForm({
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
     const [bookingId, setBookingId] = useState<string | null>(null);
     const [redirecting, setRedirecting] = useState(false);
+    const [formError, setFormError] = useState<string | null>(null);
 
     const [guest, setGuest] = useState({ name: "", email: "", phone: "" });
     const [submitting, setSubmitting] = useState(false);
@@ -37,6 +38,7 @@ export default function BookingForm({
         e.preventDefault();
         if (!selectedSlot) return;
         setSubmitting(true);
+        setFormError(null);
 
         const res = await submitBookingAction({
             tenantId,
@@ -51,7 +53,7 @@ export default function BookingForm({
             setBookingId(res.bookingId);
             setStep("success");
         } else {
-            alert("Error: " + (res.error || "Unknown error"));
+            setFormError(res.error || "No se pudo confirmar la reserva. Inténtalo de nuevo.");
         }
         setSubmitting(false);
     };
@@ -59,13 +61,14 @@ export default function BookingForm({
     const handlePayment = async () => {
         if (!bookingId) return;
         setRedirecting(true);
+        setFormError(null);
         try {
             const { url } = await createCheckoutSessionAction(bookingId);
             if (url) {
                 window.location.href = url;
             }
-        } catch (err) {
-            alert("Error iniciando pago: " + err);
+        } catch (err: any) {
+            setFormError(err?.message || "Error al iniciar el pago. Inténtalo de nuevo.");
             setRedirecting(false);
         }
     };
@@ -87,6 +90,11 @@ export default function BookingForm({
                 </p>
 
                 <div className="space-y-3">
+                    {formError && (
+                        <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+                            {formError}
+                        </div>
+                    )}
                     <button
                         onClick={handlePayment}
                         disabled={redirecting}
@@ -198,6 +206,12 @@ export default function BookingForm({
                             onChange={e => setGuest({ ...guest, phone: e.target.value })}
                         />
                     </div>
+
+                    {formError && (
+                        <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+                            {formError}
+                        </div>
+                    )}
 
                     <div className="flex gap-3 pt-4">
                         <button

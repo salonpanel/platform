@@ -1,6 +1,6 @@
 "use client";
 
-import { RefObject, useEffect, useMemo } from "react";
+import { RefObject, useEffect, useRef, useMemo } from "react";
 import { Spinner } from "@/components/ui/Spinner";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { MessageBubble } from "./MessageBubble";
@@ -83,6 +83,22 @@ export function MessageList({
 	hasMoreMessages = false,
 }: MessageListProps) {
 	const supabase = getSupabaseBrowser();
+	// Flag para evitar múltiples disparos seguidos del load more
+	const isLoadingMoreRef = useRef(false);
+	// Guardamos el scrollHeight antes de cargar para restaurar posición después
+	const prevScrollHeightRef = useRef(0);
+
+	// Restaurar posición de scroll después de que se añadan mensajes al principio
+	useEffect(() => {
+		const container = containerRef.current;
+		if (!container || !isLoadingMoreRef.current) return;
+		const newScrollHeight = container.scrollHeight;
+		const diff = newScrollHeight - prevScrollHeightRef.current;
+		if (diff > 0) {
+			container.scrollTop = diff;
+		}
+		isLoadingMoreRef.current = false;
+	}, [messages.length, containerRef]);
 
 	// 🚀 SCROLL INFINITO: Detectar cuando el usuario scrollea hasta arriba
 	useEffect(() => {
@@ -90,13 +106,15 @@ export function MessageList({
 		if (!container || !onLoadMore || !hasMoreMessages) return;
 
 		const handleScroll = () => {
-			// Si estamos en el tope (scrollTop < 100px) y no estamos cargando
-			if (container.scrollTop < 100 && !loading) {
+			// Evitar disparos múltiples: solo actuar si no estamos cargando ya
+			if (container.scrollTop < 80 && !loading && !isLoadingMoreRef.current) {
+				isLoadingMoreRef.current = true;
+				prevScrollHeightRef.current = container.scrollHeight;
 				onLoadMore();
 			}
 		};
 
-		container.addEventListener('scroll', handleScroll);
+		container.addEventListener('scroll', handleScroll, { passive: true });
 		return () => container.removeEventListener('scroll', handleScroll);
 	}, [containerRef, onLoadMore, hasMoreMessages, loading]);
 

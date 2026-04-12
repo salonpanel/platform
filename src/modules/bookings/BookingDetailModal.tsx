@@ -5,11 +5,13 @@ import { BookingDetailPanel } from "@/components/calendar/BookingDetailPanel";
 import { useBookingModal } from "@/contexts/BookingModalContext";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { useToast } from "@/components/ui/Toast";
+import { useCurrentTenantWithImpersonation } from "@/hooks/useCurrentTenantWithImpersonation";
 
 export function BookingDetailModal() {
   const { modalState, close } = useBookingModal();
   const { showToast } = useToast();
   const supabase = getSupabaseBrowser();
+  const { tenantTimezone } = useCurrentTenantWithImpersonation();
 
   // Estado local para la booking completa
   const [booking, setBooking] = useState<any>(null);
@@ -89,7 +91,7 @@ export function BookingDetailModal() {
       onClose={close}
       onEdit={handleEdit}
       onDelete={handleDelete}
-      timezone="Europe/Madrid" // TODO: obtener del tenant
+      timezone={tenantTimezone}
     />
   );
 }
