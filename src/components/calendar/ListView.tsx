@@ -262,6 +262,7 @@ export const ListView = React.memo(function ListView({
                                   booking={booking}
                                   timezone={timezone}
                                   variant="list"
+                                  staffColor={booking.staff?.color}
                                   onClick={() => onBookingClick(booking)}
                                   onContextMenu={(e) => onBookingContextMenu?.(e, booking)}
                                 />
@@ -321,6 +322,7 @@ export const ListView = React.memo(function ListView({
                         booking={booking}
                         timezone={timezone}
                         variant="list"
+                        staffColor={booking.staff?.color}
                         onClick={() => onBookingClick(booking)}
                         onContextMenu={(e) => onBookingContextMenu?.(e, booking)}
                       />

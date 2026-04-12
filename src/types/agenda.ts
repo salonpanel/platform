@@ -37,6 +37,7 @@ export interface Booking {
   staff?: {
     id: string;
     name: string;
+    color?: string | null;
   } | null;
   internal_notes?: string | null;
   client_message?: string | null;
@@ -47,6 +48,8 @@ export interface Staff {
   id: string;
   name: string;
   active: boolean;
+  color?: string | null;
+  display_name?: string | null;
 }
 
 /**

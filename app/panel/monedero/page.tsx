@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Wallet, RefreshCw, TrendingUp, DollarSign, BarChart3, Clock, CheckCircle2, AlertCircle, Info } from "lucide-react";
+import { Wallet, RefreshCw, TrendingUp, DollarSign, BarChart3, Clock, CheckCircle2, AlertCircle, Info, Download } from "lucide-react";
 import { Card, Button, Spinner, EmptyState, Alert, TitleBar } from "@/components/ui";
 import { BalanceCard, BalanceGrid } from "@/components/ui/BalanceCard";
 import { MetricCard, MetricsGrid } from "@/components/ui/MetricCard";
@@ -89,6 +89,64 @@ export default function MonederoPage() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const exportToPdf = () => {
+    const rows = filteredTransactions.map(tx => [
+      formatDate(tx.created),
+      getTransactionTypeLabel(tx.type),
+      tx.description || "—",
+      formatCurrency(tx.amount, tx.currency),
+      formatCurrency(tx.fee, tx.currency),
+      formatCurrency(tx.net, tx.currency),
+      tx.status,
+    ]);
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Informe de Transacciones</title>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 12px; color: #111; margin: 32px; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  p.subtitle { color: #666; margin-bottom: 24px; font-size: 11px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: #1a1a2e; color: #fff; padding: 8px 10px; text-align: left; font-size: 11px; }
+  td { padding: 7px 10px; border-bottom: 1px solid #eee; font-size: 11px; }
+  tr:nth-child(even) td { background: #f7f7f7; }
+  .amount { text-align: right; font-family: monospace; }
+  .footer { margin-top: 24px; font-size: 10px; color: #aaa; }
+</style>
+</head>
+<body>
+<h1>Informe de Transacciones</h1>
+<p class="subtitle">Exportado el ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })} · ${rows.length} movimientos</p>
+<table>
+  <thead>
+    <tr>
+      <th>Fecha</th><th>Tipo</th><th>Descripción</th>
+      <th class="amount">Importe</th><th class="amount">Comisión</th><th class="amount">Neto</th>
+      <th>Estado</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${rows.map(r => `<tr>${r.map((v, i) => `<td${i >= 3 && i <= 5 ? ' class="amount"' : ''}>${v}</td>`).join('')}</tr>`).join('')}
+  </tbody>
+</table>
+<p class="footer">Generado automáticamente por BookFast</p>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, "_blank");
+    if (win) {
+      win.onload = () => {
+        win.print();
+      };
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
   };
 
   const getTransactionTypeLabel = (type: string) => {
@@ -473,6 +531,16 @@ export default function MonederoPage() {
                           Limpiar filtros
                         </Button>
                       </>
+                    )}
+                    {filteredTransactions.length > 0 && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={exportToPdf}
+                        icon={<Download className="h-3.5 w-3.5" />}
+                      >
+                        Exportar PDF
+                      </Button>
                     )}
                   </div>
                 </div>

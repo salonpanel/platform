@@ -156,6 +156,7 @@ export const WeekView = React.memo(function WeekView({
                   booking={booking}
                   timezone={timezone}
                   variant="list"
+                  staffColor={booking.staff?.color}
                   onClick={() => onBookingClick(booking)}
                   onContextMenu={(e) => onBookingContextMenu?.(e, booking)}
                 />
@@ -285,6 +286,7 @@ export const WeekView = React.memo(function WeekView({
                             booking={booking}
                             timezone={timezone}
                             variant="timeline"
+                            staffColor={booking.staff?.color}
                             onClick={() => onBookingClick(booking)}
                             onContextMenu={(e) => onBookingContextMenu?.(e, booking)}
                           />

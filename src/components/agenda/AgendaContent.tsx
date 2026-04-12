@@ -208,6 +208,7 @@ export function AgendaContent({
                                       booking={booking}
                                       timezone={tenantTimezone}
                                       variant="list"
+                                      staffColor={booking.staff?.color}
                                       onClick={() => onBookingClick(booking)}
                                     />
                                   ))}

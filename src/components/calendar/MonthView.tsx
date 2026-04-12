@@ -225,6 +225,7 @@ export const MonthView = React.memo(function MonthView({
                         booking={booking}
                         timezone={timezone}
                         variant="grid"
+                        staffColor={booking.staff?.color}
                         onClick={() => onBookingClick(booking)}
                         onContextMenu={(e) => {
                           e.stopPropagation();

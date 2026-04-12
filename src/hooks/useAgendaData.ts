@@ -107,7 +107,7 @@ export function useAgendaData({ tenantId, selectedDate, viewMode, initialData }:
         const [staffRes, servicesRes] = await Promise.all([
           supabase
             .from("staff")
-            .select("id, name, active")
+            .select("id, name, active, color, display_name")
             .eq("tenant_id", tenantId)
             .eq("active", true)
             .order("name"),

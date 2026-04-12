@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-// import { getSupabaseBrowser } from "@/lib/supabase/browser"; // No longer needed for mutations
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { GlassCard, GlassButton, GlassInput, GlassSelect, GlassSection, GlassModal, GlassToast } from "@/components/ui/glass";
@@ -10,8 +10,6 @@ import { CustomersGrid } from "@/components/customers/CustomersGrid";
 // import { CustomerHistory } from "@/components/customers/CustomerHistory";
 import {
   Calendar,
-  Edit2,
-  Trash2,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -90,7 +88,6 @@ export default function ClientesPage() {
 
   // Estados de modales
   const [showNewModal, setShowNewModal] = useState(false);
-  const [showHistory, setShowHistory] = useState<string | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
 
   // Estados de paginación
@@ -103,8 +100,11 @@ export default function ClientesPage() {
     email: "",
     phone: "",
     segment: "normal" as "normal" | "vip" | "marketing" | "no_contact" | "banned",
-    notes: ""
+    notes: "",
+    internal_notes: "",
   });
+
+  const router = useRouter();
 
   // Init Handlers
   const { saveCustomer, deleteCustomers } = useCustomersHandlers({
@@ -259,8 +259,28 @@ export default function ClientesPage() {
   }, [selectedCustomers, deleteCustomers]);
 
   const handleExportCsv = useCallback(() => {
-    console.log("Exportando todos los clientes a CSV");
-  }, []);
+    const headers = ["Nombre", "Email", "Teléfono", "Segmento", "Visitas", "Última visita", "Gasto total (€)", "Alta"];
+    const rows = filteredCustomers.map(c => [
+      c.name,
+      c.email || "",
+      c.phone || "",
+      c.segment,
+      c.visitCount,
+      c.lastVisit ? format(new Date(c.lastVisit), "dd/MM/yyyy", { locale: es }) : "",
+      c.totalSpent !== undefined ? (c.totalSpent / 100).toFixed(2) : "",
+      format(new Date(c.created_at), "dd/MM/yyyy", { locale: es }),
+    ]);
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `clientes_${format(new Date(), "yyyyMMdd")}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [filteredCustomers]);
 
   const handleNewCustomer = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -274,7 +294,8 @@ export default function ClientesPage() {
         email: newCustomer.email,
         phone: newCustomer.phone,
         segment: newCustomer.segment,
-        notes: newCustomer.notes
+        notes: newCustomer.notes,
+        internal_notes: newCustomer.internal_notes,
       };
 
       const result = await saveCustomer(payload);
@@ -287,7 +308,8 @@ export default function ClientesPage() {
           email: "",
           phone: "",
           segment: "normal",
-          notes: ""
+          notes: "",
+          internal_notes: "",
         });
       }
     } finally {
@@ -315,8 +337,8 @@ export default function ClientesPage() {
   }, [deleteCustomers]);
 
   const handleViewHistory = useCallback((customerId: string) => {
-    setShowHistory(customerId);
-  }, []);
+    router.push(`/panel/clientes/${customerId}`);
+  }, [router]);
 
   const openNewModal = useCallback(() => {
     setEditingCustomer(null);
@@ -325,7 +347,8 @@ export default function ClientesPage() {
       email: "",
       phone: "",
       segment: "normal",
-      notes: ""
+      notes: "",
+      internal_notes: "",
     });
     setShowNewModal(true);
   }, []);
@@ -660,26 +683,22 @@ export default function ClientesPage() {
               <option value="marketing">Marketing</option>
               <option value="no_contact">Sin contacto</option>
             </GlassSelect>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">
+                Notas internas
+              </label>
+              <textarea
+                value={newCustomer.internal_notes}
+                onChange={(e) => setNewCustomer({ ...newCustomer, internal_notes: e.target.value })}
+                placeholder="Preferencias, alergias, notas del equipo... (solo visible para el equipo)"
+                rows={3}
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/25 focus:border-[var(--accent-blue)]/40 focus:outline-none transition-colors resize-none"
+              />
+            </div>
           </form>
         </GlassModal>
 
-        {
-          <GlassModal
-            isOpen={!!showHistory}
-            onClose={() => setShowHistory(null)}
-            title="Historial de reservas"
-            size="lg"
-          >
-            <div className="p-8 text-center flex flex-col items-center justify-center opacity-70">
-              <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
-                <Calendar className="w-6 h-6 text-[var(--text-secondary)]" />
-              </div>
-              <p className="text-sm text-[var(--text-secondary)]">
-                El componente de historial está en desarrollo (Fase D.3.2.c/f).
-              </p>
-            </div>
-          </GlassModal>
-        }
       </div >
     </ProtectedRoute >
   );

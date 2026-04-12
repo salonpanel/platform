@@ -248,20 +248,35 @@ export const StaffColumn = React.memo(function StaffColumn({
     >
       {/* Header */}
       <div className="sticky top-0 z-20 px-3 py-3 flex-shrink-0 bg-[#0B0C10]/95 backdrop-blur border-b border-white/5" style={{ height: "72px" }}>
-        <div className="h-full rounded-xl bg-white/[0.02] border border-white/5 p-2 flex items-center gap-3 shadow-inner">
-          <div className={cn(
-            "h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold shadow-lg",
-            "bg-gradient-to-br from-gray-800 to-black border border-white/10 text-white",
-            "ring-2 ring-[#0B0C10]"
-          )}>
-            {staff.name.charAt(0).toUpperCase()}
+        <div
+          className="h-full rounded-xl p-2 flex items-center gap-3 shadow-inner border"
+          style={{
+            backgroundColor: staff.color ? `${staff.color}08` : "rgba(255,255,255,0.02)",
+            borderColor: staff.color ? `${staff.color}25` : "rgba(255,255,255,0.05)",
+          }}
+        >
+          <div
+            className="h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold shadow-lg ring-2 ring-[#0B0C10]"
+            style={{
+              backgroundColor: staff.color ? `${staff.color}30` : "rgba(255,255,255,0.08)",
+              border: `2px solid ${staff.color ? staff.color + "60" : "rgba(255,255,255,0.1)"}`,
+              color: staff.color || "#ffffff",
+            }}
+          >
+            {(staff.display_name || staff.name).charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
             <div className="font-semibold text-sm tracking-wide text-white truncate font-sans">
-              {staff.name}
+              {staff.display_name || staff.name}
             </div>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <div className="h-1.5 w-1.5 rounded-full bg-[#4FE3C1] shadow-[0_0_8px_#4FE3C1]" />
+              <div
+                className="h-1.5 w-1.5 rounded-full"
+                style={{
+                  backgroundColor: staff.color || "#4FE3C1",
+                  boxShadow: `0 0 6px ${staff.color || "#4FE3C1"}`,
+                }}
+              />
               <span className="text-[10px] text-gray-500 font-medium">
                 {(() => {
                   const schedule = staffSchedules.find(s => s.staff_id === staff.id);
@@ -333,6 +348,7 @@ export const StaffColumn = React.memo(function StaffColumn({
                 booking={booking}
                 timezone={timezone}
                 variant="timeline"
+                staffColor={staff.color}
                 onClick={() => onBookingClick?.(booking)}
                 onContextMenu={(e) => onBookingContextMenu?.(e, booking)}
               />

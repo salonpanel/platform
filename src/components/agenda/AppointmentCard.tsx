@@ -17,6 +17,7 @@ interface AppointmentCardProps {
   showStatus?: boolean;
   showPrice?: boolean;
   className?: string;
+  staffColor?: string | null;
 }
 
 /**
@@ -33,6 +34,7 @@ export function AppointmentCard({
   showStatus = true,
   showPrice = false,
   className = "",
+  staffColor,
 }: AppointmentCardProps) {
   const startTime = formatInTenantTz(booking.starts_at, timezone, "HH:mm");
   const endTime = formatInTenantTz(booking.ends_at, timezone, "HH:mm");
@@ -58,10 +60,15 @@ export function AppointmentCard({
     className
   );
 
+  const accentColor = staffColor || statusTokens.text;
   const cardStyle = {
-    background: statusTokens.bg,
-    borderLeftColor: statusTokens.border,
-    boxShadow: "var(--shadow-premium)",
+    background: staffColor
+      ? `linear-gradient(135deg, ${staffColor}10 0%, rgba(26,29,36,0.95) 100%)`
+      : statusTokens.bg,
+    borderLeftColor: accentColor,
+    boxShadow: staffColor
+      ? `0 0 0 1px ${staffColor}15, var(--shadow-premium)`
+      : "var(--shadow-premium)",
   };
 
   // Timeline variant (for WeekView timeline positioning)
