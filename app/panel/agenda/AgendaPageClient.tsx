@@ -100,6 +100,18 @@ export default function AgendaPageClient({
     }
   }, [notificationsOpen]);
 
+  // Cmd+K / Ctrl+K global shortcut to open search
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   const modals = useAgendaModals();
 
   const {
@@ -394,6 +406,10 @@ export default function AgendaPageClient({
           modals.openEditBookingModal(booking);
         }}
         onCancel={(bookingId) => showToast("Cancelar cita: próximamente", "info")}
+        onStatusChange={(bookingId, newStatus) => {
+          showToast(`Estado actualizado a ${newStatus}`, "success");
+          refreshDaySnapshots(selectedDate);
+        }}
         timezone={tenantTimezone}
       />
 

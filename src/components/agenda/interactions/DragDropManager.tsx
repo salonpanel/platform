@@ -177,6 +177,108 @@ export function useDragDropManager({
     return null;
   };
 
+  // Touch drag handler
+  const handleBookingTouchStart = useCallback(
+    (e: React.TouchEvent, booking: Booking, top: number) => {
+      // Check if booking is protected
+      if (booking.status === "paid" || booking.status === "completed") return;
+
+      const touch = e.touches[0];
+      const bookingElement = e.currentTarget as HTMLElement;
+      const bookingRect = bookingElement.getBoundingClientRect();
+
+      const dragOffset = {
+        x: touch.clientX - bookingRect.left,
+        y: touch.clientY - bookingRect.top,
+      };
+
+      const initialScrollTop = scrollContainerRef?.current?.scrollTop ?? 0;
+
+      const dragState: DragState = {
+        bookingId: booking.id,
+        bookingSnapshot: booking,
+        originalStaffId: booking.staff_id || "",
+        originalTop: top,
+        initialScrollTop,
+        dragOffset,
+        currentTop: top,
+        currentStaffId: booking.staff_id || "",
+      };
+
+      setDraggingBooking(dragState);
+      draggingRef.current = dragState;
+
+      const handleTouchMove = (moveEvent: TouchEvent) => {
+        moveEvent.preventDefault(); // prevent page scroll while dragging
+        const currentDrag = draggingRef.current;
+        if (!currentDrag) return;
+
+        const t = moveEvent.touches[0];
+        const elementUnderTouch = document.elementFromPoint(t.clientX, t.clientY) as HTMLElement;
+        const newStaffId = getStaffIdFromElement(elementUnderTouch) || currentDrag.originalStaffId;
+
+        const deltaY = t.clientY - touch.clientY;
+        const container = scrollContainerRef?.current;
+        const scrollDelta = container ? container.scrollTop - currentDrag.initialScrollTop : 0;
+        const newTopRaw = currentDrag.originalTop + deltaY + scrollDelta;
+
+        const slotIndex = Math.round(newTopRaw / slotHeight);
+        const clampedSlotIndex = Math.max(0, Math.min(TOTAL_SLOTS - 1, slotIndex));
+        const clampedY = clampedSlotIndex * slotHeight;
+
+        const updatedDrag = { ...currentDrag, currentTop: clampedY, currentStaffId: newStaffId };
+        setDraggingBooking(updatedDrag);
+        draggingRef.current = updatedDrag;
+      };
+
+      const handleTouchEnd = () => {
+        const currentDrag = draggingRef.current;
+        stopAutoScroll();
+
+        if (!currentDrag) {
+          document.removeEventListener("touchmove", handleTouchMove);
+          document.removeEventListener("touchend", handleTouchEnd);
+          return;
+        }
+
+        const movedDistance = Math.abs(currentDrag.currentTop - currentDrag.originalTop);
+        const wasActualDrag = movedDistance > 5;
+
+        if (!wasActualDrag) {
+          setDraggingBooking(null);
+          draggingRef.current = null;
+          document.removeEventListener("touchmove", handleTouchMove);
+          document.removeEventListener("touchend", handleTouchEnd);
+          return;
+        }
+
+        justFinishedDragRef.current = true;
+        const rawStartMinutes = pixelsToMinutes(currentDrag.currentTop);
+        const originalBooking = currentDrag.bookingSnapshot;
+        const durationMinutes =
+          (new Date(originalBooking.ends_at).getTime() - new Date(originalBooking.starts_at).getTime()) / 60000;
+        const snappedStart = snapToValidWindow(rawStartMinutes, durationMinutes, currentDrag.currentStaffId);
+        const finalStart = snappedStart ?? rawStartMinutes;
+        const finalEnd = finalStart + durationMinutes;
+
+        const startTime = minutesToTime(finalStart);
+        const endTime = minutesToTime(finalEnd);
+        onBookingMove?.(currentDrag.bookingId, currentDrag.currentStaffId, startTime, endTime);
+
+        setDraggingBooking(null);
+        draggingRef.current = null;
+        document.removeEventListener("touchmove", handleTouchMove);
+        document.removeEventListener("touchend", handleTouchEnd);
+
+        setTimeout(() => { justFinishedDragRef.current = false; }, 300);
+      };
+
+      document.addEventListener("touchmove", handleTouchMove, { passive: false });
+      document.addEventListener("touchend", handleTouchEnd);
+    },
+    [slotHeight, TOTAL_SLOTS, scrollContainerRef, snapToValidWindow, pixelsToMinutes, minutesToTime, stopAutoScroll, onBookingMove]
+  );
+
   // Drag handlers
   const handleBookingMouseDown = useCallback(
     (e: React.MouseEvent, booking: Booking, top: number) => {
@@ -534,6 +636,7 @@ export function useDragDropManager({
     draggingBooking,
     resizingBooking,
     handleBookingMouseDown,
+    handleBookingTouchStart,
     handleBookingResizeStart,
     justFinishedDrag: justFinishedDragRef.current,
     justFinishedResize: justFinishedResizeRef.current,

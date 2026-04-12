@@ -31,10 +31,36 @@ export function BookingSlidePanel({
   onClose,
   onEdit,
   onCancel,
+  onStatusChange,
   timezone,
 }: BookingSlidePanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [statusLoading, setStatusLoading] = useState<string | null>(null);
+
+  // Cambiar estado de la reserva
+  const handleStatusChange = async (newStatus: string) => {
+    if (!booking) return;
+    setStatusLoading(newStatus);
+    try {
+      const res = await fetch("/api/panel/booking-status", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId: booking.id, status: newStatus }),
+      });
+      if (res.ok) {
+        onStatusChange?.(booking.id, newStatus);
+        onClose();
+      } else {
+        const errorData = await res.json();
+        console.error("[BookingSlidePanel] status change error:", errorData);
+      }
+    } catch (e) {
+      console.error("[BookingSlidePanel] status change error:", e);
+    } finally {
+      setStatusLoading(null);
+    }
+  };
 
   // Mobile detection with state (triggers re-render for layout switch)
   useEffect(() => {
@@ -429,46 +455,89 @@ export function BookingSlidePanel({
             </div>
 
             {/* Footer */}
-            <div
-              className="border-t border-[var(--glass-border-subtle)] px-6 py-4 flex gap-3"
-              style={{
-                backgroundColor: 'rgba(0, 0, 0, 0.2)',
-              }}
-            >
-              <button
-                onClick={() => booking && onEdit?.(booking)}
-                className="flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-                style={{
-                  color: 'var(--accent-blue)',
-                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid var(--glass-border-subtle)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.12)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
-                }}
-              >
-                Editar
-              </button>
-              <button
-                onClick={() => booking && onCancel?.(booking.id)}
-                className="flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-                style={{
-                  color: '#EF4444',
-                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
-                }}
-              >
-                Cancelar cita
-              </button>
+            <div className="border-t border-[var(--glass-border-subtle)] px-5 py-4 space-y-2" style={{ backgroundColor: 'rgba(0,0,0,0.2)' }}>
+
+              {/* Status Quick Actions — contextual based on current status */}
+              {booking.status === "pending" && (
+                <button
+                  onClick={() => handleStatusChange("paid")}
+                  disabled={statusLoading !== null}
+                  className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: 'rgba(79,227,193,0.15)', color: '#4FE3C1', border: '1px solid rgba(79,227,193,0.3)' }}
+                  onMouseEnter={(e) => {
+                    if (!statusLoading) e.currentTarget.style.backgroundColor = 'rgba(79,227,193,0.25)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(79,227,193,0.15)';
+                  }}
+                >
+                  {statusLoading === "paid" ? "..." : "✓ Marcar como pagado"}
+                </button>
+              )}
+
+              {booking.status === "paid" && (
+                <button
+                  onClick={() => handleStatusChange("completed")}
+                  disabled={statusLoading !== null}
+                  className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: 'rgba(58,109,255,0.15)', color: 'var(--accent-blue)', border: '1px solid rgba(58,109,255,0.3)' }}
+                  onMouseEnter={(e) => {
+                    if (!statusLoading) e.currentTarget.style.backgroundColor = 'rgba(58,109,255,0.25)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(58,109,255,0.15)';
+                  }}
+                >
+                  {statusLoading === "completed" ? "..." : "✓ Completar cita"}
+                </button>
+              )}
+
+              {booking.status === "hold" && (
+                <button
+                  onClick={() => handleStatusChange("pending")}
+                  disabled={statusLoading !== null}
+                  className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: 'rgba(255,193,7,0.12)', color: '#FFC107', border: '1px solid rgba(255,193,7,0.3)' }}
+                  onMouseEnter={(e) => {
+                    if (!statusLoading) e.currentTarget.style.backgroundColor = 'rgba(255,193,7,0.22)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255,193,7,0.12)';
+                  }}
+                >
+                  {statusLoading === "pending" ? "..." : "Confirmar reserva"}
+                </button>
+              )}
+
+              {/* Edit + Cancel row */}
+              <div className="flex gap-2.5">
+                <button
+                  onClick={() => booking && onEdit?.(booking)}
+                  className="flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                  style={{ color: 'var(--accent-blue)', backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid var(--glass-border-subtle)' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
+                  }}
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => booking && onCancel?.(booking.id)}
+                  className="flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                  style={{ color: '#EF4444', backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.15)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.1)';
+                  }}
+                >
+                  Cancelar cita
+                </button>
+              </div>
             </div>
           </motion.div>
         </>

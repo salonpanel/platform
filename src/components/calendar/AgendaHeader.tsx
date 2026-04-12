@@ -163,14 +163,18 @@ export function AgendaHeader({
                 {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </GlassButton>
 
-              <div className="flex flex-col">
+              <button
+                onClick={handleToday}
+                className="flex flex-col text-left active:opacity-70 transition-opacity"
+                aria-label="Volver a hoy"
+              >
                 <span className="text-sm font-bold text-[var(--text-primary)] font-[var(--font-heading)] leading-none">
                   {format(date, "d MMM")}
                 </span>
                 <span className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider font-semibold">
                   {format(date, "EEEE")}
                 </span>
-              </div>
+              </button>
             </div>
 
             {/* Right: Actions (New Booking + Search) */}

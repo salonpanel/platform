@@ -10,8 +10,11 @@ import { PremiumLoader } from "./PremiumLoader";
 import { PremiumSkeleton } from "./PremiumSkeleton";
 import { DayView } from "./views/DayView";
 import { ConflictZone } from "./ConflictZone";
+import { NoShowAlert } from "./NoShowAlert";
 import { MobileStaffTabs } from "./MobileStaffTabs";
+import { MobileDaySummary } from "./MobileDaySummary";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
+import { useTouchSwipe } from "@/hooks/useTouchSwipe";
 import { AppointmentCard } from "./AppointmentCard";
 import { GlassCard, GlassEmptyState } from "@/components/ui/glass";
 import { Users, Calendar, Filter } from "lucide-react";
@@ -88,6 +91,25 @@ export function AgendaContent({
   // Mobile staff tab selection — empty string means "all"
   const [mobileSelectedStaffId, setMobileSelectedStaffId] = useState<string | null>(null);
 
+  // Touch swipe for day navigation on mobile
+  const { onTouchStart, onTouchEnd } = useTouchSwipe({
+    onSwipeLeft: () => {
+      if (viewMode === "day") {
+        const next = new Date(selectedDate + "T00:00:00");
+        next.setDate(next.getDate() + 1);
+        onDateChange(next.toISOString().split("T")[0]);
+      }
+    },
+    onSwipeRight: () => {
+      if (viewMode === "day") {
+        const prev = new Date(selectedDate + "T00:00:00");
+        prev.setDate(prev.getDate() - 1);
+        onDateChange(prev.toISOString().split("T")[0]);
+      }
+    },
+    disabled: !isMobile || viewMode !== "day",
+  });
+
   // Filtered staff and bookings for mobile single-staff view
   const mobileStaffList = useMemo(() => {
     if (!isMobile || !mobileSelectedStaffId) return staffList;
@@ -134,7 +156,7 @@ export function AgendaContent({
   }
 
   return (
-    <div className="flex-1 min-h-0">
+    <div className="flex-1 min-h-0" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       <AnimatePresence mode="wait">
         <motion.div
           key="agenda-content"
@@ -198,6 +220,13 @@ export function AgendaContent({
                               </div>
                             )}
 
+                            {/* Alertas no-show — siempre visible cuando hay retrasos */}
+                            <NoShowAlert
+                              bookings={isMobile ? mobileBookings : bookings}
+                              tenantTimezone={tenantTimezone}
+                              className="mx-3 mt-1"
+                            />
+
                             {/* Zona de conflictos premium */}
                             {showConflicts && (
                               <motion.div
@@ -236,6 +265,15 @@ export function AgendaContent({
                                 onSlotAbsence={onSlotAbsence}
                               />
                             </div>
+
+                            {/* Mobile: lista colapsable debajo del grid */}
+                            {isMobile && (
+                              <MobileDaySummary
+                                bookings={isMobile && mobileSelectedStaffId ? mobileBookings : bookings}
+                                timezone={tenantTimezone}
+                                onBookingClick={onBookingClick}
+                              />
+                            )}
                           </div>
                         ) : (
                           <div className="h-full flex items-center justify-center p-8">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useCallback } from "react";
+import { useEffect, useMemo, useRef, useCallback } from "react";
 import { Staff, Booking, StaffBlocking, StaffSchedule } from "@/types/agenda";
 import { TimeColumn } from "../core/TimeColumn";
 import { StaffColumn } from "../core/StaffColumn";
@@ -175,6 +175,37 @@ export function DayView({
     enabled: true,
   });
 
+  // Auto-scroll to current time on mount
+  useEffect(() => {
+    if (!timelineRef.current) return;
+
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTotalMinutes = currentHour * 60 + currentMinute;
+    const dayStartMinutes = dayStartHour * 60;
+
+    // Only scroll if today
+    const isToday = (() => {
+      const today = new Date();
+      const selected = new Date(selectedDate + "T00:00:00");
+      return today.getFullYear() === selected.getFullYear() &&
+             today.getMonth() === selected.getMonth() &&
+             today.getDate() === selected.getDate();
+    })();
+
+    if (!isToday) return;
+
+    const relativeMinutes = currentTotalMinutes - dayStartMinutes - 60; // scroll 1h before current
+    if (relativeMinutes <= 0) return;
+
+    const scrollOffset = (relativeMinutes / SLOT_DURATION_MINUTES) * slotHeight;
+
+    requestAnimationFrame(() => {
+      timelineRef.current?.scrollTo({ top: Math.max(0, scrollOffset), behavior: "smooth" });
+    });
+  }, [selectedDate, dayStartHour, slotHeight]);
+
   // Group data by staff
   const bookingsByStaff = useMemo(() => {
     const map = new Map<string, Booking[]>();
@@ -265,6 +296,7 @@ export function DayView({
                     dayEndHour={dayEndHour}
                     onBookingClick={(booking) => interactions.handleBookingClick(null, booking)}
                     onBookingMouseDown={dragDrop.handleBookingMouseDown}
+                    onBookingTouchStart={dragDrop.handleBookingTouchStart}
                     onBookingContextMenu={onBookingContextMenu}
                     onSlotClick={interactions.handleSlotClick}
                     onFreeSlotClick={onFreeSlotClick}
