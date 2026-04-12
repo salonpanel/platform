@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Booking, Staff, StaffBlocking, StaffSchedule } from "@/types/agenda";
@@ -10,6 +10,7 @@ import { PremiumLoader } from "./PremiumLoader";
 import { PremiumSkeleton } from "./PremiumSkeleton";
 import { DayView } from "./views/DayView";
 import { ConflictZone } from "./ConflictZone";
+import { MobileStaffTabs } from "./MobileStaffTabs";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { AppointmentCard } from "./AppointmentCard";
 import { GlassCard, GlassEmptyState } from "@/components/ui/glass";
@@ -83,6 +84,32 @@ export function AgendaContent({
 }: AgendaContentProps) {
   // Phase 2: Mobile-first responsive viewport detection
   const isMobile = useMediaQuery("(max-width: 768px)");
+
+  // Mobile staff tab selection — empty string means "all"
+  const [mobileSelectedStaffId, setMobileSelectedStaffId] = useState<string | null>(null);
+
+  // Filtered staff and bookings for mobile single-staff view
+  const mobileStaffList = useMemo(() => {
+    if (!isMobile || !mobileSelectedStaffId) return staffList;
+    return staffList.filter((s) => s.id === mobileSelectedStaffId);
+  }, [isMobile, mobileSelectedStaffId, staffList]);
+
+  const mobileBookings = useMemo(() => {
+    if (!isMobile || !mobileSelectedStaffId) return bookings;
+    return bookings.filter((b) => b.staff_id === mobileSelectedStaffId);
+  }, [isMobile, mobileSelectedStaffId, bookings]);
+
+  // Booking count per staff (for tab badges)
+  const bookingCountsByStaff = useMemo(() => {
+    const counts: Record<string, number> = {};
+    staffList.forEach((s) => { counts[s.id] = 0; });
+    bookings.forEach((b) => {
+      if (b.staff_id && counts[b.staff_id] !== undefined) {
+        counts[b.staff_id]++;
+      }
+    });
+    return counts;
+  }, [bookings, staffList]);
 
   // G.3.1: Memoize handler adapter to prevent re-renders of DayView
   const handleBookingMove = useCallback((bookingId: string, newStaffId: string | undefined, newStartTime: string, newEndTime: string) => {
@@ -159,6 +186,18 @@ export function AgendaContent({
                       {viewMode === "day" && (
                         staffList.length > 0 ? (
                           <div className="h-full flex flex-col min-h-0">
+                            {/* Mobile: Staff tabs for single-staff view */}
+                            {isMobile && staffList.length > 1 && (
+                              <div className="flex-shrink-0">
+                                <MobileStaffTabs
+                                  staffList={staffList}
+                                  selectedStaffId={mobileSelectedStaffId}
+                                  onSelectStaff={(id) => setMobileSelectedStaffId(id || null)}
+                                  bookingCounts={bookingCountsByStaff}
+                                />
+                              </div>
+                            )}
+
                             {/* Zona de conflictos premium */}
                             {showConflicts && (
                               <motion.div
@@ -168,19 +207,19 @@ export function AgendaContent({
                                 className="flex-shrink-0 mb-2"
                               >
                                 <ConflictZone
-                                  bookings={bookings}
+                                  bookings={isMobile ? mobileBookings : bookings}
                                   tenantTimezone={tenantTimezone}
                                   className="mx-3"
                                 />
                               </motion.div>
                             )}
 
-                            {/* Siempre mostramos DayView para que se vean horas y franjas, también en móvil */}
+                            {/* DayView — on mobile uses filtered staff/bookings for single-staff focus */}
                             <div className="flex-1 min-h-0">
                               <DayView
-                                bookings={bookings}
+                                bookings={isMobile ? mobileBookings : bookings}
                                 staffBlockings={staffBlockings}
-                                staffList={staffList}
+                                staffList={isMobile ? mobileStaffList : staffList}
                                 staffSchedules={staffSchedules}
                                 selectedDate={selectedDate}
                                 timezone={tenantTimezone}
@@ -197,24 +236,6 @@ export function AgendaContent({
                                 onSlotAbsence={onSlotAbsence}
                               />
                             </div>
-
-                            {/* En móvil mantenemos la lista como vista complementaria bajo el timeline */}
-                            {isMobile && bookings.length > 0 && (
-                              <div className="flex-shrink-0 border-t border-white/5 bg-[#0B0C10]" role="region" aria-label="Lista de reservas del día">
-                                <div className="space-y-3 p-4">
-                                  {bookings.map((booking) => (
-                                    <AppointmentCard
-                                      key={booking.id}
-                                      booking={booking}
-                                      timezone={tenantTimezone}
-                                      variant="list"
-                                      staffColor={booking.staff?.color}
-                                      onClick={() => onBookingClick(booking)}
-                                    />
-                                  ))}
-                                </div>
-                              </div>
-                            )}
                           </div>
                         ) : (
                           <div className="h-full flex items-center justify-center p-8">

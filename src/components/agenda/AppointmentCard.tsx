@@ -71,12 +71,12 @@ export function AppointmentCard({
       : "var(--shadow-premium)",
   };
 
-  // Timeline variant (for WeekView timeline positioning)
+  // Timeline variant (compact for day/week grid cells - progressive disclosure)
   if (variant === "timeline") {
     return (
       <motion.div
         {...getMotionSafeProps({
-          initial: { opacity: 0, scale: 0.95 },
+          initial: { opacity: 0, scale: 0.97 },
           animate: { opacity: 1, scale: 1 },
           whileHover: interactionPresets.appointmentCard.hover,
           whileTap: interactionPresets.appointmentCard.tap,
@@ -96,55 +96,33 @@ export function AppointmentCard({
         role="button"
         className={baseClasses}
         style={cardStyle}
-        aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime} - ${booking.service?.name || "Sin servicio"}`}
+        aria-label={`${startTime} - ${booking.customer?.name || "Sin cliente"} - ${booking.service?.name || "Sin servicio"}`}
       >
-        <div className="p-3 md:p-4 space-y-2 md:space-y-3">
-          {/* Time - Enhanced prominence for better hierarchy */}
-          <div className={cn(
-            "text-sm md:text-base font-semibold font-mono",
-            "text-[var(--text-secondary)]",
-            "tracking-tight" // Better readability
+        <div className="flex items-center gap-2 px-2.5 py-1.5 min-w-0">
+          {/* Time — fixed width for alignment */}
+          <span className={cn(
+            "text-xs font-semibold font-mono flex-shrink-0",
+            "text-[var(--text-secondary)]"
           )}>
             {startTime}
-          </div>
-          
-          {/* Customer - Primary information */}
-          <div className={cn(
-            "text-sm md:text-base font-semibold truncate",
-            "text-[var(--text-primary)] font-[var(--font-heading)]",
-            "leading-tight" // Better line height for mobile
+          </span>
+
+          {/* Customer name — truncated */}
+          <span className={cn(
+            "text-xs font-medium truncate flex-1 min-w-0",
+            "text-[var(--text-primary)]"
           )}>
             {booking.customer?.name || "Sin cliente"}
-          </div>
-          
-          {/* Service - Enhanced display with better mobile spacing */}
+          </span>
+
+          {/* Service short label — only if not compact and space allows */}
           {!compact && booking.service?.name && (
-            <div className={cn(
-              "text-xs md:text-sm truncate",
-              "text-[var(--text-secondary)] font-[var(--font-body)]",
-              "leading-relaxed" // Better readability on mobile
+            <span className={cn(
+              "text-[10px] truncate max-w-[80px] flex-shrink-0 hidden sm:inline",
+              "text-[var(--text-tertiary)]"
             )}>
               {booking.service.name}
-            </div>
-          )}
-          
-          {/* Status indicator - Refined design */}
-          {showStatus && (
-            <div className="flex items-center gap-2">
-              <div 
-                className={cn(
-                  "w-2 h-2 rounded-full",
-                  "bg-[var(--status-dot)]" // Use CSS custom property for consistency
-                )}
-                style={{ backgroundColor: statusTokens.border }}
-              />
-              <span className={cn(
-                "text-xs font-medium",
-                "text-[var(--text-tertiary)]"
-              )}>
-                {statusConfig.label}
-              </span>
-            </div>
+            </span>
           )}
         </div>
       </motion.div>

@@ -8,7 +8,7 @@ import { AgendaContent } from "@/components/agenda/AgendaContent";
 import { SearchPanel } from "@/components/calendar/SearchPanel";
 import { NotificationsPanel } from "@/components/calendar/NotificationsPanel";
 import { BookingActionPopover } from "@/components/calendar/BookingActionPopover";
-import { BookingDetailPanel } from "@/components/calendar/BookingDetailPanel";
+import { BookingSlidePanel } from "@/components/calendar/BookingSlidePanel";
 import { NewBookingModal } from "@/components/calendar/NewBookingModal";
 import StaffBlockingModal from "@/components/calendar/StaffBlockingModal";
 import { useAgendaModals } from "@/hooks/useAgendaModals";
@@ -385,19 +385,17 @@ export default function AgendaPageClient({
         />
       )}
 
-      {modals.showBookingDetail && modals.selectedBooking && (
-        <BookingDetailPanel
-          booking={modals.selectedBooking}
-          isOpen={modals.showBookingDetail}
-          onClose={modals.closeBookingDetail}
-          onEdit={(booking) => {
-            modals.closeBookingDetail();
-            modals.openEditBookingModal(booking);
-          }}
-          onDelete={() => showToast("Eliminación gestionada por RPC", "info")}
-          timezone={tenantTimezone}
-        />
-      )}
+      <BookingSlidePanel
+        booking={modals.selectedBooking}
+        isOpen={modals.showBookingDetail}
+        onClose={modals.closeBookingDetail}
+        onEdit={(booking) => {
+          modals.closeBookingDetail();
+          modals.openEditBookingModal(booking);
+        }}
+        onCancel={(bookingId) => showToast("Cancelar cita: próximamente", "info")}
+        timezone={tenantTimezone}
+      />
 
       {modals.showNewBookingModal && (
         <NewBookingModal
