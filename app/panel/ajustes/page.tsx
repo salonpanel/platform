@@ -213,7 +213,7 @@ function AjustesContent() {
     saveFields(reservas, "Configuración de reservas guardada");
 
   const saveNotificaciones = () =>
-    saveFields(notifPrefs, "Preferencias de notificaciones guardadas");
+    saveFields(notifPrefs as Record<string, unknown>, "Preferencias de notificaciones guardadas");
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
