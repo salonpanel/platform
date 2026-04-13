@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, AlertCircle, Loader2, Mail, ArrowLeft } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
+import { useWebAuthn } from "@/hooks/useWebAuthn";
 
 function VerifyCodeContent() {
   const supabase = getSupabaseBrowser();
@@ -18,6 +19,11 @@ function VerifyCodeContent() {
   const [timeLeft, setTimeLeft] = useState(60); // 60 segundos antes de poder reenviar
   const [resending, setResending] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [offerFaceId, setOfferFaceId] = useState(false); // Show Face ID registration prompt
+  const [loggedInUserId, setLoggedInUserId] = useState<string | null>(null);
+
+  // Face ID / Touch ID
+  const { isSupported: webAuthnSupported, hasCredential, register: registerWebAuthn, status: webAuthnStatus } = useWebAuthn();
 
   // Contador regresivo para reenvío
   useEffect(() => {
@@ -97,15 +103,25 @@ function VerifyCodeContent() {
         return;
       }
 
-      console.log("[VerifyCode] ✅ Éxito. Redirigiendo ATÓMICAMENTE.");
+      console.log("[VerifyCode] ✅ Éxito.");
 
-      // Feedback visual inmediato
       setVerifying(false);
       setSuccess(true);
 
+      // Check if we should offer Face ID registration
+      // Only offer if device supports it and user doesn't already have a credential
+      if (webAuthnSupported && !hasCredential) {
+        // Get user ID for WebAuthn registration
+        const supabase = getSupabaseBrowser();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setLoggedInUserId(user.id);
+          setOfferFaceId(true);
+          return; // Don't redirect yet — wait for user decision
+        }
+      }
+
       // 🚀 REDIRECCIÓN ATÓMICA
-      // Sin prefetch. Sin espera. Sin router.replace.
-      // Window location força una navegación limpia y recarga el contexto desde el servidor.
       const redirectParam = searchParams?.get("redirect");
       const target = (redirectParam && redirectParam.startsWith("/") && redirectParam !== "/")
         ? redirectParam
@@ -349,6 +365,61 @@ function VerifyCodeContent() {
                   </button>
                 </div>
               </motion.form>
+            ) : offerFaceId ? (
+              // Face ID registration offer
+              <motion.div
+                key="faceid-offer"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="text-center py-4"
+              >
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                  className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/20 mb-4 border border-blue-500/30"
+                >
+                  <svg className="w-8 h-8 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 3H5a2 2 0 0 0-2 2v4" /><path d="M15 3h4a2 2 0 0 1 2 2v4" />
+                    <path d="M9 21H5a2 2 0 0 1-2-2v-4" /><path d="M15 21h4a2 2 0 0 0 2-2v-4" />
+                    <path d="M9 9v1" /><path d="M15 9v1" /><path d="M9 14s1 1 3 1 3-1 3-1" /><path d="M12 9v4" />
+                  </svg>
+                </motion.div>
+                <h2 className="text-xl font-bold text-white mb-2 font-satoshi">
+                  ¿Activar Face ID?
+                </h2>
+                <p className="text-slate-400 text-sm mb-6">
+                  La próxima vez podrás entrar directamente con Face ID sin necesitar un código.
+                </p>
+                <div className="space-y-3">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    disabled={webAuthnStatus === 'registering'}
+                    onClick={async () => {
+                      if (loggedInUserId) {
+                        await registerWebAuthn(email, loggedInUserId);
+                      }
+                      window.location.href = '/panel';
+                    }}
+                    className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold font-satoshi shadow-lg shadow-blue-500/25 hover:shadow-xl transition-all duration-200 disabled:opacity-60 flex items-center justify-center gap-2"
+                    style={{ borderRadius: "12px" }}
+                  >
+                    {webAuthnStatus === 'registering' ? (
+                      <><Loader2 className="w-5 h-5 animate-spin" /><span>Configurando...</span></>
+                    ) : (
+                      <span>Sí, activar Face ID</span>
+                    )}
+                  </motion.button>
+                  <button
+                    onClick={() => { window.location.href = '/panel'; }}
+                    className="w-full py-3 text-sm text-slate-400 hover:text-slate-300 transition-colors"
+                  >
+                    Ahora no
+                  </button>
+                </div>
+              </motion.div>
             ) : (
               <motion.div
                 key="success"
