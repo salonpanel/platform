@@ -31,11 +31,8 @@ export function MobileStaffSwitcher({
 }: MobileStaffSwitcherProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  // Build the ordered list: [null (Todos if >1 staff), ...staffList]
+  // Build the ordered list of staff
   const staffOptions: Array<{ id: string | null; name: string; color?: string | null }> = [];
-  if (staffList.length > 1) {
-    staffOptions.push({ id: null, name: "Todos los barberos" });
-  }
   staffList.forEach((s) =>
     staffOptions.push({ id: s.id, name: s.display_name || s.name, color: s.color })
   );
@@ -247,11 +244,7 @@ export function MobileStaffSwitcher({
                               }
                         }
                       >
-                        {option.id === null ? (
-                          <Users className="w-4 h-4" />
-                        ) : (
                           (option.name.charAt(0) || "?").toUpperCase()
-                        )}
                       </div>
 
                       {/* Name + count */}

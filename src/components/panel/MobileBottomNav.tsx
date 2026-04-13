@@ -87,7 +87,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
     <>
       {/* Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-[rgba(255,255,255,0.08)] bg-[var(--bg-primary)]/98 backdrop-blur-xl safe-area-pb">
-        <div className="flex items-center justify-around h-16 px-1">
+        <div className="flex items-center justify-around h-14 px-1">
           {mainItems.map((item) => {
             const active = isActive(item.href);
             const icon = getNavIcon(item.href);

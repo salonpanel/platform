@@ -88,8 +88,24 @@ export function AgendaContent({
   // Phase 2: Mobile-first responsive viewport detection
   const isMobile = useMediaQuery("(max-width: 768px)");
 
-  // Mobile staff tab selection — empty string means "all"
+  // Mobile staff selection — on mobile we ALWAYS show exactly 1 staff (never all columns)
   const [mobileSelectedStaffId, setMobileSelectedStaffId] = useState<string | null>(null);
+
+  // Auto-select first staff on mobile when loaded — avoids multi-column layout that causes horizontal overflow
+  useEffect(() => {
+    if (isMobile && staffList.length > 0 && !mobileSelectedStaffId) {
+      setMobileSelectedStaffId(staffList[0].id);
+    }
+  }, [isMobile, staffList, mobileSelectedStaffId]);
+
+  // Resolve the active staff id on mobile — always a real staff id (never null on mobile)
+  const mobileActiveStaffId = useMemo(() => {
+    if (!isMobile) return mobileSelectedStaffId;
+    if (mobileSelectedStaffId && staffList.some((s) => s.id === mobileSelectedStaffId)) {
+      return mobileSelectedStaffId;
+    }
+    return staffList[0]?.id ?? null;
+  }, [isMobile, mobileSelectedStaffId, staffList]);
 
   // Touch swipe for day navigation on mobile
   const { onTouchStart, onTouchEnd } = useTouchSwipe({
@@ -110,16 +126,20 @@ export function AgendaContent({
     disabled: !isMobile || viewMode !== "day",
   });
 
-  // Filtered staff and bookings for mobile single-staff view
+  // On mobile: always filter to single staff (never multi-column)
   const mobileStaffList = useMemo(() => {
-    if (!isMobile || !mobileSelectedStaffId) return staffList;
-    return staffList.filter((s) => s.id === mobileSelectedStaffId);
-  }, [isMobile, mobileSelectedStaffId, staffList]);
+    if (!isMobile) return staffList;
+    const activeId = mobileActiveStaffId;
+    if (!activeId) return staffList.slice(0, 1); // fallback: first
+    return staffList.filter((s) => s.id === activeId);
+  }, [isMobile, mobileActiveStaffId, staffList]);
 
   const mobileBookings = useMemo(() => {
-    if (!isMobile || !mobileSelectedStaffId) return bookings;
-    return bookings.filter((b) => b.staff_id === mobileSelectedStaffId);
-  }, [isMobile, mobileSelectedStaffId, bookings]);
+    if (!isMobile) return bookings;
+    const activeId = mobileActiveStaffId;
+    if (!activeId) return [];
+    return bookings.filter((b) => b.staff_id === activeId);
+  }, [isMobile, mobileActiveStaffId, bookings]);
 
   // Booking count per staff (for tab badges)
   const bookingCountsByStaff = useMemo(() => {
@@ -213,7 +233,7 @@ export function AgendaContent({
                               <div className="flex-shrink-0">
                                 <MobileStaffSwitcher
                                   staffList={staffList}
-                                  selectedStaffId={mobileSelectedStaffId}
+                                  selectedStaffId={mobileActiveStaffId}
                                   onSelectStaff={(id) => setMobileSelectedStaffId(id)}
                                   bookingCounts={bookingCountsByStaff}
                                 />
@@ -356,6 +376,7 @@ export function AgendaContent({
             onClick={onNewBooking}
             label="Nueva cita"
             icon={<span className="text-lg font-semibold">+</span>}
+            className="bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-6"
           />
         </motion.div>
       </AnimatePresence>

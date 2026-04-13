@@ -281,7 +281,12 @@ export function DayView({
                   key={staff.id}
                   variants={staggerPresets.staffColumns.variants}
                   custom={staffIndex}
-                  className="flex-1 min-w-[280px] md:min-w-[300px] lg:min-w-[320px]"
+                  className={cn(
+                    "flex-1",
+                    // Mobile: each column takes full width — no min-w that forces overflow
+                    // Desktop: preserve minimum column width for readability
+                    isMobile ? "min-w-0 w-full" : "min-w-[280px] md:min-w-[300px] lg:min-w-[320px]"
+                  )}
                 >
                   <StaffColumn
                     staff={staff}

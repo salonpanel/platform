@@ -44,6 +44,7 @@ export async function proxy(request: NextRequest) {
             },
             cookieOptions: {
                 name: "sb-panel-auth",
+                maxAge: 31536000,
             },
         }
     );

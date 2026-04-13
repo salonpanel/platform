@@ -31,6 +31,7 @@ export async function createClientForServer(options?: { cookieName?: string }) {
             },
             cookieOptions: {
                 name: cookieName,
+                maxAge: 31536000,
             },
         }
     );

@@ -27,6 +27,7 @@ export function getSupabaseBrowser(options?: { cookieName?: string }): SupabaseC
         cookieOptions: {
           name: cookieName,
           path: "/",
+          maxAge: 31536000,
         },
       }
     );

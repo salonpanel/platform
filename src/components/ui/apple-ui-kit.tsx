@@ -551,17 +551,19 @@ interface FabProps {
   onClick?: () => void;
   icon?: React.ReactNode;
   label?: string;
+  className?: string;
 }
 
 export const UiFab: React.FC<FabProps> = ({
   onClick,
   icon,
   label = "Nuevo",
+  className,
 }) => {
   return (
     <motion.button
       onClick={onClick}
-      className="fixed bottom-6 right-6 z-[70] flex items-center gap-2 rounded-full bg-[rgba(21,23,26,0.96)] px-4 py-2.5 text-sm font-medium text-white shadow-[0_18px_45px_rgba(0,0,0,0.8)] border border-white/10 backdrop-blur-xl"
+      className={cn("fixed bottom-6 right-6 z-[70] flex items-center gap-2 rounded-full bg-[rgba(21,23,26,0.96)] px-4 py-2.5 text-sm font-medium text-white shadow-[0_18px_45px_rgba(0,0,0,0.8)] border border-white/10 backdrop-blur-xl", className)}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -2, boxShadow: "0 22px 55px rgba(0,0,0,0.9)" }}
