@@ -126,6 +126,7 @@ function PremiumDivider() {
 // Status color mapping
 const statusColors: Record<BookingStatus, "aqua" | "purple" | "blue" | "pink" | "amber" | "red" | "green" | "gray"> = {
   pending: "amber",
+  confirmed: "blue",
   paid: "green",
   completed: "aqua",
   cancelled: "red",

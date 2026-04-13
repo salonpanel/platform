@@ -212,6 +212,7 @@ export function AgendaTopBar({
 
   const statusColors: Record<BookingStatus, string> = {
     pending: "text-amber-400",
+    confirmed: "text-sky-400",
     paid: "text-emerald-400",
     completed: "text-[#4FE3C1]",
     cancelled: "text-red-400",
