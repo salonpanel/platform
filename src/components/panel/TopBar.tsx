@@ -66,7 +66,10 @@ export function TopBar({
 
   return (
     <div className={cn(
-      "relative pb-8 pt-6 md:pt-8",
+      "relative pb-8",
+      // Mobile: respect status bar (notch / Dynamic Island / home indicator)
+      // Use max() so we always have at least 1rem padding even on devices without safe area
+      "pt-safe-top md:pt-8",
       sidebarCollapsed ? "px-6 md:px-8" : "px-6 md:px-10"
     )}>
       {/* Elegant divider line */}

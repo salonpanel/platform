@@ -391,8 +391,8 @@ function PanelLayoutContent({
           sidebarCollapsed={sidebarCollapsed}
         />
 
-        {/* Page Content - Add bottom padding on mobile for bottom nav */}
-        <main className="flex-1 overflow-y-auto bg-slate-950 pb-16 md:pb-0">
+        {/* Page Content - Padding accounts for bottom nav (64px) + safe-area-inset-bottom (iPhone home indicator) */}
+        <main className="flex-1 overflow-y-auto bg-slate-950 pb-nav-safe md:pb-0">
           <TenantProvider tenant={tenant} isLoading={loading}>
             <PageContainer>{children}</PageContainer>
           </TenantProvider>

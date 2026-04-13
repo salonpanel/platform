@@ -11,7 +11,7 @@ import { PremiumSkeleton } from "./PremiumSkeleton";
 import { DayView } from "./views/DayView";
 import { ConflictZone } from "./ConflictZone";
 import { NoShowAlert } from "./NoShowAlert";
-import { MobileStaffTabs } from "./MobileStaffTabs";
+import { MobileStaffSwitcher } from "./MobileStaffSwitcher";
 import { MobileDaySummary } from "./MobileDaySummary";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { useTouchSwipe } from "@/hooks/useTouchSwipe";
@@ -208,13 +208,13 @@ export function AgendaContent({
                       {viewMode === "day" && (
                         staffList.length > 0 ? (
                           <div className="h-full flex flex-col min-h-0">
-                            {/* Mobile: Staff tabs for single-staff view */}
+                            {/* Mobile: Staff switcher — Fresha-style arrow+sheet picker, replaces horizontal tabs */}
                             {isMobile && staffList.length > 1 && (
                               <div className="flex-shrink-0">
-                                <MobileStaffTabs
+                                <MobileStaffSwitcher
                                   staffList={staffList}
                                   selectedStaffId={mobileSelectedStaffId}
-                                  onSelectStaff={(id) => setMobileSelectedStaffId(id || null)}
+                                  onSelectStaff={(id) => setMobileSelectedStaffId(id)}
                                   bookingCounts={bookingCountsByStaff}
                                 />
                               </div>

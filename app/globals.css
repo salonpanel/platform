@@ -797,3 +797,17 @@ select option {
 .safe-area-pt {
   padding-top: env(safe-area-inset-top, 0px);
 }
+
+/* TopBar: respects status bar on iOS (notch / Dynamic Island) and Android (status bar).
+   On mobile, padding-top = status bar height + comfortable spacing (min 1.25rem).
+   On desktop md:pt-8 takes over. */
+.pt-safe-top {
+  padding-top: max(env(safe-area-inset-top, 0px), 1.25rem);
+}
+
+/* Main content area: must clear both the fixed bottom nav (4rem = 64px) AND the
+   iPhone home indicator / Android gesture bar that the nav itself sits on top of.
+   Without this, content scrolls under the nav on gesture-based phones. */
+.pb-nav-safe {
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+}
