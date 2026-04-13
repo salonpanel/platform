@@ -10,7 +10,7 @@ import { useDragDropManager } from "../interactions/DragDropManager";
 import { useScrollSyncManager } from "../interactions/ScrollSyncManager";
 import { motion } from "framer-motion";
 import { staggerPresets } from "../motion/presets";
-import { STAFF_COLUMN_MIN_WIDTH_DESKTOP, STAFF_COLUMN_MIN_WIDTH_MOBILE, SLOT_HEIGHT_PX, SLOT_HEIGHT_MOBILE_PX } from "../constants/layout";
+import { STAFF_COLUMN_MIN_WIDTH_DESKTOP, STAFF_COLUMN_MIN_WIDTH_MOBILE, SLOT_HEIGHT_PX, SLOT_HEIGHT_MOBILE_PX, SLOT_DURATION_MINUTES } from "../constants/layout";
 import { cn } from "@/lib/utils";
 import { useResponsive } from "@/hooks/useResponsive";
 import { buildStaffWindowsForDay } from "../utils/timeWindows";
