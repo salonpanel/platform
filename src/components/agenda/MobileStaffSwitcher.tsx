@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Users, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,11 @@ export function MobileStaffSwitcher({
   bookingCounts,
 }: MobileStaffSwitcherProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Build the ordered list of staff
   const staffOptions: Array<{ id: string | null; name: string; color?: string | null }> = [];
@@ -155,9 +161,10 @@ export function MobileStaffSwitcher({
         </motion.button>
       </div>
 
-      {/* Bottom sheet */}
-      <AnimatePresence>
-        {sheetOpen && (
+      {/* Bottom sheet via Portal to escape CSS transforms and z-index issues */}
+      {mounted && createPortal(
+        <AnimatePresence>
+          {sheetOpen && (
           <>
             {/* Backdrop */}
             <motion.div
@@ -244,7 +251,7 @@ export function MobileStaffSwitcher({
                               }
                         }
                       >
-                          (option.name.charAt(0) || "?").toUpperCase()
+                        {(option.name.charAt(0) || "?").toUpperCase()}
                       </div>
 
                       {/* Name + count */}
@@ -283,12 +290,14 @@ export function MobileStaffSwitcher({
                       </AnimatePresence>
                     </motion.button>
                   );
-                })}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+                  })}
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </>
   );
 }
