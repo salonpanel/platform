@@ -22,8 +22,12 @@ export function getAutoTransitionStatus(
   currentTime: Date = new Date()
 ): BookingStatus | null {
   // Solo evaluar transiciones automáticas para ciertos estados
-  if (booking.status === "cancelled" || booking.status === "no_show") {
-    // Estados finales, no cambian automáticamente
+  if (
+    booking.status === "cancelled" ||
+    booking.status === "no_show" ||
+    booking.status === "confirmed"
+  ) {
+    // Estados finales o gestionados externamente (portal), no cambian automáticamente
     return null;
   }
 
@@ -93,12 +97,13 @@ export function isValidStatusTransition(
 
   // Transiciones permitidas
   const allowedTransitions: Record<BookingStatus, BookingStatus[]> = {
-    hold: ["pending", "paid", "cancelled"], // hold puede ir a pending, paid o cancelled
-    pending: ["paid", "cancelled", "no_show"], // pending puede ir a paid, cancelled o no_show
-    paid: ["completed", "cancelled"], // paid puede ir a completed (auto) o cancelled (manual)
-    completed: ["cancelled"], // completed solo puede ir a cancelled (manual)
-    cancelled: [], // cancelled es final (pero podría reactivarse manualmente en el futuro)
-    no_show: [], // no_show es final
+    hold: ["pending", "confirmed", "paid", "cancelled"],   // hold → pending/confirmed/paid/cancelled
+    pending: ["confirmed", "paid", "cancelled", "no_show"], // pending → confirmado, pagado, cancelado o no_show
+    confirmed: ["paid", "completed", "cancelled", "no_show"], // confirmed (portal) → pagado, completado, cancelado o no_show
+    paid: ["completed", "cancelled"], // paid → completed (auto) o cancelled (manual)
+    completed: ["cancelled"], // completed → solo cancelled
+    cancelled: [], // final (reactivación manual a través de cheque isManual)
+    no_show: [], // final
   };
 
   return allowedTransitions[currentStatus]?.includes(newStatus) ?? false;
@@ -113,7 +118,8 @@ export function isValidStatusTransition(
 export function getSuggestedNextStatus(currentStatus: BookingStatus): BookingStatus | null {
   const suggestions: Record<BookingStatus, BookingStatus | null> = {
     hold: "pending",
-    pending: "paid",
+    pending: "confirmed",
+    confirmed: "paid",
     paid: "completed",
     completed: null, // No hay siguiente estado
     cancelled: null, // No hay siguiente estado

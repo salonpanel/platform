@@ -2,7 +2,7 @@
  * Tipos centralizados para la Agenda
  */
 
-export type BookingStatus = "hold" | "pending" | "paid" | "completed" | "cancelled" | "no_show";
+export type BookingStatus = "hold" | "pending" | "confirmed" | "paid" | "completed" | "cancelled" | "no_show";
 
 export interface Booking {
   id: string;
@@ -121,13 +121,21 @@ export const BOOKING_STATUS_CONFIG: Record<BookingStatus, {
     legendBg: "rgba(255,193,7,0.12)",
     legendBorder: "#FFC107/30",
   },
-  pending: { 
-    label: "Pendiente de pago", 
-    color: "bg-amber-500/10 text-amber-300", 
+  pending: {
+    label: "Pendiente de pago",
+    color: "bg-amber-500/10 text-amber-300",
     chipVariant: "default",
     legendColor: "#FFC107",
     legendBg: "rgba(255,193,7,0.12)",
     legendBorder: "#FFC107/30",
+  },
+  confirmed: {
+    label: "Confirmado",
+    color: "bg-sky-500/10 text-sky-300",
+    chipVariant: "default",
+    legendColor: "#38BDF8",
+    legendBg: "rgba(56,189,248,0.12)",
+    legendBorder: "#38BDF8/30",
   },
   paid: { 
     label: "Pagado", 
@@ -170,6 +178,7 @@ export const BOOKING_STATUS_CONFIG: Record<BookingStatus, {
 export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
   hold: BOOKING_STATUS_CONFIG.hold.label,
   pending: BOOKING_STATUS_CONFIG.pending.label,
+  confirmed: BOOKING_STATUS_CONFIG.confirmed.label,
   paid: BOOKING_STATUS_CONFIG.paid.label,
   completed: BOOKING_STATUS_CONFIG.completed.label,
   cancelled: BOOKING_STATUS_CONFIG.cancelled.label,
