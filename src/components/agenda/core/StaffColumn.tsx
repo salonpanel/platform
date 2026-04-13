@@ -339,6 +339,7 @@ export const StaffColumn = React.memo(function StaffColumn({
           staffId={staff.id}
           selectedDate={selectedDate}
           dayStartHour={dayStartHour}
+          slotHeight={slotHeight}
         />
 
         {/* Blockings */}

@@ -37,6 +37,7 @@ export function BookingSlidePanel({
   const panelRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [statusLoading, setStatusLoading] = useState<string | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   // Cambiar estado de la reserva
   const handleStatusChange = async (newStatus: string) => {
@@ -74,6 +75,11 @@ export function BookingSlidePanel({
 
     return () => mediaQuery.removeEventListener('change', handleMediaChange);
   }, []);
+
+  // Reset cancel confirm when panel closes or booking changes
+  useEffect(() => {
+    if (!isOpen) setShowCancelConfirm(false);
+  }, [isOpen, booking?.id]);
 
   // Body scroll lock
   useEffect(() => {
@@ -510,34 +516,61 @@ export function BookingSlidePanel({
               )}
 
               {/* Edit + Cancel row */}
-              <div className="flex gap-2.5">
-                <button
-                  onClick={() => booking && onEdit?.(booking)}
-                  className="flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-                  style={{ color: 'var(--accent-blue)', backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid var(--glass-border-subtle)' }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
-                  }}
+              {!showCancelConfirm ? (
+                <div className="flex gap-2.5">
+                  <button
+                    onClick={() => booking && onEdit?.(booking)}
+                    className="flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                    style={{ color: 'var(--accent-blue)', backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid var(--glass-border-subtle)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; }}
+                  >
+                    Editar
+                  </button>
+                  {booking.status !== "cancelled" && booking.status !== "completed" && (
+                    <button
+                      onClick={() => setShowCancelConfirm(true)}
+                      className="flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                      style={{ color: '#EF4444', backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.15)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.1)'; }}
+                    >
+                      Cancelar cita
+                    </button>
+                  )}
+                </div>
+              ) : (
+                /* Confirmación inline de cancelación */
+                <div
+                  className="rounded-lg p-3 space-y-2.5"
+                  style={{ backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)' }}
                 >
-                  Editar
-                </button>
-                <button
-                  onClick={() => booking && onCancel?.(booking.id)}
-                  className="flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-                  style={{ color: '#EF4444', backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.15)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.1)';
-                  }}
-                >
-                  Cancelar cita
-                </button>
-              </div>
+                  <p className="text-xs text-center font-medium" style={{ color: 'rgba(239,68,68,0.9)' }}>
+                    ¿Confirmar cancelación de la cita?
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowCancelConfirm(false)}
+                      className="flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: 'var(--text-secondary)', border: '1px solid var(--glass-border-subtle)' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; }}
+                    >
+                      No, volver
+                    </button>
+                    <button
+                      onClick={() => handleStatusChange("cancelled")}
+                      disabled={statusLoading !== null}
+                      className="flex-1 rounded-md px-3 py-1.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.4)' }}
+                      onMouseEnter={(e) => { if (!statusLoading) e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.3)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.2)'; }}
+                    >
+                      {statusLoading === "cancelled" ? "Cancelando..." : "Sí, cancelar"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         </>

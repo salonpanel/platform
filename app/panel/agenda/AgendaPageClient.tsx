@@ -138,6 +138,14 @@ export default function AgendaPageClient({
     onAfterMutation: () => refreshDaySnapshots(selectedDate),
   });
 
+  // Auto-refresh cada 5 minutos para mantener datos actualizados
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refreshDaySnapshots(selectedDate);
+    }, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [selectedDate, refreshDaySnapshots]);
+
   const handleBookingSave = useCallback(
     (payload: BookingMutationPayload): Promise<SaveBookingResult> => saveBooking(payload),
     [saveBooking]
@@ -405,9 +413,13 @@ export default function AgendaPageClient({
           modals.closeBookingDetail();
           modals.openEditBookingModal(booking);
         }}
-        onCancel={(bookingId) => showToast("Cancelar cita: próximamente", "info")}
+        onCancel={(bookingId) => {
+          showToast("Cita cancelada", "success");
+          refreshDaySnapshots(selectedDate);
+        }}
         onStatusChange={(bookingId, newStatus) => {
-          showToast(`Estado actualizado a ${newStatus}`, "success");
+          const label = newStatus === "cancelled" ? "Cita cancelada" : `Estado actualizado a ${newStatus}`;
+          showToast(label, newStatus === "cancelled" ? "error" : "success");
           refreshDaySnapshots(selectedDate);
         }}
         timezone={tenantTimezone}

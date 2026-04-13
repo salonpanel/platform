@@ -18,6 +18,7 @@ interface FreeSlotOverlayProps {
   staffId: string;
   selectedDate: string;
   dayStartHour?: number;
+  slotHeight?: number;
 }
 
 export function FreeSlotOverlay({
@@ -26,6 +27,7 @@ export function FreeSlotOverlay({
   staffId,
   selectedDate,
   dayStartHour = 8,
+  slotHeight = SLOT_HEIGHT_PX,
 }: FreeSlotOverlayProps) {
   return (
     <>
@@ -34,11 +36,11 @@ export function FreeSlotOverlay({
         const relativeStartMinutes = gap.startMinutes - dayStartMinutes;
         const relativeEndMinutes = gap.endMinutes - dayStartMinutes;
 
-        // Calculate position using shared constants
+        // Calculate position using dynamic slotHeight (mobile-aware)
         const slotIndexStart = Math.round(relativeStartMinutes / SLOT_DURATION_MINUTES);
         const slotIndexEnd = Math.round(relativeEndMinutes / SLOT_DURATION_MINUTES);
-        const top = Math.max(0, slotIndexStart * SLOT_HEIGHT_PX);
-        const height = Math.max(MIN_BOOKING_HEIGHT_PX, (slotIndexEnd - slotIndexStart) * SLOT_HEIGHT_PX);
+        const top = Math.max(0, slotIndexStart * slotHeight);
+        const height = Math.max(MIN_BOOKING_HEIGHT_PX, (slotIndexEnd - slotIndexStart) * slotHeight);
 
         const durationHours = Math.floor(gap.duration / 60);
         const durationMins = gap.duration % 60;
