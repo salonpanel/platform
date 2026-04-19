@@ -1,9 +1,19 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { availabilityRateLimit, getClientIp } from "@/lib/rate-limit";
 
 // GET /api/availability/combined?tenantId=<uuid|slug>&day=YYYY-MM-DD
 export async function GET(req: Request) {
 	try {
+		// ── Rate limiting ────────────────────────────────────────────────────────
+		if (availabilityRateLimit) {
+			const ip = getClientIp(req);
+			const { success } = await availabilityRateLimit.limit(ip);
+			if (!success) {
+				return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+			}
+		}
+
 		const url = new URL(req.url);
 		const tenantId = url.searchParams.get("tenantId");
 		const day = url.searchParams.get("day");

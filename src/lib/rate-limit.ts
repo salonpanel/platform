@@ -15,6 +15,16 @@ export const holdRateLimit = redis
     })
   : null;
 
+// Rate limiter para endpoints públicos de disponibilidad (combined + slots)
+// 30 req/min por IP — suficiente para portales de reservas legítimos
+export const availabilityRateLimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(30, "1 m"),
+      analytics: false,
+    })
+  : null;
+
 export function getClientIp(req: Request | Headers): string {
   let headers: Headers;
   
