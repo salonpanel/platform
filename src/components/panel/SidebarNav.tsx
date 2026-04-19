@@ -34,6 +34,7 @@ interface NavItem {
 interface SidebarNavProps {
   items: NavItem[];
   tenantName: string;
+  tenantTimezone?: string;
   isOpen?: boolean;
   isCollapsed?: boolean;
   onClose?: () => void;
@@ -44,6 +45,7 @@ interface SidebarNavProps {
 export function SidebarNav({
   items,
   tenantName,
+  tenantTimezone = "Europe/Madrid",
   isOpen = true,
   isCollapsed = false,
   onClose,
@@ -251,7 +253,7 @@ export function SidebarNav({
             ]);
 
             return {
-              tenant: { id: tId, name: "Tu negocio", timezone: "Europe/Madrid" },
+              tenant: { id: tId, name: tenantName || "Tu negocio", timezone: tenantTimezone },
               kpis: { bookingsToday: bookingsRes.count || 0, activeServices: servicesRes.count || 0, activeStaff: staffRes.count || 0 },
               upcomingBookings: upcomingRes.data || [],
             };
@@ -284,7 +286,7 @@ export function SidebarNav({
               tenant: {
                 id: tId,
                 name: tenantName || "Tu negocio",
-                timezone: "Europe/Madrid",
+                timezone: tenantTimezone,
               },
               services: data || [],
             };
@@ -327,7 +329,7 @@ export function SidebarNav({
             }
 
             return {
-              tenant: { id: tId, name: "Tu negocio", timezone: "Europe/Madrid" },
+              tenant: { id: tId, name: tenantName || "Tu negocio", timezone: tenantTimezone },
               conversations: conversations.map((conv: any) => ({
                 id: conv.id,
                 tenantId: conv.tenant_id,

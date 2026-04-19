@@ -364,6 +364,7 @@ function PanelLayoutContent({
         <SidebarNav
           items={navItems}
           tenantName={tenant.name}
+          tenantTimezone={tenant.timezone}
           isOpen={sidebarOpen}
           isCollapsed={sidebarCollapsed}
           onClose={() => setSidebarOpen(false)}

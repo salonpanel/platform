@@ -87,6 +87,8 @@ export function MessageList({
 	const isLoadingMoreRef = useRef(false);
 	// Guardamos el scrollHeight antes de cargar para restaurar posición después
 	const prevScrollHeightRef = useRef(0);
+	// ID del último mensaje visible — para distinguir "nuevo mensaje" de "load-more"
+	const lastMessageIdRef = useRef<string | null>(null);
 
 	// Restaurar posición de scroll después de que se añadan mensajes al principio
 	useEffect(() => {
@@ -95,6 +97,7 @@ export function MessageList({
 		const newScrollHeight = container.scrollHeight;
 		const diff = newScrollHeight - prevScrollHeightRef.current;
 		if (diff > 0) {
+			// Restaurar scroll síncrono ANTES de que el setTimeout del scrollToBottom lo pise
 			container.scrollTop = diff;
 		}
 		isLoadingMoreRef.current = false;
@@ -165,12 +168,20 @@ export function MessageList({
 
 	const dateKeys = useMemo(() => Object.keys(messagesWithDates).sort(), [messagesWithDates]);
 
-	// Auto-scroll cuando cambian los mensajes o se carga por primera vez
+	// Auto-scroll solo cuando llega un mensaje nuevo al FINAL (no en load-more).
+	// Comparamos el ID del último mensaje: si cambió es porque se añadió uno nuevo;
+	// si no cambió, fue un prepend de mensajes antiguos (load-more) → no tocamos scroll.
 	useEffect(() => {
-		if (messages.length > 0) {
-			scrollToBottom(containerRef);
+		if (messages.length === 0) return;
+		const newLastId = messages[messages.length - 1].id;
+		if (newLastId !== lastMessageIdRef.current) {
+			lastMessageIdRef.current = newLastId;
+			// Solo auto-scroll si NO estamos en medio de un load-more
+			if (!isLoadingMoreRef.current) {
+				scrollToBottom(containerRef);
+			}
 		}
-	}, [messages.length, containerRef]);
+	}, [messages, containerRef]);
 
 	if (loading) {
 		return (
@@ -192,11 +203,19 @@ export function MessageList({
 
 	return (
 		<div ref={containerRef} className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
-			{/* 🚀 Indicador de "Cargando más mensajes..." */}
+			{/* Spinner durante load-more (loading=true + ya hay mensajes = es un load-more) */}
 			{loading && hasMoreMessages && (
 				<div className="flex items-center justify-center py-2">
 					<Spinner size="sm" />
 					<span className="ml-2 text-xs text-[var(--text-secondary)]">Cargando más mensajes...</span>
+				</div>
+			)}
+			{/* Indicador sutil: hay historial disponible, pero no estamos cargando */}
+			{!loading && hasMoreMessages && (
+				<div className="flex items-center justify-center py-1">
+					<span className="text-[10px] text-[var(--text-secondary)]/50 italic">
+						↑ Sube para ver mensajes anteriores
+					</span>
 				</div>
 			)}
 
