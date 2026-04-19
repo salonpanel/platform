@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { format, parseISO, startOfDay, endOfDay } from "date-fns";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { getAgendaRange, type AgendaDataset } from "@/lib/agenda-data";
@@ -217,6 +217,61 @@ export function useAgendaData({ tenantId, selectedDate, viewMode, initialData }:
     },
     [fetchRangeData]
   );
+
+  // ── Ref para evitar closures obsoletas en el callback de Realtime ────────────
+  // refreshDaySnapshots cambia de referencia cuando selectedDate/viewMode cambian.
+  // En lugar de re-suscribirse al canal en cada cambio de fecha, usamos una ref
+  // que siempre apunta a la versión más reciente de la función.
+  const refreshRef = useRef(refreshDaySnapshots);
+  useEffect(() => {
+    refreshRef.current = refreshDaySnapshots;
+  }, [refreshDaySnapshots]);
+
+  // ── Supabase Realtime: sincronización en tiempo real de bookings ─────────────
+  useEffect(() => {
+    if (!tenantId) return;
+
+    // Marca si hubo cambios remotos mientras la pestaña estaba en background.
+    // Al volver al foco se aplica el refresh en lugar de ignorarlos.
+    let pendingRefresh = false;
+
+    const channel = supabase
+      .channel(`agenda-bookings-${tenantId}`)
+      .on(
+        "postgres_changes" as any,
+        {
+          event: "*",          // INSERT | UPDATE | DELETE
+          schema: "public",
+          table: "bookings",
+          filter: `tenant_id=eq.${tenantId}`,
+        },
+        () => {
+          if (document.hidden) {
+            // Pestaña en background: anotar el cambio sin hacer fetch
+            pendingRefresh = true;
+          } else {
+            // Pestaña activa: refrescar con la fecha/vista actuales
+            refreshRef.current();
+          }
+        }
+      )
+      .subscribe();
+
+    // Cuando el usuario vuelve a la pestaña, aplicar el refresh pendiente
+    const handleVisibilityChange = () => {
+      if (!document.hidden && pendingRefresh) {
+        pendingRefresh = false;
+        refreshRef.current();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      supabase.removeChannel(channel);
+    };
+  }, [tenantId, supabase]); // Solo se re-suscribe si cambia el tenant
 
   return {
     loading,
