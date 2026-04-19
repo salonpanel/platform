@@ -1,6 +1,6 @@
 "use client";
 
-import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parseISO } from "date-fns";
+import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parseISO, isSameDay } from "date-fns";
 import { Settings, Bell, Search, Filter, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -72,6 +72,7 @@ export function AgendaHeader({
 
   // Parsear fecha desde selectedDate = "yyyy-MM-dd" usando parseISO para robustez
   const date = parseISO(selectedDate);
+  const isToday = isSameDay(date, new Date());
 
   const getDateLabel = () => {
     switch (viewMode) {
@@ -292,10 +293,15 @@ export function AgendaHeader({
               </GlassButton>
 
               <GlassButton
-                onClick={handleToday}
+                onClick={isToday ? undefined : handleToday}
                 variant="secondary"
                 size="sm"
-                className="font-[var(--font-heading)]"
+                className={cn(
+                  "font-[var(--font-heading)] transition-opacity duration-150",
+                  isToday && "opacity-40 cursor-default pointer-events-none"
+                )}
+                aria-current={isToday ? "date" : undefined}
+                aria-label={isToday ? "Ya estás en hoy" : "Ir a hoy"}
               >
                 Hoy
               </GlassButton>

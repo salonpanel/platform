@@ -76,7 +76,11 @@ export function FreeSlotOverlay({
             }}
             title={`Hueco libre: ${minutesToTime(gap.startMinutes)} - ${minutesToTime(gap.endMinutes)} (${durationLabel})`}
           >
-            <div className="flex items-center justify-center h-full p-2">
+            {/* Huecos ≥45 min: label siempre visible. <45 min: solo en hover */}
+            <div className={cn(
+              "flex items-center justify-center h-full p-2 transition-opacity duration-150",
+              gap.duration < 45 ? "opacity-0 group-hover:opacity-100" : "opacity-100"
+            )}>
               <div className="text-center">
                 <div className="text-xs font-semibold mb-0.5 text-[#4FE3C1] font-sans drop-shadow-sm">
                   Libre {durationLabel}

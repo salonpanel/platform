@@ -75,3 +75,4 @@ export function MobileDaySummary({ bookings, timezone, onBookingClick }: MobileD
     </div>
   );
 }
+       

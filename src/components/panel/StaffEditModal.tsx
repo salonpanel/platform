@@ -8,7 +8,7 @@ import { GlassSelect } from "@/components/ui/glass/GlassSelect";
 import { UserPermissions, DEFAULT_PERMISSIONS } from "@/hooks/useUserPermissions";
 import { updateStaffServices, getStaffServices } from "@/lib/staff/staffServicesRelations";
 import { cn } from "@/lib/utils";
-import { Clock, CheckCircle2, XCircle, Shield, User, Image as ImageIcon } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, Shield, User, Image as ImageIcon, Plus, Minus } from "lucide-react";
 
 type Staff = {
   id: string;
@@ -31,7 +31,22 @@ type DaySchedule = {
   startTime: string;
   endTime: string;
   isActive: boolean;
+  hasBreak: boolean;   // ¿tiene descanso intermedio?
+  breakStart: string;  // Inicio del 2.º turno (tras descanso)
+  breakEnd: string;    // Fin del 2.º turno
 };
+
+/** Construye un DaySchedule con valores por defecto */
+const makeDefaultSchedule = (day: number, name: string): DaySchedule => ({
+  day,
+  name,
+  startTime: "09:00",
+  endTime: "19:00",
+  isActive: day !== 0 && day !== 6,
+  hasBreak: false,
+  breakStart: "14:00",
+  breakEnd: "16:00",
+});
 
 interface StaffEditModalProps {
   isOpen: boolean;
@@ -94,7 +109,9 @@ export function StaffEditModal({
     color: "#4cb3ff",
     bio: "",
   });
-  const [schedules, setSchedules] = useState<DaySchedule[]>([]);
+  const [schedules, setSchedules] = useState<DaySchedule[]>(
+    () => DAYS_OF_WEEK.map((d) => makeDefaultSchedule(d.day, d.name))
+  );
   const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS);
   const [loading, setLoading] = useState(false);
   const [loadingSchedules, setLoadingSchedules] = useState(false);
@@ -122,15 +139,26 @@ export function StaffEditModal({
 
       if (error) throw error;
 
-      // Crear horarios para todos los días
+      // Crear horarios para todos los días — soporte de hasta 2 filas/día (descanso)
       const daySchedules: DaySchedule[] = DAYS_OF_WEEK.map((day) => {
-        const existing = data?.find((s: any) => s.day_of_week === day.day);
+        const rows = (data || [])
+          .filter((s: any) => s.day_of_week === day.day)
+          .sort((a: any, b: any) => a.start_time.localeCompare(b.start_time));
+
+        const first = rows[0];
+        const second = rows[1]; // 2.º turno (tras descanso), si existe
+
+        if (!first) return makeDefaultSchedule(day.day, day.name);
+
         return {
           day: day.day,
           name: day.name,
-          startTime: existing?.start_time?.substring(0, 5) || "09:00",
-          endTime: existing?.end_time?.substring(0, 5) || "19:00",
-          isActive: existing?.is_active ?? true,
+          startTime: first.start_time.substring(0, 5),
+          endTime:   first.end_time.substring(0, 5),
+          isActive:  first.is_active ?? true,
+          hasBreak:  !!second,
+          breakStart: second ? second.start_time.substring(0, 5) : "14:00",
+          breakEnd:   second ? second.end_time.substring(0, 5)   : "16:00",
         };
       });
 
@@ -139,13 +167,7 @@ export function StaffEditModal({
     } catch (err: any) {
       console.error("Error al cargar horarios:", err);
       // En caso de error, usar valores por defecto
-      setSchedules(DAYS_OF_WEEK.map((day) => ({
-        day: day.day,
-        name: day.name,
-        startTime: "09:00",
-        endTime: "19:00",
-        isActive: day.day !== 0 && day.day !== 6,
-      })));
+      setSchedules(DAYS_OF_WEEK.map((d) => makeDefaultSchedule(d.day, d.name)));
     } finally {
       setLoadingSchedules(false);
     }
@@ -247,13 +269,7 @@ export function StaffEditModal({
         color: "#4cb3ff",
         bio: "",
       });
-      setSchedules(DAYS_OF_WEEK.map((day) => ({
-        day: day.day,
-        name: day.name,
-        startTime: "09:00",
-        endTime: "19:00",
-        isActive: day.day !== 0 && day.day !== 6, // Activo de lunes a viernes por defecto
-      })));
+      setSchedules(DAYS_OF_WEEK.map((d) => makeDefaultSchedule(d.day, d.name)));
       setSelectedServices([]);
       setSaveError(null);
       return;
@@ -287,18 +303,16 @@ export function StaffEditModal({
     } else {
       console.log("[StaffEditModal] No staff provided, using defaults for new staff");
       // Nuevo staff - valores por defecto
-      setSchedules(DAYS_OF_WEEK.map((day) => ({
-        day: day.day,
-        name: day.name,
-        startTime: "09:00",
-        endTime: "19:00",
-        isActive: day.day !== 0 && day.day !== 6, // Activo de lunes a viernes por defecto
-      })));
+      setSchedules(DAYS_OF_WEEK.map((d) => makeDefaultSchedule(d.day, d.name)));
       setSelectedServices([]);
     }
   }, [isOpen, staff?.id, tenantId, loadSchedules, loadPermissions, loadStaffServices]);
 
-  const handleScheduleChange = (day: number, field: "startTime" | "endTime" | "isActive", value: string | boolean) => {
+  const handleScheduleChange = (
+    day: number,
+    field: "startTime" | "endTime" | "isActive" | "hasBreak" | "breakStart" | "breakEnd",
+    value: string | boolean
+  ) => {
     setSchedules((prev) =>
       prev.map((s) => (s.day === day ? { ...s, [field]: value } : s))
     );
@@ -317,14 +331,29 @@ export function StaffEditModal({
       // Usar selectedServices en lugar de parsear form.skills
       const skillsArray = selectedServices.length > 0 ? selectedServices : [];
 
+      // Genera 1 o 2 filas por día según tenga descanso
       const schedulesData = schedules
         .filter((s) => s.isActive)
-        .map((s) => ({
-          day_of_week: s.day,
-          start_time: `${s.startTime}:00`,
-          end_time: `${s.endTime}:00`,
-          is_active: true,
-        }));
+        .flatMap((s) => {
+          const turno1 = {
+            day_of_week: s.day,
+            start_time: `${s.startTime}:00`,
+            end_time:   `${s.endTime}:00`,
+            is_active: true,
+          };
+          if (s.hasBreak && s.breakStart && s.breakEnd) {
+            return [
+              turno1,
+              {
+                day_of_week: s.day,
+                start_time: `${s.breakStart}:00`,
+                end_time:   `${s.breakEnd}:00`,
+                is_active: true,
+              },
+            ];
+          }
+          return [turno1];
+        });
 
       await onSave({
         name: form.name.trim(),
@@ -639,70 +668,119 @@ export function StaffEditModal({
                 Cargando horarios...
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {schedules.map((schedule) => (
                   <div
                     key={schedule.day}
                     className={cn(
-                      "rounded-xl p-4 border transition-all duration-200",
+                      "rounded-xl p-3 border transition-all duration-200",
                       schedule.isActive
                         ? "bg-white/5 border-white/10"
                         : "bg-white/[0.02] border-white/5 opacity-60 hover:opacity-100"
                     )}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-3 min-w-[120px]">
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={schedule.isActive}
-                            onChange={(e) =>
-                              handleScheduleChange(schedule.day, "isActive", e.target.checked)
-                            }
-                            className="sr-only peer"
-                          />
-                          <div className="w-9 h-5 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--color-accent)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--color-accent)]"></div>
-                        </label>
-                        <span className={cn(
-                          "text-sm font-medium transition-colors",
-                          schedule.isActive ? "text-white" : "text-[var(--text-secondary)]"
-                        )}>
-                          {schedule.name}
-                        </span>
-                      </div>
-
-                      {schedule.isActive && (
-                        <div className="flex items-center gap-2 flex-1">
-                          <div className="relative flex-1">
-                            <input
-                              type="time"
-                              value={schedule.startTime}
-                              onChange={(e) =>
-                                handleScheduleChange(schedule.day, "startTime", e.target.value)
-                              }
-                              className="w-full rounded-lg glass border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white transition-all duration-200 focus:border-emerald-500/50 focus:bg-white/[0.05] focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
-                            />
-                          </div>
-                          <span className="text-[var(--text-secondary)]">-</span>
-                          <div className="relative flex-1">
-                            <input
-                              type="time"
-                              value={schedule.endTime}
-                              onChange={(e) =>
-                                handleScheduleChange(schedule.day, "endTime", e.target.value)
-                              }
-                              className="w-full rounded-lg glass border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white transition-all duration-200 focus:border-emerald-500/50 focus:bg-white/[0.05] focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
-                            />
-                          </div>
-                        </div>
-                      )}
-
+                    {/* Fila 1: toggle + nombre del día */}
+                    <div className="flex items-center gap-3">
+                      <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={schedule.isActive}
+                          onChange={(e) =>
+                            handleScheduleChange(schedule.day, "isActive", e.target.checked)
+                          }
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--color-accent)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--color-accent)]" />
+                      </label>
+                      <span className={cn(
+                        "text-sm font-medium transition-colors w-20 flex-shrink-0",
+                        schedule.isActive ? "text-white" : "text-[var(--text-secondary)]"
+                      )}>
+                        {schedule.name}
+                      </span>
                       {!schedule.isActive && (
                         <span className="text-xs text-[var(--text-disabled)] italic ml-auto">
                           Día libre
                         </span>
                       )}
                     </div>
+
+                    {/* Filas de horario: solo cuando está activo */}
+                    {schedule.isActive && (
+                      <div className="mt-2.5 space-y-2 pl-12">
+                        {/* Turno 1 */}
+                        <div className="flex items-center gap-2">
+                          {schedule.hasBreak && (
+                            <span className="text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wide w-12 flex-shrink-0">
+                              Turno 1
+                            </span>
+                          )}
+                          <input
+                            type="time"
+                            value={schedule.startTime}
+                            onChange={(e) =>
+                              handleScheduleChange(schedule.day, "startTime", e.target.value)
+                            }
+                            className="flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-sm text-white transition-all duration-200 focus:border-emerald-500/50 focus:bg-white/[0.05] focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
+                          />
+                          <span className="text-[var(--text-secondary)] text-xs">–</span>
+                          <input
+                            type="time"
+                            value={schedule.endTime}
+                            onChange={(e) =>
+                              handleScheduleChange(schedule.day, "endTime", e.target.value)
+                            }
+                            className="flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-sm text-white transition-all duration-200 focus:border-emerald-500/50 focus:bg-white/[0.05] focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
+                          />
+                          {!schedule.hasBreak && (
+                            <button
+                              type="button"
+                              onClick={() => handleScheduleChange(schedule.day, "hasBreak", true)}
+                              title="Añadir descanso"
+                              className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs text-[var(--color-accent)] border border-[var(--color-accent)]/30 hover:bg-[var(--color-accent)]/10 transition-colors flex-shrink-0"
+                            >
+                              <Plus className="h-3 w-3" />
+                              <span className="hidden sm:inline">Descanso</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Turno 2 (descanso intermedio) */}
+                        {schedule.hasBreak && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wide w-12 flex-shrink-0">
+                              Turno 2
+                            </span>
+                            <input
+                              type="time"
+                              value={schedule.breakStart}
+                              onChange={(e) =>
+                                handleScheduleChange(schedule.day, "breakStart", e.target.value)
+                              }
+                              className="flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-sm text-white transition-all duration-200 focus:border-emerald-500/50 focus:bg-white/[0.05] focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
+                            />
+                            <span className="text-[var(--text-secondary)] text-xs">–</span>
+                            <input
+                              type="time"
+                              value={schedule.breakEnd}
+                              onChange={(e) =>
+                                handleScheduleChange(schedule.day, "breakEnd", e.target.value)
+                              }
+                              className="flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-sm text-white transition-all duration-200 focus:border-emerald-500/50 focus:bg-white/[0.05] focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleScheduleChange(schedule.day, "hasBreak", false)}
+                              title="Eliminar descanso"
+                              className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors flex-shrink-0"
+                            >
+                              <Minus className="h-3 w-3" />
+                              <span className="hidden sm:inline">Quitar</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
