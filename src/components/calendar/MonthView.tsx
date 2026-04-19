@@ -16,6 +16,7 @@ interface MonthViewProps {
   bookings: Booking[];
   selectedDate: string;
   onDateSelect: (date: string) => void;
+  onDayViewClick?: (date: string) => void;  // navega a DayView en esa fecha
   onBookingClick: (booking: Booking) => void;
   onBookingContextMenu?: (e: React.MouseEvent, booking: Booking) => void;
   timezone?: string;
@@ -25,6 +26,7 @@ export const MonthView = React.memo(function MonthView({
   bookings,
   selectedDate,
   onDateSelect,
+  onDayViewClick,
   onBookingClick,
   onBookingContextMenu,
   timezone = "Europe/Madrid",
@@ -216,7 +218,7 @@ export const MonthView = React.memo(function MonthView({
                   )}
                 </div>
                 <div className="px-2 pb-2 space-y-1">
-                  {dayBookings.slice(0, 2).map((booking, index) => (
+                  {dayBookings.slice(0, 3).map((booking) => (
                     <div key={booking.id} onClick={(e: React.MouseEvent) => {
                       e.stopPropagation();
                       onBookingClick(booking);
@@ -234,22 +236,30 @@ export const MonthView = React.memo(function MonthView({
                       />
                     </div>
                   ))}
-                  {dayBookings.length > 2 && (
-                    <motion.div
-                      whileHover={{ opacity: 0.8 }}
-                      whileTap={{ opacity: 0.9 }}
+                  {dayBookings.length > 3 && day && (
+                    <motion.button
+                      whileHover={{ scale: 1.02, opacity: 0.9 }}
+                      whileTap={{ scale: 0.97 }}
                       onClick={(e) => {
                         e.stopPropagation();
+                        const dateStr = format(day, "yyyy-MM-dd");
+                        if (onDayViewClick) {
+                          onDayViewClick(dateStr);
+                        } else {
+                          onDateSelect(dateStr);
+                        }
                       }}
                       className={cn(
-                        "text-xs text-center py-1 px-2 rounded-md cursor-pointer transition-all duration-200",
-                        "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
-                        "bg-[var(--glass-bg-subtle)] hover:bg-[var(--glass-bg-hover)]",
-                        "border border-[var(--glass-border-subtle)] hover:border-[var(--glass-border)]"
+                        "w-full text-xs text-center py-1 px-2 rounded-lg cursor-pointer transition-all duration-200",
+                        "text-[var(--accent-aqua)] hover:text-white font-medium",
+                        "bg-[var(--glass-bg-subtle)] hover:bg-[var(--accent-aqua)]/10",
+                        "border border-[var(--glass-border-subtle)] hover:border-[var(--accent-aqua)]/30",
+                        "backdrop-blur-sm"
                       )}
+                      title={`Ver los ${dayBookings.length} citas de este día`}
                     >
-                      +{dayBookings.length - 2} más
-                    </motion.div>
+                      +{dayBookings.length - 3} más
+                    </motion.button>
                   )}
                 </div>
               </motion.div>
@@ -267,7 +277,8 @@ export const MonthView = React.memo(function MonthView({
     prevProps.timezone === nextProps.timezone &&
     prevProps.onBookingClick === nextProps.onBookingClick &&
     prevProps.onBookingContextMenu === nextProps.onBookingContextMenu &&
-    prevProps.onDateSelect === nextProps.onDateSelect
+    prevProps.onDateSelect === nextProps.onDateSelect &&
+    prevProps.onDayViewClick === nextProps.onDayViewClick
   );
 });
 

@@ -337,6 +337,10 @@ export function AgendaContent({
                           bookings={bookings}
                           selectedDate={selectedDate}
                           onDateSelect={onDateChange}
+                          onDayViewClick={(date) => {
+                            onDateChange(date);
+                            onViewModeChange("day");
+                          }}
                           onBookingClick={onBookingClick}
                           onBookingContextMenu={onBookingContextMenu}
                           timezone={tenantTimezone}

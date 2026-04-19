@@ -54,7 +54,10 @@ export function MobileDaySummary({ bookings, timezone, onBookingClick }: MobileD
             transition={{ duration: 0.22, ease: "easeOut" }}
             className="overflow-hidden"
           >
-            <div className="px-3 pb-4 space-y-2 max-h-60 overflow-y-auto">
+            <div
+              className="px-3 pb-4 space-y-2 max-h-[40vh] overflow-y-auto overscroll-contain"
+              style={{ WebkitOverflowScrolling: "touch" }}
+            >
               {sorted.map((booking) => (
                 <AppointmentCard
                   key={booking.id}
