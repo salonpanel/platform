@@ -13,6 +13,7 @@ import { NewBookingModal } from "@/components/calendar/NewBookingModal";
 import StaffBlockingModal from "@/components/calendar/StaffBlockingModal";
 import { useAgendaModals } from "@/hooks/useAgendaModals";
 import { useAgendaData } from "@/hooks/useAgendaData";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   useAgendaHandlers,
   type BookingMutationPayload,
@@ -58,6 +59,9 @@ export default function AgendaPageClient({
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const [searchTerm, setSearchTerm] = useState("");
+  // El input actualiza searchTerm inmediatamente (sin lag visual).
+  // El filtrado usa la versión debounced para evitar recalcular en cada keystroke.
+  const debouncedSearchTerm = useDebounce(searchTerm, 200);
   const [filters, setFilters] = useState<AgendaFiltersState>(DEFAULT_FILTERS);
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -219,7 +223,7 @@ export default function AgendaPageClient({
   const closeSlotPopover = () => setSlotPopover(null);
 
   const filteredBookings = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
+    const term = debouncedSearchTerm.trim().toLowerCase();
     return bookings.filter((booking) => {
       if (filters.status.length > 0 && !filters.status.includes(booking.status)) {
         return false;
@@ -251,7 +255,7 @@ export default function AgendaPageClient({
         .map((value) => value!.toLowerCase());
       return haystack.some((value) => value.includes(term));
     });
-  }, [bookings, filters, searchTerm]);
+  }, [bookings, filters, debouncedSearchTerm]);
 
   const visibleStaff = useMemo(() => {
     if (filters.staff.includes("all")) return staffList;
