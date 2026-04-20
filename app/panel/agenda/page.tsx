@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { Suspense } from "react";
 import { AgendaSkeleton } from "@/components/skeletons/AgendaSkeleton";
 import { supabaseServer } from "@/lib/supabase";
