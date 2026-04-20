@@ -56,7 +56,7 @@ export function AppointmentCard({
     "focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]/50 focus:ring-offset-2 focus:ring-offset-[var(--bg-primary)]",
     // Phase 3: Mobile-first responsive improvements
     "min-h-[44px]", // Ensure 44px minimum tap target (padding handled per variant)
-    variant === "timeline" ? "absolute left-2 right-2" : "w-full",
+    variant === "timeline" ? "w-full h-full" : "w-full",
     className
   );
 

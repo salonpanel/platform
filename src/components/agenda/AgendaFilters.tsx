@@ -44,7 +44,7 @@ export function AgendaFilters({
     <motion.div
       initial={{ opacity: 0, y: -6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex-shrink-0 flex flex-col gap-2"
+      className="flex-shrink-0 flex flex-col gap-2 px-4 pb-1"
     >
       {/* Search panel */}
       <AnimatePresence>

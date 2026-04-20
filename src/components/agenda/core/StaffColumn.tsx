@@ -363,7 +363,7 @@ export const StaffColumn = React.memo(function StaffColumn({
               )}
               style={{
                 top: `${position.top}px`,
-                minHeight: `${position.height}px`,
+                height: `${position.height}px`,
               }}
               onMouseDown={(e) => onBookingMouseDown?.(e, booking, position.top)}
               onTouchStart={(e) => onBookingTouchStart?.(e, booking, position.top)}

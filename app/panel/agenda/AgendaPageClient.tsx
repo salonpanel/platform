@@ -2,15 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
-import { AgendaHeader } from "@/components/calendar/AgendaHeader";
-import { AgendaSidebar } from "@/components/calendar/AgendaSidebar";
+import { AgendaTopBar } from "@/components/agenda/AgendaTopBar";
+import { AgendaFilters } from "@/components/agenda/AgendaFilters";
 import { AgendaContent } from "@/components/agenda/AgendaContent";
-import { SearchPanel } from "@/components/calendar/SearchPanel";
 import { NotificationsPanel } from "@/components/calendar/NotificationsPanel";
 import { BookingActionPopover } from "@/components/calendar/BookingActionPopover";
 import { BookingSlidePanel } from "@/components/calendar/BookingSlidePanel";
 import { NewBookingModal } from "@/components/calendar/NewBookingModal";
 import StaffBlockingModal from "@/components/calendar/StaffBlockingModal";
+import { NotificationProvider } from "@/components/agenda/NotificationSystem";
 import { useAgendaModals } from "@/hooks/useAgendaModals";
 import { useAgendaData } from "@/hooks/useAgendaData";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -22,6 +22,7 @@ import {
 import { useToast } from "@/components/ui/Toast";
 import type { AgendaDataset } from "@/lib/agenda-data";
 import type { Booking, CalendarSlot, ViewMode } from "@/types/agenda";
+import { BOOKING_STATUS_CONFIG } from "@/types/agenda";
 
 interface AgendaPageClientProps {
   initialData: AgendaDataset | null;
@@ -59,43 +60,24 @@ export default function AgendaPageClient({
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const [searchTerm, setSearchTerm] = useState("");
-  // El input actualiza searchTerm inmediatamente (sin lag visual).
-  // El filtrado usa la versión debounced para evitar recalcular en cada keystroke.
   const debouncedSearchTerm = useDebounce(searchTerm, 200);
   const [filters, setFilters] = useState<AgendaFiltersState>(DEFAULT_FILTERS);
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [slotPopover, setSlotPopover] = useState<
-    | {
-      open: boolean;
-      position: { x: number; y: number };
-      slot: CalendarSlot;
-    }
-    | null
-  >(null);
-  const [bookingPopover, setBookingPopover] = useState<
-    | {
-      open: boolean;
-      position: { x: number; y: number };
-      booking: Booking;
-    }
-    | null
-  >(null);
-  const [notifications, setNotifications] = useState(
-    () =>
-      initialData
-        ? []
-        : [
-          {
-            id: "1",
-            type: "info" as const,
-            title: "Agenda lista",
-            message: "Las notificaciones llegarán aquí",
-            timestamp: "Hace 1 min",
-            read: false,
-          },
-        ]
+  const [slotPopover, setSlotPopover] = useState<{
+    open: boolean;
+    position: { x: number; y: number };
+    slot: CalendarSlot;
+  } | null>(null);
+  const [bookingPopover, setBookingPopover] = useState<{
+    open: boolean;
+    position: { x: number; y: number };
+    booking: Booking;
+  } | null>(null);
+  const [notifications, setNotifications] = useState(() =>
+    initialData
+      ? []
+      : [{ id: "1", type: "info" as const, title: "Agenda lista", message: "Las notificaciones llegarán aquí", timestamp: "Hace 1 min", read: false }]
   );
 
   useEffect(() => {
@@ -130,25 +112,74 @@ export default function AgendaPageClient({
     stats,
     rangeLabel,
     refreshDaySnapshots,
-  } = useAgendaData({
-    tenantId,
-    selectedDate,
-    viewMode,
-    initialData,
-  });
+  } = useAgendaData({ tenantId, selectedDate, viewMode, initialData });
 
   const { saveBooking, saveBlocking, moveBooking, resizeBooking } = useAgendaHandlers({
     tenantId,
     onAfterMutation: () => refreshDaySnapshots(selectedDate),
   });
 
-  // Auto-refresh cada 5 minutos para mantener datos actualizados
+  // Auto-refresh cada 5 minutos
   useEffect(() => {
     const interval = setInterval(() => {
       refreshDaySnapshots(selectedDate);
     }, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [selectedDate, refreshDaySnapshots]);
+
+  // Staff filter derived values
+  const selectedStaffId = useMemo(
+    () => (filters.staff.includes("all") ? null : filters.staff[0] || null),
+    [filters.staff]
+  );
+
+  const handleStaffChange = useCallback((staffId: string | null) => {
+    setFilters((prev) => ({ ...prev, staff: staffId ? [staffId] : ["all"] }));
+  }, []);
+
+  // Real API calls for status/cancel
+  const handleStatusChange = useCallback(
+    async (bookingId: string, newStatus: string) => {
+      try {
+        const res = await fetch("/api/panel/booking-status", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bookingId, status: newStatus }),
+        });
+        if (res.ok) {
+          const config = BOOKING_STATUS_CONFIG[newStatus as keyof typeof BOOKING_STATUS_CONFIG];
+          showToast(config ? `Estado: ${config.label}` : "Estado actualizado", "success");
+          refreshDaySnapshots(selectedDate);
+        } else {
+          showToast("Error al cambiar estado", "error");
+        }
+      } catch {
+        showToast("Error al cambiar estado", "error");
+      }
+    },
+    [refreshDaySnapshots, selectedDate, showToast]
+  );
+
+  const handleCancelBooking = useCallback(
+    async (bookingId: string) => {
+      try {
+        const res = await fetch("/api/panel/booking-status", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bookingId, status: "cancelled" }),
+        });
+        if (res.ok) {
+          showToast("Cita cancelada", "success");
+          refreshDaySnapshots(selectedDate);
+        } else {
+          showToast("Error al cancelar la cita", "error");
+        }
+      } catch {
+        showToast("Error al cancelar la cita", "error");
+      }
+    },
+    [refreshDaySnapshots, selectedDate, showToast]
+  );
 
   const handleBookingSave = useCallback(
     (payload: BookingMutationPayload): Promise<SaveBookingResult> => saveBooking(payload),
@@ -164,10 +195,8 @@ export default function AgendaPageClient({
     async (bookingId: string, newTime: string, newStaffId?: string) => {
       const booking = bookings.find((b) => b.id === bookingId);
       if (!booking) return;
-
       const dateStr = format(new Date(selectedDate), "yyyy-MM-dd");
       const newStartsAt = `${dateStr}T${newTime}`;
-
       await moveBooking(booking, newStartsAt, newStaffId);
     },
     [bookings, selectedDate, moveBooking]
@@ -177,11 +206,8 @@ export default function AgendaPageClient({
     async (bookingId: string, newEndTime: string) => {
       const booking = bookings.find((b) => b.id === bookingId);
       if (!booking) return;
-
-      // Ensure date is conserved
       const dateStr = format(new Date(booking.starts_at), "yyyy-MM-dd");
       const newEndsAt = `${dateStr}T${newEndTime}`;
-
       await resizeBooking(booking, newEndsAt);
     },
     [bookings, resizeBooking]
@@ -204,19 +230,13 @@ export default function AgendaPageClient({
   );
 
   const handleBookingClick = useCallback(
-    (booking: Booking) => {
-      modals.openBookingDetail(booking);
-    },
+    (booking: Booking) => { modals.openBookingDetail(booking); },
     [modals]
   );
 
   const handleBookingContextMenu = useCallback((e: React.MouseEvent, booking: Booking) => {
     e.preventDefault();
-    setBookingPopover({
-      open: true,
-      position: { x: e.clientX, y: e.clientY },
-      booking,
-    });
+    setBookingPopover({ open: true, position: { x: e.clientX, y: e.clientY }, booking });
   }, []);
 
   const closeBookingPopover = () => setBookingPopover(null);
@@ -225,35 +245,17 @@ export default function AgendaPageClient({
   const filteredBookings = useMemo(() => {
     const term = debouncedSearchTerm.trim().toLowerCase();
     return bookings.filter((booking) => {
-      if (filters.status.length > 0 && !filters.status.includes(booking.status)) {
-        return false;
-      }
-
+      if (filters.status.length > 0 && !filters.status.includes(booking.status)) return false;
       if (!filters.staff.includes("all") && filters.staff.length > 0) {
-        if (!booking.staff_id || !filters.staff.includes(booking.staff_id)) {
-          return false;
-        }
+        if (!booking.staff_id || !filters.staff.includes(booking.staff_id)) return false;
       }
-
-      if (filters.highlighted !== null && Boolean(booking.is_highlighted) !== filters.highlighted) {
-        return false;
-      }
-
-      if (filters.payment.includes("paid")) {
-        const isPaid = booking.status === "paid" || booking.status === "completed";
-        if (!isPaid) return false;
-      }
-
-      if (filters.payment.includes("unpaid")) {
-        const requiresPayment = booking.status === "pending" || booking.status === "hold";
-        if (!requiresPayment) return false;
-      }
-
+      if (filters.highlighted !== null && Boolean(booking.is_highlighted) !== filters.highlighted) return false;
+      if (filters.payment.includes("paid") && !(booking.status === "paid" || booking.status === "completed")) return false;
+      if (filters.payment.includes("unpaid") && !(booking.status === "pending" || booking.status === "hold")) return false;
       if (!term) return true;
       const haystack = [booking.customer?.name, booking.customer?.phone, booking.service?.name]
-        .filter(Boolean)
-        .map((value) => value!.toLowerCase());
-      return haystack.some((value) => value.includes(term));
+        .filter(Boolean).map((v) => v!.toLowerCase());
+      return haystack.some((v) => v.includes(term));
     });
   }, [bookings, filters, debouncedSearchTerm]);
 
@@ -262,26 +264,13 @@ export default function AgendaPageClient({
     return staffList.filter((member) => filters.staff.includes(member.id));
   }, [filters.staff, staffList]);
 
-  const staffUtilization = useMemo(
-    () =>
-      staffList.map((member) => {
-        const staffBookings = filteredBookings.filter((booking) => booking.staff_id === member.id);
-        return {
-          staffId: member.id,
-          staffName: member.name,
-          utilization: Math.min(100, staffBookings.length * 10),
-        };
-      }),
-    [filteredBookings, staffList]
-  );
-
   const quickStats = stats
     ? {
-      totalBookings: stats.total_bookings,
-      totalHours: Number((stats.total_minutes / 60).toFixed(1)),
-      totalAmount: stats.total_amount,
-      rangeLabel,
-    }
+        totalBookings: stats.total_bookings,
+        totalHours: Number((stats.total_minutes / 60).toFixed(1)),
+        totalAmount: stats.total_amount,
+        rangeLabel,
+      }
     : undefined;
 
   const unreadNotifications = notifications.filter((n) => !n.read).length;
@@ -304,45 +293,38 @@ export default function AgendaPageClient({
   }
 
   return (
-    <div className="h-full flex flex-col gap-4">
-      <AgendaHeader
-        selectedDate={selectedDate}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        onDateChange={setSelectedDate}
-        onNotificationsClick={() => setNotificationsOpen(true)}
-        onSearchClick={() => setSearchOpen(true)}
-        onFiltersClick={() => setSidebarOpen(true)}
-        showFiltersButton
-        quickStats={quickStats}
-        searchOpen={searchOpen}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        onSearchClose={() => setSearchOpen(false)}
-        searchResultCount={filteredBookings.length}
-        searchTotalCount={bookings.length}
-        staffUtilization={staffUtilization}
-        onStaffFilterChange={(staffId) =>
-          setFilters((prev) => ({
-            ...prev,
-            staff: staffId === "all" ? ["all"] : [staffId],
-          }))
-        }
-      />
+    <NotificationProvider position="top-right" maxNotifications={3}>
+      <div className="h-full flex flex-col">
+        {/* Compact single-row header */}
+        <AgendaTopBar
+          selectedDate={selectedDate}
+          viewMode={viewMode}
+          onDateChange={setSelectedDate}
+          onViewModeChange={setViewMode}
+          onSearchClick={() => setSearchOpen((v) => !v)}
+          onNotificationsClick={() => setNotificationsOpen(true)}
+          unreadNotifications={unreadNotifications}
+          filters={filters}
+          onFiltersChange={setFilters}
+          quickStats={quickStats}
+        />
 
-      <div className="flex-1 min-h-0 flex gap-4">
-        <aside className="hidden xl:block w-80 flex-shrink-0">
-          <AgendaSidebar
-            selectedDate={selectedDate}
-            onDateSelect={setSelectedDate}
-            filters={filters}
-            onFiltersChange={setFilters}
-            isOpen={sidebarOpen}
-            onClose={() => setSidebarOpen(false)}
-          />
-        </aside>
+        {/* Staff chips + inline search */}
+        <AgendaFilters
+          staffList={staffList}
+          selectedStaffId={selectedStaffId}
+          onStaffChange={handleStaffChange}
+          searchOpen={searchOpen}
+          searchTerm={searchTerm}
+          onSearchToggle={() => setSearchOpen((v) => !v)}
+          onSearchChange={setSearchTerm}
+          onSearchClose={() => { setSearchOpen(false); setSearchTerm(""); }}
+          activeFilters={[]}
+          onResetFilters={() => setFilters(DEFAULT_FILTERS)}
+        />
 
-        <div className="flex-1 min-h-0 flex flex-col">
+        {/* Calendar content */}
+        <div className="flex-1 min-h-0 mt-1.5">
           <AgendaContent
             viewMode={viewMode}
             onViewModeChange={setViewMode}
@@ -361,11 +343,7 @@ export default function AgendaPageClient({
             onBookingResize={handleBookingResize}
             density="default"
             onPopoverShow={(position, slot) =>
-              setSlotPopover({
-                open: true,
-                position,
-                slot: slot || defaultSlot,
-              })
+              setSlotPopover({ open: true, position, slot: slot || defaultSlot })
             }
             onBookingContextMenu={handleBookingContextMenu}
             slotPopover={slotPopover}
@@ -375,90 +353,88 @@ export default function AgendaPageClient({
             onSlotAbsence={(slot) => handleSlotBlock(slot, "absence")}
           />
         </div>
-      </div>
 
-      <SearchPanel
-        isOpen={searchOpen}
-        onClose={() => setSearchOpen(false)}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        resultCount={filteredBookings.length}
-        totalCount={bookings.length}
-      />
+        {/* Notifications panel */}
+        <NotificationsPanel
+          isOpen={notificationsOpen}
+          onClose={() => setNotificationsOpen(false)}
+          notifications={notifications}
+        />
 
-      <NotificationsPanel
-        isOpen={notificationsOpen}
-        onClose={() => setNotificationsOpen(false)}
-        notifications={notifications}
-      />
+        {/* Booking context menu (right-click) */}
+        {bookingPopover && (
+          <BookingActionPopover
+            isOpen={bookingPopover.open}
+            position={bookingPopover.position}
+            onClose={closeBookingPopover}
+            onEdit={() => {
+              modals.openEditBookingModal(bookingPopover.booking);
+              closeBookingPopover();
+            }}
+            onCancel={() => {
+              handleCancelBooking(bookingPopover.booking.id);
+              closeBookingPopover();
+            }}
+            onSendMessage={() => {
+              showToast("Mensajería: próximamente", "info");
+              closeBookingPopover();
+            }}
+            onStatusChange={(status) => {
+              handleStatusChange(bookingPopover.booking.id, status);
+              closeBookingPopover();
+            }}
+            currentStatus={bookingPopover.booking.status}
+            canCancel
+          />
+        )}
 
-      {bookingPopover && (
-        <BookingActionPopover
-          isOpen={bookingPopover.open}
-          position={bookingPopover.position}
-          onClose={closeBookingPopover}
-          onEdit={() => {
-            modals.openEditBookingModal(bookingPopover.booking);
-            closeBookingPopover();
+        {/* Booking detail slide panel */}
+        <BookingSlidePanel
+          booking={modals.selectedBooking}
+          isOpen={modals.showBookingDetail}
+          onClose={modals.closeBookingDetail}
+          onEdit={(booking) => {
+            modals.closeBookingDetail();
+            modals.openEditBookingModal(booking);
           }}
-          onCancel={() => showToast("Cancelar cita: próximamente", "info")}
-          onSendMessage={() => showToast("Mensajería: próximamente", "info")}
-          onStatusChange={(status) => showToast(`Estado actualizado a ${status}`, "info")}
-          currentStatus={bookingPopover.booking.status}
-          canCancel
+          onCancel={handleCancelBooking}
+          onStatusChange={handleStatusChange}
+          timezone={tenantTimezone}
         />
-      )}
 
-      <BookingSlidePanel
-        booking={modals.selectedBooking}
-        isOpen={modals.showBookingDetail}
-        onClose={modals.closeBookingDetail}
-        onEdit={(booking) => {
-          modals.closeBookingDetail();
-          modals.openEditBookingModal(booking);
-        }}
-        onCancel={(bookingId) => {
-          showToast("Cita cancelada", "success");
-          refreshDaySnapshots(selectedDate);
-        }}
-        onStatusChange={(bookingId, newStatus) => {
-          const label = newStatus === "cancelled" ? "Cita cancelada" : `Estado actualizado a ${newStatus}`;
-          showToast(label, newStatus === "cancelled" ? "error" : "success");
-          refreshDaySnapshots(selectedDate);
-        }}
-        timezone={tenantTimezone}
-      />
+        {/* New / edit booking modal */}
+        {modals.showNewBookingModal && (
+          <NewBookingModal
+            isOpen={modals.showNewBookingModal}
+            onClose={modals.closeNewBookingModal}
+            onSave={handleBookingSave}
+            services={services}
+            staff={staffList}
+            customers={customers}
+            selectedDate={selectedDate}
+            selectedTime={modals.selectedSlot?.time}
+            selectedEndTime={modals.selectedSlot?.endTime}
+            selectedStaffId={modals.selectedSlot?.staffId}
+            isLoading={loading}
+            editingBooking={modals.editingBooking}
+            tenantId={tenantId || ""}
+          />
+        )}
 
-      {modals.showNewBookingModal && (
-        <NewBookingModal
-          isOpen={modals.showNewBookingModal}
-          onClose={modals.closeNewBookingModal}
-          onSave={handleBookingSave}
-          services={services}
-          staff={staffList}
-          customers={customers}
-          selectedDate={selectedDate}
-          selectedTime={modals.selectedSlot?.time}
-          selectedEndTime={modals.selectedSlot?.endTime}
-          selectedStaffId={modals.selectedSlot?.staffId}
-          isLoading={loading}
-          editingBooking={modals.editingBooking}
-          tenantId={tenantId || ""}
-        />
-      )}
+        {/* Staff blocking modal */}
+        {modals.showBlockingModal && (
+          <StaffBlockingModal
+            isOpen={modals.showBlockingModal}
+            onClose={modals.closeBlockingModal}
+            onSave={handleBlockingSave}
+            staff={staffList}
+            slot={modals.selectedSlot}
+            isLoading={loading}
+          />
+        )}
 
-      {modals.showBlockingModal && (
-        <StaffBlockingModal
-          isOpen={modals.showBlockingModal}
-          onClose={modals.closeBlockingModal}
-          onSave={handleBlockingSave}
-          staff={staffList}
-          slot={modals.selectedSlot}
-          isLoading={loading}
-        />
-      )}
-
-      {ToastComponent}
-    </div>
+        {ToastComponent}
+      </div>
+    </NotificationProvider>
   );
 }
