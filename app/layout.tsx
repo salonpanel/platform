@@ -52,8 +52,11 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  // "cover" extends the viewport behind the notch / Dynamic Island / home indicator.
+  // env(safe-area-inset-*) values are then non-zero and our layout respects them.
   viewportFit: "cover",
-  themeColor: "#000000",
+  // Match the app's dark background so the browser tab bar / status bar blends in
+  themeColor: "#06141B",
 };
 
 export default function RootLayout({
@@ -64,37 +67,54 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
-        {/* Favicon explícito para asegurar que funcione en todos los subdominios */}
+        {/* ── Icons (explicit for broad browser compatibility) ── */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icon.png" type="image/png" sizes="512x512" />
+        {/* apple-touch-icon: used by iOS when user adds app to Home Screen */}
         <link rel="apple-touch-icon" href="/icon.png" />
         <link rel="shortcut icon" href="/favicon.ico" />
-        
-        {/* PWA Manifest */}
+
+        {/* ── PWA: manifest (Next.js also adds this, kept for subdomains) ── */}
         <link rel="manifest" href="/manifest.json" />
-        
-        {/* Metaetiquetas para PWA - Modo standalone sin barras de navegación */}
-        <meta name="theme-color" content="#000000" />
+
+        {/* ── iOS PWA standalone mode ──
+            Next.js metadata export handles most of these, but we keep them
+            explicitly so they always appear first in <head> and work on
+            every subdomain / deploy preview. */}
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
+        {/*
+          black-translucent: the status bar overlaps app content (we use
+          env(safe-area-inset-top) in TopBar to push content below it).
+          This gives the true edge-to-edge fullscreen feel on iPhone.
+        */}
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="BookFast Pro" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-        
-        {/* Prevent UI to show browser bars on scrolling */}
+        {/* theme-color: browser tab bar / Android status bar colour */}
+        <meta name="theme-color" content="#06141B" />
+
+        {/* ── IMPORTANT: NO duplicate <meta name="viewport"> here ──
+            The Next.js `viewport` export above generates it with viewport-fit=cover.
+            A duplicate viewport meta causes unpredictable behaviour on iOS. */}
+
+        {/* ── Prevent iOS Safari bounce / address-bar resize ──
+            body { position: fixed } locks the body to the viewport so the
+            browser chrome can never scroll the body itself. All scrolling
+            happens inside the overflow-y-auto containers in our layout. */}
         <style>{`
-          html, body {
-            display: flex;
-            flex-direction: column;
+          html {
             height: 100%;
-            margin: 0;
-            padding: 0;
             overflow: hidden;
+            background-color: #06141B;
           }
           body {
             position: fixed;
             width: 100%;
             height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #06141B;
           }
         `}</style>
       </head>

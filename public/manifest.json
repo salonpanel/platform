@@ -2,12 +2,12 @@
   "name": "BookFast Pro - Sistema de Reservas",
   "short_name": "BookFast Pro",
   "description": "Plataforma de gestión y reservas online para barberías",
-  "start_url": "/",
+  "start_url": "/panel",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "theme_color": "#000000",
-  "background_color": "#ffffff",
+  "theme_color": "#06141B",
+  "background_color": "#06141B",
   "icons": [
     {
       "src": "/favicon.png",
@@ -28,17 +28,5 @@
       "purpose": "maskable"
     }
   ],
-  "categories": ["business", "productivity"],
-  "screenshots": [
-    {
-      "src": "/icon.png",
-      "sizes": "512x512",
-      "form_factor": "wide"
-    },
-    {
-      "src": "/icon.png",
-      "sizes": "192x192",
-      "form_factor": "narrow"
-    }
-  ]
+  "categories": ["business", "productivity"]
 }

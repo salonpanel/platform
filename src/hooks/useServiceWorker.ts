@@ -2,56 +2,59 @@
 
 import { useEffect } from "react";
 
-const ENABLE_SERVICE_WORKER =
-  process.env.NEXT_PUBLIC_ENABLE_SERVICE_WORKER === "true" ||
-  process.env.NEXT_PUBLIC_ENABLE_SERVICE_WORKER === "1";
+// Enable the service worker:
+//   • Always in production (NODE_ENV === "production")
+//   • In development only when NEXT_PUBLIC_ENABLE_SERVICE_WORKER=true is set
+//   • Can be explicitly disabled with NEXT_PUBLIC_ENABLE_SERVICE_WORKER=false
+const ENABLE_SERVICE_WORKER = (() => {
+  const explicit = process.env.NEXT_PUBLIC_ENABLE_SERVICE_WORKER;
+  if (explicit === "false" || explicit === "0") return false;
+  if (explicit === "true"  || explicit === "1") return true;
+  // Default: on in production, off in development
+  return process.env.NODE_ENV === "production";
+})();
 
 /**
- * Hook para registrar el Service Worker y habilitar caché de assets
+ * Registers the Service Worker (/public/sw.js) to enable:
+ *   - Offline page caching
+ *   - Push notification delivery
+ *   - Faster repeat loads via static asset cache
  */
 export function useServiceWorker() {
   useEffect(() => {
-    if (!ENABLE_SERVICE_WORKER) {
-      return;
-    }
+    if (!ENABLE_SERVICE_WORKER) return;
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
 
-    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-      // Verificar que el service worker existe antes de intentar registrarlo
-      fetch("/sw.js", { method: "HEAD" })
-        .then((response) => {
-          if (!response.ok) {
-            console.warn("[ServiceWorker] sw.js no encontrado (404), saltando registro");
-            return;
-          }
-
-          // Registrar el Service Worker después de que la página cargue
-          window.addEventListener("load", () => {
-            navigator.serviceWorker
-              .register("/sw.js")
-              .then((registration) => {
-                console.log("✅ Service Worker registrado:", registration.scope);
-
-                // Verificar actualizaciones periódicamente
-                setInterval(() => {
-                  registration.update();
-                }, 60000); // Cada 60 segundos
-              })
-              .catch((error) => {
-                // Solo loggear errores que no sean 404 (ya verificamos que existe)
-                if (!error.message?.includes("404")) {
-                  console.error("❌ Error al registrar Service Worker:", error);
-                }
-              });
-          });
-        })
-        .catch(() => {
-          // Silenciar errores de fetch para sw.js - no existe, no hay problema
+    const register = async () => {
+      try {
+        const registration = await navigator.serviceWorker.register("/sw.js", {
+          // Update SW in the background without forcing a reload
+          updateViaCache: "none",
         });
 
-      // Escuchar cambios en el Service Worker
-      navigator.serviceWorker.addEventListener("controllerchange", () => {
-        console.log("🔄 Service Worker actualizado");
-      });
+        // Check for updates every 5 minutes (not on every interaction)
+        const UPDATE_INTERVAL_MS = 5 * 60 * 1000;
+        const timer = setInterval(() => registration.update(), UPDATE_INTERVAL_MS);
+
+        // When a new SW takes control, we reload once so users get fresh code
+        navigator.serviceWorker.addEventListener("controllerchange", () => {
+          window.location.reload();
+        });
+
+        return () => clearInterval(timer);
+      } catch (err) {
+        // Don't surface SW errors to the user — it's a progressive enhancement
+        if (process.env.NODE_ENV !== "production") {
+          console.warn("[SW] Registration failed:", err);
+        }
+      }
+    };
+
+    // Wait for the page to be fully loaded before registering
+    if (document.readyState === "complete") {
+      register();
+    } else {
+      window.addEventListener("load", register, { once: true });
     }
   }, []);
 }

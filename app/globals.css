@@ -308,6 +308,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* html background prevents any white/wrong-colour flash on iOS launch or overscroll */
+html {
+  background-color: var(--bg-primary);
+}
+
 body {
   background: var(--bg-primary);
   color: var(--text-primary);

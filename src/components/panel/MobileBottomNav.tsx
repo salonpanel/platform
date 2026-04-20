@@ -84,11 +84,12 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
     <>
       {/* ───────────────── Bottom Navigation Bar ───────────────── */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-area-pb"
+        className="fixed bottom-0 left-0 right-0 z-50 md:hidden"
         style={{
-          background: "rgba(6, 20, 27, 0.95)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
+          /* Fully opaque — no bleed-through in the safe-area zone */
+          background: "rgb(6, 20, 27)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
         }}
       >
         {/* Top border + subtle aqua-tinted highlight */}
@@ -100,7 +101,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
           }}
         />
 
-        {/* Items row — fixed 56 px tall; safe-area-pb on <nav> expands below this on iPhone */}
+        {/* Items row — exactly 56px (h-14) */}
         <div className="flex items-center justify-around h-14 px-1">
           {MAIN_ITEMS.map((item) => {
             const active = isActive(item.href);
@@ -229,6 +230,16 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
             </button>
           </motion.div>
         </div>
+
+        {/*
+          Safe-area fill — a dedicated div whose height equals the iPhone home
+          indicator zone (env(safe-area-inset-bottom)).  The parent <nav>
+          background (rgb(6,20,27)) covers this div, so the area between the
+          tab icons and the physical bottom of the screen is always filled with
+          the nav colour — no white/dark strip ever shows.
+          On devices without a home indicator this div collapses to 0 height.
+        */}
+        <div aria-hidden="true" style={{ height: "env(safe-area-inset-bottom, 0px)" }} />
       </nav>
 
       {/* ───────────────── "Más" Bottom Sheet ───────────────── */}
