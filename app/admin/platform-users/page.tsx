@@ -1,5 +1,8 @@
 "use client";
 
+// Force dynamic rendering — Supabase client requires env vars not available at build time
+export const dynamic = "force-dynamic";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";

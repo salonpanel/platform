@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -41,11 +41,39 @@ const MAIN_ITEMS = [
 export function MobileBottomNav({ items }: MobileBottomNavProps) {
   const pathname = usePathname();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
 
   // Auto-close "Más" sheet whenever the user navigates
   useEffect(() => {
     setShowMoreMenu(false);
   }, [pathname]);
+
+  // Measure real nav height and publish as CSS variable so other components
+  // (modals, content areas) can react to the actual nav size.
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+
+    const updateHeight = () => {
+      const h = el.getBoundingClientRect().height;
+      document.documentElement.style.setProperty(
+        "--bottom-nav-offset",
+        `${h}px`
+      );
+    };
+
+    // Initial measurement
+    updateHeight();
+
+    // Watch for size changes (e.g. safe-area recalc, orientation change)
+    const ro = new ResizeObserver(updateHeight);
+    ro.observe(el);
+
+    return () => {
+      ro.disconnect();
+      document.documentElement.style.removeProperty("--bottom-nav-offset");
+    };
+  }, []);
 
   const getNavIcon = useCallback(
     (href: string, size: number = 20): React.ReactNode => {
@@ -84,6 +112,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
     <>
       {/* ───────────────── Bottom Navigation Bar ───────────────── */}
       <nav
+        ref={navRef}
         className="fixed bottom-0 left-0 right-0 z-50 md:hidden"
         style={{
           /* Fully opaque — no bleed-through in the safe-area zone */

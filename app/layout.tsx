@@ -1,4 +1,4 @@
-﻿import type { Metadata, Viewport } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SupabaseProvider } from "./supabase-provider";
@@ -110,7 +110,8 @@ export default function RootLayout({
           body {
             position: fixed;
             width: 100%;
-            height: 100%;
+            height: 100vh;  /* fallback for older browsers */
+            height: 100dvh; /* dynamic viewport height — adapts to browser chrome */
             margin: 0;
             padding: 0;
             overflow: hidden;

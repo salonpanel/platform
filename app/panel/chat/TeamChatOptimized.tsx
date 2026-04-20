@@ -625,10 +625,7 @@ export function TeamChatOptimized({
 
 	return (
 		<div className="h-full flex flex-col gap-4">
-			<header className="flex items-center justify-between">
-				<h1 className="text-2xl md:text-3xl font-semibold text-[var(--color-text-primary)] font-satoshi">
-					Chats de equipo
-				</h1>
+			<header className="flex items-center justify-end">
 				<div className="flex items-center gap-2">
 					{/* Botón para abrir perfil propio con dropdown */}
 					<div className="relative" ref={profileDropdownRef}>

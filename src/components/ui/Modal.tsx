@@ -157,7 +157,7 @@ export function Modal({
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               handleClose();
@@ -184,7 +184,7 @@ export function Modal({
               ease: "easeOut" as const
             }}
             className={cn(
-              "relative z-50 w-full rounded-[var(--radius-xl)] glass-strong border-[var(--glass-border-strong)]",
+              "relative z-[60] w-full rounded-[var(--radius-xl)] glass-strong border-[var(--glass-border-strong)]",
               "shadow-[var(--shadow-modal)]",
               sizes[size]
             )}

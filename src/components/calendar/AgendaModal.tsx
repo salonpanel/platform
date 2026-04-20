@@ -315,7 +315,7 @@ export function AgendaModal({
     return (
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <div className="fixed inset-0 z-[60] flex items-end justify-center">
             {/* Enhanced backdrop */}
             <motion.div
               initial={{ opacity: 0 }}

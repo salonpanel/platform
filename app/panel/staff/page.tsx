@@ -279,14 +279,11 @@ function StaffContent() {
   return (
     <div className="space-y-5">
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
-        <div>
-          <h1 className="text-2xl font-semibold text-white tracking-tight">Staff</h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-0.5">
-            {staffList.length} miembro{staffList.length !== 1 ? "s" : ""} · {activeCount} activo{activeCount !== 1 ? "s" : ""}
-          </p>
-        </div>
+      {/* Actions row with live count */}
+      <div className="flex items-center justify-between gap-3 pt-1">
+        <p className="text-sm text-[var(--text-secondary)]">
+          {staffList.length} miembro{staffList.length !== 1 ? "s" : ""} · {activeCount} activo{activeCount !== 1 ? "s" : ""}
+        </p>
         <GlassButton onClick={openNew} className="shrink-0 h-10 px-5">
           <UserPlus className="w-4 h-4 mr-2" />
           Nuevo Miembro

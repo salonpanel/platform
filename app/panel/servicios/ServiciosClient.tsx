@@ -650,14 +650,11 @@ export function ServiciosClient({
   return (
     <div className="space-y-5">
 
-      {/* ── Top bar: title + CTA ─────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
-        <div>
-          <h1 className="text-2xl font-semibold text-white tracking-tight">Servicios</h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-0.5">
-            {services.length} servicio{services.length !== 1 ? "s" : ""} · {stats.activeCount} activos · {stats.inactiveCount} archivados
-          </p>
-        </div>
+      {/* ── Top bar: live stats + CTA ────────────────────────────────────── */}
+      <div className="flex items-center justify-between gap-3 pt-1">
+        <p className="text-sm text-[var(--text-secondary)]">
+          {services.length} servicio{services.length !== 1 ? "s" : ""} · {stats.activeCount} activos · {stats.inactiveCount} archivados
+        </p>
         <GlassButton
           onClick={() => openNewModal()}
           className="shrink-0 h-10 px-5"

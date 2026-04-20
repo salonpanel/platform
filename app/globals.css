@@ -4,6 +4,8 @@
 @import "tailwindcss";
 
 :root {
+  /* Bottom navigation height (nav 56px + safe area for home indicator) */
+  --bottom-nav-height: calc(3.5rem + env(safe-area-inset-bottom, 0px));
   /* ============================================================================
      NUEVO DESIGN SYSTEM - BookFast Platform
      Capsule Shapes + Soft Glass + Premium Gradients + Neo-Glow
@@ -810,9 +812,17 @@ select option {
   padding-top: max(env(safe-area-inset-top, 0px), 1.25rem);
 }
 
-/* Main content area: must clear both the fixed bottom nav (4rem = 64px) AND the
+/* Main content area: must clear both the fixed bottom nav (3.5rem = 56px) AND the
    iPhone home indicator / Android gesture bar that the nav itself sits on top of.
    Without this, content scrolls under the nav on gesture-based phones. */
 .pb-nav-safe {
-  padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: var(--bottom-nav-height);
+}
+
+/* PWA standalone mode — safe-area-inset-bottom is already correct (0 or gesture bar).
+   No special override needed but we ensure dvh-based height is used. */
+@media (display-mode: standalone) {
+  :root {
+    --bottom-nav-height: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+  }
 }

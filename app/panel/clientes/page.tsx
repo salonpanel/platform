@@ -405,35 +405,25 @@ export default function ClientesPage() {
   return (
     <ProtectedRoute requiredPermission="clientes">
       <div className="space-y-6">
-        {/* Header Glass */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center pt-2">
-          <div>
-            <h1 className="text-[22px] sm:text-[26px] font-semibold text-white tracking-tight leading-[1.2]">
-              Clientes
-            </h1>
-            <p className="text-[11px] sm:text-[12px] text-[var(--text-secondary)]">
-              Gestiona tu base de datos de clientes y visitas
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <GlassButton
-              variant="secondary"
-              onClick={handleExportCsv}
-              disabled={isLoading}
-              className="w-full sm:w-auto"
-              leftIcon={<Download className="w-4 h-4" />}
-            >
-              Exportar CSV
-            </GlassButton>
-            <GlassButton
-              variant="primary"
-              onClick={openNewModal}
-              className="w-full sm:w-auto"
-              leftIcon={<Plus className="w-4 h-4" />}
-            >
-              Nuevo Cliente
-            </GlassButton>
-          </div>
+        {/* Actions row */}
+        <div className="flex flex-col sm:flex-row gap-2 justify-end items-stretch sm:items-center pt-1">
+          <GlassButton
+            variant="secondary"
+            onClick={handleExportCsv}
+            disabled={isLoading}
+            className="w-full sm:w-auto"
+            leftIcon={<Download className="w-4 h-4" />}
+          >
+            Exportar CSV
+          </GlassButton>
+          <GlassButton
+            variant="primary"
+            onClick={openNewModal}
+            className="w-full sm:w-auto"
+            leftIcon={<Plus className="w-4 h-4" />}
+          >
+            Nuevo Cliente
+          </GlassButton>
         </div>
 
         {/* KPIs Grid */}

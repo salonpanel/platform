@@ -231,21 +231,15 @@ function MarketingContent() {
   return (
     <div className="space-y-5">
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
-        <div>
-          <h1 className="text-2xl font-semibold text-white tracking-tight">Marketing</h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-0.5">
-            Recupera clientes inactivos y llena los huecos de tu agenda
-          </p>
-        </div>
-        {selectedIds.size > 0 && (
+      {/* Campaign CTA — only shown when clients are selected */}
+      {selectedIds.size > 0 && (
+        <div className="flex justify-end pt-1">
           <GlassButton onClick={() => setShowBuilder(true)} className="shrink-0 h-10 px-5">
             <Send className="w-4 h-4 mr-2" />
             Crear campaña ({selectedIds.size})
           </GlassButton>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* KPI strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

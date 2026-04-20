@@ -243,12 +243,6 @@ function AjustesContent() {
   return (
     <div className="space-y-8 pb-10">
 
-      {/* Page header */}
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold text-white tracking-tight">Ajustes</h1>
-        <p className="text-sm text-[var(--text-secondary)]">Gestiona la configuración global de tu negocio.</p>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* ── Main column ─────────────────────────────────────────────────── */}

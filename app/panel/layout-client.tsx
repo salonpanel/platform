@@ -345,15 +345,18 @@ function PanelLayoutContent({
   ];
 
   const getPageTitle = () => {
-    if (pathname === "/panel") return "Dashboard";
-    if (pathname === "/panel/agenda") return "Agenda";
-    if (pathname === "/panel/clientes") return "Clientes";
-    if (pathname === "/panel/servicios") return "Servicios";
-    if (pathname === "/panel/staff") return "Staff";
-    if (pathname === "/panel/monedero") return "Monedero";
-    if (pathname === "/panel/marketing") return "Marketing";
-    if (pathname === "/panel/chat") return "Chat";
-    if (pathname === "/panel/ajustes") return "Ajustes";
+    if (pathname === "/panel" || pathname === "/panel/") return "Dashboard";
+    // startsWith so sub-routes (/panel/clientes/[id], /panel/ajustes/calendario, …)
+    // inherit their section name instead of falling back to the generic "Panel"
+    if (pathname?.startsWith("/panel/agenda"))    return "Agenda";
+    if (pathname?.startsWith("/panel/clientes"))  return "Clientes";
+    if (pathname?.startsWith("/panel/servicios")) return "Servicios";
+    if (pathname?.startsWith("/panel/staff"))     return "Staff";
+    if (pathname?.startsWith("/panel/monedero"))  return "Monedero";
+    if (pathname?.startsWith("/panel/marketing")) return "Marketing";
+    if (pathname?.startsWith("/panel/chat"))      return "Chat";
+    if (pathname?.startsWith("/panel/ajustes"))   return "Ajustes";
+    if (pathname?.startsWith("/panel/config"))    return "Configuración";
     return "Panel";
   };
 
@@ -392,7 +395,7 @@ function PanelLayoutContent({
           sidebarCollapsed={sidebarCollapsed}
         />
 
-        {/* Page Content - pb-nav-safe = calc(4rem + safe-area-inset-bottom) clears the fixed bottom nav on mobile */}
+        {/* Page Content - pb-nav-safe uses var(--bottom-nav-height) to clear the fixed bottom nav on mobile */}
         <main className="flex-1 overflow-y-auto bg-[var(--bg-primary)] pb-nav-safe md:pb-0">
           <TenantProvider tenant={tenant} isLoading={loading}>
             <PageContainer>{children}</PageContainer>
