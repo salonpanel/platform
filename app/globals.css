@@ -816,7 +816,7 @@ select option {
    iPhone home indicator / Android gesture bar that the nav itself sits on top of.
    Without this, content scrolls under the nav on gesture-based phones. */
 .pb-nav-safe {
-  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
+  padding-bottom: var(--bottom-nav-height);
 }
 
 /* PWA standalone mode */
