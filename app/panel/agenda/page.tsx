@@ -74,7 +74,15 @@ export default async function AgendaPage({
   const resolvedSearchParams = await searchParams;
   const impersonateOrgId = (resolvedSearchParams?.impersonate as string) || null;
   const initialDate = (resolvedSearchParams?.date as string) || new Date().toISOString().slice(0, 10);
-  const initialViewMode = ((resolvedSearchParams?.view as ViewMode) || "day") as ViewMode;
+  
+  // Detect mobile device serverside to set correct default view
+  const headersList = await headers();
+  const userAgent = headersList.get("user-agent") || "";
+  const isMobile = /mobile/i.test(userAgent);
+  
+  // Default to 'week' on mobile, 'day' on desktop if no view is specified
+  const defaultView = isMobile ? "week" : "day";
+  const initialViewMode = ((resolvedSearchParams?.view as ViewMode) || defaultView) as ViewMode;
 
   const result = await getInitialAgendaData(impersonateOrgId, initialDate, initialViewMode);
 
