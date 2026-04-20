@@ -361,7 +361,7 @@ function PanelLayoutContent({
   };
 
   return (
-    <div className="flex h-screen bg-slate-950">
+    <div className="flex h-[100dvh] bg-[var(--bg-primary)]">
       {/* Sidebar - Hidden on mobile */}
       <div className="hidden md:block h-full">
         <SidebarNav

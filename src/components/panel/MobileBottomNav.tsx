@@ -113,8 +113,11 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
       {/* ───────────────── Bottom Navigation Bar ───────────────── */}
       <nav
         ref={navRef}
-        className="fixed bottom-0 left-0 right-0 z-50 md:hidden"
+        className="fixed left-0 right-0 z-50 md:hidden"
         style={{
+          /* iOS PWA Safe Area fix: stretch down to cover the home indicator */
+          bottom: 0,
+          paddingBottom: "env(safe-area-inset-bottom)",
           /* Fully opaque — no bleed-through in the safe-area zone */
           background: "rgb(6, 20, 27)",
           backdropFilter: "blur(20px)",
