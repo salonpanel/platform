@@ -4,8 +4,8 @@
 @import "tailwindcss";
 
 :root {
-  /* Bottom navigation height (nav 56px + safe area for home indicator) */
-  --bottom-nav-height: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+  /* Bottom navigation height (nav 56px) - Safe area removed to fix Android PWA gaps */
+  --bottom-nav-height: 3.5rem;
   /* ============================================================================
      NUEVO DESIGN SYSTEM - BookFast Platform
      Capsule Shapes + Soft Glass + Premium Gradients + Neo-Glow
@@ -819,10 +819,9 @@ select option {
   padding-bottom: var(--bottom-nav-height);
 }
 
-/* PWA standalone mode — safe-area-inset-bottom is already correct (0 or gesture bar).
-   No special override needed but we ensure dvh-based height is used. */
+/* PWA standalone mode */
 @media (display-mode: standalone) {
   :root {
-    --bottom-nav-height: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+    --bottom-nav-height: 3.5rem;
   }
 }
