@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { format, parseISO, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
-import { ChevronLeft, ChevronRight, Search, Bell, Filter, Calendar, ChevronDown, X, RotateCcw, Star, Users, CheckCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, Bell, Star, CheckCircle, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Staff, BookingStatus, BOOKING_STATUS_CONFIG } from "@/types/agenda";
 import { useState, useRef, useEffect } from "react";
@@ -16,6 +16,13 @@ interface AgendaFiltersState {
   highlighted: boolean | null;
 }
 
+interface QuickStats {
+  totalBookings: number;
+  totalHours: number;
+  totalAmount: number;
+  rangeLabel?: string;
+}
+
 interface AgendaTopBarProps {
   selectedDate: string;
   viewMode: ViewMode;
@@ -25,84 +32,32 @@ interface AgendaTopBarProps {
   onNotificationsClick: () => void;
   unreadNotifications?: number;
   onFiltersClick?: () => void;
+  // Staff props kept for backwards compat but Barberos dropdown removed from UI
   staffList?: Staff[];
   selectedStaffIds?: string[];
   onStaffFilterChange?: (staffIds: string[]) => void;
   filters?: AgendaFiltersState;
   onFiltersChange?: (filters: AgendaFiltersState) => void;
+  quickStats?: QuickStats | null;
 }
 
-// Dropdown component for filters
-function FilterDropdown({
-  label,
-  icon,
-  children,
-  badge,
-}: {
-  label: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  badge?: number;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+const VIEW_MODES: { key: ViewMode; label: string; short: string }[] = [
+  { key: "day",   label: "Día",    short: "Día"  },
+  { key: "week",  label: "Semana", short: "Sem"  },
+  { key: "month", label: "Mes",    short: "Mes"  },
+  { key: "list",  label: "Lista",  short: "Lista"},
+];
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+const STATUS_COLORS: Record<BookingStatus, string> = {
+  pending:   "text-amber-400",
+  confirmed: "text-sky-400",
+  paid:      "text-emerald-400",
+  completed: "text-[#4FE3C1]",
+  cancelled: "text-red-400",
+  no_show:   "text-white/40",
+  hold:      "text-[#A06BFF]",
+};
 
-  return (
-    <div ref={dropdownRef} className="relative">
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          "flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all border",
-          isOpen || (badge && badge > 0)
-            ? "bg-white/10 text-white border-white/20"
-            : "bg-white/5 text-white/80 border-white/10 hover:bg-white/10"
-        )}
-      >
-        {icon}
-        <span>{label}</span>
-        {badge !== undefined && badge > 0 && (
-          <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-[#4FE3C1] text-[#0E0F11]">
-            {badge}
-          </span>
-        )}
-        <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", isOpen && "rotate-180")} />
-      </motion.button>
-      
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.15 }}
-            className="absolute top-full mt-2 left-0 z-50 min-w-[200px] rounded-xl bg-[#1A1B1F] border border-white/10 shadow-xl overflow-hidden"
-          >
-            <div className="p-2 max-h-[400px] overflow-y-auto">
-              {children}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-/**
- * AgendaTopBar - Compact header with all filters integrated
- * Contains date navigation, view mode tabs, filters, and action buttons
- */
 export function AgendaTopBar({
   selectedDate,
   viewMode,
@@ -111,84 +66,59 @@ export function AgendaTopBar({
   onSearchClick,
   onNotificationsClick,
   unreadNotifications = 0,
-  onFiltersClick,
-  staffList = [],
-  selectedStaffIds = [],
-  onStaffFilterChange,
   filters = { payment: [], status: [], staff: [], highlighted: null },
   onFiltersChange,
+  quickStats,
 }: AgendaTopBarProps) {
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
+  const filtersRef = useRef<HTMLDivElement>(null);
 
-  const viewModes: { key: ViewMode; label: string }[] = [
-    { key: "day", label: "Día" },
-    { key: "week", label: "Semana" },
-    { key: "month", label: "Mes" },
-    { key: "list", label: "Lista" },
-  ];
-
+  // Close dropdowns on outside click
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
-        setShowDatePicker(false);
-      }
+    function handleClick(e: MouseEvent) {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) setShowDatePicker(false);
+      if (filtersRef.current && !filtersRef.current.contains(e.target as Node)) setShowFilters(false);
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const handleNavigate = (direction: "prev" | "next") => {
+  const handleNavigate = (dir: "prev" | "next") => {
     const date = parseISO(selectedDate);
-    let newDate: Date;
-
-    switch (viewMode) {
-      case "day":
-        newDate = direction === "prev" ? subDays(date, 1) : addDays(date, 1);
-        break;
-      case "week":
-        newDate = direction === "prev" ? subWeeks(date, 1) : addWeeks(date, 1);
-        break;
-      case "month":
-        newDate = direction === "prev" ? subMonths(date, 1) : addMonths(date, 1);
-        break;
-      case "list":
-        newDate = direction === "prev" ? subDays(date, 1) : addDays(date, 1);
-        break;
-      default:
-        newDate = date;
-    }
-
-    onDateChange(format(newDate, "yyyy-MM-dd"));
+    const ops = {
+      day:   { prev: subDays,    next: addDays    },
+      week:  { prev: subWeeks,   next: addWeeks   },
+      month: { prev: subMonths,  next: addMonths  },
+      list:  { prev: subDays,    next: addDays    },
+    };
+    onDateChange(format(ops[viewMode][dir](date, 1), "yyyy-MM-dd"));
   };
 
-  const handleToday = () => {
-    onDateChange(format(new Date(), "yyyy-MM-dd"));
-  };
+  const handleToday = () => onDateChange(format(new Date(), "yyyy-MM-dd"));
 
   const formatDateDisplay = () => {
     const date = parseISO(selectedDate);
+    const MONTHS_LONG  = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+    const MONTHS_SHORT = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+    const WEEKDAYS     = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+
     switch (viewMode) {
       case "day":
-        return format(date, "d 'de' MMMM", { locale: { localize: { month: (month: number) => ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'][month] || '' } } as any });
+        return `${WEEKDAYS[date.getDay()]}, ${date.getDate()} ${MONTHS_LONG[date.getMonth()]}`;
       case "week":
-        return `Semana del ${format(date, "d MMM", { locale: { localize: { month: (month: number) => ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'][month] || '' } } as any })}`;
+        return `Semana del ${date.getDate()} ${MONTHS_SHORT[date.getMonth()]}`;
       case "month":
-        return format(date, "MMMM yyyy", { locale: { localize: { month: (month: number) => ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][month] || '' } } as any });
+        return `${MONTHS_LONG[date.getMonth()].charAt(0).toUpperCase() + MONTHS_LONG[date.getMonth()].slice(1)} ${date.getFullYear()}`;
       case "list":
-        return format(date, "d 'de' MMMM", { locale: { localize: { month: (month: number) => ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'][month] || '' } } as any });
+        return `${date.getDate()} ${MONTHS_LONG[date.getMonth()]}`;
       default:
         return "";
     }
   };
 
-  const handleStaffToggle = (staffId: string) => {
-    if (!onStaffFilterChange) return;
-    const newSelection = selectedStaffIds.includes(staffId)
-      ? selectedStaffIds.filter(id => id !== staffId)
-      : [...selectedStaffIds, staffId];
-    onStaffFilterChange(newSelection);
-  };
+  const isToday = selectedDate === format(new Date(), "yyyy-MM-dd");
 
   const handleStatusToggle = (status: string) => {
     if (!onFiltersChange) return;
@@ -203,272 +133,258 @@ export function AgendaTopBar({
     onFiltersChange({ ...filters, highlighted: filters.highlighted ? null : true });
   };
 
-  const activeFiltersCount = selectedStaffIds.length + filters.status.length + (filters.highlighted ? 1 : 0);
-
   const handleClearFilters = () => {
-    if (onStaffFilterChange) onStaffFilterChange([]);
     if (onFiltersChange) onFiltersChange({ payment: [], status: [], staff: [], highlighted: null });
+    setShowFilters(false);
   };
 
-  const statusColors: Record<BookingStatus, string> = {
-    pending: "text-amber-400",
-    confirmed: "text-sky-400",
-    paid: "text-emerald-400",
-    completed: "text-[#4FE3C1]",
-    cancelled: "text-red-400",
-    no_show: "text-white/40",
-    hold: "text-[#A06BFF]",
-  };
+  const activeFiltersCount = filters.status.length + (filters.highlighted ? 1 : 0);
+
+  const hasStats = quickStats && quickStats.totalBookings > 0;
+  const statsLine = hasStats
+    ? [
+        `${quickStats.totalBookings} citas`,
+        quickStats.totalHours > 0 ? `${quickStats.totalHours}h` : null,
+        quickStats.totalAmount > 0 ? `${Math.round(quickStats.totalAmount / 100)}€` : null,
+      ].filter(Boolean).join(" · ")
+    : null;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -8 }}
+      initial={{ opacity: 0, y: -6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl"
+      transition={{ duration: 0.15 }}
     >
-      <div className="px-6 py-4 flex flex-col gap-3">
-        {/* Main row: Title, Date Navigation, Actions */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          {/* Title and date - more compact */}
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="h-9 w-9 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center shadow-inner flex-shrink-0">
-              <Calendar className="h-4 w-4 text-white" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-base font-semibold text-white truncate">{formatDateDisplay()}</h1>
-            </div>
-          </div>
+      <div className="px-4 py-2.5 flex items-center gap-2 flex-wrap sm:flex-nowrap">
 
-          {/* Date navigation + Calendar picker + Actions */}
-          <div className="flex items-center gap-2">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => handleNavigate("prev")}
-              className="h-9 w-9 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all flex items-center justify-center"
-              aria-label="Fecha anterior"
+        {/* ── Date display + stats ── */}
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div
+            ref={datePickerRef}
+            className="relative flex items-center gap-2 min-w-0"
+          >
+            <button
+              onClick={() => setShowDatePicker(!showDatePicker)}
+              className="flex flex-col items-start min-w-0 group"
+              aria-label="Seleccionar fecha"
             >
-              <ChevronLeft className="h-4 w-4 text-white/80" />
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleToday}
-              className="px-3 h-9 rounded-xl bg-gradient-to-r from-[#4FE3C1] to-[#3A6DFF] text-sm font-semibold text-[#0E0F11] shadow-[0_10px_30px_rgba(58,109,255,0.35)]"
-            >
-              Hoy
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => handleNavigate("next")}
-              className="h-9 w-9 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all flex items-center justify-center"
-              aria-label="Fecha siguiente"
-            >
-              <ChevronRight className="h-4 w-4 text-white/80" />
-            </motion.button>
-
-            {/* Calendar picker */}
-            <div ref={datePickerRef} className="relative">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowDatePicker(!showDatePicker)}
-                className="h-9 w-9 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all flex items-center justify-center"
-                aria-label="Seleccionar fecha"
-              >
-                <Calendar className="h-4 w-4 text-white/80" />
-              </motion.button>
-              
-              <AnimatePresence>
-                {showDatePicker && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute top-full mt-2 right-0 z-50 rounded-xl bg-[#1A1B1F] border border-white/10 shadow-xl p-3"
-                  >
-                    <input
-                      type="date"
-                      value={selectedDate}
-                      onChange={(e) => {
-                        onDateChange(e.target.value);
-                        setShowDatePicker(false);
-                      }}
-                      className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-[#4FE3C1]/50 focus:outline-none focus:ring-2 focus:ring-[#4FE3C1]/20"
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            <div className="h-6 w-px bg-white/10 hidden md:block" />
-
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={onSearchClick}
-              className="h-9 w-9 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all flex items-center justify-center"
-              aria-label="Buscar"
-            >
-              <Search className="h-4 w-4 text-white/80" />
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={onNotificationsClick}
-              className="relative h-9 w-9 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all flex items-center justify-center"
-              aria-label="Notificaciones"
-            >
-              <Bell className="h-4 w-4 text-white/80" />
-              {unreadNotifications > 0 && (
-                <motion.span
-                  initial={{ scale: 0.6, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 320, damping: 18 }}
-                  className="absolute -top-1 -right-1 h-5 min-w-[1.1rem] px-1 rounded-full bg-gradient-to-r from-[#4FE3C1] to-[#3A6DFF] text-[10px] font-semibold text-[#0E0F11] shadow-[0_6px_16px_rgba(58,109,255,0.4)] flex items-center justify-center"
-                >
-                  {unreadNotifications > 9 ? "9+" : unreadNotifications}
-                </motion.span>
+              <span className={cn(
+                "text-sm font-semibold leading-tight truncate group-hover:text-white/80 transition-colors",
+                isToday ? "text-white" : "text-white/90"
+              )}>
+                {formatDateDisplay()}
+              </span>
+              {statsLine && (
+                <span className="text-[11px] text-white/35 font-medium leading-tight mt-0.5">
+                  {statsLine}
+                </span>
               )}
-            </motion.button>
+            </button>
+
+            <AnimatePresence>
+              {showDatePicker && (
+                <motion.div
+                  initial={{ opacity: 0, y: 4, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 4, scale: 0.97 }}
+                  transition={{ duration: 0.12 }}
+                  className="absolute top-full mt-2 left-0 z-50 rounded-xl bg-[#1A1B1F] border border-white/10 shadow-2xl p-3"
+                >
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => { onDateChange(e.target.value); setShowDatePicker(false); }}
+                    className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-[#4FE3C1]/50 focus:outline-none focus:ring-2 focus:ring-[#4FE3C1]/20"
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
-        {/* View modes + Filters row */}
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          {/* View mode buttons */}
-          <div className="flex items-center flex-wrap gap-2">
-            {viewModes.map((mode) => (
-              <motion.button
-                key={mode.key}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                onClick={() => onViewModeChange(mode.key)}
-                className={cn(
-                  "px-3 py-1.5 rounded-xl text-sm font-medium transition-all border",
-                  viewMode === mode.key
-                    ? "bg-white text-[#0E0F11] border-white shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
-                    : "bg-white/5 text-white/80 border-white/10 hover:bg-white/10"
-                )}
-              >
-                {mode.label}
-              </motion.button>
-            ))}
-          </div>
+        {/* ── Date navigation ── */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <motion.button
+            whileTap={{ scale: 0.94 }}
+            onClick={() => handleNavigate("prev")}
+            className="h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
+            aria-label="Fecha anterior"
+          >
+            <ChevronLeft className="h-3.5 w-3.5 text-white/70" />
+          </motion.button>
 
-          {/* Filter dropdowns */}
-          <div className="flex items-center flex-wrap gap-2">
-            {/* Staff filter */}
-            {staffList.length > 0 && (
-              <FilterDropdown 
-                label="Barberos" 
-                icon={<Users className="h-4 w-4" />}
-                badge={selectedStaffIds.length}
+          <motion.button
+            whileTap={{ scale: 0.94 }}
+            onClick={handleToday}
+            className={cn(
+              "px-2.5 h-8 rounded-xl text-xs font-semibold transition-all",
+              isToday
+                ? "bg-white/10 text-white border border-white/20"
+                : "bg-gradient-to-r from-[#4FE3C1] to-[#3A6DFF] text-[#0E0F11] shadow-[0_6px_20px_rgba(58,109,255,0.3)]"
+            )}
+          >
+            Hoy
+          </motion.button>
+
+          <motion.button
+            whileTap={{ scale: 0.94 }}
+            onClick={() => handleNavigate("next")}
+            className="h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
+            aria-label="Fecha siguiente"
+          >
+            <ChevronRight className="h-3.5 w-3.5 text-white/70" />
+          </motion.button>
+        </div>
+
+        {/* ── Divider ── */}
+        <div className="h-5 w-px bg-white/10 hidden sm:block flex-shrink-0" />
+
+        {/* ── Actions: search + bell ── */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <motion.button
+            whileTap={{ scale: 0.94 }}
+            onClick={onSearchClick}
+            className="h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
+            aria-label="Buscar"
+          >
+            <Search className="h-3.5 w-3.5 text-white/70" />
+          </motion.button>
+
+          <motion.button
+            whileTap={{ scale: 0.94 }}
+            onClick={onNotificationsClick}
+            className="relative h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
+            aria-label="Notificaciones"
+          >
+            <Bell className="h-3.5 w-3.5 text-white/70" />
+            {unreadNotifications > 0 && (
+              <motion.span
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="absolute -top-0.5 -right-0.5 h-4 min-w-[1rem] px-1 rounded-full bg-gradient-to-r from-[#4FE3C1] to-[#3A6DFF] text-[9px] font-bold text-[#0E0F11] flex items-center justify-center shadow-[0_4px_12px_rgba(58,109,255,0.4)]"
               >
-                <div className="space-y-1">
-                  <button
-                    onClick={() => onStaffFilterChange && onStaffFilterChange([])}
-                    className={cn(
-                      "w-full text-left px-3 py-2 rounded-lg text-sm transition-all",
-                      selectedStaffIds.length === 0
-                        ? "bg-[#4FE3C1]/20 text-[#4FE3C1] font-medium"
-                        : "text-white/70 hover:bg-white/5"
-                    )}
-                  >
-                    Todos los barberos
-                  </button>
-                  {staffList.map((staff) => (
+                {unreadNotifications > 9 ? "9+" : unreadNotifications}
+              </motion.span>
+            )}
+          </motion.button>
+        </div>
+
+        {/* ── Divider ── */}
+        <div className="h-5 w-px bg-white/10 hidden sm:block flex-shrink-0" />
+
+        {/* ── View mode segmented control ── */}
+        <div className="flex items-center rounded-xl border border-white/10 bg-white/5 p-0.5 gap-0.5 flex-shrink-0">
+          {VIEW_MODES.map((mode) => (
+            <motion.button
+              key={mode.key}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => onViewModeChange(mode.key)}
+              className={cn(
+                "px-2.5 py-1 rounded-[10px] text-xs font-medium transition-all duration-150",
+                viewMode === mode.key
+                  ? "bg-white text-[#0E0F11] shadow-sm"
+                  : "text-white/50 hover:text-white/80"
+              )}
+            >
+              {mode.short}
+            </motion.button>
+          ))}
+        </div>
+
+        {/* ── Filters button with combined dropdown ── */}
+        <div ref={filtersRef} className="relative flex-shrink-0">
+          <motion.button
+            whileTap={{ scale: 0.94 }}
+            onClick={() => setShowFilters(!showFilters)}
+            className={cn(
+              "h-8 w-8 rounded-xl border flex items-center justify-center relative transition-all",
+              activeFiltersCount > 0
+                ? "bg-[#4FE3C1]/15 border-[#4FE3C1]/30 text-[#4FE3C1]"
+                : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80"
+            )}
+            aria-label="Filtros"
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            {activeFiltersCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-4 min-w-[1rem] px-1 rounded-full bg-[#4FE3C1] text-[#0E0F11] text-[9px] font-bold flex items-center justify-center">
+                {activeFiltersCount}
+              </span>
+            )}
+          </motion.button>
+
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                initial={{ opacity: 0, y: 4, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 4, scale: 0.97 }}
+                transition={{ duration: 0.12 }}
+                className="absolute top-full mt-2 right-0 z-50 w-52 rounded-xl bg-[#1A1B1F] border border-white/10 shadow-2xl overflow-hidden"
+              >
+                <div className="p-3 space-y-3">
+                  {/* Status filters */}
+                  <div>
+                    <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-1.5 px-1">Estado</p>
+                    <div className="space-y-0.5">
+                      {(["pending","confirmed","paid","completed","cancelled","no_show"] as BookingStatus[]).map((status) => (
+                        <button
+                          key={status}
+                          onClick={() => handleStatusToggle(status)}
+                          className={cn(
+                            "w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-all",
+                            filters.status.includes(status)
+                              ? "bg-white/10 text-white"
+                              : "text-white/60 hover:bg-white/5 hover:text-white"
+                          )}
+                        >
+                          <span className={cn(STATUS_COLORS[status], "font-medium")}>
+                            {BOOKING_STATUS_CONFIG[status].label}
+                          </span>
+                          {filters.status.includes(status) && (
+                            <CheckCircle className="h-3.5 w-3.5 text-[#4FE3C1]" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Highlighted filter */}
+                  <div className="border-t border-white/5 pt-2">
                     <button
-                      key={staff.id}
-                      onClick={() => handleStaffToggle(staff.id)}
+                      onClick={handleHighlightedToggle}
                       className={cn(
-                        "w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center justify-between",
-                        selectedStaffIds.includes(staff.id)
-                          ? "bg-[#4FE3C1]/20 text-[#4FE3C1] font-medium"
-                          : "text-white/70 hover:bg-white/5"
+                        "w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-all",
+                        filters.highlighted
+                          ? "bg-[#FF6DA3]/15 text-[#FF6DA3]"
+                          : "text-white/60 hover:bg-white/5 hover:text-white"
                       )}
                     >
-                      <span>{staff.name}</span>
-                      {selectedStaffIds.includes(staff.id) && (
-                        <CheckCircle className="h-4 w-4" />
-                      )}
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <Star className="h-3.5 w-3.5" />
+                        Destacadas
+                      </span>
+                      {filters.highlighted && <CheckCircle className="h-3.5 w-3.5" />}
                     </button>
-                  ))}
+                  </div>
+
+                  {/* Clear button */}
+                  {activeFiltersCount > 0 && (
+                    <div className="border-t border-white/5 pt-2">
+                      <button
+                        onClick={handleClearFilters}
+                        className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                      >
+                        <X className="h-3 w-3" />
+                        Limpiar filtros
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </FilterDropdown>
+              </motion.div>
             )}
-
-            {/* Status filter */}
-            <FilterDropdown 
-              label="Estado" 
-              icon={<CheckCircle className="h-4 w-4" />}
-              badge={filters.status.length}
-            >
-              <div className="space-y-1">
-                {([
-                  "pending",
-                  "paid",
-                  "completed",
-                  "cancelled",
-                  "no_show",
-                  "hold",
-                ] as BookingStatus[]).map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => handleStatusToggle(status)}
-                    className={cn(
-                      "w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center justify-between",
-                      filters.status.includes(status)
-                        ? "bg-[#4FE3C1]/20 text-[#4FE3C1] font-medium"
-                        : "text-white/70 hover:bg-white/5"
-                    )}
-                  >
-                    <span className={filters.status.includes(status) ? "" : statusColors[status]}>
-                      {BOOKING_STATUS_CONFIG[status].label}
-                    </span>
-                    {filters.status.includes(status) && (
-                      <CheckCircle className="h-4 w-4" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </FilterDropdown>
-
-            {/* Special filters */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleHighlightedToggle}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all border",
-                filters.highlighted
-                  ? "bg-[#FF6DA3]/20 text-[#FF6DA3] border-[#FF6DA3]/30"
-                  : "bg-white/5 text-white/80 border-white/10 hover:bg-white/10"
-              )}
-            >
-              <Star className="h-4 w-4" />
-              <span>Destacadas</span>
-            </motion.button>
-
-            {/* Clear filters */}
-            {activeFiltersCount > 0 && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleClearFilters}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all border bg-white/5 text-white/70 border-white/10 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-                <span>Limpiar</span>
-              </motion.button>
-            )}
-          </div>
+          </AnimatePresence>
         </div>
+
       </div>
     </motion.div>
   );

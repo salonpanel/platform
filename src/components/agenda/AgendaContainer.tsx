@@ -5,7 +5,6 @@ import { format, parseISO } from "date-fns";
 import { motion } from "framer-motion";
 import { Booking, Staff, StaffBlocking, StaffSchedule } from "@/types/agenda";
 import { AgendaTopBar } from "@/components/agenda/AgendaTopBar";
-import { AgendaContextBar } from "@/components/agenda/AgendaContextBar";
 import { AgendaContent } from "@/components/agenda/AgendaContent";
 import { NotificationProvider, useNotificationActions } from "./NotificationSystem";
 import { AgendaFilters } from "./AgendaFilters";
@@ -96,7 +95,7 @@ interface AgendaContainerProps {
 /**
  * AgendaContainer - Premium 3-zone layout optimizado
  * ZONE 1: AgendaTopBar (sticky header con glassmorphism)
- * ZONE 2: AgendaContextBar (KPIs + filtros de staff)
+ * ZONE 2: AgendaFilters (staff chips + search)
  * ZONE 3: Agenda Canvas (contenido principal del calendario)
  */
 export function AgendaContainer({
@@ -248,6 +247,7 @@ export function AgendaContainer({
               onStaffFilterChange={(staffIds) => onStaffChange(staffIds.length > 0 ? staffIds[0] : null)}
               filters={filters}
               onFiltersChange={setFilters}
+              quickStats={quickStats}
             />
           </motion.div>
 
@@ -272,18 +272,13 @@ export function AgendaContainer({
         </div>
 
         {/* Scrollable Content Section - Full width without sidebar */}
-        <div className="flex-1 min-h-0 mt-4">
+        <div className="flex-1 min-h-0 mt-1.5">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, delay: 0.05 }}
             className="flex flex-col h-full overflow-hidden"
           >
-            {/* Day summary stats - compact bar above calendar */}
-            <div className="flex-shrink-0">
-              <AgendaContextBar quickStats={quickStats} />
-            </div>
-            
             {/* Scrollable calendar content */}
             <div className="flex-1 min-h-0 overflow-y-auto">
               <AgendaContent

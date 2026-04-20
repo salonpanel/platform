@@ -118,40 +118,63 @@ export default function BookingForm({
         return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
+    const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string }>({});
+
+    const validateField = (field: "name" | "email", value: string) => {
+        if (field === "name" && value.trim().length < 2) {
+            setFieldErrors(prev => ({ ...prev, name: "Introduce tu nombre completo." }));
+        } else if (field === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+            setFieldErrors(prev => ({ ...prev, email: "Introduce un email válido." }));
+        } else {
+            setFieldErrors(prev => { const next = { ...prev }; delete next[field]; return next; });
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* Step 1: Slot Selection */}
             {step === "slot" && (
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Fecha</label>
+                        <label htmlFor="booking-date" className="block text-sm font-medium text-slate-700 mb-1">Fecha</label>
                         <input
+                            id="booking-date"
                             type="date"
-                            className="w-full p-3 rounded-xl border border-slate-200 bg-white"
+                            className="w-full p-3 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-blue-500 outline-none"
                             value={selectedDate}
                             min={new Date().toISOString().split("T")[0]}
-                            onChange={(e) => setSelectedDate(e.target.value)}
+                            onChange={(e) => { setSelectedDate(e.target.value); setSelectedSlot(null); }}
                         />
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Horas Disponibles</label>
                         {loadingSlots ? (
-                            <div className="text-center py-8 text-slate-400">Cargando disponibilidad...</div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2" aria-label="Cargando horas disponibles">
+                                {Array.from({ length: 6 }).map((_, i) => (
+                                    <div key={i} className="h-12 rounded-lg bg-slate-100 animate-pulse" />
+                                ))}
+                            </div>
                         ) : slots.length === 0 ? (
-                            <div className="text-center p-4 bg-slate-100 rounded-xl text-slate-500">
-                                No hay horas disponibles para esta fecha.
+                            <div className="flex flex-col items-center gap-2 p-6 bg-slate-100 rounded-xl text-slate-500">
+                                <svg className="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <span className="text-sm">No hay horas disponibles para esta fecha.</span>
+                                <span className="text-xs text-slate-400">Prueba con otro día.</span>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                 {slots.map((slot) => (
                                     <button
                                         key={slot.slot_time}
                                         onClick={() => setSelectedSlot(slot.slot_time)}
-                                        className={`p-3 rounded-lg text-sm font-medium transition-all ${selectedSlot === slot.slot_time
+                                        className={`min-h-[48px] rounded-lg text-sm font-medium transition-all active:scale-[0.97] ${selectedSlot === slot.slot_time
                                             ? 'bg-blue-600 text-white shadow-lg ring-2 ring-blue-600 ring-offset-2'
                                             : 'bg-white border border-slate-200 text-slate-700 hover:border-blue-400'
                                             }`}
+                                        style={selectedSlot === slot.slot_time ? { backgroundColor: "var(--tenant-brand)" } : {}}
+                                        aria-pressed={selectedSlot === slot.slot_time}
                                     >
                                         {formatTime(slot.slot_time)}
                                     </button>
@@ -163,7 +186,7 @@ export default function BookingForm({
                     <button
                         disabled={!selectedSlot}
                         onClick={() => setStep("details")}
-                        className="w-full py-4 rounded-xl bg-slate-900 text-white font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+                        className="w-full py-4 rounded-xl bg-slate-900 text-white font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed mt-4 active:scale-[0.98] transition-transform"
                         style={{ backgroundColor: "var(--tenant-brand)" }}
                     >
                         Continuar
@@ -171,44 +194,60 @@ export default function BookingForm({
                 </div>
             )}
 
-// cleaned
             {step === "details" && (
                 <form onSubmit={handleSubmit} className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Nombre Completo</label>
+                        <label htmlFor="guest-name" className="block text-sm font-medium text-slate-700 mb-1">Nombre Completo</label>
                         <input
+                            id="guest-name"
                             type="text"
                             required
-                            className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                            autoComplete="name"
+                            autoCapitalize="words"
+                            className={`w-full p-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition-shadow ${fieldErrors.name ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
                             placeholder="Ej: Juan Pérez"
                             value={guest.name}
                             onChange={e => setGuest({ ...guest, name: e.target.value })}
+                            onBlur={e => validateField("name", e.target.value)}
                         />
+                        {fieldErrors.name && <p className="mt-1 text-xs text-red-600">{fieldErrors.name}</p>}
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                        <label htmlFor="guest-email" className="block text-sm font-medium text-slate-700 mb-1">Email</label>
                         <input
+                            id="guest-email"
                             type="email"
                             required
-                            className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                            autoComplete="email"
+                            autoCapitalize="none"
+                            autoCorrect="off"
+                            spellCheck={false}
+                            className={`w-full p-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition-shadow ${fieldErrors.email ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
                             placeholder="juan@ejemplo.com"
                             value={guest.email}
                             onChange={e => setGuest({ ...guest, email: e.target.value })}
+                            onBlur={e => validateField("email", e.target.value)}
                         />
+                        {fieldErrors.email && <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>}
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Teléfono (Opcional)</label>
+                        <label htmlFor="guest-phone" className="block text-sm font-medium text-slate-700 mb-1">
+                            Teléfono <span className="text-slate-400 font-normal">(Opcional)</span>
+                        </label>
                         <input
+                            id="guest-phone"
                             type="tel"
-                            className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="+34 600..."
+                            autoComplete="tel"
+                            inputMode="tel"
+                            className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-shadow"
+                            placeholder="+34 600 000 000"
                             value={guest.phone}
                             onChange={e => setGuest({ ...guest, phone: e.target.value })}
                         />
                     </div>
 
                     {formError && (
-                        <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+                        <div role="alert" className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
                             {formError}
                         </div>
                     )}
@@ -217,17 +256,25 @@ export default function BookingForm({
                         <button
                             type="button"
                             onClick={() => setStep("slot")}
-                            className="flex-1 py-4 rounded-xl bg-slate-100 text-slate-600 font-bold"
+                            className="flex-1 py-4 rounded-xl bg-slate-100 text-slate-600 font-bold active:scale-[0.98] transition-transform"
                         >
                             Atrás
                         </button>
                         <button
                             type="submit"
-                            disabled={submitting}
-                            className="flex-[2] py-4 rounded-xl bg-slate-900 text-white font-bold shadow-lg disabled:opacity-70"
+                            disabled={submitting || Object.keys(fieldErrors).length > 0}
+                            className="flex-[2] py-4 rounded-xl bg-slate-900 text-white font-bold shadow-lg disabled:opacity-70 active:scale-[0.98] transition-transform"
                             style={{ backgroundColor: "var(--tenant-brand)" }}
                         >
-                            {submitting ? "Confirmando..." : "Confirmar Reserva"}
+                            {submitting ? (
+                                <span className="flex items-center justify-center gap-2">
+                                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                    </svg>
+                                    Confirmando...
+                                </span>
+                            ) : "Confirmar Reserva"}
                         </button>
                     </div>
                 </form>

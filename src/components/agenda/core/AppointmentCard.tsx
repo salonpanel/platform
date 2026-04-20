@@ -17,21 +17,19 @@ interface AppointmentCardProps {
   onMouseDown?: (e: React.MouseEvent, booking: Booking, top: number) => void;
 }
 
-// Status color mapping
-const getStatusColor = (status: string) => {
-  const colors: Record<string, string> = {
-    hold: "#FFC107",
-    pending: "#FFC107",
-    confirmed: "#38BDF8",
-    paid: "#3A6DFF",
-    completed: "#4FE3C1",
-    cancelled: "#EF4444",
-    no_show: "#FF6DA3",
-  };
-  return colors[status] || colors.pending;
+const STATUS_COLORS: Record<string, string> = {
+  hold: "#FFC107",
+  pending: "#FFC107",
+  confirmed: "#38BDF8",
+  paid: "#3A6DFF",
+  completed: "#4FE3C1",
+  cancelled: "#EF4444",
+  no_show: "#FF6DA3",
 };
 
-// Client initials helper (max 2 chars)
+const getStatusColor = (status: string) =>
+  STATUS_COLORS[status] || STATUS_COLORS.pending;
+
 const getInitials = (name: string | null | undefined): string => {
   if (!name) return "?";
   const parts = name.trim().split(/\s+/);
@@ -46,24 +44,20 @@ export const AppointmentCard = React.memo(function AppointmentCard({
   isDragging = false,
   isGhost = false,
   onClick,
-  onMouseDown
+  onMouseDown,
 }: AppointmentCardProps) {
   const { top, height } = position;
 
-  // Convert dates to tenant timezone
   const startsAt = new Date(booking.starts_at);
   const endsAt = new Date(booking.ends_at);
-  const localStartsAt = new Date(
-    startsAt.toLocaleString("en-US", { timeZone: timezone })
-  );
-  const localEndsAt = new Date(
-    endsAt.toLocaleString("en-US", { timeZone: timezone })
-  );
+  const localStartsAt = new Date(startsAt.toLocaleString("en-US", { timeZone: timezone }));
+  const localEndsAt = new Date(endsAt.toLocaleString("en-US", { timeZone: timezone }));
 
   const isPast = localEndsAt < new Date();
   const statusColor = getStatusColor(booking.status);
-  const isUltraSmall = height < 40;   // ← micro-card: solo iniciales + dot
-  const isSmallSlot = height < 55;    // ← card compacta: sin servicio ni badge
+  const isUltraSmall = height < 40;
+  const isSmall = height < 55;
+  const isLarge = height >= 90;
 
   return (
     <motion.div
@@ -97,104 +91,98 @@ export const AppointmentCard = React.memo(function AppointmentCard({
       }}
       className={cn(
         "absolute left-2 right-2 transition-all duration-200",
-        "border border-white/10 rounded-2xl",
         "backdrop-blur-md",
-        isGhost ? "opacity-30 border-dashed border-white/20" : "bg-[#1a1d24]/90 shadow-lg",
-        isPast && !isDragging ? "opacity-60" : "",
-        isDragging && !isGhost ? "cursor-grabbing z-50 shadow-2xl scale-[1.02] ring-1 ring-white/20" : "cursor-grab z-20",
+        isGhost ? "opacity-30 border-dashed border-white/20 border" : "",
+        isPast && !isDragging ? "opacity-45" : "",
+        isDragging && !isGhost
+          ? "cursor-grabbing z-50 shadow-2xl scale-[1.02] ring-1 ring-white/20"
+          : "cursor-grab z-20",
         "group focus:outline-none focus:ring-2 focus:ring-[#4FE3C1]/50 focus:ring-offset-0"
       )}
       style={{
         top: `${top}px`,
-        height: `${Math.max(height, isSmallSlot ? 40 : 52)}px`,
-        minHeight: isSmallSlot ? "40px" : "52px",
-        background: "linear-gradient(135deg, rgba(26,29,36,0.95), rgba(18,21,28,0.98))",
-        backdropFilter: "blur(12px)",
-        borderRadius: "16px",
+        height: `${Math.max(height, isSmall ? 40 : 52)}px`,
+        minHeight: isSmall ? "40px" : "52px",
+        background: isGhost
+          ? "transparent"
+          : `${statusColor}12`,
+        border: isGhost ? undefined : `1px solid ${statusColor}30`,
+        borderRadius: "12px",
+        boxShadow: isDragging ? undefined : `0 2px 8px ${statusColor}10`,
       }}
-      title={`${booking.customer?.name || "Sin cliente"} - ${booking.service?.name || "Sin servicio"} (${format(localStartsAt, "HH:mm")} - ${format(localEndsAt, "HH:mm")})`}
+      title={`${booking.customer?.name || "Sin cliente"} — ${booking.service?.name || "Sin servicio"} (${format(localStartsAt, "HH:mm")} - ${format(localEndsAt, "HH:mm")})`}
     >
-      {/* Left colored accent bar */}
-      <div 
-        className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" 
-        style={{ 
+      {/* Left status bar */}
+      <div
+        className="absolute left-0 top-0 bottom-0 w-[3px]"
+        style={{
           backgroundColor: statusColor,
-          borderRadius: "16px 0 0 16px" 
+          borderRadius: "12px 0 0 12px",
         }}
       />
 
-      {/* Card content - fully contained with proper overflow handling */}
       {isUltraSmall ? (
-        /* ── Micro-card (<40 px): barra + iniciales + dot de status ── */
+        /* Micro-card: iniciales + status dot */
         <div className="flex items-center h-full pl-3 pr-1.5 gap-1.5 overflow-hidden">
-          <span
-            className="text-[10px] font-bold leading-none text-white/90 truncate flex-1 min-w-0"
-            style={{ letterSpacing: "0.03em" }}
-          >
+          <span className="text-[10px] font-bold leading-none text-white/90 truncate flex-1 min-w-0">
             {getInitials(booking.customer?.name)}
           </span>
-          {/* Status dot */}
           <span
             className="flex-shrink-0 w-1.5 h-1.5 rounded-full"
             style={{ backgroundColor: statusColor }}
           />
         </div>
       ) : (
-        <div className={cn(
-          "flex flex-col h-full w-full overflow-hidden",
-          isSmallSlot ? "justify-center pl-3 pr-2 py-2" : "pl-3 pr-3 py-2.5"
-        )}>
-
-          {/* Time header - only show if space permits */}
-          {!isSmallSlot && (
+        <div
+          className={cn(
+            "flex flex-col h-full w-full overflow-hidden",
+            isSmall ? "justify-center pl-3 pr-2 py-1.5" : "pl-3 pr-3 py-2"
+          )}
+        >
+          {/* Time header */}
+          {!isSmall && (
             <div className="flex items-center justify-between mb-1 min-w-0">
-              <span className="text-[10px] font-mono font-medium text-white/50 truncate">
-                {format(localStartsAt, "HH:mm")} - {format(localEndsAt, "HH:mm")}
+              <span className="text-[11px] font-mono text-white/45 truncate">
+                {format(localStartsAt, "HH:mm")} – {format(localEndsAt, "HH:mm")}
               </span>
             </div>
           )}
 
-          {/* Main Content - Customer name */}
-          <div className="flex items-center gap-2 min-w-0 mb-1">
-            <div className={cn(
-              "font-semibold truncate text-white flex-1 min-w-0",
-              isSmallSlot ? "text-xs" : "text-sm"
-            )}>
+          {/* Customer name */}
+          <div className="flex items-center gap-2 min-w-0">
+            <div
+              className={cn(
+                "font-medium truncate text-white flex-1 min-w-0",
+                isSmall ? "text-xs" : "text-sm"
+              )}
+            >
               {booking.customer?.name || "Sin cliente"}
             </div>
 
-            {/* Time for small slots (inline) */}
-            {isSmallSlot && (
-              <span className="text-[10px] text-white/40 font-mono flex-shrink-0">
+            {isSmall && (
+              <span className="text-[11px] text-white/40 font-mono flex-shrink-0">
                 {format(localStartsAt, "HH:mm")}
               </span>
             )}
           </div>
 
-          {/* Service - hide on small slots */}
-          {!isSmallSlot && (
-            <div className="text-xs text-white/60 truncate min-w-0">
+          {/* Service */}
+          {!isSmall && (
+            <div className="text-[11px] text-white/55 truncate min-w-0 mt-0.5">
               {booking.service?.name || "Sin servicio"}
             </div>
           )}
 
-          {/* Status badge for larger slots */}
-          {!isSmallSlot && height >= 70 && (
-            <div
-              className="mt-1.5 inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-medium self-start"
-              style={{
-                backgroundColor: `${statusColor}15`,
-                color: statusColor,
-                border: `1px solid ${statusColor}40`
-              }}
-            >
-              {booking.status === "pending" && "Pendiente"}
-              {booking.status === "hold" && "En espera"}
-              {booking.status === "confirmed" && "Confirmado"}
-              {booking.status === "paid" && "Pagado"}
-              {booking.status === "completed" && "Completado"}
-              {booking.status === "cancelled" && "Cancelado"}
-              {booking.status === "no_show" && "No asistió"}
+          {/* Staff dot — large cards only */}
+          {isLarge && booking.staff?.name && (
+            <div className="mt-auto flex items-center gap-1.5 pt-1">
+              <span
+                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                style={{ backgroundColor: statusColor, opacity: 0.7 }}
+              />
+              <span className="text-[10px] text-white/35 truncate">
+                {booking.staff.name}
+              </span>
             </div>
           )}
         </div>

@@ -81,14 +81,22 @@ export function BookingSlidePanel({
     if (!isOpen) setShowCancelConfirm(false);
   }, [isOpen, booking?.id]);
 
-  // Body scroll lock
+  // Body scroll lock — uses position:fixed trick for iOS Safari compatibility
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = 'unset';
-      };
-    }
+    if (!isOpen) return;
+    const scrollY = window.scrollY;
+    const body = document.body;
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.width = '100%';
+    body.style.overflow = 'hidden';
+    return () => {
+      body.style.position = '';
+      body.style.top = '';
+      body.style.width = '';
+      body.style.overflow = '';
+      window.scrollTo(0, scrollY);
+    };
   }, [isOpen]);
 
   // Escape key handler

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 
+export const dynamic = "force-dynamic";
+
 type CheckoutRequest = {
   appointment_id?: string;
   price_id?: string;

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClientForServer } from "@/lib/supabase/server-client";
 import { stripe } from "@/lib/stripe";
 
+export const dynamic = "force-dynamic";
+
 const CURRENCY = process.env.STRIPE_DEFAULT_CURRENCY ?? "eur";
 
 type MigrateRequest = {

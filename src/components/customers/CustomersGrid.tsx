@@ -121,16 +121,16 @@ export function CustomersGrid({
 
                                 <div className="col-span-2 flex flex-col justify-center text-xs text-[var(--text-secondary)] truncate">
                                     {customer.email && (
-                                        <div className="flex items-center gap-1.5 truncate" title={customer.email}>
-                                            <Mail className="w-3 h-3 opacity-70" />
+                                        <a href={`mailto:${customer.email}`} className="flex items-center gap-1.5 truncate hover:text-[var(--accent-blue)] transition-colors" title={customer.email} onClick={e => e.stopPropagation()}>
+                                            <Mail className="w-3 h-3 opacity-70 flex-shrink-0" />
                                             <span className="truncate">{customer.email}</span>
-                                        </div>
+                                        </a>
                                     )}
                                     {customer.phone && (
-                                        <div className="flex items-center gap-1.5 truncate mt-0.5" title={customer.phone}>
-                                            <Phone className="w-3 h-3 opacity-70" />
+                                        <a href={`tel:${customer.phone}`} className="flex items-center gap-1.5 truncate mt-0.5 hover:text-[var(--accent-blue)] transition-colors" title={customer.phone} onClick={e => e.stopPropagation()}>
+                                            <Phone className="w-3 h-3 opacity-70 flex-shrink-0" />
                                             <span>{customer.phone}</span>
-                                        </div>
+                                        </a>
                                     )}
                                 </div>
 
@@ -204,16 +204,16 @@ export function CustomersGrid({
 
                                 <div className="grid grid-cols-2 gap-2 text-xs text-[var(--text-secondary)] bg-white/[0.02] p-2 rounded-lg">
                                     {customer.email && (
-                                        <div className="flex items-center gap-1.5 truncate">
-                                            <Mail className="w-3 h-3 opacity-70" />
+                                        <a href={`mailto:${customer.email}`} className="flex items-center gap-1.5 truncate hover:text-[var(--accent-blue)] transition-colors" onClick={e => e.stopPropagation()}>
+                                            <Mail className="w-3 h-3 opacity-70 flex-shrink-0" />
                                             <span className="truncate">{customer.email}</span>
-                                        </div>
+                                        </a>
                                     )}
                                     {customer.phone && (
-                                        <div className="flex items-center gap-1.5 truncate">
-                                            <Phone className="w-3 h-3 opacity-70" />
+                                        <a href={`tel:${customer.phone}`} className="flex items-center gap-1.5 truncate hover:text-[var(--accent-blue)] transition-colors" onClick={e => e.stopPropagation()}>
+                                            <Phone className="w-3 h-3 opacity-70 flex-shrink-0" />
                                             <span>{customer.phone}</span>
-                                        </div>
+                                        </a>
                                     )}
                                     <div className="col-span-2 flex items-center gap-1.5 border-t border-white/5 pt-2 mt-0.5">
                                         <Clock className="w-3 h-3 opacity-70" />

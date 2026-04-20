@@ -125,7 +125,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
 
                   <span
                     className={cn(
-                      "text-[10px] font-satoshi relative z-10 leading-tight",
+                      "text-[11px] font-satoshi relative z-10 leading-tight",
                       active ? "font-semibold text-[var(--accent-aqua)]" : "font-medium"
                     )}
                   >
@@ -163,10 +163,13 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
                 className="relative z-10 p-1"
               >
                 <MoreHorizontal className="h-5 w-5" />
+                {isMoreActive && !showMoreMenu && (
+                  <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-[var(--accent-aqua)] border-2 border-[var(--bg-primary)]" />
+                )}
               </motion.div>
 
               <span className={cn(
-                "text-[10px] font-satoshi relative z-10 leading-tight",
+                "text-[11px] font-satoshi relative z-10 leading-tight",
                 isMoreActive ? "font-semibold text-[var(--accent-aqua)]" : "font-medium"
               )}>
                 Más
