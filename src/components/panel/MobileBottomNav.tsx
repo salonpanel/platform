@@ -130,8 +130,8 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
           }}
         />
 
-        {/* Items row — exactly 56px (h-14) */}
-        <div className="flex items-center justify-around h-14 px-1">
+        {/* Items row — exactly 52px */}
+        <div className="flex items-center justify-around h-[52px] px-1">
           {MAIN_ITEMS.map((item) => {
             const active = isActive(item.href);
             const icon = getNavIcon(item.href);
@@ -146,7 +146,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
                 <Link
                   href={item.href}
                   prefetch={true}
-                  className="relative flex flex-col items-center justify-center gap-[3px] py-1.5 min-w-[52px] select-none"
+                  className="relative flex flex-col items-center justify-end pb-1.5 pt-2 gap-[2px] min-w-[50px] select-none h-full"
                 >
                   {/* Shared-layout active indicator bar at top of nav */}
                   {active && (
@@ -158,10 +158,10 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
                     />
                   )}
 
-                  {/* Icon pill — subtle background when active */}
+                  {/* Icon pill */}
                   <div
                     className={cn(
-                      "flex items-center justify-center w-10 h-[30px] rounded-xl transition-all duration-200",
+                      "flex items-center justify-center w-[38px] h-[28px] rounded-xl transition-all duration-200",
                       active ? "bg-[rgba(79,227,193,0.11)]" : ""
                     )}
                   >
@@ -201,7 +201,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
           >
             <button
               onClick={() => setShowMoreMenu((v) => !v)}
-              className="relative flex flex-col items-center justify-center gap-[3px] py-1.5 min-w-[52px] select-none"
+              className="relative flex flex-col items-center justify-end pb-1.5 pt-2 gap-[2px] min-w-[50px] select-none h-full"
               aria-label="Más opciones"
               aria-expanded={showMoreMenu}
             >
@@ -218,7 +218,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
               {/* Icon pill */}
               <div
                 className={cn(
-                  "relative flex items-center justify-center w-10 h-[30px] rounded-xl transition-all duration-200",
+                  "relative flex items-center justify-center w-[38px] h-[28px] rounded-xl transition-all duration-200",
                   isMoreActive || showMoreMenu ? "bg-[rgba(79,227,193,0.11)]" : ""
                 )}
               >
