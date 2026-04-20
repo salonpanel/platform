@@ -115,7 +115,9 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
         ref={navRef}
         className="fixed bottom-0 left-0 right-0 z-50 md:hidden"
         style={{
-          /* Fully opaque — no bleed-through in the safe-area zone */
+          /* iOS PWA Safe Area fix: Instagram style uses padding to fill the bottom */
+          paddingBottom: "env(safe-area-inset-bottom)",
+          /* Fully opaque */
           background: "rgb(6, 20, 27)",
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
@@ -146,48 +148,16 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
                 <Link
                   href={item.href}
                   prefetch={true}
-                  className="relative flex flex-col items-center justify-end pb-[2px] pt-1 gap-[1px] min-w-[50px] select-none h-full"
+                  className="relative flex items-center justify-center min-w-[50px] select-none h-full"
                 >
-                  {/* Shared-layout active indicator bar at top of nav */}
-                  {active && (
-                    <motion.div
-                      layoutId="nav-active-bar"
-                      className="absolute -top-[1px] left-1/2 -translate-x-1/2 w-7 h-[3px] rounded-full"
-                      style={{ background: "var(--accent-aqua)" }}
-                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                    />
-                  )}
-
-                  {/* Icon pill */}
                   <div
                     className={cn(
-                      "flex items-center justify-center w-[36px] h-[26px] rounded-xl transition-all duration-200",
-                      active ? "bg-[rgba(79,227,193,0.11)]" : ""
+                      "flex items-center justify-center w-[40px] h-[40px] rounded-xl transition-all duration-200",
+                      active ? "text-[var(--accent-aqua)]" : "text-slate-400"
                     )}
                   >
-                    <span
-                      className={cn(
-                        "transition-colors duration-200",
-                        active
-                          ? "text-[var(--accent-aqua)]"
-                          : "text-[var(--text-tertiary)]"
-                      )}
-                    >
-                      {icon}
-                    </span>
+                    {icon}
                   </div>
-
-                  {/* Label */}
-                  <span
-                    className={cn(
-                      "text-[10px] leading-none font-satoshi transition-all duration-200",
-                      active
-                        ? "font-semibold text-[var(--accent-aqua)]"
-                        : "font-medium text-[var(--text-tertiary)]"
-                    )}
-                  >
-                    {item.label}
-                  </span>
                 </Link>
               </motion.div>
             );
@@ -201,41 +171,25 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
           >
             <button
               onClick={() => setShowMoreMenu((v) => !v)}
-              className="relative flex flex-col items-center justify-end pb-[2px] pt-1 gap-[1px] min-w-[50px] select-none h-full"
+              className="relative flex items-center justify-center min-w-[50px] select-none h-full"
               aria-label="Más opciones"
               aria-expanded={showMoreMenu}
             >
-              {/* Shared-layout indicator for "more-active" state */}
-              {isMoreActive && !showMoreMenu && (
-                <motion.div
-                  layoutId="nav-active-bar"
-                  className="absolute -top-[1px] left-1/2 -translate-x-1/2 w-7 h-[3px] rounded-full"
-                  style={{ background: "var(--accent-aqua)" }}
-                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                />
-              )}
-
               <div
                 className={cn(
-                  "relative flex items-center justify-center w-[36px] h-[26px] rounded-xl transition-all duration-200",
-                  isMoreActive || showMoreMenu ? "bg-[rgba(79,227,193,0.11)]" : ""
+                  "relative flex items-center justify-center w-[40px] h-[40px] rounded-xl transition-all duration-200",
+                  isMoreActive || showMoreMenu ? "text-[var(--accent-aqua)]" : "text-slate-400"
                 )}
               >
                 <MoreHorizontal
-                  width={20}
-                  height={20}
-                  strokeWidth={1.8}
-                  className={cn(
-                    "transition-colors duration-200",
-                    isMoreActive || showMoreMenu
-                      ? "text-[var(--accent-aqua)]"
-                      : "text-[var(--text-tertiary)]"
-                  )}
+                  size={24}
+                  strokeWidth={isMoreActive || showMoreMenu ? 2.5 : 2}
+                  className="mt-[2px]"
                 />
                 {/* Badge dot when a "more" item is the active route */}
                 {isMoreActive && (
                   <span
-                    className="absolute top-0.5 right-0.5 w-[7px] h-[7px] rounded-full border-2"
+                    className="absolute top-2 right-2 w-[7px] h-[7px] rounded-full border-2"
                     style={{
                       background: "var(--accent-aqua)",
                       borderColor: "var(--bg-primary)",
@@ -243,8 +197,6 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
                   />
                 )}
               </div>
-
-              {/* Label */}
               <span
                 className={cn(
                   "text-[10px] leading-none font-satoshi transition-all duration-200",
