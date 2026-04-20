@@ -51,7 +51,7 @@ export function AppointmentCard({
 
   // Base card styling with premium glassmorphism and mobile-first responsive design
   const baseClasses = cn(
-    "relative backdrop-blur-md border-l-4 rounded-xl cursor-pointer",
+    "relative backdrop-blur-md border-l-[3px] rounded-[10px] cursor-pointer",
     "transition-all duration-200 group",
     "focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]/50 focus:ring-offset-2 focus:ring-offset-[var(--bg-primary)]",
     // Phase 3: Mobile-first responsive improvements
@@ -60,15 +60,13 @@ export function AppointmentCard({
     className
   );
 
+  // Status tinting is primary — staffColor only affects the left border accent
   const accentColor = staffColor || statusTokens.text;
   const cardStyle = {
-    background: staffColor
-      ? `linear-gradient(135deg, ${staffColor}10 0%, rgba(26,29,36,0.95) 100%)`
-      : statusTokens.bg,
+    background: statusTokens.bg,
     borderLeftColor: accentColor,
-    boxShadow: staffColor
-      ? `0 0 0 1px ${staffColor}15, var(--shadow-premium)`
-      : "var(--shadow-premium)",
+    boxShadow: `0 1px 6px ${statusTokens.text}12`,
+    borderRadius: "10px",
   };
 
   // Timeline variant (compact for day/week grid cells - progressive disclosure)
@@ -98,29 +96,20 @@ export function AppointmentCard({
         style={cardStyle}
         aria-label={`${startTime} - ${booking.customer?.name || "Sin cliente"} - ${booking.service?.name || "Sin servicio"}`}
       >
-        <div className="flex items-center gap-2 px-2.5 py-1.5 min-w-0">
-          {/* Time — fixed width for alignment */}
-          <span className={cn(
-            "text-xs font-semibold font-mono flex-shrink-0",
-            "text-[var(--text-secondary)]"
-          )}>
-            {startTime}
-          </span>
+        <div className="h-full flex flex-col justify-center px-2.5 py-1 gap-0.5 min-w-0 overflow-hidden">
+          {/* Row 1: time + customer name */}
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-[11px] font-mono font-medium flex-shrink-0 text-[var(--text-secondary)]">
+              {startTime}
+            </span>
+            <span className="text-xs font-semibold truncate flex-1 min-w-0 text-[var(--text-primary)]">
+              {booking.customer?.name || "Sin cliente"}
+            </span>
+          </div>
 
-          {/* Customer name — truncated */}
-          <span className={cn(
-            "text-xs font-medium truncate flex-1 min-w-0",
-            "text-[var(--text-primary)]"
-          )}>
-            {booking.customer?.name || "Sin cliente"}
-          </span>
-
-          {/* Service short label — only if not compact and space allows */}
-          {!compact && booking.service?.name && (
-            <span className={cn(
-              "text-[10px] truncate max-w-[80px] flex-shrink-0 hidden sm:inline",
-              "text-[var(--text-tertiary)]"
-            )}>
+          {/* Row 2: service name (always shown, hidden by overflow when too small) */}
+          {booking.service?.name && (
+            <span className="text-[10px] text-[var(--text-tertiary)] truncate leading-none">
               {booking.service.name}
             </span>
           )}

@@ -388,7 +388,7 @@ export default function AgendaPageClient({
           />
         )}
 
-        {/* Booking detail slide panel */}
+        {/* Booking detail slide panel — status change handled internally by the panel, callback only for UI refresh */}
         <BookingSlidePanel
           booking={modals.selectedBooking}
           isOpen={modals.showBookingDetail}
@@ -398,7 +398,13 @@ export default function AgendaPageClient({
             modals.openEditBookingModal(booking);
           }}
           onCancel={handleCancelBooking}
-          onStatusChange={handleStatusChange}
+          onStatusChange={(bookingId, newStatus) => {
+            // Panel already called the API — just show feedback and refresh
+            const config = BOOKING_STATUS_CONFIG[newStatus as keyof typeof BOOKING_STATUS_CONFIG];
+            const label = config ? config.label : newStatus;
+            showToast(newStatus === "cancelled" ? "Cita cancelada" : `Estado: ${label}`, newStatus === "cancelled" ? "error" : "success");
+            refreshDaySnapshots(selectedDate);
+          }}
           timezone={tenantTimezone}
         />
 
