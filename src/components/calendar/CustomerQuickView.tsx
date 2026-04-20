@@ -236,7 +236,10 @@ export function CustomerQuickView({
         </div>
 
         {/* Footer con acciones */}
-        <div className="flex items-center justify-end gap-2 p-6 border-t border-white/5">
+        <div 
+          className="flex items-center justify-end gap-2 p-6 border-t border-white/5"
+          style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}
+        >
           <GlassButton variant="secondary" onClick={onClose}>
             Cerrar
           </GlassButton>

@@ -117,8 +117,8 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
         style={{
           /* iOS PWA Safe Area fix: Instagram style uses padding to fill the bottom */
           paddingBottom: "env(safe-area-inset-bottom)",
-          /* Fully opaque */
-          background: "rgb(6, 20, 27)",
+          /* Fully opaque background matching the app theme */
+          background: "var(--neutral-50)",
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
         }}
@@ -133,7 +133,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
         />
 
         {/* Items row — extremely compact */}
-        <div className="flex items-center justify-around h-[48px] px-1">
+        <div className="flex items-center justify-around h-[60px] px-1">
           {MAIN_ITEMS.map((item) => {
             const active = isActive(item.href);
             const icon = getNavIcon(item.href);

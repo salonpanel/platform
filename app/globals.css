@@ -5,7 +5,7 @@
 
 :root {
   /* Bottom navigation height (nav 48px) - Safe area removed to fix Android PWA gaps */
-  --bottom-nav-height: 3rem;
+  --bottom-nav-height: 60px;
   /* ============================================================================
      NUEVO DESIGN SYSTEM - BookFast Platform
      Capsule Shapes + Soft Glass + Premium Gradients + Neo-Glow
@@ -160,7 +160,7 @@
                0px 0px 32px rgba(58, 109, 255, 0.2);
 
   --glow-pink: 0px 0px 16px rgba(255, 109, 163, 0.4),
-               0px 0px 32px rgba(255, 109, 163, 0.2);
+                 0px 0px 32px rgba(255, 109, 163, 0.2);
 
   /* Glow de Borde (neo-glow edges) */
   --glow-border-aqua: 0px 0px 8px rgba(79, 227, 193, 0.3);
@@ -816,7 +816,7 @@ select option {
    iPhone home indicator / Android gesture bar that the nav itself sits on top of.
    Without this, content scrolls under the nav on gesture-based phones. */
 .pb-nav-safe {
-  padding-bottom: var(--bottom-nav-height);
+  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
 }
 
 /* PWA standalone mode */
