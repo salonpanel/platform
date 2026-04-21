@@ -98,14 +98,23 @@ export function AgendaContent({
     }
   }, [isMobile, staffList, mobileSelectedStaffId]);
 
+  // In mobile week view, default to "Todos" (null) to show all bookings.
+  useEffect(() => {
+    if (!isMobile) return;
+    if (viewMode !== "week") return;
+    setMobileSelectedStaffId(null);
+  }, [isMobile, viewMode]);
+
   // Resolve the active staff id on mobile — always a real staff id (never null on mobile)
   const mobileActiveStaffId = useMemo(() => {
     if (!isMobile) return mobileSelectedStaffId;
+    // Week view supports "Todos" (null)
+    if (viewMode === "week") return mobileSelectedStaffId;
     if (mobileSelectedStaffId && staffList.some((s) => s.id === mobileSelectedStaffId)) {
       return mobileSelectedStaffId;
     }
     return staffList[0]?.id ?? null;
-  }, [isMobile, mobileSelectedStaffId, staffList]);
+  }, [isMobile, mobileSelectedStaffId, staffList, viewMode]);
 
   // Touch swipe for day navigation on mobile
   const { onTouchStart, onTouchEnd } = useTouchSwipe({
@@ -320,7 +329,7 @@ export function AgendaContent({
                             onBookingContextMenu={onBookingContextMenu}
                             staffSchedules={staffSchedules}
                             staffBlockings={staffBlockings}
-                            mobileSelectedStaffId={isMobile ? mobileActiveStaffId : null}
+                            mobileSelectedStaffId={isMobile ? mobileSelectedStaffId : null}
                             onMobileStaffChange={isMobile ? (id) => setMobileSelectedStaffId(id) : undefined}
                             bookingCounts={isMobile ? bookingCountsByStaff : undefined}
                           />

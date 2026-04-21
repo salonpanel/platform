@@ -13,6 +13,17 @@ import { GlassEmptyState } from "@/components/ui/glass";
 import { Calendar } from "lucide-react";
 import { MobileStaffSwitcher } from "@/components/agenda/MobileStaffSwitcher";
 
+function generateDistinctHslColors(count: number): string[] {
+  if (count <= 0) return [];
+  // Deterministic evenly-spaced hues. HSL keeps good contrast on dark backgrounds.
+  const saturation = 78;
+  const lightness = 56;
+  return Array.from({ length: count }, (_, i) => {
+    const hue = Math.round((360 / count) * i);
+    return `hsl(${hue} ${saturation}% ${lightness}%)`;
+  });
+}
+
 interface WeekViewProps {
   bookings: Booking[];
   staffList: Staff[];
@@ -48,6 +59,16 @@ export const WeekView = React.memo(function WeekView({
   const hours = Array.from({ length: 14 }, (_, i) => i + 8); // 8:00 - 21:00
   const today = startOfToday();
   const isMobile = useMediaQuery("(max-width: 768px)");
+
+  // Unique, deterministic staff colors (never repeated), used in "Todos" list mode.
+  const staffColorById = useMemo(() => {
+    const colors = generateDistinctHslColors(staffList.length);
+    const map = new Map<string, string>();
+    staffList.forEach((s, idx) => {
+      map.set(s.id, colors[idx] ?? "hsl(180 80% 55%)");
+    });
+    return map;
+  }, [staffList]);
 
   // Mobile: día seleccionado para filtrar bookings (por defecto: el día seleccionado o hoy)
   const defaultMobileDay = useMemo(() => {
@@ -270,7 +291,7 @@ export const WeekView = React.memo(function WeekView({
                       booking={booking}
                       timezone={timezone}
                       variant="list"
-                      staffColor={booking.staff?.color}
+                      staffColor={booking.staff_id ? staffColorById.get(booking.staff_id) : (booking.staff?.color ?? null)}
                       onClick={() => onBookingClick(booking)}
                       onContextMenu={(e) => onBookingContextMenu?.(e, booking)}
                     />
