@@ -95,8 +95,6 @@ export function StaffEditModal({
   tenantId,
   supabase,
 }: StaffEditModalProps): React.ReactElement {
-  console.log("[StaffEditModal] Render:", { isOpen, staffId: staff?.id, staffName: staff?.name, tenantId });
-
   const [form, setForm] = useState({
     name: "",
     skills: "",
@@ -123,11 +121,9 @@ export function StaffEditModal({
   // Función para cargar horarios
   const loadSchedules = useCallback(async () => {
     if (!staff || !tenantId) {
-      console.log("[StaffEditModal] Skipping loadSchedules: no staff or tenantId");
       return;
     }
 
-    console.log("[StaffEditModal] Loading schedules for staff:", staff.id);
     setLoadingSchedules(true);
     try {
       const { data, error } = await supabase
@@ -163,7 +159,6 @@ export function StaffEditModal({
       });
 
       setSchedules(daySchedules);
-      console.log("[StaffEditModal] Schedules loaded successfully");
     } catch (err: any) {
       console.error("Error al cargar horarios:", err);
       // En caso de error, usar valores por defecto
@@ -176,11 +171,9 @@ export function StaffEditModal({
   // Función para cargar permisos
   const loadPermissions = useCallback(async () => {
     if (!staff || !staff.user_id || !tenantId) {
-      console.log("[StaffEditModal] Skipping loadPermissions: no staff.user_id or tenantId");
       return;
     }
 
-    console.log("[StaffEditModal] Loading permissions for user:", staff.user_id);
     setLoadingPermissions(true);
     try {
       const { data, error } = await supabase
@@ -197,10 +190,8 @@ export function StaffEditModal({
 
       if (data?.permissions) {
         setPermissions(data.permissions as UserPermissions);
-        console.log("[StaffEditModal] Permissions loaded successfully");
       } else {
         setPermissions(DEFAULT_PERMISSIONS);
-        console.log("[StaffEditModal] Using default permissions");
       }
     } catch (err: any) {
       console.error("Error al cargar permisos:", err);
@@ -213,16 +204,13 @@ export function StaffEditModal({
   // Función para cargar servicios actuales del staff
   const loadStaffServices = useCallback(async () => {
     if (!staff || !tenantId) {
-      console.log("[StaffEditModal] Skipping loadStaffServices: no staff or tenantId");
       setSelectedServices([]);
       return;
     }
 
-    console.log("[StaffEditModal] Loading services for staff:", staff.id);
     try {
       const serviceIds = await getStaffServices(staff.id, tenantId);
       setSelectedServices(serviceIds);
-      console.log("[StaffEditModal] Services loaded successfully:", serviceIds.length);
     } catch (err: any) {
       console.error("Error al cargar servicios del staff:", err);
       setSelectedServices([]);
@@ -252,10 +240,7 @@ export function StaffEditModal({
 
   // Inicializar formulario cuando se abre el modal
   useEffect(() => {
-    console.log("[StaffEditModal] useEffect triggered:", { isOpen, staffId: staff?.id, tenantId });
-
     if (!isOpen || !tenantId) {
-      console.log("[StaffEditModal] Modal closed or no tenantId, resetting form");
       // Reset form when closing
       setForm({
         name: "",
@@ -276,7 +261,6 @@ export function StaffEditModal({
     }
 
     if (staff) {
-      console.log("[StaffEditModal] Initializing form for staff:", staff.display_name || staff.name);
       setForm({
         name: staff.display_name || staff.name,
         skills: staff.skills?.join(", ") || "",
@@ -301,7 +285,6 @@ export function StaffEditModal({
         setPermissions(DEFAULT_PERMISSIONS);
       }
     } else {
-      console.log("[StaffEditModal] No staff provided, using defaults for new staff");
       // Nuevo staff - valores por defecto
       setSchedules(DAYS_OF_WEEK.map((d) => makeDefaultSchedule(d.day, d.name)));
       setSelectedServices([]);
@@ -328,8 +311,11 @@ export function StaffEditModal({
     setSaveError(null);
     setLoading(true);
     try {
-      // Usar selectedServices en lugar de parsear form.skills
-      const skillsArray = selectedServices.length > 0 ? selectedServices : [];
+      // Skills (texto) y servicios (relación) son cosas distintas
+      const skillsArray = form.skills
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
 
       // Genera 1 o 2 filas por día según tenga descanso
       const schedulesData = schedules

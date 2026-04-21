@@ -76,8 +76,8 @@ export function SidebarNav({
 
   // Filtrar items según permisos (sin loading, instantáneo desde el contexto)
   const filteredItems = useMemo(() => {
-    // Si es owner/admin, mostrar todo
-    if (role === "owner" || role === "admin") {
+    // Si es owner/manager, mostrar todo
+    if (role === "owner" || role === "manager" || role === "admin") {
       return items;
     }
 

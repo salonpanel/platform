@@ -85,7 +85,8 @@ export function useUserPermissions(tenantId: string | null) {
       }
 
       setRole(data.role);
-      if (data.role === "owner" || data.role === "admin") {
+      // owner/manager = full access; keep "admin" for legacy compatibility
+      if (data.role === "owner" || data.role === "manager" || data.role === "admin") {
         setPermissions(FULL_PERMISSIONS);
       } else {
         setPermissions(data.permissions as UserPermissions);

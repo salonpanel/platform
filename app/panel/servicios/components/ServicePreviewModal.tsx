@@ -49,7 +49,7 @@ export function ServicePreviewModal({
       footer={
         <div className="flex w-full flex-wrap items-center justify-between gap-2">
           <GlassButton variant="danger" onClick={() => onDelete(service)}>
-            Eliminar
+            {service.active ? "Archivar" : "Eliminar"}
           </GlassButton>
           <div className="flex flex-wrap gap-2">
             <GlassButton variant="secondary" onClick={() => onDuplicate(service)}>

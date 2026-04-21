@@ -189,6 +189,9 @@ export function NewBookingModal({
         onClose={onClose}
         title={editingBooking ? "Editar cita" : "Nueva cita"}
         size="lg"
+        showMobileDrawer={true}
+        drawerPosition="bottom"
+        stickyFooter={true}
         context={{ type: "booking" }}
         actions={[
           {
@@ -207,7 +210,7 @@ export function NewBookingModal({
           cancelLabel: "Cancelar",
         }}
       >
-        <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+        <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr] pb-4">
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "details" | "notes")}>
             <TabsList>
               <TabsTrigger value="details">Detalles</TabsTrigger>

@@ -46,6 +46,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<ANON_KEY>
 SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY>
 ```
 
+También puedes partir de `env.example` (cópialo a `.env.local`).
+
 ### 5. Verificar Despliegue
 
 ```bash

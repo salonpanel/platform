@@ -772,7 +772,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                   {/* Gráfico de barras - max-w-[85%] centrado */}
                   <div className="max-w-[85%] mx-auto">
                     {showChartBars ? (
-                      <div className="flex items-end gap-1 h-9 sm:h-10 mb-2">
+                      <div className="flex items-end gap-1 h-16 sm:h-20 mb-2">
                         {bookingValues.map((count: number, index: number) => {
                           const height = chartMax > 0 ? (count / chartMax) * 100 : 0;
                           return (
@@ -782,7 +782,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                                 animate={{ height: `${height}%` }}
                                 transition={{ duration: 0.3, delay: index * 0.05 }}
                                 className="w-full rounded-t bg-gradient-to-t from-emerald-500 to-blue-500"
-                                style={{ minHeight: count > 0 ? "2px" : "0" }}
+                                style={{ minHeight: count > 0 ? "4px" : "0" }}
                               />
                               <span className="text-[7px] sm:text-[8px] text-[var(--text-secondary)] mt-0.5">
                                 {performancePeriod === "7d"
@@ -902,9 +902,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
 }
 
 export default function PanelHome(props: PanelHomeClientProps) {
-  return (
-    <Suspense fallback={<DashboardSkeleton />}>
-      <PanelHomeContent {...props} />
-    </Suspense>
-  );
+  // Nota: este componente ya está envuelto por Suspense en `app/panel/page.tsx`.
+  // Evitamos Suspense anidado aquí para reducir riesgo de hydration/race issues.
+  return <PanelHomeContent {...props} />;
 }

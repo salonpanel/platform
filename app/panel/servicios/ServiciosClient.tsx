@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { fetchTenantStaffOptions } from "@/lib/staff/fetchTenantStaffOptions";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
@@ -63,6 +63,24 @@ const formatEuros = (value: number) => `${value.toFixed(2)} €`;
 
 type QuickFilterId = "noCategory" | "noBuffer";
 
+function normalizeServicesPageError(err: any): string {
+  const raw =
+    (typeof err?.message === "string" && err.message) ||
+    (typeof err?.details === "string" && err.details) ||
+    "";
+  const code = typeof err?.code === "string" ? err.code : "";
+
+  const lowered = raw.toLowerCase();
+  if (raw === "access_denied" || lowered.includes("access_denied") || code === "42501") {
+    return "No tienes permisos para ver o gestionar los servicios de este negocio.";
+  }
+  if (raw === "not_authenticated" || lowered.includes("not_authenticated") || code === "28000") {
+    return "Tu sesión ha caducado. Vuelve a iniciar sesión e inténtalo de nuevo.";
+  }
+  if (raw.trim().length > 0) return raw;
+  return "Error al cargar servicios";
+}
+
 type ServiciosClientProps = {
   tenantId: string;
   initialServices: Service[];
@@ -73,6 +91,8 @@ export function ServiciosClient({
   initialServices,
 }: ServiciosClientProps) {
   const supabase = getSupabaseBrowser();
+  const didInitialLoad = useRef(false);
+  const didInitPriceFilter = useRef(false);
   const [services, setServices] = useState<Service[]>(() =>
     (initialServices || []).map(normalizeService)
   );
@@ -81,7 +101,6 @@ export function ServiciosClient({
   );
   const [loading, setLoading] = useState(!initialServices.length);
   const [saving, setSaving] = useState(false);
-  const [gridLoading, setGridLoading] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -107,15 +126,6 @@ export function ServiciosClient({
   const [filterCategory, setFilterCategory] = useState("all");
   const [bufferFilter, setBufferFilter] =
     useState<ServiceFilters["buffer"]>("all");
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 0]);
-  const [sortBy, setSortBy] = useState<SortOption>("name");
-  const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[1]);
-  const [searchInput, setSearchInput] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-
-  // 🚀 OPTIMIZACIÓN: Los filtros ahora se pasan directamente a get_services_filtered RPC
-  // Ya no necesitamos el objeto filters para filtrado en cliente
-
   const priceBounds = useMemo(() => {
     if (!services.length) return { min: 0, max: 0 };
     const values = services.map((service) => service.price_cents / 100);
@@ -124,6 +134,15 @@ export function ServiciosClient({
       max: Math.max(...values),
     };
   }, [services]);
+  const [priceMinInput, setPriceMinInput] = useState<string>("");
+  const [priceMaxInput, setPriceMaxInput] = useState<string>("");
+  const [sortBy, setSortBy] = useState<SortOption>("name");
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[1]);
+  const [searchInput, setSearchInput] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // 🚀 OPTIMIZACIÓN: Los filtros ahora se pasan directamente a get_services_filtered RPC
+  // Ya no necesitamos el objeto filters para filtrado en cliente
 
   const categoryOptions = useMemo(() => {
     const unique = new Set<string>([DEFAULT_CATEGORY]);
@@ -150,6 +169,15 @@ export function ServiciosClient({
     []
   );
 
+  useEffect(() => {
+    if (didInitPriceFilter.current) return;
+    if (!services.length) return;
+    // Inicializar el filtro de precio a los límites actuales (sin filtrar).
+    setPriceMinInput(priceBounds.min ? priceBounds.min.toFixed(2) : "0");
+    setPriceMaxInput(priceBounds.max ? priceBounds.max.toFixed(2) : "0");
+    didInitPriceFilter.current = true;
+  }, [services.length, priceBounds.min, priceBounds.max]);
+
   const loadServices = useCallback(
     async (options?: { showLoader?: boolean; allowEmpty?: boolean }) => {
       if (!tenantId) return;
@@ -159,6 +187,17 @@ export function ServiciosClient({
       try {
         setPageError(null);
 
+        const parsedMin = Number(priceMinInput);
+        const parsedMax = Number(priceMaxInput);
+        const minEuro = Number.isFinite(parsedMin) ? parsedMin : null;
+        const maxEuro = Number.isFinite(parsedMax) ? parsedMax : null;
+        const effectiveMin = minEuro != null ? Math.max(0, minEuro) : null;
+        const effectiveMax = maxEuro != null ? Math.max(0, maxEuro) : null;
+        const minCents =
+          effectiveMin != null ? Math.round(effectiveMin * 100) : null;
+        const maxCents =
+          effectiveMax != null ? Math.round(effectiveMax * 100) : null;
+
         // 🚀 OPTIMIZACIÓN: Usar manage_list_services con filtros del servidor
         const { data, error } = await supabase.rpc('manage_list_services', {
           p_tenant_id: tenantId,
@@ -167,10 +206,21 @@ export function ServiciosClient({
           p_search_term: searchTerm || null,
           p_sort_by: sortBy,
           p_sort_direction: 'asc',
+          // Filtros adicionales (precio/buffer)
+          p_min_price_cents:
+            minCents != null && maxCents != null && minCents > maxCents
+              ? maxCents
+              : minCents,
+          p_max_price_cents:
+            minCents != null && maxCents != null && minCents > maxCents
+              ? minCents
+              : maxCents,
+          p_buffer_filter: bufferFilter === "all" ? "all" : bufferFilter,
         });
 
         if (error) {
-          throw new Error(error.message);
+          // Propagar el error real para normalizarlo abajo.
+          throw error;
         }
         const normalized = ((data as Service[]) || []).map(normalizeService);
 
@@ -185,25 +235,35 @@ export function ServiciosClient({
 
         setServices(normalized);
       } catch (err: any) {
-        setPageError(err?.message || "Error al cargar servicios");
+        setPageError(normalizeServicesPageError(err));
       } finally {
         if (options?.showLoader) {
           setLoading(false);
         }
       }
     },
-    [supabase, tenantId, filterStatus, filterCategory, searchTerm, sortBy, services.length]
+    [supabase, tenantId, filterStatus, filterCategory, searchTerm, sortBy, bufferFilter, priceMinInput, priceMaxInput, services.length]
   );
 
   // Cargar servicios inicialmente cuando el componente se monta o tenantId cambia
   useEffect(() => {
-    if (tenantId) {
-      loadServices({ showLoader: true });
+    if (!tenantId) return;
+
+    // Si ya tenemos datos iniciales, no forzar doble fetch al montar.
+    if (initialServices.length > 0) {
+      setLoading(false);
+      didInitialLoad.current = true;
+      return;
     }
-  }, [tenantId, loadServices]);
+
+    loadServices({ showLoader: true, allowEmpty: true }).finally(() => {
+      didInitialLoad.current = true;
+    });
+  }, [tenantId, initialServices.length, loadServices]);
 
   // 🔥 Recargar servicios cuando cambien los filtros (debounce para evitar llamadas excesivas)
   useEffect(() => {
+    if (!didInitialLoad.current) return;
     const timer = setTimeout(() => {
       if (tenantId) {
         loadServices({ showLoader: false });
@@ -211,7 +271,7 @@ export function ServiciosClient({
     }, 300); // Debounce de 300ms
 
     return () => clearTimeout(timer);
-  }, [filterStatus, filterCategory, priceRange, bufferFilter, searchTerm, sortBy, tenantId, loadServices]);
+  }, [filterStatus, filterCategory, bufferFilter, searchTerm, sortBy, tenantId, loadServices]);
 
   const openNewModal = useCallback(
     (defaults?: Partial<ServiceFormState>) => {
@@ -340,13 +400,12 @@ export function ServiciosClient({
       category: form.category.trim() || DEFAULT_CATEGORY,
       pricing_levels: form.pricing_levels,
       description: form.description,
-      // media_url: form.media_url, // TODO: Add support for media in RPC if needed
+      media_url: form.media_url,
       // vip_tier: form.vip_tier,
       // combo_service_ids: form.combo_service_ids,
       // duration_variants: form.duration_variants
     };
 
-    setSaving(true);
     try {
       // 1. Save Service
       const result = await saveService({
@@ -466,8 +525,9 @@ export function ServiciosClient({
     setSortBy("name");
     setSearchInput("");
     setSearchTerm("");
-    setPriceRange([priceBounds.min, priceBounds.max]);
-  }, [priceBounds.min, priceBounds.max]);
+    setPriceMinInput(priceBounds.min ? priceBounds.min.toFixed(2) : "0");
+    setPriceMaxInput(priceBounds.max ? priceBounds.max.toFixed(2) : "0");
+  }, []);
 
   const stats = useServiceStats(services);
 
@@ -482,15 +542,7 @@ export function ServiciosClient({
     goToPage,
   } = usePagination(filteredServices, pageSize);
 
-  useEffect(() => {
-    if (!tenantId) return;
-    if (!initialServices.length) {
-      // En la carga inicial sí permitimos que la lista sea realmente vacía
-      loadServices({ showLoader: true, allowEmpty: true });
-    } else {
-      setLoading(false);
-    }
-  }, [tenantId, initialServices.length, loadServices]);
+  // Nota: la carga inicial se gestiona en el efecto superior (tenantId + initialServices).
 
   useEffect(() => {
     if (!tenantId) return;
@@ -519,22 +571,6 @@ export function ServiciosClient({
     }, 300);
     return () => clearTimeout(handler);
   }, [searchInput]);
-
-  useEffect(() => {
-    if (!services.length) {
-      setPriceRange([0, 0]);
-      return;
-    }
-    setPriceRange((prev) => {
-      if (prev[0] === 0 && prev[1] === 0) {
-        return [priceBounds.min, priceBounds.max];
-      }
-      return [
-        Math.max(priceBounds.min, Math.min(prev[0], priceBounds.max)),
-        Math.max(priceBounds.min, Math.min(prev[1], priceBounds.max)),
-      ];
-    });
-  }, [priceBounds.min, priceBounds.max, services.length]);
 
   useEffect(() => {
     // 🔒 GUARDRAIL: Do not execute if modal is closed or tenant is not ready
@@ -572,15 +608,22 @@ export function ServiciosClient({
   }, [showModal, tenantId]);
 
   const hasServices = services.length > 0;
+  const parsedMinForFilter = Number(priceMinInput);
+  const parsedMaxForFilter = Number(priceMaxInput);
+  const hasPriceFilterApplied =
+    hasServices &&
+    Number.isFinite(parsedMinForFilter) &&
+    Number.isFinite(parsedMaxForFilter) &&
+    (Math.round(parsedMinForFilter * 100) > Math.round(priceBounds.min * 100) ||
+      Math.round(parsedMaxForFilter * 100) < Math.round(priceBounds.max * 100));
   const hasFiltersApplied =
     filterStatus !== "all" ||
     filterCategory !== "all" ||
     bufferFilter !== "all" ||
     Boolean(searchTerm) ||
-    (services.length > 0 &&
-      (priceRange[0] > priceBounds.min || priceRange[1] < priceBounds.max));
+    hasPriceFilterApplied;
   const filteredIsEmpty = hasServices && filteredServices.length === 0;
-  const priceSliderDisabled = priceBounds.max <= priceBounds.min;
+  // const priceSliderDisabled = false;
 
   const filterSummaryText = useMemo(() => {
     const parts = [
@@ -598,8 +641,11 @@ export function ServiciosClient({
     if (searchTerm) {
       parts.push(`Búsqueda: "${searchTerm}"`);
     }
+    if (hasPriceFilterApplied) {
+      parts.push(`Precio: ${priceMinInput || "0"}€–${priceMaxInput || "0"}€`);
+    }
     return parts.join(" · ");
-  }, [filterStatus, filterCategory, bufferFilter, searchTerm]);
+  }, [filterStatus, filterCategory, bufferFilter, searchTerm, hasPriceFilterApplied, priceMinInput, priceMaxInput]);
 
   const quickAlerts = useMemo(() => {
     const alerts: Array<{
@@ -726,6 +772,37 @@ export function ServiciosClient({
             ))}
           </select>
 
+          {/* Price range */}
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-secondary)]">€</span>
+              <input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step={0.5}
+                value={priceMinInput}
+                onChange={(e) => setPriceMinInput(e.target.value)}
+                className="h-9 w-24 pl-6 pr-3 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-[var(--accent-blue)]/40 transition-colors"
+                aria-label="Precio mínimo"
+              />
+            </div>
+            <span className="text-xs text-[var(--text-secondary)]">—</span>
+            <div className="relative">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-secondary)]">€</span>
+              <input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step={0.5}
+                value={priceMaxInput}
+                onChange={(e) => setPriceMaxInput(e.target.value)}
+                className="h-9 w-24 pl-6 pr-3 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-[var(--accent-blue)]/40 transition-colors"
+                aria-label="Precio máximo"
+              />
+            </div>
+          </div>
+
           {hasFiltersApplied && (
             <button
               onClick={clearFilters}
@@ -821,8 +898,7 @@ export function ServiciosClient({
           <>
             <div className="relative">
               <div
-                className={`grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 ${gridLoading ? "opacity-60" : "opacity-100"
-                  } transition`}
+                className="grid grid-cols-1 gap-4 transition md:grid-cols-2 xl:grid-cols-3"
               >
                 {paginatedItems.map((service) => (
                   <ServiceCard
@@ -839,11 +915,6 @@ export function ServiciosClient({
                   />
                 ))}
               </div>
-              {gridLoading && (
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
-                </div>
-              )}
             </div>
             <div className="flex flex-col gap-3 rounded-[14px] border border-white/10 bg-white/5 p-4 shadow-glass md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-2">
@@ -986,14 +1057,98 @@ export function ServiciosClient({
         </div>
       </GlassModal>
 
+      <GlassModal
+        isOpen={Boolean(servicePendingArchive)}
+        onClose={handleCancelArchiveService}
+        title="Archivar servicio"
+        description="El servicio dejará de estar disponible para clientes, pero se conservará en tu historial."
+        footer={
+          <div className="flex w-full justify-end gap-2">
+            <GlassButton
+              variant="ghost"
+              onClick={handleCancelArchiveService}
+              disabled={Boolean(deletingId)}
+            >
+              Cancelar
+            </GlassButton>
+            <GlassButton
+              variant="danger"
+              onClick={handleConfirmArchiveService}
+              isLoading={Boolean(deletingId)}
+              disabled={Boolean(deletingId)}
+            >
+              Archivar
+            </GlassButton>
+          </div>
+        }
+      >
+        <GlassCard className="p-4">
+          <p className="text-sm text-[var(--text-secondary)]">
+            ¿Seguro que quieres archivar{" "}
+            <span className="font-semibold text-white">
+              {servicePendingArchive?.name}
+            </span>
+            ?
+          </p>
+        </GlassCard>
+      </GlassModal>
+
+      <GlassModal
+        isOpen={Boolean(servicePendingHardDelete)}
+        onClose={handleCancelHardDeleteService}
+        title="Eliminar servicio"
+        description="Esta acción es permanente. Si el servicio tiene citas asociadas, puede fallar."
+        footer={
+          <div className="flex w-full justify-end gap-2">
+            <GlassButton
+              variant="ghost"
+              onClick={handleCancelHardDeleteService}
+              disabled={Boolean(deletingId)}
+            >
+              Cancelar
+            </GlassButton>
+            <GlassButton
+              variant="danger"
+              onClick={handleConfirmHardDeleteService}
+              isLoading={Boolean(deletingId)}
+              disabled={Boolean(deletingId)}
+            >
+              Eliminar
+            </GlassButton>
+          </div>
+        }
+      >
+        <GlassCard className="p-4">
+          <p className="text-sm text-[var(--text-secondary)]">
+            ¿Seguro que quieres eliminar{" "}
+            <span className="font-semibold text-white">
+              {servicePendingHardDelete?.name}
+            </span>
+            ?
+          </p>
+        </GlassCard>
+      </GlassModal>
+
       <ServicePreviewModal
         service={previewService}
         isOpen={Boolean(previewService)}
         onClose={() => setPreviewService(null)}
-        onEdit={openEditModal}
-        onDuplicate={handleDuplicateService}
-        onToggleActive={toggleActive}
-        onDelete={handleRequestArchiveService}
+        onEdit={(service) => {
+          setPreviewService(null);
+          openEditModal(service);
+        }}
+        onDuplicate={async (service) => {
+          setPreviewService(null);
+          await handleDuplicateService(service);
+        }}
+        onToggleActive={async (id, currentActive) => {
+          setPreviewService(null);
+          await toggleActive(id, currentActive);
+        }}
+        onDelete={(service) => {
+          setPreviewService(null);
+          handleRequestArchiveService(service);
+        }}
       />
     </div >
   );

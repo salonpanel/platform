@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     // Llamar a assertMembership
     const membership = await assertMembership(supabaseServer(), session.user.id, tenantId);
 
-    if (!["owner", "admin"].includes(membership.role)) {
+    if (!["owner", "admin", "manager"].includes(membership.role)) {
       return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
     }
 

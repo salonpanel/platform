@@ -6,6 +6,8 @@ import { getCurrentTenant } from "@/lib/panel-tenant";
 import { GlassCard, GlassButton, GlassToast } from "@/components/ui/glass";
 import { Loader2 } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
+import { ProtectedRoute } from "@/components/panel/ProtectedRoute";
+import { usePermissions } from "@/contexts/PermissionsContext";
 
 function NoShowContent() {
   const supabase = getSupabaseBrowser();
@@ -22,6 +24,8 @@ function NoShowContent() {
   const [cancellationHours, setCancellationHours] = useState(12);
 
   const impersonateOrgId = useMemo(() => searchParams?.get("impersonate") || null, [searchParams?.toString()]);
+  const { role } = usePermissions();
+  const canEdit = role === "owner" || role === "admin";
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -70,6 +74,10 @@ function NoShowContent() {
 
   const handleSave = async () => {
     if (!tenantId || saving) return;
+    if (!canEdit) {
+      setError("No tienes permisos para guardar esta configuración (se requiere owner/admin).");
+      return;
+    }
 
     setError(null);
     setSuccess(null);
@@ -77,7 +85,7 @@ function NoShowContent() {
 
     try {
       // Guardar en tenant_settings (upsert)
-      const { error: upsertError } = await supabase
+      const { data: updated, error: upsertError } = await supabase
         .from("tenant_settings")
         .upsert({
           tenant_id: tenantId,
@@ -87,10 +95,16 @@ function NoShowContent() {
           no_show_cancellation_hours: cancellationHours,
         }, {
           onConflict: "tenant_id",
-        });
+        })
+        .select("tenant_id")
+        .maybeSingle();
 
       if (upsertError) {
         throw new Error(upsertError.message);
+      }
+      // Si RLS bloquea, PostgREST puede devolver 0 filas sin error.
+      if (!updated) {
+        throw new Error("No tienes permisos para guardar esta configuración (se requiere owner/admin).");
       }
 
       setSuccess("Protección contra ausencias actualizada correctamente");
@@ -132,6 +146,14 @@ function NoShowContent() {
         </p>
       </div>
 
+      {!canEdit && (
+        <GlassCard className="p-4 border-white/10 bg-white/5">
+          <p className="text-sm text-[var(--text-secondary)]">
+            Estás en modo solo lectura. Solo <span className="text-white/80">owner</span> o <span className="text-white/80">admin</span> pueden modificar esta configuración.
+          </p>
+        </GlassCard>
+      )}
+
       {/* Mensajes */}
       {error && (
         <GlassCard className="border-red-500/50 bg-red-500/10 p-4">
@@ -163,6 +185,7 @@ function NoShowContent() {
                 type="checkbox"
                 checked={enabled}
                 onChange={(e) => setEnabled(e.target.checked)}
+                disabled={!canEdit || saving}
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--color-accent)]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-accent)]"></div>
@@ -179,6 +202,7 @@ function NoShowContent() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setMode("deposit")}
+                    disabled={!canEdit || saving}
                     className={`
                       flex-1 px-4 py-3 rounded-lg border text-sm font-medium transition-all
                       ${mode === "deposit"
@@ -191,6 +215,7 @@ function NoShowContent() {
                   </button>
                   <button
                     onClick={() => setMode("cancellation")}
+                    disabled={!canEdit || saving}
                     className={`
                       flex-1 px-4 py-3 rounded-lg border text-sm font-medium transition-all
                       ${mode === "cancellation"
@@ -213,7 +238,7 @@ function NoShowContent() {
                   <GlassButton
                     variant="secondary"
                     onClick={() => setPercentage(Math.max(0, percentage - 5))}
-                    disabled={percentage <= 0}
+                    disabled={!canEdit || saving || percentage <= 0}
                     className="h-12 w-12 text-xl font-semibold p-0 flex items-center justify-center"
                   >
                     −
@@ -229,7 +254,7 @@ function NoShowContent() {
                   <GlassButton
                     variant="secondary"
                     onClick={() => setPercentage(Math.min(100, percentage + 5))}
-                    disabled={percentage >= 100}
+                    disabled={!canEdit || saving || percentage >= 100}
                     className="h-12 w-12 text-xl font-semibold p-0 flex items-center justify-center"
                   >
                     +
@@ -246,7 +271,7 @@ function NoShowContent() {
                   <GlassButton
                     variant="secondary"
                     onClick={() => setCancellationHours(Math.max(1, cancellationHours - 1))}
-                    disabled={cancellationHours <= 1}
+                    disabled={!canEdit || saving || cancellationHours <= 1}
                     className="h-10 w-10 text-lg font-semibold p-0 flex items-center justify-center"
                   >
                     −
@@ -260,7 +285,7 @@ function NoShowContent() {
                   <GlassButton
                     variant="secondary"
                     onClick={() => setCancellationHours(Math.min(48, cancellationHours + 1))}
-                    disabled={cancellationHours >= 48}
+                    disabled={!canEdit || saving || cancellationHours >= 48}
                     className="h-10 w-10 text-lg font-semibold p-0 flex items-center justify-center"
                   >
                     +
@@ -279,7 +304,7 @@ function NoShowContent() {
 
               {/* Botón guardar */}
               <div className="flex justify-end">
-                <GlassButton onClick={handleSave} disabled={saving} isLoading={saving}>
+                <GlassButton onClick={handleSave} disabled={saving || !canEdit} isLoading={saving}>
                   Guardar configuración
                 </GlassButton>
               </div>
@@ -302,15 +327,17 @@ function NoShowContent() {
 
 export default function NoShowPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-[var(--color-accent)]" />
-        </div>
-      }
-    >
-      <NoShowContent />
-    </Suspense>
+    <ProtectedRoute requiredPermission="ajustes">
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-[var(--color-accent)]" />
+          </div>
+        }
+      >
+        <NoShowContent />
+      </Suspense>
+    </ProtectedRoute>
   );
 }
 

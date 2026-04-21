@@ -68,6 +68,12 @@ type TenantMemberProfile = {
 	profilePhotoUrl?: string;
 };
 
+type PendingAttachment = {
+	id: string;
+	file: File;
+	previewUrl: string;
+};
+
 type ConversationMember = {
 	userId: string;
 	displayName: string;
@@ -128,6 +134,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 	const [replyToMessage, setReplyToMessage] = useState<TeamMessage | null>(null);
 	const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
 	const [isMobile, setIsMobile] = useState(false);
+	const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
 
 	// Typing indicators
 	const [typingUsers, setTypingUsers] = useState<Record<string, Set<string>>>({});
@@ -152,6 +159,10 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 		setMessagesLoadError(null);
 		setHasMoreMessages({});
 		setMembersByConversation({});
+		setPendingAttachments((prev) => {
+			for (const a of prev) URL.revokeObjectURL(a.previewUrl);
+			return [];
+		});
 		const groupChat = initialData.conversations.find((c) => c.type === "all");
 		setSelectedConversationId(
 			groupChat?.id ?? initialData.conversations[0]?.id ?? null
@@ -590,7 +601,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 		}, 3000);
 	};
 
-	/** Chat grupal (type=all) siempre primero y visible; el resto ordenado por actividad */
+	/** Chat grupal (type=all) siempre primero; con “solo no leídos” solo aparece si tiene no leídos */
 	const conversationsForList = useMemo(() => {
 		const general = processedConversations.find((c) => c.type === "all");
 		const rest = processedConversations.filter((c) => c.type !== "all");
@@ -598,13 +609,44 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 		const sorted = [...restFiltered].sort((a, b) =>
 			(b.lastMessageAt ?? MESSAGE_FALLBACK_DATE).localeCompare(a.lastMessageAt ?? MESSAGE_FALLBACK_DATE)
 		);
-		if (general) return [general, ...sorted];
+		const includeGeneral = Boolean(general) && (!showUnreadOnly || (general?.unreadCount ?? 0) > 0);
+		if (includeGeneral && general) return [general, ...sorted];
 		return sorted;
 	}, [processedConversations, showUnreadOnly]);
 
 	const messagesForSelected = selectedConversationId
 		? messagesByConversation[selectedConversationId] ?? []
 		: [];
+
+	const uploadPendingAttachments = useCallback(
+		async (conversationId: string, files: PendingAttachment[]) => {
+			const uploaded: Array<{ name: string; url: string; type: string; size: number }> = [];
+			for (const item of files) {
+				const file = item.file;
+				if (file.size > MAX_CHAT_ATTACHMENT_BYTES) {
+					throw new Error("Archivo demasiado grande (máx. 10 MB)");
+				}
+				const fileExt = file.name.split(".").pop();
+				const fileName = `${conversationId}/${crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)}.${fileExt}`;
+
+				const { error: uploadError } = await supabase.storage
+					.from("chat-attachments")
+					.upload(fileName, file, { upsert: false });
+				if (uploadError) throw uploadError;
+
+				const { data } = supabase.storage.from("chat-attachments").getPublicUrl(fileName);
+				const publicUrl = data.publicUrl;
+				uploaded.push({
+					name: file.name,
+					url: publicUrl,
+					type: file.type,
+					size: file.size,
+				});
+			}
+			return uploaded;
+		},
+		[supabase.storage]
+	);
 
 	const handleSendMessage = async (body: string, attachments: any[] = []) => {
 		if (!selectedConversation || !tenantId || !currentUserId || (!body.trim() && attachments.length === 0)) return;
@@ -670,45 +712,23 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 
 	const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		const files = e.target.files;
-		if (!files || files.length === 0 || !selectedConversation || !tenantId) return;
+		if (!files || files.length === 0) return;
 
-		const file = files[0];
-		if (file.size > MAX_CHAT_ATTACHMENT_BYTES) {
-			console.error(
-				"[TeamChatOptimized] Archivo demasiado grande (máx. 10 MB)"
-			);
-			return;
+		const next: PendingAttachment[] = [];
+		for (const file of Array.from(files)) {
+			if (file.size > MAX_CHAT_ATTACHMENT_BYTES) {
+				console.error("[TeamChatOptimized] Archivo demasiado grande (máx. 10 MB)");
+				continue;
+			}
+			next.push({
+				id: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+				file,
+				previewUrl: URL.createObjectURL(file),
+			});
 		}
-		const fileExt = file.name.split('.').pop();
-		const fileName = `${selectedConversation.id}/${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-		try {
-			// 1. Subir al Storage
-			const { error: uploadError } = await supabase.storage
-				.from('chat-attachments')
-				.upload(fileName, file);
-
-			if (uploadError) throw uploadError;
-
-			// 2. Obtener URL pública
-			const { data: { publicUrl } } = supabase.storage
-				.from('chat-attachments')
-				.getPublicUrl(fileName);
-
-			// 3. Enviar mensaje con el adjunto
-			await handleSendMessage("", [
-				{
-					name: file.name,
-					url: publicUrl,
-					type: file.type,
-					size: file.size,
-				}
-			]);
-		} catch (err) {
-			console.error("[TeamChatOptimized] Error al subir archivo:", err);
-		} finally {
-			if (fileInputRef.current) fileInputRef.current.value = "";
-		}
+		setPendingAttachments((prev) => [...prev, ...next]);
+		if (fileInputRef.current) fileInputRef.current.value = "";
 	};
 
 	const loadConversationsOptimized = useCallback(
@@ -855,8 +875,16 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 				>
 					{selectedConversation ? (
 						<GlassCard className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-[#0b141a] p-0 shadow-none md:rounded-xl md:border md:border-white/5">
-							{/* Fondo de Chat Estilo WhatsApp (Sutil) */}
-							<div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
+							{/* Fondo de Chat (uniforme para mensajes + composer) */}
+							<div
+								className="absolute inset-0 opacity-[0.25] pointer-events-none"
+								style={{
+									backgroundImage: `url(\"https://w0.peakpx.com/wallpaper/580/650/wallpaper-whatsapp-dark-mode.jpg\")`,
+									backgroundSize: "cover",
+									backgroundPosition: "center",
+									mixBlendMode: "soft-light",
+								}}
+							/>
 							
 							<ConversationHeader
 								conversation={selectedConversation}
@@ -902,8 +930,63 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 								</div>
 							) : (
 								<>
+									{pendingAttachments.length > 0 && (
+										<div className="border-t border-white/5 bg-transparent px-4 py-3">
+											<div className="flex items-center gap-2 overflow-x-auto">
+												{pendingAttachments.map((att) => {
+													const isImage = att.file.type.startsWith("image/");
+													return (
+														<div
+															key={att.id}
+															className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border border-white/10 bg-white/5"
+														>
+															{isImage ? (
+																<img
+																	src={att.previewUrl}
+																	alt={att.file.name}
+																	className="h-full w-full object-cover"
+																/>
+															) : (
+																<div className="h-full w-full flex items-center justify-center text-[10px] text-[var(--text-secondary)] px-1 text-center">
+																	{att.file.name}
+																</div>
+															)}
+															<button
+																type="button"
+																onClick={() =>
+																	setPendingAttachments((prev) => {
+																		const next = prev.filter((p) => p.id !== att.id);
+																		URL.revokeObjectURL(att.previewUrl);
+																		return next;
+																	})
+																}
+																className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-black/60 border border-white/10 text-white flex items-center justify-center"
+																aria-label="Quitar adjunto"
+																title="Quitar"
+															>
+																×
+															</button>
+														</div>
+													);
+												})}
+											</div>
+										</div>
+									)}
 									<MessageComposer
-										onSend={handleSendMessage}
+										onSend={async (text) => {
+											if (!selectedConversationId) return;
+											const files = pendingAttachments;
+											setPendingAttachments([]);
+											try {
+												const uploaded =
+													files.length > 0
+														? await uploadPendingAttachments(selectedConversationId, files)
+														: [];
+												await handleSendMessage(text, uploaded);
+											} finally {
+												for (const a of files) URL.revokeObjectURL(a.previewUrl);
+											}
+										}}
 										onTyping={handleTyping}
 										replyTo={replyToMessage}
 										onCancelReply={() => setReplyToMessage(null)}
@@ -914,6 +997,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 										ref={fileInputRef}
 										onChange={handleFileUpload}
 										className="hidden"
+										multiple
 										accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"
 									/>
 								</>

@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -38,7 +38,7 @@ interface Customer {
   internal_notes?: string | null;
 }
 
-export default function ClientesPage() {
+function ClientesPageContent() {
   const searchParams = useSearchParams();
   // const supabase = getSupabaseBrowser(); // Use hook instead
 
@@ -113,7 +113,9 @@ export default function ClientesPage() {
     tenantId,
     onAfterMutation: () => {
       // Invalidar cache después de la operación
-      invalidateCache(`customers-page-${impersonateOrgId || 'default'}`);
+      if (tenantId) {
+        invalidateCache(`customers-page-${tenantId}`);
+      }
     }
   });
 
@@ -161,15 +163,21 @@ export default function ClientesPage() {
     if (activityFilter === "active90") {
       const ninetyDaysAgo = new Date();
       ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-      filtered = filtered.filter(c =>
-        c.lastVisit && new Date(c.lastVisit) > ninetyDaysAgo
-      );
+      filtered = filtered.filter(c => {
+        if (!c.lastVisit) return false;
+        const d = new Date(c.lastVisit);
+        if (Number.isNaN(d.getTime())) return false;
+        return d > ninetyDaysAgo;
+      });
     } else if (activityFilter === "inactive90") {
       const ninetyDaysAgo = new Date();
       ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-      filtered = filtered.filter(c =>
-        !c.lastVisit || new Date(c.lastVisit) <= ninetyDaysAgo
-      );
+      filtered = filtered.filter(c => {
+        if (!c.lastVisit) return true;
+        const d = new Date(c.lastVisit);
+        if (Number.isNaN(d.getTime())) return true;
+        return d <= ninetyDaysAgo;
+      });
     }
 
     // Filtro de segmento
@@ -695,6 +703,7 @@ export default function ClientesPage() {
             >
               <option value="normal">Normal</option>
               <option value="vip">VIP</option>
+              <option value="banned">Baneado</option>
               <option value="marketing">Marketing</option>
               <option value="no_contact">Sin contacto</option>
             </GlassSelect>
@@ -716,5 +725,23 @@ export default function ClientesPage() {
 
       </div >
     </ProtectedRoute >
+  );
+}
+
+export default function ClientesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="space-y-6">
+          <div className="flex justify-between">
+            <div className="h-10 w-32 bg-white/5 rounded animate-pulse" />
+            <div className="h-10 w-32 bg-white/5 rounded animate-pulse" />
+          </div>
+          <TableSkeleton rows={10} />
+        </div>
+      }
+    >
+      <ClientesPageContent />
+    </Suspense>
   );
 }

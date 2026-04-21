@@ -2,10 +2,11 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useBookingModal } from "@/contexts/BookingModalContext";
 import {
   LayoutDashboard,
   Calendar,
@@ -43,7 +44,7 @@ const NAV_RIGHT = [{ href: "/panel/chat", label: "Chat" }] as const;
 
 export function MobileBottomNav({ items }: MobileBottomNavProps) {
   const pathname = usePathname();
-  const router = useRouter();
+  const { openCreate } = useBookingModal();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const navRef = useRef<HTMLElement>(null);
 
@@ -112,8 +113,8 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
   const agendaActive = pathname === "/panel/agenda" || pathname?.startsWith("/panel/agenda/");
 
   const openNewBooking = useCallback(() => {
-    router.push("/panel/agenda?nuevaCita=1");
-  }, [router]);
+    openCreate(new Date());
+  }, [openCreate]);
 
   const renderLink = (href: string) => {
     const active = isActive(href);

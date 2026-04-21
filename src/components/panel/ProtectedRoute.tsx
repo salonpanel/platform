@@ -22,8 +22,9 @@ export function ProtectedRoute({ children, requiredPermission }: ProtectedRouteP
     // Si no hay permiso requerido, permitir acceso
     if (!requiredPermission) return;
 
-    // Owners y admins tienen acceso completo
-    if (role === "owner" || role === "admin") return;
+    // Owners y managers tienen acceso completo
+    // (en este proyecto el rol legacy "admin" se normaliza a "manager")
+    if (role === "owner" || role === "manager" || role === "admin") return;
 
     // Verificar si tiene el permiso específico
     if (!permissions[requiredPermission]) {
@@ -38,8 +39,8 @@ export function ProtectedRoute({ children, requiredPermission }: ProtectedRouteP
     return null;
   }
 
-  // Si es owner/admin o tiene el permiso, mostrar contenido
-  if (role === "owner" || role === "admin" || !requiredPermission || permissions[requiredPermission]) {
+  // Si es owner/manager o tiene el permiso, mostrar contenido
+  if (role === "owner" || role === "manager" || role === "admin" || !requiredPermission || permissions[requiredPermission]) {
     return <>{children}</>;
   }
 

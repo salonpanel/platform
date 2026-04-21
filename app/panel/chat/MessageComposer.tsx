@@ -85,7 +85,7 @@ export function MessageComposer({
 	};
 
 	return (
-		<div className="border-t border-white/5 p-4 bg-black/20 backdrop-blur-sm relative">
+		<div className="border-t border-white/5 p-4 bg-transparent backdrop-blur-sm relative">
 			{/* INDICADOR DE ESCRITURA FLOTANTE */}
 			{typingUsers.length > 0 && (
 				<div className="absolute -top-6 left-6 animate-in fade-in slide-in-from-bottom-1 duration-300">

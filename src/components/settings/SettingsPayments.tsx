@@ -8,18 +8,24 @@ import { GlassToast } from "@/components/ui/glass/GlassToast";
 
 interface StripeStatus {
     connected: boolean;
-    account_name?: string;
-    last_sync_at?: string;
+    account_id?: string;
+    onboarding_status?: "pending" | "restricted" | "completed" | string;
+    charges_enabled?: boolean;
+    payouts_enabled?: boolean;
+    details_submitted?: boolean;
+    future_requirements?: unknown;
 }
 
 interface SettingsPaymentsProps {
     status: StripeStatus | null;
     onRefreshStatus: () => Promise<void>;
+    canManage?: boolean;
 }
 
 export function SettingsPayments({
     status,
-    onRefreshStatus
+    onRefreshStatus,
+    canManage = true,
 }: SettingsPaymentsProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [webhookUrl, setWebhookUrl] = useState("");
@@ -97,14 +103,19 @@ export function SettingsPayments({
                                 </GlassBadge>
                             )}
                         </div>
-                        {status?.account_name && (
+                        {status?.connected && status?.onboarding_status && (
                             <p className="text-xs text-[var(--text-secondary)]">
-                                Cuenta: {status.account_name}
+                                Onboarding: <span className="text-white/80">{status.onboarding_status}</span>
                             </p>
                         )}
-                        {status?.last_sync_at && (
+                        {status?.connected && typeof status?.charges_enabled === "boolean" && typeof status?.payouts_enabled === "boolean" && (
                             <p className="text-[10px] text-[var(--text-secondary)] opacity-70">
-                                Sincronizado: {new Date(status.last_sync_at).toLocaleDateString()}
+                                Cobros: {status.charges_enabled ? "activados" : "pendientes"} · Payouts: {status.payouts_enabled ? "activados" : "pendientes"}
+                            </p>
+                        )}
+                        {status?.connected && status?.account_id && (
+                            <p className="text-[10px] text-[var(--text-secondary)] opacity-70">
+                                Account: <span className="font-mono">{status.account_id}</span>
                             </p>
                         )}
                     </div>
@@ -115,6 +126,7 @@ export function SettingsPayments({
                             isLoading={isLoading}
                             variant={status?.connected ? "secondary" : "primary"}
                             size="sm"
+                            disabled={!canManage}
                             className="h-11 px-4"
                         >
                             {status?.connected ? "Gestionar Cuenta" : "Conectar Stripe"}
@@ -124,13 +136,21 @@ export function SettingsPayments({
                             isLoading={isLoading}
                             variant="secondary"
                             size="sm"
-                            disabled={!status?.connected}
+                            disabled={!canManage || !status?.connected}
                             className="h-11 px-4"
                         >
                             Sincronizar Catálogo
                         </GlassButton>
                     </div>
                 </div>
+
+                {!canManage && (
+                    <GlassCard className="p-4 border-white/10 bg-white/5">
+                        <p className="text-xs text-[var(--text-secondary)]">
+                            Solo <span className="text-white/80">owner</span> o <span className="text-white/80">admin</span> pueden gestionar Stripe.
+                        </p>
+                    </GlassCard>
+                )}
 
                 <div className="space-y-2">
                     <label className="text-sm font-medium text-[var(--text-secondary)]">

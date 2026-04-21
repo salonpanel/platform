@@ -20,6 +20,7 @@ import { logCustomerAudit } from "@/lib/panel/audit";
 type Customer = {
   id: string;
   name: string;
+  full_name?: string | null;
   email: string | null;
   phone: string | null;
   birth_date: string | null;
@@ -249,21 +250,23 @@ function ClienteDetailContent() {
   }, [upcomingBookings]);
 
   const customerInitials = useMemo(() => {
-    if (!customer?.name) return "CL";
-    const parts = customer.name.trim().split(/\s+/);
+    const baseName = customer?.full_name || customer?.name;
+    if (!baseName) return "CL";
+    const parts = baseName.trim().split(/\s+/);
     const first = parts[0]?.[0] ?? "";
     const last = parts.length > 1 ? parts[parts.length - 1][0] ?? "" : parts[0]?.[1] ?? "";
     return `${first}${last}`.toUpperCase();
-  }, [customer?.name]);
+  }, [customer?.full_name, customer?.name]);
 
   const avatarColor = useMemo(() => {
-    if (!customer?.name) return "var(--gradient-primary-start)";
+    const baseName = customer?.full_name || customer?.name;
+    if (!baseName) return "var(--gradient-primary-start)";
     let hash = 0;
-    for (const char of customer.name) {
+    for (const char of baseName) {
       hash = char.charCodeAt(0) + ((hash << 5) - hash);
     }
     return `hsl(${Math.abs(hash) % 360}, 70%, 45%)`;
-  }, [customer?.name]);
+  }, [customer?.full_name, customer?.name]);
 
   const customerSinceYear = useMemo(() => {
     if (!customer?.created_at) return null;
@@ -476,7 +479,7 @@ function ClienteDetailContent() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] font-satoshi break-words">
-                {customer.name}
+                {customer.full_name || customer.name}
               </h1>
               <span
                 className={`rounded-full border ${customerValueTier.borderColor} ${customerValueTier.bgColor} px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold uppercase tracking-wide ${customerValueTier.textColor} flex-shrink-0`}

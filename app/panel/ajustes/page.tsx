@@ -78,10 +78,19 @@ function AjustesContent() {
   });
 
   // ── Stripe ──
-  const [stripeStatus, setStripeStatus] = useState<{ connected: boolean; account_name?: string; last_sync_at?: string } | null>(null);
+  const [stripeStatus, setStripeStatus] = useState<{
+    connected: boolean;
+    account_id?: string;
+    onboarding_status?: string;
+    charges_enabled?: boolean;
+    payouts_enabled?: boolean;
+    details_submitted?: boolean;
+    future_requirements?: unknown;
+  } | null>(null);
 
   const impersonateOrgId = useMemo(() => searchParams?.get("impersonate") || null, [searchParams]);
-  const { tenantId: ctxTenantId, loading: ctxLoading } = usePermissions();
+  const { tenantId: ctxTenantId, loading: ctxLoading, role } = usePermissions();
+  const canEdit = role === "owner" || role === "admin";
 
   // ── Load all tenant data ────────────────────────────────────────────────────
   useEffect(() => {
@@ -93,7 +102,7 @@ function AjustesContent() {
         const tenantId = ctxTenantId || (await getCurrentTenant(impersonateOrgId)).tenant?.id;
         if (!tenantId) { setError("No tienes acceso a ninguna barbería"); return; }
 
-        const { data: t } = await supabase
+        const { data: t, error: tError } = await supabase
           .from("tenants")
           .select(`
             id, name, timezone, slug,
@@ -107,6 +116,10 @@ function AjustesContent() {
           `)
           .eq("id", tenantId)
           .single();
+
+        if (tError) {
+          throw new Error(tError.message || "No se pudo cargar la configuración del negocio");
+        }
 
         if (t) {
           setTenant({ id: t.id, name: t.name, timezone: t.timezone });
@@ -165,12 +178,25 @@ function AjustesContent() {
 
   const saveFields = async (fields: Record<string, unknown>, successMsg: string) => {
     if (!tenant || saving) return;
+    if (!canEdit) {
+      setError("No tienes permisos para guardar cambios en Ajustes (se requiere owner/admin).");
+      return;
+    }
     setSaving(true);
     setError(null);
     setSuccess(null);
     try {
-      const { error: err } = await supabase.from("tenants").update(fields).eq("id", tenant.id);
+      const { data: updated, error: err } = await supabase
+        .from("tenants")
+        .update(fields)
+        .eq("id", tenant.id)
+        .select("id")
+        .maybeSingle();
       if (err) throw new Error(err.message);
+      // Si RLS bloquea, puede devolver 0 filas sin error.
+      if (!updated) {
+        throw new Error("No tienes permisos para guardar estos cambios (se requiere owner/admin).");
+      }
       setSuccess(successMsg);
       setTimeout(() => setSuccess(null), 3000);
       // Notify layout to refresh tenant name/timezone in sidebar & topbar
@@ -248,13 +274,21 @@ function AjustesContent() {
         {/* ── Main column ─────────────────────────────────────────────────── */}
         <div className="lg:col-span-2 space-y-6">
 
+          {!canEdit && (
+            <GlassCard className="p-4 border-white/10 bg-white/5">
+              <p className="text-sm text-[var(--text-secondary)]">
+                Estás en modo solo lectura. Solo <span className="text-white/80">owner</span> o <span className="text-white/80">admin</span> pueden modificar Ajustes.
+              </p>
+            </GlassCard>
+          )}
+
           {/* 1. General */}
           <SettingsGeneral
             name={form.name}
             timezone={form.timezone}
             onChange={handleFieldChange}
             onSave={saveGeneral}
-            isLoading={saving}
+            isLoading={saving || !canEdit}
           />
 
           {/* 2. Horarios */}
@@ -262,7 +296,7 @@ function AjustesContent() {
             businessHours={businessHours}
             onChange={setBusinessHours}
             onSave={saveHorarios}
-            isLoading={saving}
+            isLoading={saving || !canEdit}
           />
 
           {/* 3. Reservas */}
@@ -273,7 +307,7 @@ function AjustesContent() {
             bookingWindowDays={reservas.booking_window_days}
             onChange={handleReservasChange}
             onSave={saveReservas}
-            isLoading={saving}
+            isLoading={saving || !canEdit}
           />
 
           {/* 4. Pagos */}
@@ -287,6 +321,7 @@ function AjustesContent() {
                 if (data) setStripeStatus(data);
               } catch { /* silent */ }
             }}
+            canManage={canEdit}
           />
 
           {/* 5. Branding */}
@@ -295,7 +330,7 @@ function AjustesContent() {
             primaryColor={form.primary_color}
             onChange={handleFieldChange}
             onSave={saveGeneral}
-            isLoading={saving}
+            isLoading={saving || !canEdit}
           />
 
           {/* 6. Contacto */}
@@ -305,7 +340,7 @@ function AjustesContent() {
             address={form.address}
             onChange={handleFieldChange}
             onSave={saveGeneral}
-            isLoading={saving}
+            isLoading={saving || !canEdit}
           />
 
           {/* 7. Portal */}
@@ -313,7 +348,7 @@ function AjustesContent() {
             portalUrl={form.portal_url}
             onChange={(v) => handleFieldChange("portal_url", v)}
             onSave={saveGeneral}
-            isLoading={saving}
+            isLoading={saving || !canEdit}
           />
 
           {/* 8. Notificaciones */}
@@ -321,7 +356,7 @@ function AjustesContent() {
             prefs={notifPrefs}
             onChange={handleNotifChange}
             onSave={saveNotificaciones}
-            isLoading={saving}
+            isLoading={saving || !canEdit}
           />
         </div>
 

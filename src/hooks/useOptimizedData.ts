@@ -199,39 +199,105 @@ export function useServicesData(tenantId: string | null) {
  * Hook optimizado para página de Clientes - obtiene tenant + clientes en paralelo
  */
 export function useCustomersPageData(
-  impersonateOrgId: string | null,
+  impersonateOrgId?: string | null,
   options?: { initialData?: any; enabled?: boolean }
 ) {
   const supabase = getSupabaseBrowser();
   const { tenant } = useTenant();
-  const activeTenantId = tenant?.id;
+  const activeTenantId = tenant?.id ?? null;
+  const effectiveTenantId = impersonateOrgId ?? activeTenantId;
 
-  const enabled = (options?.enabled ?? true) && !!activeTenantId;
+  const enabled = (options?.enabled ?? true) && !!effectiveTenantId;
 
   return useStaleWhileRevalidate(
-    activeTenantId ? `customers-page-${activeTenantId}` : null,
+    effectiveTenantId ? `customers-page-${effectiveTenantId}` : null,
     async () => {
       // 1. Obtener tenant
-      if (!activeTenantId || !tenant) throw new Error("No tenant in context");
+      if (!effectiveTenantId) throw new Error("No tenant available");
+      const tenantId = effectiveTenantId as string;
 
-      const tenantId = activeTenantId as string;
+      // Si estamos impersonando (o el layout aún no resolvió ese tenant), cargar tenant desde DB
+      let resolvedTenant = tenant ?? null;
+      if (!resolvedTenant || resolvedTenant.id !== tenantId) {
+        const { data: t, error: tError } = await supabase
+          .from("tenants")
+          .select("id, name, timezone")
+          .eq("id", tenantId)
+          .maybeSingle();
+
+        if (tError) throw tError;
+        if (!t) throw new Error("No tienes acceso a este negocio");
+
+        resolvedTenant = {
+          ...(resolvedTenant as any),
+          id: t.id,
+          name: (t as any).name,
+          timezone: (t as any).timezone,
+        };
+      }
 
       // 2. Cargar clientes en paralelo
       const { data: customers, error } = await supabase
         .from("customers")
-        .select("*")
+        .select(
+          `
+          id,
+          name,
+          full_name,
+          email,
+          phone,
+          created_at,
+          notes,
+          internal_notes,
+          visits_count,
+          last_booking_at,
+          total_spent_cents,
+          is_vip,
+          is_banned,
+          marketing_opt_in
+        `,
+        )
         .eq("tenant_id", tenantId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
+      const normalizedCustomers = (customers || []).map((c: any) => {
+        const derivedSegment =
+          c?.is_banned
+            ? "banned"
+            : c?.is_vip
+              ? "vip"
+              : c?.marketing_opt_in
+                ? "marketing"
+                : (!c?.email && !c?.phone)
+                  ? "no_contact"
+                  : "normal";
+
+        return {
+          id: String(c.id),
+          name: (c.full_name || c.name || "Cliente") as string,
+          email: (c.email || undefined) as string | undefined,
+          phone: (c.phone || undefined) as string | undefined,
+          segment: derivedSegment,
+          visitCount: Number(c.visits_count ?? 0),
+          lastVisit: (c.last_booking_at || undefined) as string | undefined,
+          totalSpent: c.total_spent_cents !== null && c.total_spent_cents !== undefined
+            ? Number(c.total_spent_cents)
+            : undefined,
+          created_at: String(c.created_at),
+          notes: (c.notes ?? null) as string | null,
+          internal_notes: (c.internal_notes ?? null) as string | null,
+        };
+      });
+
       return {
         tenant: {
-          id: tenant.id,
-          name: tenant.name || "Tu negocio",
-          timezone: tenant.timezone || "Europe/Madrid",
+          id: resolvedTenant!.id,
+          name: resolvedTenant!.name || "Tu negocio",
+          timezone: resolvedTenant!.timezone || "Europe/Madrid",
         },
-        customers: customers || [],
+        customers: normalizedCustomers,
       };
     },
     { enabled }
@@ -270,13 +336,21 @@ export function useServicesPageData(
 
       const tenantId = activeTenantId as string;
 
-      // 🚀 OPTIMIZACIÓN: Intentar usar función RPC manage_list_services
-      const { data: servicesRpc, error: rpcError } = await supabase.rpc('manage_list_services', {
-        p_tenant_id: tenantId,
-        p_status: options?.status || 'all',
-        p_category: null, // Initial load fetches all categories
-        p_search_term: null,
-      });
+      // 🚀 OPTIMIZACIÓN: Intentar usar función RPC manage_list_services (firma endurecida)
+      const { data: servicesRpc, error: rpcError } = await supabase.rpc(
+        "manage_list_services",
+        {
+          p_tenant_id: tenantId,
+          p_status: options?.status || "all",
+          p_category: null, // Initial load fetches all categories
+          p_search_term: null,
+          p_sort_by: "name",
+          p_sort_direction: "asc",
+          p_min_price_cents: null,
+          p_max_price_cents: null,
+          p_buffer_filter: "all",
+        }
+      );
 
       // Si la función RPC existe y funciona, usarla
       if (!rpcError && servicesRpc) {
@@ -349,22 +423,30 @@ export function useStaffPageData(
 ) {
   const supabase = getSupabaseBrowser();
   const { tenant } = useTenant();
-  const activeTenantId = tenant?.id;
 
-  const enabled = (options?.enabled ?? true) && !!activeTenantId;
+  // Nota: para Staff necesitamos soportar impersonación igual que otras páginas (Chat, etc.)
+  // sin depender solo del TenantContext.
+  const enabled = options?.enabled ?? true;
 
-  // Key depends on resolved tenant
-  const cacheKey = activeTenantId
-    ? `staff-page-${activeTenantId}-${options?.includeInactive ? 'all' : 'active'}`
-    : null;
+  // Key depends on requested tenant (own vs impersonated)
+  const cacheKey =
+    tenant?.id || impersonateOrgId
+      ? `staff-page-${impersonateOrgId || tenant?.id}-${options?.includeInactive ? "all" : "active"}`
+      : null;
 
   return useStaleWhileRevalidate(
     cacheKey,
     async () => {
-      // 1. Obtener tenant
-      if (!activeTenantId || !tenant) throw new Error("No tenant in context");
+      // 1. Resolver tenant actual (con impersonación si aplica)
+      const { tenant: resolvedTenant, status } = await getCurrentTenant(
+        impersonateOrgId
+      );
 
-      const tenantId = activeTenantId as string;
+      if (status !== "OK" || !resolvedTenant) {
+        throw new Error("No tenant available");
+      }
+
+      const tenantId = resolvedTenant.id;
 
       // 🚀 OPTIMIZACIÓN: Intentar usar función RPC get_staff_with_stats
       const { data: staffRpc, error: rpcError } = await supabase.rpc('get_staff_with_stats', {
@@ -376,9 +458,9 @@ export function useStaffPageData(
       if (!rpcError && staffRpc) {
         return {
           tenant: {
-            id: tenant.id,
-            name: tenant.name || "Tu negocio",
-            timezone: tenant.timezone || "Europe/Madrid",
+            id: resolvedTenant.id,
+            name: resolvedTenant.name || "Tu negocio",
+            timezone: resolvedTenant.timezone || "Europe/Madrid",
           },
           staff: staffRpc || [],
         };
@@ -409,14 +491,14 @@ export function useStaffPageData(
 
       return {
         tenant: {
-          id: tenant.id,
-          name: tenant.name || "Tu negocio",
-          timezone: tenant.timezone || "Europe/Madrid",
+          id: resolvedTenant.id,
+          name: resolvedTenant.name || "Tu negocio",
+          timezone: resolvedTenant.timezone || "Europe/Madrid",
         },
         staff: staff || [],
       };
     },
-    { enabled }
+    { enabled: enabled && (!!tenant?.id || !!impersonateOrgId) }
   );
 }
 

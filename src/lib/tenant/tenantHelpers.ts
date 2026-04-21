@@ -11,6 +11,7 @@ export interface TenantStaffOption {
   id: string;
   name: string;
   active: boolean;
+  color?: string | null;
 }
 
 export interface TenantServiceOption {
@@ -45,7 +46,7 @@ export async function fetchTenantStaff(tenantId: string): Promise<TenantStaffOpt
 
     const { data, error } = await supabase
       .from("staff")
-      .select("id, display_name, name, active")
+      .select("id, display_name, name, active, color")
       .eq("tenant_id", tenantId)
       .order("name");
 
@@ -54,16 +55,11 @@ export async function fetchTenantStaff(tenantId: string): Promise<TenantStaffOpt
       return [];
     }
 
-    // 🔍 DEV LOGGING: Track results using reusable utility
-    logTenantQueryResult(data?.length || 0, "fetchTenantStaff", {
-      tenantId,
-      staffNames: data?.map(s => s.name || s.display_name) || []
-    });
-
     return (data || []).map(staff => ({
       id: staff.id,
       name: staff.display_name || staff.name,
       active: staff.active ?? true,
+      color: (staff as any).color ?? null,
     }));
   } catch (err) {
     console.error("[fetchTenantStaff] Unexpected error:", err);
@@ -105,12 +101,6 @@ export async function fetchTenantServices(tenantId: string): Promise<TenantServi
       console.error("[fetchTenantServices] Database error:", error);
       return [];
     }
-
-    // 🔍 DEV LOGGING: Track results using reusable utility
-    logTenantQueryResult(data?.length || 0, "fetchTenantServices", {
-      tenantId,
-      serviceNames: data?.map(s => s.name) || []
-    });
 
     return (data || []).map(service => ({
       id: service.id,

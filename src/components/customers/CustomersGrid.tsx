@@ -9,6 +9,23 @@ import { Calendar, Edit2, Trash2, LayoutList, Phone, Mail, Clock } from "lucide-
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
+function safeDate(value: string | undefined) {
+    if (!value) return null;
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function segmentLabel(segment: Customer["segment"]) {
+    switch (segment) {
+        case "vip": return "VIP";
+        case "banned": return "Baneado";
+        case "marketing": return "Marketing";
+        case "no_contact": return "Sin contacto";
+        case "normal": return "Normal";
+        default: return segment;
+    }
+}
+
 interface Customer {
     id: string;
     name: string;
@@ -19,6 +36,8 @@ interface Customer {
     lastVisit?: string;
     totalSpent?: number;
     created_at: string;
+    notes?: string | null;
+    internal_notes?: string | null;
 }
 
 interface CustomersGridProps {
@@ -144,15 +163,15 @@ export function CustomersGrid({
                                         }
                                         size="sm"
                                     >
-                                        {customer.segment === "no_contact" ? "Sin contacto" : customer.segment}
+                                        {segmentLabel(customer.segment)}
                                     </GlassBadge>
                                 </div>
 
                                 <div className="col-span-2 text-xs text-[var(--text-secondary)]">
-                                    {customer.lastVisit ? (
+                                    {safeDate(customer.lastVisit) ? (
                                         <div className="flex flex-col">
-                                            <span className="text-white">{format(new Date(customer.lastVisit), "d MMM yyyy", { locale: es })}</span>
-                                            <span className="text-[10px] opacity-60">hace {Math.floor((new Date().getTime() - new Date(customer.lastVisit).getTime()) / (1000 * 60 * 60 * 24))} días</span>
+                                            <span className="text-white">{format(safeDate(customer.lastVisit) as Date, "d MMM yyyy", { locale: es })}</span>
+                                            <span className="text-[10px] opacity-60">hace {Math.floor((new Date().getTime() - (safeDate(customer.lastVisit) as Date).getTime()) / (1000 * 60 * 60 * 24))} días</span>
                                         </div>
                                     ) : (
                                         <span className="opacity-50 italic">Sin visitas</span>
@@ -217,7 +236,7 @@ export function CustomersGrid({
                                     )}
                                     <div className="col-span-2 flex items-center gap-1.5 border-t border-white/5 pt-2 mt-0.5">
                                         <Clock className="w-3 h-3 opacity-70" />
-                                        {customer.lastVisit ? format(new Date(customer.lastVisit), "d MMM yyyy", { locale: es }) : "Sin visitas"}
+                                        {safeDate(customer.lastVisit) ? format(safeDate(customer.lastVisit) as Date, "d MMM yyyy", { locale: es }) : "Sin visitas"}
                                     </div>
                                 </div>
 

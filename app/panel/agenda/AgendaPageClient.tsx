@@ -102,8 +102,6 @@ export default function AgendaPageClient({
   }, []);
 
   const modals = useAgendaModals();
-  const modalsRef = useRef(modals);
-  modalsRef.current = modals;
 
   const {
     loading,
@@ -312,7 +310,7 @@ export default function AgendaPageClient({
     const q = next.toString();
     router.replace(q ? `/panel/agenda?${q}` : "/panel/agenda", { scroll: false });
 
-    modalsRef.current.openNewBookingModal(slot);
+    modals.openNewBookingModal(slot);
   }, [
     searchParams,
     tenantId,
@@ -321,6 +319,7 @@ export default function AgendaPageClient({
     staffList,
     visibleStaff,
     router,
+    modals,
   ]);
 
   if (!tenantId || serverError) {

@@ -16,8 +16,6 @@ export async function updateStaffServices(
 ): Promise<void> {
   const supabase = getSupabaseBrowser();
 
-  console.log("🔄 updateStaffServices:", { tenantId, staffId, newServiceIds });
-
   // Get current relations
   const { data: currentRelations, error: fetchError } = await supabase
     .from("staff_provides_services")
@@ -38,7 +36,6 @@ export async function updateStaffServices(
   const toAdd = newServiceIds.filter(id => !currentSet.has(id));
   const toRemove = currentServiceIds.filter(id => !newSet.has(id));
 
-  console.log("📊 updateStaffServices: Changes", { toAdd, toRemove });
 
   // Remove old relations
   if (toRemove.length > 0) {
@@ -73,7 +70,6 @@ export async function updateStaffServices(
     }
   }
 
-  console.log("✅ updateStaffServices: Completed successfully");
 }
 
 /**
@@ -86,8 +82,6 @@ export async function updateServiceStaff(
   newStaffIds: string[]
 ): Promise<void> {
   const supabase = getSupabaseBrowser();
-
-  console.log("🔄 updateServiceStaff:", { tenantId, serviceId, newStaffIds });
 
   // Get current relations
   const { data: currentRelations, error: fetchError } = await supabase
@@ -109,11 +103,9 @@ export async function updateServiceStaff(
   const toAdd = newStaffIds.filter(id => !currentSet.has(id));
   const toRemove = currentStaffIds.filter(id => !newSet.has(id));
 
-  console.log("📊 updateServiceStaff: Changes", { toAdd, toRemove });
 
   // Remove old relations
   if (toRemove.length > 0) {
-    console.log("[updateServiceStaff] Removing relations:", { tenantId, serviceId, toRemove });
     const { error: deleteError } = await supabase
       .from("staff_provides_services")
       .delete()
@@ -131,7 +123,6 @@ export async function updateServiceStaff(
       });
       throw new Error(`Error removing relations: ${deleteError.message}`);
     }
-    console.log("[updateServiceStaff] Relations removed successfully");
   }
 
   // Add new relations
@@ -152,7 +143,6 @@ export async function updateServiceStaff(
     }
   }
 
-  console.log("✅ updateServiceStaff: Completed successfully");
 }
 
 /**

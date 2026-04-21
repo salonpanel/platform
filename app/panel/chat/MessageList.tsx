@@ -149,22 +149,17 @@ export function MessageList({
 	}
 
 	return (
-		<div className="flex-1 relative overflow-hidden flex flex-col bg-[#0b141a]">
-			{/* Chat Wallpaper (Estilo WhatsApp) */}
-			<div 
-				className="absolute inset-0 opacity-[0.4] pointer-events-none"
-				style={{
-					backgroundImage: `url("https://w0.peakpx.com/wallpaper/580/650/wallpaper-whatsapp-dark-mode.jpg")`,
-					backgroundSize: 'cover',
-					backgroundPosition: 'center',
-					mixBlendMode: 'soft-light'
-				}}
-			/>
-
+		<div className="flex-1 relative overflow-hidden flex flex-col bg-transparent">
 			<div 
 				ref={containerRef} 
-				className="flex-1 overflow-y-auto pb-6 space-y-0.5 scroll-smooth relative z-10"
+				className={cn(
+					"flex-1 overflow-y-auto pb-6 scroll-smooth relative z-10",
+					"flex flex-col"
+				)}
 			>
+				{/* Empujar mensajes hacia abajo si no hay histórico por cargar */}
+				{!hasMoreMessages && messages.length > 0 && <div className="flex-1" />}
+
 				{/* Cargador de historial */}
 				{hasMoreMessages && (
 					<div className="flex justify-center py-4">
@@ -181,7 +176,7 @@ export function MessageList({
 				{dateKeys.map((dateKey) => {
 					const dayMessages = messagesWithDates[dateKey];
 					return (
-						<div key={dateKey} className="flex flex-col">
+						<div key={dateKey} className="flex flex-col space-y-0.5">
 							{/* Separador de fecha Estilo WhatsApp */}
 							<div className="sticky top-4 z-20 flex justify-center my-4 pointer-events-none">
 								<span className="px-3 py-1.5 rounded-lg bg-[#182229] text-[12px] text-[#8696a0] shadow-md select-none">

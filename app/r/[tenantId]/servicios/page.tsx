@@ -7,9 +7,9 @@ export const dynamic = "force-dynamic";
 export default async function ServicesPage({
     params,
 }: {
-    params: Promise<{ tenantId: string }>;
+    params: { tenantId: string };
 }) {
-    const { tenantId } = await params;
+    const { tenantId } = params;
     const tenant = await getPublicTenant(tenantId);
 
     if (!tenant) notFound();

@@ -102,8 +102,8 @@ export async function POST(req: Request) {
     // Llamar a assertMembership
     const membership = await assertMembership(supabaseServer(), session.user.id, tenantId);
 
-    // Verificar que sea owner o admin
-    if (membership.role !== "owner" && membership.role !== "admin") {
+    // Verificar que sea owner o admin/manager
+    if (membership.role !== "owner" && membership.role !== "admin" && membership.role !== "manager") {
       return NextResponse.json(
         { error: "Solo owners y admins pueden crear usuarios" },
         { status: 403 }
@@ -111,10 +111,11 @@ export async function POST(req: Request) {
     }
 
     // Validar rol permitido
-    const allowedRoles = ["owner", "admin", "staff"];
+    // En la plataforma, "admin" legacy puede mapear a "manager"
+    const allowedRoles = ["owner", "admin", "manager", "staff"];
     if (!allowedRoles.includes(normalizedRole)) {
       return NextResponse.json(
-        { error: "Rol no válido. Debe ser: owner, admin o staff" },
+        { error: "Rol no válido. Debe ser: owner, admin/manager o staff" },
         { status: 400 }
       );
     }

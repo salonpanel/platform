@@ -16,6 +16,6 @@ export async function fetchTenantStaffOptions(tenantId: string): Promise<StaffOp
   return staff.map(staff => ({
     id: staff.id,
     name: staff.name,
-    color: null, // TODO: Add color support if needed
+    color: staff.color ?? null,
   }));
 }
