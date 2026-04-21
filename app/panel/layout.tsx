@@ -8,7 +8,6 @@ import PanelLayoutClient from "./layout-client";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClientForServer } from "@/lib/supabase/server-client";
-import { supabaseServer } from "@/lib/supabase";
 import { BookingModalProvider } from "@/contexts/BookingModalContext";
 import { BookingCreateModal } from "@/modules/bookings/BookingCreateModal";
 import { BookingDetailModal } from "@/modules/bookings/BookingDetailModal";
@@ -38,10 +37,12 @@ export default async function PanelLayout({ children }: { children: ReactNode })
 
   // 2. Data Context (Pure Data - NO REDIRECTS)
   const cookieStore = await cookies();
-  const sb = supabaseServer();
   const lastTenantId = cookieStore.get("last_tenant_id")?.value;
 
-  const context = await getTenantContextSafe(sb, user.id, lastTenantId);
+  // IMPORTANT: Use the authenticated client here so RPCs relying on auth.uid()
+  // run with the user's JWT. Using service_role (admin) will yield auth.uid() = null
+  // and hardened RPCs will correctly return "Access denied".
+  const context = await getTenantContextSafe(supabase, user.id, lastTenantId);
   const clientBootstrapState = mapStatusToClientState(context.status);
 
   // 3. Error Handling - Render Error UI without redirecting
