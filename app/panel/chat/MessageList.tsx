@@ -27,6 +27,8 @@ type MessageListProps = {
 	conversationType?: "all" | "direct" | "group";
 	onLoadMore?: () => void;
 	hasMoreMessages?: boolean;
+	/** Si la RPC falló, no mostrar el vacío “sin mensajes” (mensaje real va en el padre) */
+	loadError?: string | null;
 	onReply?: (message: TeamMessage) => void;
 	tenantId?: string | null;
 	typingUsers?: string[];
@@ -74,6 +76,7 @@ export function MessageList({
 	conversationType = "direct",
 	onLoadMore,
 	hasMoreMessages = false,
+	loadError = null,
 	onReply,
 	tenantId,
 	typingUsers = [],
@@ -169,7 +172,7 @@ export function MessageList({
 					</div>
 				)}
 
-				{messages.length === 0 && (
+				{messages.length === 0 && !loadError && (
 					<div className="h-full flex items-center justify-center text-[#8696a0] text-sm italic">
 						<p>No hay mensajes en esta conversación</p>
 					</div>

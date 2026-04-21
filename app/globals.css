@@ -4,16 +4,10 @@
 @import "tailwindcss";
 
 :root {
-  /* Fila táctil del tab bar (sin home indicator). Debe coincidir con MobileBottomNav (h-14). */
+  /* Fila táctil del tab bar. Debe coincidir con MobileBottomNav (h-14). */
   --bottom-nav-height: 56px;
-  /*
-    Zona bajo los iconos (home indicator / barra gestos). Algunos WebViews/Android
-    devuelven env(safe-area-inset-bottom) muy alto y generan un “hueco” enorme.
-    Limitamos a ~34px (similar a iPhone con notch) para no desperdiciar pantalla.
-  */
-  --bottom-nav-safe-inset: min(env(safe-area-inset-bottom, 0px), 34px);
-  /* Espacio total bajo el scroll: fila + inset. MobileBottomNav refina vía ResizeObserver. */
-  --bottom-nav-offset: calc(var(--bottom-nav-height) + var(--bottom-nav-safe-inset));
+  /* Hueco que reserva el scroll principal bajo el tab fijo (sin padding extra bajo iconos). */
+  --bottom-nav-offset: var(--bottom-nav-height);
   /* ============================================================================
      NUEVO DESIGN SYSTEM - BookFast Platform
      Capsule Shapes + Soft Glass + Premium Gradients + Neo-Glow
@@ -809,19 +803,9 @@ select option {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Tab bar móvil: mismo inset acotado que --bottom-nav-offset (evita banda vacía excesiva). */
+/* Paneles anclados abajo (tab bar, sheets): sin banda extra bajo el contenido. */
 .nav-inset-bottom {
-  padding-bottom: var(--bottom-nav-safe-inset);
-}
-
-/*
-  Web app añadida a inicio (iPhone/Android): sin UI del navegador; sin padding extra
-  bajo los iconos del menú — solo la fila táctil (h-14).
-*/
-@media (display-mode: standalone), (display-mode: fullscreen) {
-  :root {
-    --bottom-nav-safe-inset: 0px;
-  }
+  padding-bottom: 0;
 }
 
 /* Footers de modales a pantalla completa (por encima del tab bar): padding base + home indicator */
@@ -840,7 +824,7 @@ select option {
   padding-top: max(env(safe-area-inset-top, 0px), 1.25rem);
 }
 
-/* Área principal: reserva exactamente el hueco del tab bar fijo + safe area (ver --bottom-nav-offset). */
+/* Área principal: hueco bajo el scroll = altura del tab bar fijo (sin inset extra). */
 .pb-nav-safe {
   padding-bottom: var(--bottom-nav-offset);
 }

@@ -82,6 +82,22 @@ type ConversationMember = {
 
 const MESSAGE_FALLBACK_DATE = "1970-01-01T00:00:00Z";
 
+/** PostgREST / Supabase devuelve errores como objeto { message, code, details }, no siempre Error */
+function readSupabaseClientError(err: unknown): string {
+	if (err instanceof Error) return err.message;
+	if (err && typeof err === "object") {
+		const o = err as Record<string, unknown>;
+		if (typeof o.message === "string" && o.message.length > 0) {
+			const base = o.message;
+			const details = typeof o.details === "string" && o.details ? ` (${o.details})` : "";
+			const hint = typeof o.hint === "string" && o.hint ? ` — ${o.hint}` : "";
+			return `${base}${details}${hint}`;
+		}
+	}
+	if (typeof err === "string") return err;
+	return "Error desconocido";
+}
+
 interface TeamChatOptimizedProps {
 	initialData: ChatPageDataset;
 }
@@ -310,24 +326,31 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 					};
 				});
 
-				// Marcar como leídos solo en la primera carga
+				// Marcar como leídos (no debe fallar la carga del historial si esto falla por RLS)
 				if (!beforeTimestamp && currentUserId) {
 					const now = new Date().toISOString();
-					await supabase
-						.from("team_conversation_members")
-						.update({ last_read_at: now })
-						.eq("conversation_id", conversationId)
-						.eq("user_id", currentUserId);
+					try {
+						const { error: readErr } = await supabase
+							.from("team_conversation_members")
+							.update({ last_read_at: now })
+							.eq("conversation_id", conversationId)
+							.eq("user_id", currentUserId);
 
-					setConversations((prev) =>
-						prev.map((conv) =>
-							conv.id === conversationId ? { ...conv, unreadCount: 0, lastReadAt: now } : conv
-						)
-					);
+						if (readErr) {
+							console.warn("[TeamChatOptimized] No se pudo marcar como leído", readSupabaseClientError(readErr));
+						} else {
+							setConversations((prev) =>
+								prev.map((conv) =>
+									conv.id === conversationId ? { ...conv, unreadCount: 0, lastReadAt: now } : conv
+								)
+							);
+						}
+					} catch (markErr) {
+						console.warn("[TeamChatOptimized] Marcar leído:", markErr);
+					}
 				}
 			} catch (err) {
-				const msg =
-					err instanceof Error ? err.message : typeof err === "string" ? err : "Error al cargar mensajes";
+				const msg = readSupabaseClientError(err);
 				setMessagesLoadError(msg);
 				console.error("[TeamChatOptimized] Error cargando mensajes", {
 					error: err,
@@ -1029,6 +1052,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 											? hasMoreMessages[selectedConversationId] ?? false
 											: false
 									}
+									loadError={messagesLoadError}
 								/>
 							</div>
 							{selectedConversation.status === "pending_direct" ? (

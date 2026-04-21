@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { AgendaTopBar } from "@/components/agenda/AgendaTopBar";
 import { AgendaFilters } from "@/components/agenda/AgendaFilters";
@@ -53,6 +54,8 @@ export default function AgendaPageClient({
   initialDate,
   initialViewMode,
 }: AgendaPageClientProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const tenantId = impersonateOrgId ?? initialData?.tenant.id ?? null;
   const tenantTimezone = initialData?.tenant.timezone ?? "Europe/Madrid";
   const { showToast, ToastComponent } = useToast();
@@ -99,6 +102,8 @@ export default function AgendaPageClient({
   }, []);
 
   const modals = useAgendaModals();
+  const modalsRef = useRef(modals);
+  modalsRef.current = modals;
 
   const {
     loading,
@@ -281,6 +286,42 @@ export default function AgendaPageClient({
     time: "10:00",
     endTime: "10:30",
   };
+
+  // Barra inferior móvil: ?nuevaCita=1 abre el modal de nueva cita (desde cualquier página del panel)
+  const nuevaCitaHandledRef = useRef(false);
+  useEffect(() => {
+    if (searchParams.get("nuevaCita") !== "1") {
+      nuevaCitaHandledRef.current = false;
+      return;
+    }
+    if (!tenantId || serverError) return;
+    const staffId = visibleStaff[0]?.id || staffList[0]?.id || "";
+    if (!staffId) return;
+    if (nuevaCitaHandledRef.current) return;
+    nuevaCitaHandledRef.current = true;
+
+    const slot: CalendarSlot = {
+      staffId,
+      date: selectedDate,
+      time: "10:00",
+      endTime: "10:30",
+    };
+
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete("nuevaCita");
+    const q = next.toString();
+    router.replace(q ? `/panel/agenda?${q}` : "/panel/agenda", { scroll: false });
+
+    modalsRef.current.openNewBookingModal(slot);
+  }, [
+    searchParams,
+    tenantId,
+    serverError,
+    selectedDate,
+    staffList,
+    visibleStaff,
+    router,
+  ]);
 
   if (!tenantId || serverError) {
     return (

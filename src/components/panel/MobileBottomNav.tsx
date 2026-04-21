@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,6 +12,7 @@ import {
   Users,
   MessageSquare,
   MoreHorizontal,
+  Plus,
   X,
   Wallet,
   Target,
@@ -30,16 +31,19 @@ interface MobileBottomNavProps {
   items: NavItem[];
 }
 
-// Primary nav items (always visible in the bar)
-const MAIN_ITEMS = [
+/** Rutas que ocupan la barra inferior (el resto va a «Más», p. ej. Clientes). */
+const BAR_HREFS = new Set<string>(["/panel", "/panel/agenda", "/panel/chat"]);
+
+const NAV_LEFT = [
   { href: "/panel", label: "Inicio" },
   { href: "/panel/agenda", label: "Agenda" },
-  { href: "/panel/clientes", label: "Clientes" },
-  { href: "/panel/chat", label: "Chat" },
-];
+] as const;
+
+const NAV_RIGHT = [{ href: "/panel/chat", label: "Chat" }] as const;
 
 export function MobileBottomNav({ items }: MobileBottomNavProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const navRef = useRef<HTMLElement>(null);
 
@@ -102,11 +106,42 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
     [pathname]
   );
 
-  // Items that go into the "Más" sheet
-  const moreItems = items.filter(
-    (item) => !MAIN_ITEMS.some((m) => m.href === item.href)
-  );
+  const moreItems = items.filter((item) => !BAR_HREFS.has(item.href));
   const isMoreActive = moreItems.some((item) => isActive(item.href));
+
+  const agendaActive = pathname === "/panel/agenda" || pathname?.startsWith("/panel/agenda/");
+
+  const openNewBooking = useCallback(() => {
+    router.push("/panel/agenda?nuevaCita=1");
+  }, [router]);
+
+  const renderLink = (href: string) => {
+    const active = isActive(href);
+    const icon = getNavIcon(href);
+    return (
+      <motion.div
+        key={href}
+        className="flex-1 flex items-end justify-center"
+        whileTap={{ scale: 0.86 }}
+        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+      >
+        <Link
+          href={href}
+          prefetch={true}
+          className="relative flex items-end justify-center min-w-[50px] select-none pb-0"
+        >
+          <div
+            className={cn(
+              "flex items-center justify-center w-[40px] h-[40px] rounded-xl transition-all duration-200",
+              active ? "text-[var(--accent-aqua)]" : "text-slate-400"
+            )}
+          >
+            {icon}
+          </div>
+        </Link>
+      </motion.div>
+    );
+  };
 
   return (
     <>
@@ -114,7 +149,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
       <nav
         ref={navRef}
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 md:hidden nav-inset-bottom",
+          "fixed bottom-0 left-0 right-0 z-50 md:hidden pb-0",
           "shadow-[0_-1px_0_rgba(255,255,255,0.06)]"
         )}
         style={{
@@ -123,7 +158,6 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
           WebkitBackdropFilter: "blur(20px)",
         }}
       >
-        {/* Top border + subtle aqua-tinted highlight */}
         <div
           className="absolute top-0 left-0 right-0 h-px"
           style={{
@@ -132,46 +166,48 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
           }}
         />
 
-        {/* Items row — altura alineada con --bottom-nav-height (globals.css) */}
-        <div className="flex items-center justify-around h-14 min-h-14 px-1">
-          {MAIN_ITEMS.map((item) => {
-            const active = isActive(item.href);
-            const icon = getNavIcon(item.href);
+        <div className="flex items-end justify-around h-14 min-h-14 px-1 pb-0">
+          {NAV_LEFT.map(({ href }) => renderLink(href))}
 
-            return (
-              <motion.div
-                key={item.href}
-                className="flex-1 flex items-center justify-center"
-                whileTap={{ scale: 0.86 }}
-                transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              >
-                <Link
-                  href={item.href}
-                  prefetch={true}
-                  className="relative flex items-center justify-center min-w-[50px] select-none h-full"
-                >
-                  <div
-                    className={cn(
-                      "flex items-center justify-center w-[40px] h-[40px] rounded-xl transition-all duration-200",
-                      active ? "text-[var(--accent-aqua)]" : "text-slate-400"
-                    )}
-                  >
-                    {icon}
-                  </div>
-                </Link>
-              </motion.div>
-            );
-          })}
-
-          {/* ── "Más" button ── */}
+          {/* Centro: nueva cita (solo móvil) */}
           <motion.div
-            className="flex-1 flex items-center justify-center"
+            className="flex-1 flex items-end justify-center"
+            whileTap={{ scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+          >
+            <button
+              type="button"
+              onClick={openNewBooking}
+              className={cn(
+                "relative flex items-end justify-center min-w-[52px] select-none pb-0",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-aqua)]/50 rounded-2xl"
+              )}
+              aria-label="Nueva cita"
+            >
+              <div
+                className={cn(
+                  "flex items-center justify-center w-11 h-11 rounded-2xl transition-all duration-200",
+                  "bg-gradient-to-br from-[var(--accent-blue)] to-[var(--accent-aqua)]",
+                  "text-[#0E0F11] shadow-[0_6px_20px_rgba(58,109,255,0.35)]",
+                  agendaActive && "ring-2 ring-[var(--accent-aqua)]/40"
+                )}
+              >
+                <Plus className="w-6 h-6" strokeWidth={2.5} aria-hidden />
+              </div>
+            </button>
+          </motion.div>
+
+          {NAV_RIGHT.map(({ href }) => renderLink(href))}
+
+          {/* ── "Más" (incluye Clientes y el resto) ── */}
+          <motion.div
+            className="flex-1 flex items-end justify-center"
             whileTap={{ scale: 0.86 }}
             transition={{ type: "spring", stiffness: 500, damping: 30 }}
           >
             <button
               onClick={() => setShowMoreMenu((v) => !v)}
-              className="relative flex items-center justify-center min-w-[50px] select-none h-full"
+              className="relative flex flex-row items-end justify-center min-w-[50px] select-none gap-0.5 pb-0"
               aria-label="Más opciones"
               aria-expanded={showMoreMenu}
             >
@@ -186,7 +222,6 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
                   strokeWidth={isMoreActive || showMoreMenu ? 2.5 : 2}
                   className="mt-[2px]"
                 />
-                {/* Badge dot when a "more" item is the active route */}
                 {isMoreActive && (
                   <span
                     className="absolute top-2 right-2 w-[7px] h-[7px] rounded-full border-2"
@@ -217,7 +252,6 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
       <AnimatePresence>
         {showMoreMenu && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -232,13 +266,12 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
               onClick={() => setShowMoreMenu(false)}
             />
 
-            {/* Sheet */}
             <motion.div
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 320 }}
-              className="fixed bottom-0 left-0 right-0 z-[56] md:hidden nav-inset-bottom"
+              className="fixed bottom-0 left-0 right-0 z-[56] md:hidden pb-0"
               style={{
                 background: "rgba(17, 33, 45, 0.98)",
                 backdropFilter: "blur(28px)",
@@ -247,7 +280,6 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
                 borderRadius: "22px 22px 0 0",
               }}
             >
-              {/* Drag handle */}
               <div className="flex justify-center pt-3 pb-1">
                 <div
                   className="w-9 h-[3px] rounded-full"
@@ -255,7 +287,6 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
                 />
               </div>
 
-              {/* Header row */}
               <div className="flex items-center justify-between px-5 pt-2 pb-3">
                 <h3 className="text-[15px] font-semibold font-satoshi text-[var(--text-primary)]">
                   Más opciones
@@ -270,13 +301,11 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
                 </button>
               </div>
 
-              {/* Thin divider */}
               <div
                 className="mx-5 mb-4"
                 style={{ height: 1, background: "rgba(255,255,255,0.06)" }}
               />
 
-              {/* Items grid */}
               <div className="grid grid-cols-3 gap-3 px-4 pb-4">
                 {moreItems.map((item, index) => {
                   const active = isActive(item.href);

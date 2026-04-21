@@ -375,13 +375,15 @@ export function AgendaContent({
             </AnimatePresence>
           </motion.div>
 
-          {/* Apple-style FAB - Always visible on mobile for quick actions */}
-          <UiFab
-            onClick={onNewBooking}
-            label="Nueva cita"
-            icon={<span className="text-lg font-semibold">+</span>}
-            className="bottom-[calc(var(--bottom-nav-offset)+1rem)] md:bottom-6"
-          />
+          {/* FAB nueva cita: solo desktop; en móvil va en la barra inferior (MobileBottomNav) */}
+          {!isMobile && (
+            <UiFab
+              onClick={onNewBooking}
+              label="Nueva cita"
+              icon={<span className="text-lg font-semibold">+</span>}
+              className="md:bottom-6"
+            />
+          )}
         </motion.div>
       </AnimatePresence>
     </div>

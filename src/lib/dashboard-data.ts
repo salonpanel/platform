@@ -84,26 +84,62 @@ export function createEmptyDashboardKpis(): DashboardKpis {
   return { ...EMPTY_DASHBOARD_KPIS };
 }
 
+/** Si PostgREST / jsonb devuelve un objeto anidado como string JSON, lo parsea. */
+function parseJsonObject(raw: unknown): Record<string, unknown> | null {
+  if (raw == null) return null;
+  if (typeof raw === "string") {
+    try {
+      const p = JSON.parse(raw) as unknown;
+      if (p && typeof p === "object" && !Array.isArray(p)) return p as Record<string, unknown>;
+      return null;
+    } catch {
+      return null;
+    }
+  }
+  if (typeof raw === "object" && !Array.isArray(raw)) return raw as Record<string, unknown>;
+  return null;
+}
+
+function parseJsonArray(raw: unknown): unknown[] | null {
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === "string") {
+    try {
+      const p = JSON.parse(raw) as unknown;
+      return Array.isArray(p) ? p : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 /** Normaliza KPIs del RPC (get_dashboard_kpis / panel) a arrays numéricos de longitud fija. */
 export function normalizeKpisFromRpc(raw: unknown): DashboardKpis {
-  const k = raw as Record<string, unknown> | null | undefined;
   const empty = createEmptyDashboardKpis();
-  if (!k || typeof k !== "object") return empty;
+  const k = parseJsonObject(raw);
+  if (!k) return empty;
 
   const to7 = (a: unknown): number[] => {
-    if (!Array.isArray(a)) return Array(7).fill(0);
-    const arr = a.map((v) => Number(v) || 0);
+    const parsed = parseJsonArray(a);
+    if (!parsed) return Array(7).fill(0);
+    const arr = parsed.map((v) => Number(v) || 0);
     while (arr.length < 7) arr.push(0);
     return arr.slice(0, 7);
   };
   const to30 = (a: unknown): number[] => {
-    if (!Array.isArray(a)) return Array(30).fill(0);
-    const arr = a.map((v) => Number(v) || 0);
+    const parsed = parseJsonArray(a);
+    if (!parsed) return Array(30).fill(0);
+    const arr = parsed.map((v) => Number(v) || 0);
     while (arr.length < 30) arr.push(0);
     return arr.slice(0, 30);
   };
 
-  const num = (v: unknown) => (typeof v === "number" && !Number.isNaN(v) ? v : Number(v)) || 0;
+  const num = (v: unknown): number => {
+    if (typeof v === "bigint") return Number(v);
+    if (typeof v === "number" && !Number.isNaN(v)) return v;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  };
 
   return {
     ...empty,
@@ -256,7 +292,7 @@ export async function fetchDashboardDataset(
   if (!tenant?.id) return null;
 
   // Use the new unified RPC for fast, atomic data loading
-  const { data, error } = await supabase.rpc("panel_fetch_dashboard_dataset_v1", {
+  const { data: rawData, error } = await supabase.rpc("panel_fetch_dashboard_dataset_v1", {
     p_tenant_id: tenant.id,
   });
 
@@ -265,14 +301,21 @@ export async function fetchDashboardDataset(
     return null;
   }
 
-  if (data?.status === "ERROR") {
+  const data = parseJsonObject(rawData) as (typeof rawData & Record<string, unknown>) | null;
+  if (!data || typeof data !== "object") {
+    console.error("[Dashboard] RPC payload missing or not an object:", rawData);
+    return null;
+  }
+
+  if (data.status === "ERROR") {
     console.error("[Dashboard] RPC returned error:", data.error);
     return null;
   }
 
   // If successful, return the dataset
-  if (data?.status === "OK") {
-    const rawStaff = (data.staffMembers || []) as any[];
+  if (data.status === "OK") {
+    const staffRaw = parseJsonArray((data as any).staffMembers) ?? ((data as any).staffMembers as any[]);
+    const rawStaff = (Array.isArray(staffRaw) ? staffRaw : []) as any[];
     const staffMembers: StaffMember[] = rawStaff.map((s) => ({
       id: s.id,
       name: s.name ?? "Sin nombre",
@@ -283,10 +326,27 @@ export async function fetchDashboardDataset(
       isActive: s.isActive ?? s.active ?? true,
     }));
 
+    const upcomingParsed =
+      parseJsonArray((data as { upcomingBookings?: unknown }).upcomingBookings) ??
+      ((data as { upcomingBookings?: unknown }).upcomingBookings as unknown[] | undefined);
+    const upcomingBookings = (Array.isArray(upcomingParsed) ? upcomingParsed : []) as UpcomingBooking[];
+
+    const tenantRaw = (data as { tenant?: unknown }).tenant;
+    const tenantObj =
+      parseJsonObject(tenantRaw) ?? (tenantRaw && typeof tenantRaw === "object" && !Array.isArray(tenantRaw) ? tenantRaw : null);
+
+    const tenantSafe: DashboardDataset["tenant"] = tenantObj
+      ? (tenantObj as DashboardDataset["tenant"])
+      : {
+          id: tenant.id,
+          name: tenant.name ?? "Tu negocio",
+          timezone: tenant.timezone ?? "Europe/Madrid",
+        };
+
     return {
-      tenant: data.tenant,
-      kpis: validateDashboardKpis(normalizeKpisFromRpc(data.kpis)),
-      upcomingBookings: data.upcomingBookings || [],
+      tenant: tenantSafe,
+      kpis: validateDashboardKpis(normalizeKpisFromRpc((data as { kpis?: unknown }).kpis)),
+      upcomingBookings,
       staffMembers,
     };
   }
