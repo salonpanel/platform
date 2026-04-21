@@ -114,7 +114,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
       <nav
         ref={navRef}
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 md:hidden safe-area-pb",
+          "fixed bottom-0 left-0 right-0 z-50 md:hidden nav-inset-bottom",
           "shadow-[0_-1px_0_rgba(255,255,255,0.06)]"
         )}
         style={{
@@ -238,7 +238,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 320 }}
-              className="fixed bottom-0 left-0 right-0 z-[56] md:hidden safe-area-pb"
+              className="fixed bottom-0 left-0 right-0 z-[56] md:hidden nav-inset-bottom"
               style={{
                 background: "rgba(17, 33, 45, 0.98)",
                 backdropFilter: "blur(28px)",

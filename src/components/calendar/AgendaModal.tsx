@@ -352,7 +352,7 @@ export function AgendaModal({
                   "relative flex flex-col bg-[var(--bg-primary)] border",
                   "border-[var(--glass-border)] shadow-[var(--shadow-premium)]",
                   "backdrop-blur-md",
-                  drawerPosition === "bottom" && "max-w-full w-full mb-0 rounded-t-3xl max-h-[90vh] safe-area-pb",
+                  drawerPosition === "bottom" && "max-w-full w-full mb-0 rounded-t-3xl max-h-[90vh] nav-inset-bottom",
                   drawerPosition === "right" && "h-full max-w-md rounded-l-3xl",
                   className
                 )}

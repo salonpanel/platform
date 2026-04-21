@@ -74,7 +74,7 @@ export function BottomNavBar({ className }: BottomNavBarProps) {
           className={cn(
             "fixed bottom-0 left-0 right-0 z-50 md:hidden",
             "border-t border-[rgba(255,255,255,0.08)]",
-            "bg-[var(--bg-primary)]/98 backdrop-blur-xl safe-area-pb",
+            "bg-[var(--bg-primary)]/98 backdrop-blur-xl nav-inset-bottom",
             className
           )}
           style={{

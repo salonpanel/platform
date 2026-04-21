@@ -6,8 +6,14 @@
 :root {
   /* Fila táctil del tab bar (sin home indicator). Debe coincidir con MobileBottomNav (h-14). */
   --bottom-nav-height: 56px;
-  /* Espacio total bajo el scroll: fila + home indicator. MobileBottomNav refina vía ResizeObserver. */
-  --bottom-nav-offset: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+  /*
+    Zona bajo los iconos (home indicator / barra gestos). Algunos WebViews/Android
+    devuelven env(safe-area-inset-bottom) muy alto y generan un “hueco” enorme.
+    Limitamos a ~34px (similar a iPhone con notch) para no desperdiciar pantalla.
+  */
+  --bottom-nav-safe-inset: min(env(safe-area-inset-bottom, 0px), 34px);
+  /* Espacio total bajo el scroll: fila + inset. MobileBottomNav refina vía ResizeObserver. */
+  --bottom-nav-offset: calc(var(--bottom-nav-height) + var(--bottom-nav-safe-inset));
   /* ============================================================================
      NUEVO DESIGN SYSTEM - BookFast Platform
      Capsule Shapes + Soft Glass + Premium Gradients + Neo-Glow
@@ -801,6 +807,21 @@ select option {
 /* Safe area padding for mobile devices with notches */
 .safe-area-pb {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Tab bar móvil: mismo inset acotado que --bottom-nav-offset (evita banda vacía excesiva). */
+.nav-inset-bottom {
+  padding-bottom: var(--bottom-nav-safe-inset);
+}
+
+/*
+  Web app añadida a inicio (iPhone/Android): sin UI del navegador; sin padding extra
+  bajo los iconos del menú — solo la fila táctil (h-14).
+*/
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  :root {
+    --bottom-nav-safe-inset: 0px;
+  }
 }
 
 /* Footers de modales a pantalla completa (por encima del tab bar): padding base + home indicator */

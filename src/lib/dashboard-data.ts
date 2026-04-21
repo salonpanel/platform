@@ -84,6 +84,50 @@ export function createEmptyDashboardKpis(): DashboardKpis {
   return { ...EMPTY_DASHBOARD_KPIS };
 }
 
+/** Normaliza KPIs del RPC (get_dashboard_kpis / panel) a arrays numéricos de longitud fija. */
+export function normalizeKpisFromRpc(raw: unknown): DashboardKpis {
+  const k = raw as Record<string, unknown> | null | undefined;
+  const empty = createEmptyDashboardKpis();
+  if (!k || typeof k !== "object") return empty;
+
+  const to7 = (a: unknown): number[] => {
+    if (!Array.isArray(a)) return Array(7).fill(0);
+    const arr = a.map((v) => Number(v) || 0);
+    while (arr.length < 7) arr.push(0);
+    return arr.slice(0, 7);
+  };
+  const to30 = (a: unknown): number[] => {
+    if (!Array.isArray(a)) return Array(30).fill(0);
+    const arr = a.map((v) => Number(v) || 0);
+    while (arr.length < 30) arr.push(0);
+    return arr.slice(0, 30);
+  };
+
+  const num = (v: unknown) => (typeof v === "number" && !Number.isNaN(v) ? v : Number(v)) || 0;
+
+  return {
+    ...empty,
+    ...k,
+    bookingsLast7Days: to7(k.bookingsLast7Days),
+    bookingsLast30DaysByDay: to30(k.bookingsLast30DaysByDay),
+    bookingsToday: num(k.bookingsToday),
+    activeServices: num(k.activeServices),
+    activeStaff: num(k.activeStaff),
+    totalBookingsLast7Days: num(k.totalBookingsLast7Days),
+    totalBookingsLast30Days: num(k.totalBookingsLast30Days),
+    revenueToday: num(k.revenueToday),
+    revenueLast7Days: num(k.revenueLast7Days),
+    revenueLast30Days: num(k.revenueLast30Days),
+    noShowsLast7Days: num(k.noShowsLast7Days),
+    avgTicketLast7Days: num(k.avgTicketLast7Days),
+    avgTicketToday: num(k.avgTicketToday),
+    avgTicketLast30Days: num(k.avgTicketLast30Days),
+    occupancyTodayPercent: num(k.occupancyTodayPercent),
+    occupancyLast7DaysPercent: num(k.occupancyLast7DaysPercent),
+    occupancyLast30DaysPercent: num(k.occupancyLast30DaysPercent),
+  };
+}
+
 // Runtime validation helper for dashboard KPIs - development only
 export function validateDashboardKpis(kpis: DashboardKpis): DashboardKpis {
   if (process.env.NODE_ENV !== "development") return kpis;
@@ -241,7 +285,7 @@ export async function fetchDashboardDataset(
 
     return {
       tenant: data.tenant,
-      kpis: validateDashboardKpis(data.kpis),
+      kpis: validateDashboardKpis(normalizeKpisFromRpc(data.kpis)),
       upcomingBookings: data.upcomingBookings || [],
       staffMembers,
     };

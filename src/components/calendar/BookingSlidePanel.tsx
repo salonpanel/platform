@@ -215,7 +215,7 @@ export function BookingSlidePanel({
             className={cn(
               'fixed z-[56] flex flex-col',
               isMobile
-                ? 'inset-x-0 bottom-0 w-full max-h-[85vh] rounded-t-2xl safe-area-pb'
+                ? 'inset-x-0 bottom-0 w-full max-h-[85vh] rounded-t-2xl nav-inset-bottom'
                 : 'right-0 top-0 h-full w-[400px] rounded-none'
             )}
             style={{

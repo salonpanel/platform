@@ -184,7 +184,7 @@ export function MobileStaffSwitcher({
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 320 }}
-              className="fixed bottom-0 left-0 right-0 z-[56] rounded-t-3xl bg-[var(--bg-primary)] border-t border-[var(--glass-border)] safe-area-pb"
+              className="fixed bottom-0 left-0 right-0 z-[56] rounded-t-3xl bg-[var(--bg-primary)] border-t border-[var(--glass-border)] nav-inset-bottom"
             >
               {/* Handle */}
               <div className="flex justify-center pt-3 pb-1">

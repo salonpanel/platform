@@ -114,7 +114,12 @@ BEGIN
     tm.created_at,
     tm.edited_at,
     tm.deleted_at,
-    COALESCE(u.full_name, u.email, 'Usuario desconocido') AS author_name,
+    COALESCE(
+      NULLIF(trim(u.raw_user_meta_data->>'full_name'), ''),
+      NULLIF(trim(u.raw_user_meta_data->>'name'), ''),
+      NULLIF(split_part(u.email, '@', 1), ''),
+      'Usuario desconocido'
+    ) AS author_name,
     u.raw_user_meta_data->>'avatar_url' AS author_avatar,
     v_has_more_before,
     v_has_more_after

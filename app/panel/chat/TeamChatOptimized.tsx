@@ -104,6 +104,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 		return groupChat ? groupChat.id : initialData.conversations[0].id;
 	});
 	const [messagesByConversation, setMessagesByConversation] = useState<Record<string, TeamMessage[]>>({});
+	const [messagesLoadError, setMessagesLoadError] = useState<string | null>(null);
 	const [messagesLoading, setMessagesLoading] = useState(false);
 	const [hasMoreMessages, setHasMoreMessages] = useState<Record<string, boolean>>({}); // 🚀 Rastrear si hay más mensajes
 	const [membersByConversation, setMembersByConversation] = useState<Record<string, ConversationMember[]>>({});
@@ -147,6 +148,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 		setConversations(initialData.conversations);
 		setMembersDirectory(initialData.membersDirectory);
 		setMessagesByConversation({});
+		setMessagesLoadError(null);
 		setHasMoreMessages({});
 		setMembersByConversation({});
 		const groupChat = initialData.conversations.find((c) => c.type === "all");
@@ -256,6 +258,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 			}
 
 			setMessagesLoading(true);
+			setMessagesLoadError(null);
 			try {
 				// 🚀 OPTIMIZACIÓN: Usar get_conversation_messages_paginated RPC
 				const { data, error } = await supabase.rpc('get_conversation_messages_paginated', {
@@ -323,6 +326,9 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 					);
 				}
 			} catch (err) {
+				const msg =
+					err instanceof Error ? err.message : typeof err === "string" ? err : "Error al cargar mensajes";
+				setMessagesLoadError(msg);
 				console.error("[TeamChatOptimized] Error cargando mensajes", {
 					error: err,
 					message: err instanceof Error ? err.message : String(err),
@@ -525,6 +531,10 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 			supabase.removeChannel(channel);
 		};
 	}, [supabase, tenantId, selectedConversationId, currentUserId]);
+
+	useEffect(() => {
+		setMessagesLoadError(null);
+	}, [selectedConversationId]);
 
 	// Cargar mensajes cuando se selecciona conversación (undefined = aún no cargado)
 	useEffect(() => {
@@ -1000,6 +1010,11 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 								isMobile={isMobile}
 							/>
 							<div className="flex-1 min-h-0 relative">
+								{messagesLoadError && (
+									<div className="px-4 py-2 bg-red-500/10 border-b border-red-500/20 text-red-300 text-sm">
+										{messagesLoadError}
+									</div>
+								)}
 								<MessageList
 									messages={messagesForSelected}
 									currentUserId={currentUserId || ""}
