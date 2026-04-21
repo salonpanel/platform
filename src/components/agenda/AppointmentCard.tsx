@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Booking, BOOKING_STATUS_CONFIG } from "@/types/agenda";
+import { Booking, BOOKING_STATUS_CONFIG, getBookingPresentation } from "@/types/agenda";
 import { formatInTenantTz } from "@/lib/timezone";
 import { theme } from "@/theme/ui";
 import { getMotionSafeProps, interactionPresets } from "./motion/presets";
@@ -39,9 +39,10 @@ export function AppointmentCard({
   const startTime = formatInTenantTz(booking.starts_at, timezone, "HH:mm");
   const endTime = formatInTenantTz(booking.ends_at, timezone, "HH:mm");
   const statusConfig = BOOKING_STATUS_CONFIG[booking.status] || BOOKING_STATUS_CONFIG.pending;
+  const presentation = getBookingPresentation(booking);
 
   // Get theme-based status colors with fallbacks for missing statuses
-  const statusTokens = theme.statusTokens?.[booking.status as keyof typeof theme.statusTokens] || 
+  const statusTokens = theme.statusTokens?.[presentation.bookingState as keyof typeof theme.statusTokens] || 
     theme.statusTokens?.pending || {
       bg: "rgba(255, 193, 7, 0.12)",
       border: "rgba(255, 193, 7, 0.25)", 
@@ -112,6 +113,32 @@ export function AppointmentCard({
             <span className="text-[10px] text-[var(--text-tertiary)] truncate leading-none">
               {booking.service.name}
             </span>
+          )}
+
+          {/* Row 3: compact dual badges (only when requested) */}
+          {showStatus && (
+            <div className="flex items-center gap-1.5 mt-1">
+              <span
+                className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                style={{
+                  backgroundColor: presentation.bookingStateConfig.legendBg,
+                  color: presentation.bookingStateConfig.legendColor,
+                  border: `1px solid ${presentation.bookingStateConfig.legendBorder}`,
+                }}
+              >
+                {presentation.bookingStateConfig.label}
+              </span>
+              <span
+                className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                style={{
+                  backgroundColor: presentation.paymentStatusConfig.legendBg,
+                  color: presentation.paymentStatusConfig.legendColor,
+                  border: `1px solid ${presentation.paymentStatusConfig.legendBorder}`,
+                }}
+              >
+                {presentation.paymentStatusConfig.shortLabel}
+              </span>
+            </div>
           )}
         </div>
       </motion.div>

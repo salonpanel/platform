@@ -22,7 +22,7 @@ import {
 } from "@/hooks/useAgendaHandlers";
 import { useToast } from "@/components/ui/Toast";
 import type { AgendaDataset } from "@/lib/agenda-data";
-import type { Booking, CalendarSlot, ViewMode } from "@/types/agenda";
+import type { Booking, CalendarSlot, ViewMode, BookingState, PaymentStatus } from "@/types/agenda";
 import { BOOKING_STATUS_CONFIG } from "@/types/agenda";
 
 interface AgendaPageClientProps {
@@ -140,48 +140,52 @@ export default function AgendaPageClient({
     setFilters((prev) => ({ ...prev, staff: staffId ? [staffId] : ["all"] }));
   }, []);
 
-  // Real API calls for status/cancel
-  const handleStatusChange = useCallback(
-    async (bookingId: string, newStatus: string) => {
+  // Real API calls for dual-state updates
+  const handleBookingStateChange = useCallback(
+    async (bookingId: string, booking_state: BookingState) => {
       try {
         const res = await fetch("/api/panel/booking-status", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ bookingId, status: newStatus }),
+          body: JSON.stringify({ bookingId, booking_state }),
         });
         if (res.ok) {
-          const config = BOOKING_STATUS_CONFIG[newStatus as keyof typeof BOOKING_STATUS_CONFIG];
-          showToast(config ? `Estado: ${config.label}` : "Estado actualizado", "success");
+          showToast("Estado de la cita actualizado", "success");
           refreshDaySnapshots(selectedDate);
         } else {
-          showToast("Error al cambiar estado", "error");
+          showToast("Error al cambiar estado de la cita", "error");
         }
       } catch {
-        showToast("Error al cambiar estado", "error");
+        showToast("Error al cambiar estado de la cita", "error");
+      }
+    },
+    [refreshDaySnapshots, selectedDate, showToast]
+  );
+
+  const handlePaymentStatusChange = useCallback(
+    async (bookingId: string, payment_status: PaymentStatus) => {
+      try {
+        const res = await fetch("/api/panel/booking-status", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bookingId, payment_status }),
+        });
+        if (res.ok) {
+          showToast("Estado del pago actualizado", "success");
+          refreshDaySnapshots(selectedDate);
+        } else {
+          showToast("Error al cambiar estado del pago", "error");
+        }
+      } catch {
+        showToast("Error al cambiar estado del pago", "error");
       }
     },
     [refreshDaySnapshots, selectedDate, showToast]
   );
 
   const handleCancelBooking = useCallback(
-    async (bookingId: string) => {
-      try {
-        const res = await fetch("/api/panel/booking-status", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ bookingId, status: "cancelled" }),
-        });
-        if (res.ok) {
-          showToast("Cita cancelada", "success");
-          refreshDaySnapshots(selectedDate);
-        } else {
-          showToast("Error al cancelar la cita", "error");
-        }
-      } catch {
-        showToast("Error al cancelar la cita", "error");
-      }
-    },
-    [refreshDaySnapshots, selectedDate, showToast]
+    async (bookingId: string) => handleBookingStateChange(bookingId, "cancelled"),
+    [handleBookingStateChange]
   );
 
   const handleBookingSave = useCallback(
@@ -248,13 +252,18 @@ export default function AgendaPageClient({
   const filteredBookings = useMemo(() => {
     const term = debouncedSearchTerm.trim().toLowerCase();
     return bookings.filter((booking) => {
-      if (filters.status.length > 0 && !filters.status.includes(booking.status)) return false;
+      const bookingState = (booking.booking_state as string | null) ?? booking.status;
+      const paymentStatus =
+        (booking.payment_status as string | null) ??
+        (booking.status === "paid" || booking.status === "completed" ? "paid" : "unpaid");
+
+      if (filters.status.length > 0 && !filters.status.includes(bookingState)) return false;
       if (!filters.staff.includes("all") && filters.staff.length > 0) {
         if (!booking.staff_id || !filters.staff.includes(booking.staff_id)) return false;
       }
       if (filters.highlighted !== null && Boolean(booking.is_highlighted) !== filters.highlighted) return false;
-      if (filters.payment.includes("paid") && !(booking.status === "paid" || booking.status === "completed")) return false;
-      if (filters.payment.includes("unpaid") && !(booking.status === "pending" || booking.status === "hold")) return false;
+      if (filters.payment.includes("paid") && paymentStatus !== "paid") return false;
+      if (filters.payment.includes("unpaid") && paymentStatus !== "unpaid") return false;
       if (!term) return true;
       const haystack = [booking.customer?.name, booking.customer?.phone, booking.service?.name]
         .filter(Boolean).map((v) => v!.toLowerCase());
@@ -419,11 +428,16 @@ export default function AgendaPageClient({
               showToast("Mensajería: próximamente", "info");
               closeBookingPopover();
             }}
-            onStatusChange={(status) => {
-              handleStatusChange(bookingPopover.booking.id, status);
+            onBookingStateChange={(state) => {
+              handleBookingStateChange(bookingPopover.booking.id, state);
               closeBookingPopover();
             }}
-            currentStatus={bookingPopover.booking.status}
+            onPaymentStatusChange={(payment) => {
+              handlePaymentStatusChange(bookingPopover.booking.id, payment);
+              closeBookingPopover();
+            }}
+            currentBookingState={(bookingPopover.booking.booking_state as BookingState) || undefined}
+            currentPaymentStatus={(bookingPopover.booking.payment_status as PaymentStatus) || undefined}
             canCancel
           />
         )}
@@ -438,13 +452,8 @@ export default function AgendaPageClient({
             modals.openEditBookingModal(booking);
           }}
           onCancel={handleCancelBooking}
-          onStatusChange={(bookingId, newStatus) => {
-            // Panel already called the API — just show feedback and refresh
-            const config = BOOKING_STATUS_CONFIG[newStatus as keyof typeof BOOKING_STATUS_CONFIG];
-            const label = config ? config.label : newStatus;
-            showToast(newStatus === "cancelled" ? "Cita cancelada" : `Estado: ${label}`, newStatus === "cancelled" ? "error" : "success");
-            refreshDaySnapshots(selectedDate);
-          }}
+          onBookingStateChange={handleBookingStateChange}
+          onPaymentStatusChange={handlePaymentStatusChange}
           timezone={tenantTimezone}
         />
 

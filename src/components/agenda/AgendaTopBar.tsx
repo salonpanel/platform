@@ -158,97 +158,67 @@ export function AgendaTopBar({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.15 }}
     >
-      <div className="px-3 sm:px-4 py-2 sm:py-2.5 flex items-center gap-2 flex-nowrap">
+      <div className="px-3 sm:px-4 py-2 sm:py-2.5 flex flex-col sm:flex-row sm:items-center gap-2">
 
-        {/* ── Date display + stats ── */}
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <div
-            ref={datePickerRef}
-            className="relative flex items-center gap-2 min-w-0"
-          >
-            <button
-              onClick={() => setShowDatePicker(!showDatePicker)}
-              className="flex flex-col items-start min-w-0 group"
-              aria-label="Seleccionar fecha"
+        {/* ── Row 1 (mobile): Date + actions ── */}
+        <div className="flex items-start justify-between gap-2 min-w-0">
+          {/* Date display + stats */}
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div
+              ref={datePickerRef}
+              className="relative flex items-center gap-2 min-w-0"
             >
-              <span className={cn(
-                "text-sm font-semibold leading-tight truncate group-hover:text-white/80 transition-colors",
-                isToday ? "text-white" : "text-white/90"
-              )}>
-                <span className="truncate">{formatDateDisplay()}</span>
+              <button
+                onClick={() => setShowDatePicker(!showDatePicker)}
+                className="flex flex-col items-start min-w-0 group text-left"
+                aria-label="Seleccionar fecha"
+              >
+                <span
+                  className={cn(
+                    "text-sm font-semibold leading-tight truncate group-hover:text-white/80 transition-colors",
+                    isToday ? "text-white" : "text-white/90"
+                  )}
+                >
+                  <span className="truncate">{formatDateDisplay()}</span>
+                  {statsLine && (
+                    <span className="text-[11px] text-white/35 font-medium leading-tight ml-2 truncate hidden sm:inline">
+                      {statsLine}
+                    </span>
+                  )}
+                </span>
                 {statsLine && (
-                  <span className="text-[11px] text-white/35 font-medium leading-tight ml-2 truncate hidden sm:inline">
+                  <span className="text-[11px] text-white/35 font-medium leading-tight mt-0.5 sm:hidden truncate max-w-[16rem]">
                     {statsLine}
                   </span>
                 )}
-              </span>
-              {statsLine && (
-                <span className="text-[11px] text-white/35 font-medium leading-tight mt-0.5 sm:hidden truncate max-w-[16rem]">
-                  {statsLine}
-                </span>
-              )}
-            </button>
+              </button>
 
-            <AnimatePresence>
-              {showDatePicker && (
-                <motion.div
-                  initial={{ opacity: 0, y: 4, scale: 0.97 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 4, scale: 0.97 }}
-                  transition={{ duration: 0.12 }}
-                  className="absolute top-full mt-2 left-0 z-[80] rounded-xl bg-[#1A1B1F] border border-white/10 shadow-2xl p-3"
-                >
-                  <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => { onDateChange(e.target.value); setShowDatePicker(false); }}
-                    className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-[#4FE3C1]/50 focus:outline-none focus:ring-2 focus:ring-[#4FE3C1]/20"
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
+              <AnimatePresence>
+                {showDatePicker && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.97 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute top-full mt-2 left-0 z-[80] rounded-xl bg-[#1A1B1F] border border-white/10 shadow-2xl p-3"
+                  >
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => {
+                        onDateChange(e.target.value);
+                        setShowDatePicker(false);
+                      }}
+                      className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-[#4FE3C1]/50 focus:outline-none focus:ring-2 focus:ring-[#4FE3C1]/20"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
-        </div>
 
-        {/* ── Date navigation ── */}
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <motion.button
-            whileTap={{ scale: 0.94 }}
-            onClick={() => handleNavigate("prev")}
-            className="h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
-            aria-label="Fecha anterior"
-          >
-            <ChevronLeft className="h-3.5 w-3.5 text-white/70" />
-          </motion.button>
-
-          <motion.button
-            whileTap={{ scale: 0.94 }}
-            onClick={handleToday}
-            className={cn(
-              "px-2.5 h-8 rounded-xl text-xs font-semibold transition-all",
-              isToday
-                ? "bg-white/10 text-white border border-white/20"
-                : "bg-gradient-to-r from-[#4FE3C1] to-[#3A6DFF] text-[#0E0F11] shadow-[0_6px_20px_rgba(58,109,255,0.3)]"
-            )}
-          >
-            Hoy
-          </motion.button>
-
-          <motion.button
-            whileTap={{ scale: 0.94 }}
-            onClick={() => handleNavigate("next")}
-            className="h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
-            aria-label="Fecha siguiente"
-          >
-            <ChevronRight className="h-3.5 w-3.5 text-white/70" />
-          </motion.button>
-        </div>
-
-        {/* ── Divider ── */}
-        <div className="h-5 w-px bg-white/10 hidden sm:block flex-shrink-0" />
-
-        {/* ── Actions: search + bell ── */}
-        <div className="flex items-center gap-1 flex-shrink-0">
+          {/* Actions: search + bell */}
+          <div className="flex items-center gap-1 flex-shrink-0">
           <motion.button
             whileTap={{ scale: 0.94 }}
             onClick={onSearchClick}
@@ -277,13 +247,46 @@ export function AgendaTopBar({
           </motion.button>
         </div>
 
-        {/* ── Divider ── */}
-        <div className="h-5 w-px bg-white/10 hidden sm:block flex-shrink-0" />
+        {/* ── Row 2 (mobile): navigation + view + filters ── */}
+        <div className="flex items-center justify-between gap-2">
+          {/* Date navigation */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <motion.button
+              whileTap={{ scale: 0.94 }}
+              onClick={() => handleNavigate("prev")}
+              className="h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
+              aria-label="Fecha anterior"
+            >
+              <ChevronLeft className="h-3.5 w-3.5 text-white/70" />
+            </motion.button>
 
-        {/* ── View mode segmented control ── */}
-        <div className="flex-shrink-0">
-          {/* Desktop / tablet */}
-          <div className="hidden sm:flex items-center rounded-xl border border-white/10 bg-white/5 p-0.5 gap-0.5">
+            <motion.button
+              whileTap={{ scale: 0.94 }}
+              onClick={handleToday}
+              className={cn(
+                "px-2.5 h-8 rounded-xl text-xs font-semibold transition-all",
+                isToday
+                  ? "bg-white/10 text-white border border-white/20"
+                  : "bg-gradient-to-r from-[#4FE3C1] to-[#3A6DFF] text-[#0E0F11] shadow-[0_6px_20px_rgba(58,109,255,0.3)]"
+              )}
+            >
+              Hoy
+            </motion.button>
+
+            <motion.button
+              whileTap={{ scale: 0.94 }}
+              onClick={() => handleNavigate("next")}
+              className="h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
+              aria-label="Fecha siguiente"
+            >
+              <ChevronRight className="h-3.5 w-3.5 text-white/70" />
+            </motion.button>
+          </div>
+
+          {/* Right group: view + filters */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Desktop / tablet */}
+            <div className="hidden sm:flex items-center rounded-xl border border-white/10 bg-white/5 p-0.5 gap-0.5">
             {VIEW_MODES.map((mode) => (
               <motion.button
                 key={mode.key}
@@ -347,7 +350,7 @@ export function AgendaTopBar({
               )}
             </AnimatePresence>
           </div>
-        </div>
+          </div>
 
         {/* ── Filters button with combined dropdown ── */}
         <div ref={filtersRef} className="relative flex-shrink-0">
@@ -441,6 +444,8 @@ export function AgendaTopBar({
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
+          </div>
         </div>
 
       </div>

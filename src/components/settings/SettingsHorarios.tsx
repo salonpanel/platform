@@ -72,7 +72,7 @@ export function SettingsHorarios({ businessHours, onChange, onSave, isLoading }:
     >
       <div className="space-y-1">
         {/* Header row */}
-        <div className="grid grid-cols-[minmax(110px,1fr)_minmax(110px,140px)_minmax(110px,140px)_72px] gap-3 px-3 pb-1">
+        <div className="hidden sm:grid grid-cols-[minmax(140px,1fr)_minmax(110px,140px)_minmax(110px,140px)_72px] gap-3 px-4 pb-1">
           <span className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold">Día</span>
           <span className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold">Apertura</span>
           <span className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold">Cierre</span>
@@ -86,57 +86,112 @@ export function SettingsHorarios({ businessHours, onChange, onSave, isLoading }:
           return (
             <div
               key={day}
-              className={`grid grid-cols-[minmax(110px,1fr)_minmax(110px,140px)_minmax(110px,140px)_72px] gap-3 items-center rounded-xl px-3 py-2.5 transition-all duration-200 ${
+              className={`rounded-xl px-4 py-3 transition-all duration-200 ${
                 isClosed
                   ? "opacity-50 bg-white/2"
                   : "bg-white/5 hover:bg-white/8"
               }`}
             >
-              {/* Day label */}
-              <span className={`text-sm font-medium pr-2 ${isClosed ? "text-[var(--text-secondary)]" : "text-white"}`}>
-                {DAY_LABELS[day]}
-              </span>
-
-              {/* Open time */}
-              <select
-                value={schedule.open}
-                onChange={(e) => updateDay(day, "open", e.target.value)}
-                disabled={isClosed || isLoading}
-                className="h-9 w-full rounded-lg bg-white/8 border border-white/10 text-sm text-white px-2 focus:outline-none focus:border-[var(--accent-blue)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                {TIME_OPTIONS.map((t) => (
-                  <option key={t} value={t} className="bg-[#1a1a2e]">{t}</option>
-                ))}
-              </select>
-
-              {/* Close time */}
-              <select
-                value={schedule.close}
-                onChange={(e) => updateDay(day, "close", e.target.value)}
-                disabled={isClosed || isLoading}
-                className="h-9 w-full rounded-lg bg-white/8 border border-white/10 text-sm text-white px-2 focus:outline-none focus:border-[var(--accent-blue)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                {TIME_OPTIONS.map((t) => (
-                  <option key={t} value={t} className="bg-[#1a1a2e]">{t}</option>
-                ))}
-              </select>
-
-              {/* Closed toggle */}
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => updateDay(day, "is_closed", !isClosed)}
-                  disabled={isLoading}
-                  className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none disabled:cursor-not-allowed ${
-                    isClosed ? "bg-red-500/60" : "bg-white/20"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ${
-                      isClosed ? "translate-x-4.5" : "translate-x-0.5"
+              {/* Mobile: day + toggle on top, selects below. Desktop: single grid row */}
+              <div className="flex items-center justify-between gap-3 sm:hidden">
+                <span className={`text-sm font-medium ${isClosed ? "text-[var(--text-secondary)]" : "text-white"}`}>
+                  {DAY_LABELS[day]}
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-[var(--text-secondary)]">Cerrado</span>
+                  <button
+                    type="button"
+                    onClick={() => updateDay(day, "is_closed", !isClosed)}
+                    disabled={isLoading}
+                    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none disabled:cursor-not-allowed ${
+                      isClosed ? "bg-red-500/60" : "bg-white/20"
                     }`}
-                  />
-                </button>
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                        isClosed ? "translate-x-4.5" : "translate-x-0.5"
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-3 sm:hidden">
+                <div className="space-y-1">
+                  <p className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold">Apertura</p>
+                  <select
+                    value={schedule.open}
+                    onChange={(e) => updateDay(day, "open", e.target.value)}
+                    disabled={isClosed || isLoading}
+                    className="h-9 w-full rounded-lg bg-white/8 border border-white/10 text-sm text-white px-2 focus:outline-none focus:border-[var(--accent-blue)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {TIME_OPTIONS.map((t) => (
+                      <option key={t} value={t} className="bg-[#1a1a2e]">{t}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold">Cierre</p>
+                  <select
+                    value={schedule.close}
+                    onChange={(e) => updateDay(day, "close", e.target.value)}
+                    disabled={isClosed || isLoading}
+                    className="h-9 w-full rounded-lg bg-white/8 border border-white/10 text-sm text-white px-2 focus:outline-none focus:border-[var(--accent-blue)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {TIME_OPTIONS.map((t) => (
+                      <option key={t} value={t} className="bg-[#1a1a2e]">{t}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="hidden sm:grid grid-cols-[minmax(140px,1fr)_minmax(110px,140px)_minmax(110px,140px)_72px] gap-3 items-center">
+                {/* Day label */}
+                <span className={`text-sm font-medium ${isClosed ? "text-[var(--text-secondary)]" : "text-white"}`}>
+                  {DAY_LABELS[day]}
+                </span>
+
+                {/* Open time */}
+                <select
+                  value={schedule.open}
+                  onChange={(e) => updateDay(day, "open", e.target.value)}
+                  disabled={isClosed || isLoading}
+                  className="h-9 w-full rounded-lg bg-white/8 border border-white/10 text-sm text-white px-2 focus:outline-none focus:border-[var(--accent-blue)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {TIME_OPTIONS.map((t) => (
+                    <option key={t} value={t} className="bg-[#1a1a2e]">{t}</option>
+                  ))}
+                </select>
+
+                {/* Close time */}
+                <select
+                  value={schedule.close}
+                  onChange={(e) => updateDay(day, "close", e.target.value)}
+                  disabled={isClosed || isLoading}
+                  className="h-9 w-full rounded-lg bg-white/8 border border-white/10 text-sm text-white px-2 focus:outline-none focus:border-[var(--accent-blue)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {TIME_OPTIONS.map((t) => (
+                    <option key={t} value={t} className="bg-[#1a1a2e]">{t}</option>
+                  ))}
+                </select>
+
+                {/* Closed toggle */}
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => updateDay(day, "is_closed", !isClosed)}
+                    disabled={isLoading}
+                    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none disabled:cursor-not-allowed ${
+                      isClosed ? "bg-red-500/60" : "bg-white/20"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                        isClosed ? "translate-x-4.5" : "translate-x-0.5"
+                      }`}
+                    />
+                  </button>
+                </div>
               </div>
             </div>
           );

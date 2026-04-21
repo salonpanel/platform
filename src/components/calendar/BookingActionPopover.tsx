@@ -1,10 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Edit, X, MessageSquare, CheckCircle2, Circle } from "lucide-react";
+import { Edit, X, MessageSquare, Circle } from "lucide-react";
 import { GlassButton } from "@/components/ui/glass/GlassButton";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookingStatus, BOOKING_STATUS_CONFIG } from "@/types/agenda";
+import {
+  BookingState,
+  PaymentStatus,
+  BOOKING_STATE_CONFIG,
+  PAYMENT_STATUS_CONFIG,
+  getBookingStateFromLegacyStatus,
+  getPaymentStatusFromLegacyStatus,
+} from "@/types/agenda";
 import { GlassCard } from "@/components/agenda/primitives/GlassCard";
 import { theme } from "@/theme/ui";
 import { cn } from "@/lib/utils";
@@ -17,8 +24,10 @@ interface BookingActionPopoverProps {
   onEdit: () => void;
   onCancel: () => void;
   onSendMessage: () => void;
-  onStatusChange?: (newStatus: BookingStatus) => void;
-  currentStatus?: BookingStatus;
+  onBookingStateChange?: (newState: BookingState) => void;
+  onPaymentStatusChange?: (newPayment: PaymentStatus) => void;
+  currentBookingState?: BookingState;
+  currentPaymentStatus?: PaymentStatus;
   canCancel?: boolean;
 }
 
@@ -29,8 +38,10 @@ export function BookingActionPopover({
   onEdit,
   onCancel,
   onSendMessage,
-  onStatusChange,
-  currentStatus,
+  onBookingStateChange,
+  onPaymentStatusChange,
+  currentBookingState,
+  currentPaymentStatus,
   canCancel = true,
 }: BookingActionPopoverProps) {
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -155,7 +166,7 @@ export function BookingActionPopover({
               </motion.button>
 
               {/* Cambio rápido de estado */}
-              {onStatusChange && currentStatus && (
+              {(onBookingStateChange || onPaymentStatusChange) && (currentBookingState || currentPaymentStatus) && (
                 <>
                   <div className={cn("border-t my-1", "border-border-default")} />
                   <div className="px-2 py-1.5">
@@ -163,19 +174,56 @@ export function BookingActionPopover({
                       "text-xs font-semibold uppercase tracking-wider mb-1.5",
                       "text-tertiary font-sans"
                     )}>
-                      Cambiar estado
+                      Estado de la cita
                     </div>
                     <div className="flex flex-col gap-0.5">
-                      {(["pending", "paid", "completed", "cancelled", "no_show"] as BookingStatus[]).map((status) => {
-                        if (status === currentStatus) return null;
-                        const config = BOOKING_STATUS_CONFIG[status];
+                      {(Object.keys(BOOKING_STATE_CONFIG) as BookingState[]).map((state) => {
+                        if (!onBookingStateChange) return null;
+                        const current = currentBookingState ?? "pending";
+                        if (state === current) return null;
+                        const config = BOOKING_STATE_CONFIG[state];
                         return (
                           <motion.button
-                            key={status}
+                            key={state}
                             whileHover={{ x: 2, backgroundColor: theme.colors.bgGlass }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => {
-                              onStatusChange(status);
+                              onBookingStateChange(state);
+                              onClose();
+                            }}
+                            className={cn(
+                              "w-full flex items-center justify-start gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-150",
+                              "text-primary hover:bg-glass font-sans"
+                            )}
+                          >
+                            <Circle className="h-3 w-3" fill="currentColor" />
+                            {config.label}
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="px-2 pb-1.5">
+                    <div className={cn(
+                      "text-xs font-semibold uppercase tracking-wider mb-1.5",
+                      "text-tertiary font-sans"
+                    )}>
+                      Estado del pago
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      {(Object.keys(PAYMENT_STATUS_CONFIG) as PaymentStatus[]).map((payment) => {
+                        if (!onPaymentStatusChange) return null;
+                        const current = currentPaymentStatus ?? "unpaid";
+                        if (payment === current) return null;
+                        const config = PAYMENT_STATUS_CONFIG[payment];
+                        return (
+                          <motion.button
+                            key={payment}
+                            whileHover={{ x: 2, backgroundColor: theme.colors.bgGlass }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => {
+                              onPaymentStatusChange(payment);
                               onClose();
                             }}
                             className={cn(

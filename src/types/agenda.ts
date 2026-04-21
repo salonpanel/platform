@@ -2,7 +2,128 @@
  * Tipos centralizados para la Agenda
  */
 
+/**
+ * Legacy single-status field (still persisted for backwards compatibility).
+ * New UI should prefer `booking_state` + `payment_status`.
+ */
 export type BookingStatus = "hold" | "pending" | "confirmed" | "paid" | "completed" | "cancelled" | "no_show";
+
+export type BookingState = "pending" | "confirmed" | "in_progress" | "completed" | "cancelled" | "no_show";
+export type PaymentStatus = "unpaid" | "deposit" | "paid";
+
+export const BOOKING_STATE_CONFIG: Record<
+  BookingState,
+  {
+    label: string;
+    legendColor: string;
+    legendBg: string;
+    legendBorder: string;
+  }
+> = {
+  pending: {
+    label: "Pendiente",
+    legendColor: "#FFC107",
+    legendBg: "rgba(255,193,7,0.12)",
+    legendBorder: "rgba(255,193,7,0.35)",
+  },
+  confirmed: {
+    label: "Confirmada",
+    legendColor: "#38BDF8",
+    legendBg: "rgba(56,189,248,0.12)",
+    legendBorder: "rgba(56,189,248,0.35)",
+  },
+  in_progress: {
+    label: "En curso",
+    legendColor: "#A78BFA",
+    legendBg: "rgba(167,139,250,0.12)",
+    legendBorder: "rgba(167,139,250,0.35)",
+  },
+  completed: {
+    label: "Completada",
+    legendColor: "#4FE3C1",
+    legendBg: "rgba(79,227,193,0.12)",
+    legendBorder: "rgba(79,227,193,0.35)",
+  },
+  cancelled: {
+    label: "Cancelada",
+    legendColor: "#9CA3AF",
+    legendBg: "rgba(255,255,255,0.04)",
+    legendBorder: "rgba(255,255,255,0.12)",
+  },
+  no_show: {
+    label: "No se presentó",
+    legendColor: "#FF6DA3",
+    legendBg: "rgba(255,109,163,0.12)",
+    legendBorder: "rgba(255,109,163,0.35)",
+  },
+};
+
+export const PAYMENT_STATUS_CONFIG: Record<
+  PaymentStatus,
+  {
+    label: string;
+    legendColor: string;
+    legendBg: string;
+    legendBorder: string;
+    shortLabel: string;
+  }
+> = {
+  unpaid: {
+    label: "No pagado",
+    shortLabel: "No pagado",
+    legendColor: "#F59E0B",
+    legendBg: "rgba(245,158,11,0.12)",
+    legendBorder: "rgba(245,158,11,0.35)",
+  },
+  deposit: {
+    label: "Adelanto pagado",
+    shortLabel: "Adelanto",
+    legendColor: "#FB7185",
+    legendBg: "rgba(251,113,133,0.12)",
+    legendBorder: "rgba(251,113,133,0.35)",
+  },
+  paid: {
+    label: "Pagado",
+    shortLabel: "Pagado",
+    legendColor: "#3A6DFF",
+    legendBg: "rgba(58,109,255,0.12)",
+    legendBorder: "rgba(58,109,255,0.35)",
+  },
+};
+
+export function getBookingStateFromLegacyStatus(status: BookingStatus): BookingState {
+  switch (status) {
+    case "cancelled":
+      return "cancelled";
+    case "no_show":
+      return "no_show";
+    case "completed":
+      return "completed";
+    case "confirmed":
+      return "confirmed";
+    case "paid":
+      return "confirmed";
+    case "hold":
+    case "pending":
+    default:
+      return "pending";
+  }
+}
+
+export function getPaymentStatusFromLegacyStatus(status: BookingStatus): PaymentStatus {
+  return status === "paid" || status === "completed" ? "paid" : "unpaid";
+}
+
+export function getBookingPresentation(booking: Pick<Booking, "status" | "booking_state" | "payment_status">) {
+  const bookingState = booking.booking_state ?? getBookingStateFromLegacyStatus(booking.status);
+  const paymentStatus = booking.payment_status ?? getPaymentStatusFromLegacyStatus(booking.status);
+  return {
+    bookingState,
+    paymentStatus,
+    bookingStateConfig: BOOKING_STATE_CONFIG[bookingState],
+    paymentStatusConfig: PAYMENT_STATUS_CONFIG[paymentStatus],
+  };
+}
 
 export interface Booking {
   id: string;
@@ -10,6 +131,8 @@ export interface Booking {
   ends_at: string;
   appointment_id?: string | null;
   status: BookingStatus;
+  booking_state?: BookingState | null;
+  payment_status?: PaymentStatus | null;
   customer_id: string | null;
   service_id: string | null;
   staff_id: string | null;

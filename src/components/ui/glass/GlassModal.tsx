@@ -15,6 +15,11 @@ interface GlassModalProps {
     children: React.ReactNode;
     footer?: React.ReactNode;
     size?: "sm" | "md" | "lg" | "xl" | "full";
+    /**
+     * If true, on mobile the modal behaves like a bottom-sheet (not fullscreen),
+     * avoiding safe-area overlaps near the status bar / notch.
+     */
+    mobileSheet?: boolean;
     className?: string;
 }
 
@@ -26,6 +31,7 @@ export function GlassModal({
     children,
     footer,
     size = "md",
+    mobileSheet = false,
     className,
 }: GlassModalProps) {
     // Prevent body scroll when modal is open
@@ -57,6 +63,14 @@ export function GlassModal({
         full: "max-w-full m-4 h-[calc(100vh-2rem)]",
     };
 
+    const mobileContainer = mobileSheet
+        ? "w-full h-auto max-h-[85vh] mb-3 pointer-events-auto"
+        : "w-full h-full md:h-auto pointer-events-auto";
+
+    const mobileCard = mobileSheet
+        ? "flex flex-col h-auto max-h-[85vh]"
+        : "flex flex-col h-full md:max-h-[85vh]";
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -78,13 +92,13 @@ export function GlassModal({
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
                             transition={{ duration: 0.2 }}
                             className={cn(
-                                "w-full h-full md:h-auto pointer-events-auto",
+                                mobileContainer,
                                 sizes[size],
                                 "md:rounded-xl rounded-t-xl overflow-hidden"
                             )}
                         >
                             <GlassCard
-                                className={cn("flex flex-col h-full md:max-h-[85vh]", className)}
+                                className={cn(mobileCard, className)}
                                 noPadding
                             >
                                 {/* Header */}

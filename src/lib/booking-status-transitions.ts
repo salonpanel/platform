@@ -2,13 +2,16 @@
  * Lógica de transiciones automáticas de estados de booking
  * 
  * Reglas de negocio:
- * - "paid" -> "completed": Cuando la hora de fin (ends_at) ha pasado
- * - "hold" -> "pending": Cuando expira el TTL (si está implementado)
- * - "pending" -> "paid": Solo manual o mediante webhook de pago (Stripe)
- * - "paid"/"completed" -> "cancelled": Solo manual (con restricciones)
+ * Nuevo modelo:
+ * - booking_state: pending | confirmed | in_progress | completed | cancelled | no_show
+ * - payment_status: unpaid | deposit | paid
+ *
+ * Reglas principales:
+ * - Cuando el pago está en "paid" y ends_at ya pasó, sugerimos booking_state="completed"
+ * - Cambios a cancelled/no_show solo manual (UI)
  */
 
-import { Booking, BookingStatus } from "@/types/agenda";
+import { Booking, BookingState, BookingStatus, getBookingPresentation } from "@/types/agenda";
 import { parseISO, isPast } from "date-fns";
 
 /**
@@ -21,18 +24,19 @@ export function getAutoTransitionStatus(
   booking: Booking,
   currentTime: Date = new Date()
 ): BookingStatus | null {
+  const presentation = getBookingPresentation(booking);
+
   // Solo evaluar transiciones automáticas para ciertos estados
   if (
-    booking.status === "cancelled" ||
-    booking.status === "no_show" ||
-    booking.status === "confirmed"
+    presentation.bookingState === "cancelled" ||
+    presentation.bookingState === "no_show"
   ) {
     // Estados finales o gestionados externamente (portal), no cambian automáticamente
     return null;
   }
 
-  // Regla 1: "paid" -> "completed" cuando pasa la hora de fin
-  if (booking.status === "paid") {
+  // Regla: si está pagada y ya terminó, sugerir completed (legacy status)
+  if (presentation.paymentStatus === "paid" && presentation.bookingState !== "completed") {
     const endsAt = parseISO(booking.ends_at);
     if (isPast(endsAt)) {
       return "completed";

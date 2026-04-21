@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Clock, User, Scissors, Euro } from "lucide-react";
-import { Booking, BOOKING_STATUS_CONFIG } from "@/types/agenda";
+import { Booking, BOOKING_STATUS_CONFIG, getBookingPresentation } from "@/types/agenda";
 import { formatInTenantTz } from "@/lib/timezone";
 import { getMotionSafeProps, interactionPresets } from "./motion/presets";
 import { cn } from "@/lib/utils";
@@ -39,6 +39,7 @@ export function BookingCard({
   const startTime = formatInTenantTz(booking.starts_at, timezone, "HH:mm");
   const endTime = formatInTenantTz(booking.ends_at, timezone, "HH:mm");
   const statusConfig = BOOKING_STATUS_CONFIG[booking.status] || BOOKING_STATUS_CONFIG.pending;
+  const presentation = getBookingPresentation(booking);
 
   // Evitar mostrar citas fantasma sin cliente ni servicio asociado
   if (!booking.customer && !booking.service) {
@@ -60,44 +61,22 @@ export function BookingCard({
 
   // Status color mapping with consistent tokens
   const getStatusColors = () => {
-    switch (booking.status) {
+    // Use new booking_state as primary visual language
+    switch (presentation.bookingState) {
       case "completed":
-        return {
-          bg: "bg-sky-400/10",
-          border: "border-sky-400/50",
-          text: "text-sky-100",
-          accent: "bg-sky-400"
-        };
-      case "paid":
-        return {
-          bg: "bg-cyan-400/15",
-          border: "border-cyan-400/60",
-          text: "text-cyan-50",
-          accent: "bg-cyan-300"
-        };
+        return { bg: "bg-emerald-400/12", border: "border-emerald-300/40", text: "text-emerald-50", accent: "bg-emerald-300" };
+      case "in_progress":
+        return { bg: "bg-violet-400/12", border: "border-violet-300/40", text: "text-violet-50", accent: "bg-violet-300" };
+      case "confirmed":
+        return { bg: "bg-sky-400/12", border: "border-sky-300/40", text: "text-sky-50", accent: "bg-sky-300" };
       case "pending":
-      case "hold":
-        return {
-          bg: "bg-amber-400/15",
-          border: "border-amber-300/60",
-          text: "text-amber-50",
-          accent: "bg-amber-300"
-        };
+        return { bg: "bg-amber-400/12", border: "border-amber-300/40", text: "text-amber-50", accent: "bg-amber-300" };
       case "cancelled":
+        return { bg: "bg-slate-400/10", border: "border-white/10", text: "text-slate-200", accent: "bg-slate-400" };
       case "no_show":
-        return {
-          bg: booking.status === "no_show" ? "bg-pink-400/15" : "bg-red-500/15",
-          border: booking.status === "no_show" ? "border-pink-300/60" : "border-red-400/60",
-          text: booking.status === "no_show" ? "text-pink-50" : "text-red-50",
-          accent: booking.status === "no_show" ? "bg-pink-300" : "bg-red-400"
-        };
+        return { bg: "bg-rose-400/12", border: "border-rose-300/40", text: "text-rose-50", accent: "bg-rose-300" };
       default:
-        return {
-          bg: "bg-slate-500/15",
-          border: "border-slate-400/60",
-          text: "text-slate-100",
-          accent: "bg-slate-300"
-        };
+        return { bg: "bg-slate-500/10", border: "border-white/10", text: "text-slate-200", accent: "bg-slate-400" };
     }
   };
 
@@ -209,7 +188,20 @@ export function BookingCard({
                 statusColors.text
               )}
             >
-              {statusConfig.label}
+              {presentation.bookingStateConfig.label}
+            </div>
+
+            {/* Payment badge (compact) */}
+            <div
+              className="px-1.5 py-0.5 rounded-lg text-[10px] font-medium whitespace-nowrap flex-shrink-0"
+              style={{
+                backgroundColor: presentation.paymentStatusConfig.legendBg,
+                color: presentation.paymentStatusConfig.legendColor,
+                border: `1px solid ${presentation.paymentStatusConfig.legendBorder}`,
+              }}
+              aria-label={`Pago: ${presentation.paymentStatusConfig.label}`}
+            >
+              {presentation.paymentStatusConfig.shortLabel}
             </div>
           </div>
 

@@ -12,7 +12,7 @@ import {
   Calendar as CalendarIcon,
 } from 'lucide-react';
 import { formatInTenantTz } from '@/lib/timezone';
-import { Booking, BOOKING_STATUS_CONFIG } from '@/types/agenda';
+import { Booking, BOOKING_STATUS_CONFIG, getBookingPresentation, BookingState, PaymentStatus } from '@/types/agenda';
 import { cn } from '@/lib/utils';
 
 export interface BookingSlidePanelProps {
@@ -21,7 +21,8 @@ export interface BookingSlidePanelProps {
   onClose: () => void;
   onEdit?: (booking: Booking) => void;
   onCancel?: (bookingId: string) => void;
-  onStatusChange?: (bookingId: string, newStatus: string) => void;
+  onBookingStateChange?: (bookingId: string, newState: BookingState) => void;
+  onPaymentStatusChange?: (bookingId: string, newPayment: PaymentStatus) => void;
   timezone: string;
 }
 
@@ -31,7 +32,8 @@ export function BookingSlidePanel({
   onClose,
   onEdit,
   onCancel,
-  onStatusChange,
+  onBookingStateChange,
+  onPaymentStatusChange,
   timezone,
 }: BookingSlidePanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -39,25 +41,22 @@ export function BookingSlidePanel({
   const [statusLoading, setStatusLoading] = useState<string | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
-  // Cambiar estado de la reserva
-  const handleStatusChange = async (newStatus: string) => {
-    if (!booking) return;
-    setStatusLoading(newStatus);
+  const applyBookingState = async (newState: BookingState) => {
+    if (!booking || !onBookingStateChange) return;
+    setStatusLoading(newState);
     try {
-      const res = await fetch("/api/panel/booking-status", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookingId: booking.id, status: newStatus }),
-      });
-      if (res.ok) {
-        onStatusChange?.(booking.id, newStatus);
-        onClose();
-      } else {
-        const errorData = await res.json();
-        console.error("[BookingSlidePanel] status change error:", errorData);
-      }
-    } catch (e) {
-      console.error("[BookingSlidePanel] status change error:", e);
+      await onBookingStateChange(booking.id, newState);
+      onClose();
+    } finally {
+      setStatusLoading(null);
+    }
+  };
+
+  const applyPaymentStatus = async (newPayment: PaymentStatus) => {
+    if (!booking || !onPaymentStatusChange) return;
+    setStatusLoading(newPayment);
+    try {
+      await onPaymentStatusChange(booking.id, newPayment);
     } finally {
       setStatusLoading(null);
     }
@@ -161,9 +160,11 @@ export function BookingSlidePanel({
   const formattedStartTime = formatInTenantTz(booking.starts_at, timezone, 'HH:mm');
   const formattedEndTime = formatInTenantTz(booking.ends_at, timezone, 'HH:mm');
 
-  const statusConfig = BOOKING_STATUS_CONFIG[booking.status];
-  const statusLabel = statusConfig?.label || booking.status;
-  const statusLegendColor = statusConfig?.legendColor || '#9ca3af';
+  const presentation = getBookingPresentation(booking);
+  const statusLabel = presentation.bookingStateConfig.label;
+  const statusLegendColor = presentation.bookingStateConfig.legendColor;
+  const paymentLabel = presentation.paymentStatusConfig.shortLabel;
+  const paymentLegendColor = presentation.paymentStatusConfig.legendColor;
 
   const panelVariants = {
     desktop: {
@@ -248,6 +249,16 @@ export function BookingSlidePanel({
                   }}
                 >
                   {statusLabel}
+                </div>
+                <div
+                  className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium"
+                  style={{
+                    backgroundColor: `${paymentLegendColor}20`,
+                    color: paymentLegendColor,
+                    border: `1px solid ${paymentLegendColor}40`,
+                  }}
+                >
+                  {paymentLabel}
                 </div>
 
                 {/* Close Button */}
@@ -471,55 +482,26 @@ export function BookingSlidePanel({
             {/* Footer */}
             <div className="border-t border-[var(--glass-border-subtle)] px-5 py-4 space-y-2" style={{ backgroundColor: 'rgba(0,0,0,0.2)' }}>
 
-              {/* Status Quick Actions — contextual based on current status */}
-              {booking.status === "pending" && (
+              {/* Quick actions (dual-state) */}
+              {onPaymentStatusChange && presentation.paymentStatus !== "paid" && presentation.bookingState !== "cancelled" && presentation.bookingState !== "no_show" && (
                 <button
-                  onClick={() => handleStatusChange("paid")}
-                  disabled={statusLoading !== null}
-                  className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: 'rgba(79,227,193,0.15)', color: '#4FE3C1', border: '1px solid rgba(79,227,193,0.3)' }}
-                  onMouseEnter={(e) => {
-                    if (!statusLoading) e.currentTarget.style.backgroundColor = 'rgba(79,227,193,0.25)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(79,227,193,0.15)';
-                  }}
-                >
-                  {statusLoading === "paid" ? "..." : "✓ Marcar como pagado"}
-                </button>
-              )}
-
-              {booking.status === "paid" && (
-                <button
-                  onClick={() => handleStatusChange("completed")}
+                  onClick={() => applyPaymentStatus("paid")}
                   disabled={statusLoading !== null}
                   className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ backgroundColor: 'rgba(58,109,255,0.15)', color: 'var(--accent-blue)', border: '1px solid rgba(58,109,255,0.3)' }}
-                  onMouseEnter={(e) => {
-                    if (!statusLoading) e.currentTarget.style.backgroundColor = 'rgba(58,109,255,0.25)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(58,109,255,0.15)';
-                  }}
                 >
-                  {statusLoading === "completed" ? "..." : "✓ Completar cita"}
+                  ✓ Marcar pago como pagado
                 </button>
               )}
 
-              {booking.status === "hold" && (
+              {onBookingStateChange && presentation.bookingState !== "completed" && presentation.bookingState !== "cancelled" && presentation.bookingState !== "no_show" && (
                 <button
-                  onClick={() => handleStatusChange("pending")}
+                  onClick={() => applyBookingState("completed")}
                   disabled={statusLoading !== null}
                   className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: 'rgba(255,193,7,0.12)', color: '#FFC107', border: '1px solid rgba(255,193,7,0.3)' }}
-                  onMouseEnter={(e) => {
-                    if (!statusLoading) e.currentTarget.style.backgroundColor = 'rgba(255,193,7,0.22)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255,193,7,0.12)';
-                  }}
+                  style={{ backgroundColor: 'rgba(79,227,193,0.15)', color: '#4FE3C1', border: '1px solid rgba(79,227,193,0.3)' }}
                 >
-                  {statusLoading === "pending" ? "..." : "Confirmar reserva"}
+                  ✓ Marcar cita como completada
                 </button>
               )}
 
@@ -567,7 +549,7 @@ export function BookingSlidePanel({
                       No, volver
                     </button>
                     <button
-                      onClick={() => handleStatusChange("cancelled")}
+                      onClick={() => applyBookingState("cancelled")}
                       disabled={statusLoading !== null}
                       className="flex-1 rounded-md px-3 py-1.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.4)' }}

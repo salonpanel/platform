@@ -19,6 +19,8 @@ DECLARE
   v_start_at timestamptz;
   v_end_at timestamptz;
   v_status text;
+  v_booking_state text;
+  v_payment_status text;
   v_internal_notes text;
   v_client_message text;
   v_is_highlighted boolean;
@@ -32,9 +34,45 @@ BEGIN
   v_start_at := (p_booking->>'starts_at')::timestamptz;
   v_end_at := (p_booking->>'ends_at')::timestamptz;
   v_status := COALESCE(NULLIF(p_booking->>'status', ''), 'confirmed');
+  v_booking_state := COALESCE(NULLIF(p_booking->>'booking_state', ''), NULLIF(p_booking->>'state', ''), NULL);
+  v_payment_status := COALESCE(NULLIF(p_booking->>'payment_status', ''), NULLIF(p_booking->>'payment', ''), NULL);
   v_internal_notes := NULLIF(p_booking->>'internal_notes', '');
   v_client_message := NULLIF(p_booking->>'client_message', '');
   v_is_highlighted := COALESCE((p_booking->>'is_highlighted')::boolean, false);
+
+  -- Normalize dual-state model from legacy "status" when not provided
+  if v_booking_state is null then
+    v_booking_state :=
+      case
+        when v_status = 'cancelled' then 'cancelled'
+        when v_status = 'no_show' then 'no_show'
+        when v_status = 'completed' then 'completed'
+        when v_status = 'confirmed' then 'confirmed'
+        when v_status = 'paid' then 'confirmed'
+        when v_status = 'pending' then 'pending'
+        when v_status = 'hold' then 'pending'
+        else 'pending'
+      end;
+  end if;
+
+  if v_payment_status is null then
+    v_payment_status :=
+      case
+        when v_status in ('paid', 'completed') then 'paid'
+        else 'unpaid'
+      end;
+  end if;
+
+  -- Keep legacy status loosely in sync (for older UI paths)
+  v_status :=
+    case
+      when v_booking_state in ('cancelled','no_show') then v_booking_state
+      when v_booking_state = 'completed' then 'completed'
+      when v_payment_status = 'paid' then 'paid'
+      when v_booking_state in ('confirmed','in_progress') then 'confirmed'
+      when v_payment_status = 'deposit' then 'confirmed'
+      else 'pending'
+    end;
 
   -- Conflict validation (exclude self when editing)
   IF EXISTS (
@@ -63,6 +101,8 @@ BEGIN
       starts_at = v_start_at,
       ends_at = v_end_at,
       status = v_status,
+      booking_state = v_booking_state,
+      payment_status = v_payment_status,
       internal_notes = v_internal_notes,
       client_message = v_client_message,
       is_highlighted = v_is_highlighted,
@@ -87,6 +127,8 @@ BEGIN
     starts_at,
     ends_at,
     status,
+    booking_state,
+    payment_status,
     internal_notes,
     client_message,
     is_highlighted
@@ -98,6 +140,8 @@ BEGIN
     v_start_at,
     v_end_at,
     v_status,
+    v_booking_state,
+    v_payment_status,
     v_internal_notes,
     v_client_message,
     v_is_highlighted

@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import type { Booking, BookingStatus } from "@/types/agenda";
+import type { BookingState, PaymentStatus } from "@/types/agenda";
 
 export interface BookingMutationPayload {
   id?: string;
@@ -12,7 +13,13 @@ export interface BookingMutationPayload {
   staff_id: string;
   starts_at: string;
   ends_at: string;
+  /**
+   * Legacy single status (kept for compatibility).
+   * Prefer `booking_state` + `payment_status`.
+   */
   status?: BookingStatus;
+  booking_state?: BookingState;
+  payment_status?: PaymentStatus;
   internal_notes?: string | null;
   client_message?: string | null;
   is_highlighted?: boolean;

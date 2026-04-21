@@ -3,7 +3,7 @@
 import React from "react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
-import { Booking } from "@/types/agenda";
+import { Booking, getBookingPresentation } from "@/types/agenda";
 import { cn } from "@/lib/utils";
 import { getMotionSafeProps } from "../motion/presets";
 
@@ -17,18 +17,16 @@ interface AppointmentCardProps {
   onMouseDown?: (e: React.MouseEvent, booking: Booking, top: number) => void;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  hold: "#FFC107",
+const STATE_COLORS: Record<string, string> = {
   pending: "#FFC107",
   confirmed: "#38BDF8",
-  paid: "#3A6DFF",
+  in_progress: "#A78BFA",
   completed: "#4FE3C1",
-  cancelled: "#EF4444",
+  cancelled: "#9CA3AF",
   no_show: "#FF6DA3",
 };
 
-const getStatusColor = (status: string) =>
-  STATUS_COLORS[status] || STATUS_COLORS.pending;
+const getStateColor = (state: string) => STATE_COLORS[state] || STATE_COLORS.pending;
 
 const getInitials = (name: string | null | undefined): string => {
   if (!name) return "?";
@@ -54,7 +52,8 @@ export const AppointmentCard = React.memo(function AppointmentCard({
   const localEndsAt = new Date(endsAt.toLocaleString("en-US", { timeZone: timezone }));
 
   const isPast = localEndsAt < new Date();
-  const statusColor = getStatusColor(booking.status);
+  const presentation = getBookingPresentation(booking);
+  const statusColor = getStateColor(presentation.bookingState);
   const isUltraSmall = height < 40;
   const isSmall = height < 55;
   const isLarge = height >= 90;
@@ -165,6 +164,22 @@ export const AppointmentCard = React.memo(function AppointmentCard({
               </span>
             )}
           </div>
+
+          {/* Payment microbadge (only when enough space) */}
+          {!isSmall && (
+            <div className="mt-1 flex items-center gap-2">
+              <span
+                className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                style={{
+                  backgroundColor: presentation.paymentStatusConfig.legendBg,
+                  color: presentation.paymentStatusConfig.legendColor,
+                  border: `1px solid ${presentation.paymentStatusConfig.legendBorder}`,
+                }}
+              >
+                {presentation.paymentStatusConfig.shortLabel}
+              </span>
+            </div>
+          )}
 
           {/* Service */}
           {!isSmall && (

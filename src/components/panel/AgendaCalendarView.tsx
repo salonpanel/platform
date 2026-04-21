@@ -10,7 +10,17 @@ import { BookingMoveConfirmModal } from "@/components/calendar/BookingMoveConfir
 import { BookingResizeConfirmModal } from "@/components/calendar/BookingResizeConfirmModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { toTenantLocalDate } from "@/lib/timezone";
-import { Booking, Staff, StaffBlocking, StaffSchedule, BookingStatus, CalendarSlot } from "@/types/agenda";
+import {
+  Booking,
+  Staff,
+  StaffBlocking,
+  StaffSchedule,
+  BookingState,
+  PaymentStatus,
+  CalendarSlot,
+  getBookingStateFromLegacyStatus,
+  getPaymentStatusFromLegacyStatus,
+} from "@/types/agenda";
 import { GlassCard } from "@/components/agenda/primitives/GlassCard";
 import { theme } from "@/theme/ui";
 import { cn } from "@/lib/utils";
@@ -36,7 +46,8 @@ interface AgendaCalendarViewProps {
   onBookingEdit?: (booking: Booking) => void;
   onBookingCancel?: (bookingId: string) => void;
   onBookingSendMessage?: (booking: Booking) => void;
-  onBookingStatusChange?: (bookingId: string, newStatus: BookingStatus) => void;
+  onBookingStateChange?: (bookingId: string, newState: BookingState) => void;
+  onPaymentStatusChange?: (bookingId: string, newPayment: PaymentStatus) => void;
   canCancel?: boolean;
 }
 
@@ -110,7 +121,8 @@ export function AgendaCalendarView({
   onBookingEdit,
   onBookingCancel,
   onBookingSendMessage,
-  onBookingStatusChange,
+  onBookingStateChange,
+  onPaymentStatusChange,
   canCancel = true,
 }: AgendaCalendarViewProps) {
 
@@ -1309,13 +1321,26 @@ export function AgendaCalendarView({
             }
             setBookingActionPopover({ isOpen: false, position: { x: 0, y: 0 }, booking: null });
           }}
-          onStatusChange={(newStatus) => {
+          onBookingStateChange={(newState) => {
             if (bookingActionPopover.booking) {
-              onBookingStatusChange?.(bookingActionPopover.booking.id, newStatus);
+              onBookingStateChange?.(bookingActionPopover.booking.id, newState);
             }
             setBookingActionPopover({ isOpen: false, position: { x: 0, y: 0 }, booking: null });
           }}
-          currentStatus={bookingActionPopover.booking?.status}
+          onPaymentStatusChange={(newPayment) => {
+            if (bookingActionPopover.booking) {
+              onPaymentStatusChange?.(bookingActionPopover.booking.id, newPayment);
+            }
+            setBookingActionPopover({ isOpen: false, position: { x: 0, y: 0 }, booking: null });
+          }}
+          currentBookingState={
+            bookingActionPopover.booking.booking_state ??
+            getBookingStateFromLegacyStatus(bookingActionPopover.booking.status)
+          }
+          currentPaymentStatus={
+            bookingActionPopover.booking.payment_status ??
+            getPaymentStatusFromLegacyStatus(bookingActionPopover.booking.status)
+          }
           canCancel={canCancel}
         />
       )}

@@ -2,13 +2,31 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClientForServer } from "@/lib/supabase/server-client";
 import { supabaseServer } from "@/lib/supabase";
 import { z } from "zod";
-import { BookingStatus } from "@/types/agenda";
+import { BookingStatus, BookingState, PaymentStatus } from "@/types/agenda";
 import { isValidStatusTransition } from "@/lib/booking-status-transitions";
 
-const BookingStatusSchema = z.object({
-  bookingId: z.string().uuid("ID de reserva inválido"),
-  status: z.enum(["hold", "pending", "confirmed", "paid", "completed", "cancelled", "no_show"] as const),
-});
+const BookingUpdateSchema = z
+  .object({
+    bookingId: z.string().uuid("ID de reserva inválido"),
+    // Legacy single status
+    status: z.enum(["hold", "pending", "confirmed", "paid", "completed", "cancelled", "no_show"] as const).optional(),
+    // New dual-state model
+    booking_state: z.enum(["pending", "confirmed", "in_progress", "completed", "cancelled", "no_show"] as const).optional(),
+    payment_status: z.enum(["unpaid", "deposit", "paid"] as const).optional(),
+  })
+  .refine((v) => Boolean(v.status || v.booking_state || v.payment_status), {
+    message: "Debes enviar status o booking_state o payment_status",
+  });
+
+function deriveLegacyStatus(input: { booking_state: BookingState; payment_status: PaymentStatus }): BookingStatus {
+  const { booking_state, payment_status } = input;
+  if (booking_state === "cancelled") return "cancelled";
+  if (booking_state === "no_show") return "no_show";
+  if (booking_state === "completed") return "completed";
+  if (payment_status === "paid") return "paid";
+  if (booking_state === "confirmed") return "confirmed";
+  return "pending";
+}
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -39,7 +57,7 @@ export async function PATCH(request: NextRequest) {
 
     // ── 3. Validar body ───────────────────────────────────────────────────────
     const body = await request.json();
-    const parseResult = BookingStatusSchema.safeParse(body);
+    const parseResult = BookingUpdateSchema.safeParse(body);
 
     if (!parseResult.success) {
       const message =
@@ -48,13 +66,13 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: message }, { status: 400 });
     }
 
-    const { bookingId, status: newStatus } = parseResult.data;
+    const { bookingId, status: newStatusLegacy, booking_state, payment_status } = parseResult.data;
     const adminClient = supabaseServer();
 
     // ── 4. Verificar que el booking pertenece al tenant y obtener estado actual ─
     const { data: currentBooking, error: fetchError } = await (adminClient as any)
       .from("bookings")
-      .select("id, status, tenant_id")
+      .select("id, status, tenant_id, booking_state, payment_status")
       .eq("id", bookingId)
       .eq("tenant_id", tenantId)
       .single();
@@ -66,23 +84,49 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // ── 5. Validar que la transición de estado es permitida ───────────────────
     const currentStatus = currentBooking.status as BookingStatus;
-    if (!isValidStatusTransition(currentStatus, newStatus, true)) {
+    const nextBookingState: BookingState =
+      (booking_state as BookingState) ??
+      (currentBooking.booking_state as BookingState) ??
+      (currentStatus === "cancelled"
+        ? "cancelled"
+        : currentStatus === "no_show"
+          ? "no_show"
+          : currentStatus === "completed"
+            ? "completed"
+            : currentStatus === "confirmed"
+              ? "confirmed"
+              : "pending");
+    const nextPaymentStatus: PaymentStatus =
+      (payment_status as PaymentStatus) ??
+      (currentBooking.payment_status as PaymentStatus) ??
+      (currentStatus === "paid" || currentStatus === "completed" ? "paid" : "unpaid");
+
+    const nextLegacyStatus: BookingStatus = newStatusLegacy
+      ? (newStatusLegacy as BookingStatus)
+      : deriveLegacyStatus({ booking_state: nextBookingState, payment_status: nextPaymentStatus });
+
+    // ── 5. Validar transición legacy (solo si nos llega status explícito) ─────
+    if (newStatusLegacy && !isValidStatusTransition(currentStatus, nextLegacyStatus, true)) {
       return NextResponse.json(
         {
-          error: `Transición de estado no permitida: ${currentStatus} → ${newStatus}`,
+          error: `Transición de estado no permitida: ${currentStatus} → ${nextLegacyStatus}`,
         },
         { status: 422 }
       );
     }
 
-    // ── 6. Aplicar el cambio de estado ────────────────────────────────────────
+    // ── 6. Aplicar cambios ────────────────────────────────────────────────────
     const { data, error } = await (adminClient as any)
       .from("bookings")
-      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .update({
+        status: nextLegacyStatus,
+        booking_state: nextBookingState,
+        payment_status: nextPaymentStatus,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", bookingId)
-      .select("id, status")
+      .select("id, status, booking_state, payment_status")
       .single();
 
     if (error) {

@@ -864,6 +864,7 @@ export function ServiciosClient({
         title="Filtros"
         description="Estado, orden y precio"
         size="md"
+        mobileSheet
         footer={
           <div className="flex w-full items-center justify-between gap-2">
             <GlassButton

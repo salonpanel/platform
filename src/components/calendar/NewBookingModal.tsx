@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { AgendaModal } from "@/components/calendar/AgendaModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { useToast } from "@/components/ui/Toast";
-import type { Booking, Staff } from "@/types/agenda";
+import type { Booking, Staff, BookingState, PaymentStatus } from "@/types/agenda";
 import type { Service as PlatformService } from "@/types/services";
 import type { BookingMutationPayload, SaveBookingResult } from "@/hooks/useAgendaHandlers";
 import { useCustomerSearch, type CustomerLite } from "@/hooks/useCustomerSearch";
@@ -30,7 +30,8 @@ interface NewBookingModalProps {
   tenantId: string;
 }
 
-const DEFAULT_STATUS: Booking["status"] = "pending";
+const DEFAULT_BOOKING_STATE: BookingState = "pending";
+const DEFAULT_PAYMENT_STATUS: PaymentStatus = "unpaid";
 
 export function NewBookingModal({
   isOpen,
@@ -61,7 +62,8 @@ export function NewBookingModal({
   const [staffId, setStaffId] = useState(selectedStaffId || "");
   const [bookingDate, setBookingDate] = useState(selectedDate);
   const [bookingTime, setBookingTime] = useState(selectedTime || "09:00");
-  const [status, setStatus] = useState<Booking["status"]>(DEFAULT_STATUS);
+  const [bookingState, setBookingState] = useState<BookingState>(DEFAULT_BOOKING_STATE);
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(DEFAULT_PAYMENT_STATUS);
   const [internalNotes, setInternalNotes] = useState("");
   const [clientMessage, setClientMessage] = useState("");
   const [isHighlighted, setIsHighlighted] = useState(false);
@@ -95,7 +97,8 @@ export function NewBookingModal({
 
       setServiceId(editingBooking.service_id || "");
       setStaffId(editingBooking.staff_id || "");
-      setStatus(editingBooking.status || DEFAULT_STATUS);
+      setBookingState((editingBooking.booking_state as BookingState) || "confirmed");
+      setPaymentStatus((editingBooking.payment_status as PaymentStatus) || (editingBooking.status === "paid" || editingBooking.status === "completed" ? "paid" : "unpaid"));
       setInternalNotes(editingBooking.internal_notes || "");
       setClientMessage(editingBooking.client_message || "");
       setIsHighlighted(Boolean(editingBooking.is_highlighted));
@@ -107,7 +110,8 @@ export function NewBookingModal({
       setSelectedCustomer(null);
       setServiceId("");
       setStaffId(selectedStaffId || "");
-      setStatus(DEFAULT_STATUS);
+      setBookingState(DEFAULT_BOOKING_STATE);
+      setPaymentStatus(DEFAULT_PAYMENT_STATUS);
       setInternalNotes("");
       setClientMessage("");
       setIsHighlighted(false);
@@ -154,7 +158,8 @@ export function NewBookingModal({
       staff_id: staffId,
       starts_at: startDate.toISOString(),
       ends_at: endDate.toISOString(),
-      status,
+      booking_state: bookingState,
+      payment_status: paymentStatus,
       internal_notes: internalNotes.trim() || null,
       client_message: clientMessage.trim() || null,
       is_highlighted: isHighlighted,
@@ -352,17 +357,30 @@ export function NewBookingModal({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-semibold text-white mb-2">Estado</label>
+                  <label className="text-sm font-semibold text-white mb-2">Estado de la cita</label>
                   <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as Booking["status"])}
+                    value={bookingState}
+                    onChange={(e) => setBookingState(e.target.value as BookingState)}
                     className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white"
                   >
-                    {(["pending", "paid", "completed", "cancelled", "no_show", "hold"] as Booking["status"][]).map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
+                    <option value="pending">Pendiente</option>
+                    <option value="confirmed">Confirmada</option>
+                    <option value="in_progress">En curso</option>
+                    <option value="completed">Completada</option>
+                    <option value="cancelled">Cancelada</option>
+                    <option value="no_show">No se presentó</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-white mb-2">Estado del pago</label>
+                  <select
+                    value={paymentStatus}
+                    onChange={(e) => setPaymentStatus(e.target.value as PaymentStatus)}
+                    className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white"
+                  >
+                    <option value="unpaid">No pagado</option>
+                    <option value="deposit">Adelanto pagado</option>
+                    <option value="paid">Pagado</option>
                   </select>
                 </div>
                 <div className="flex items-center gap-3 pt-6">
