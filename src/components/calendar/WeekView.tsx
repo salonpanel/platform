@@ -454,6 +454,8 @@ export const WeekView = React.memo(function WeekView({
     prevProps.selectedDate === nextProps.selectedDate &&
     prevProps.timezone === nextProps.timezone &&
     prevProps.staffList.length === nextProps.staffList.length &&
+    prevProps.mobileSelectedStaffId === nextProps.mobileSelectedStaffId &&
+    prevProps.onMobileStaffChange === nextProps.onMobileStaffChange &&
     prevProps.onBookingClick === nextProps.onBookingClick &&
     prevProps.onPopoverShow === nextProps.onPopoverShow &&
     prevProps.onBookingContextMenu === nextProps.onBookingContextMenu
