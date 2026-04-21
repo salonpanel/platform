@@ -13,7 +13,7 @@ import {
   CustomerBookingsTimeline,
   type CustomerBooking,
 } from "@/components/panel/CustomerBookingsTimeline";
-import { useCurrentTenantWithImpersonation } from "@/hooks/useCurrentTenantWithImpersonation";
+import { useTenant } from "@/contexts/TenantContext";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { logCustomerAudit } from "@/lib/panel/audit";
 
@@ -42,12 +42,9 @@ function ClienteDetailContent() {
   const params = useParams();
   const router = useRouter();
   const customerId = params.id as string;
-  const {
-    tenantId,
-    tenantTimezone,
-    loadingTenant,
-    tenantError,
-  } = useCurrentTenantWithImpersonation();
+  const { tenant, isLoading: tenantLoading } = useTenant();
+  const tenantId = tenant?.id ?? null;
+  const tenantTimezone = tenant?.timezone ?? "Europe/Madrid";
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [bookings, setBookings] = useState<CustomerBooking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -415,7 +412,7 @@ function ClienteDetailContent() {
     }
   };
 
-  if (loadingTenant || loading) {
+  if (tenantLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-white/20" />
@@ -423,12 +420,15 @@ function ClienteDetailContent() {
     );
   }
 
-  if (tenantError && !tenantId) {
+  if (!tenantId) {
     return (
       <GlassCard className="border-red-500/50 bg-red-500/10">
         <div className="text-red-400 p-4">
           <h3 className="mb-2 font-semibold">Error</h3>
-          <p className="text-sm">{tenantError}</p>
+          <p className="text-sm">
+            No se pudo determinar el negocio activo. Vuelve al panel y selecciona un
+            negocio, o recarga la página.
+          </p>
         </div>
         <div className="p-4 pt-0">
           <Link href="/panel/clientes">
@@ -438,6 +438,14 @@ function ClienteDetailContent() {
           </Link>
         </div>
       </GlassCard>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-white/20" />
+      </div>
     );
   }
 

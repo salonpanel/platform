@@ -946,9 +946,10 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 								onBack={() => setMobileView('list')}
 								isMobile={isMobile}
 							/>
-							<div className="flex-1 min-h-0 relative">
+							{/* flex-col + overflow: el hijo MessageList necesita un flex parent para que flex-1 limite altura y el scroll funcione */}
+							<div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
 								{messagesLoadError && (
-									<div className="px-4 py-2 bg-red-500/10 border-b border-red-500/20 text-red-300 text-sm">
+									<div className="shrink-0 border-b border-red-500/20 bg-red-500/10 px-4 py-2 text-sm text-red-300">
 										{messagesLoadError}
 									</div>
 								)}
@@ -972,7 +973,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 								/>
 							</div>
 							{selectedConversation.status === "pending_direct" ? (
-								<div className="p-10 border-t border-white/5 bg-[#202c33] flex flex-col items-center text-center">
+								<div className="flex shrink-0 flex-col items-center border-t border-white/5 bg-[#202c33] p-10 text-center">
 									<div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
 										<UserX className="h-8 w-8 text-[#8696a0]" />
 									</div>
@@ -984,9 +985,9 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 									</p>
 								</div>
 							) : (
-								<>
+								<div className="shrink-0 border-t border-white/5 bg-[#0b141a]/95">
 									{pendingAttachments.length > 0 && (
-										<div className="border-t border-white/5 bg-transparent px-4 py-3">
+										<div className="bg-transparent px-4 py-3">
 											<div className="flex items-center gap-2 overflow-x-auto">
 												{pendingAttachments.map((att) => {
 													const isImage = att.file.type.startsWith("image/");
@@ -1055,7 +1056,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 										multiple
 										accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"
 									/>
-								</>
+								</div>
 							)}
 						</GlassCard>
 					) : (

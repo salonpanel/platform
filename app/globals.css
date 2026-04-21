@@ -824,7 +824,8 @@ select option {
   padding-top: max(env(safe-area-inset-top, 0px), 1.25rem);
 }
 
-/* Área principal: hueco bajo el scroll = altura del tab bar fijo (sin inset extra). */
+/* Área principal: hueco bajo el scroll = altura real del tab bar (ResizeObserver; suele incluir home indicator). */
+/* Márgenes izquierda/derecha con notch: `PageContainer` usa max(env(safe-area-inset-*), clamp(...)). */
 .pb-nav-safe {
   padding-bottom: var(--bottom-nav-offset);
 }

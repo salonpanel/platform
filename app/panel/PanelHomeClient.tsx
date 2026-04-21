@@ -421,8 +421,8 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
         transition={{ duration: 0.2 }}
         className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
       >
-        {/* Container principal - OPTIMIZADO para viewport */}
-        <div className="w-full px-3 sm:px-4 lg:px-6 py-2 sm:py-3">
+        {/* Container: sin px extra (PageContainer ya aplica clamp); ritmo vertical por viewport */}
+        <div className="w-full min-w-0 max-w-full px-0 py-2.5 min-[400px]:py-3 sm:py-4">
 
           {/* ═══════════════════════════════════════════════════════════════
               FILA 1: HERO HEADER (flotante, sin card)
@@ -431,35 +431,35 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-4"
+            className="flex flex-col min-[520px]:flex-row min-[520px]:items-center min-[520px]:justify-between gap-3 min-[520px]:gap-4 mb-4 sm:mb-5"
           >
-            <div>
-              <h1 className="text-[22px] sm:text-[26px] font-semibold text-white tracking-tight leading-[1.2] mb-0.5">
+            <div className="min-w-0">
+              <h1 className="text-[clamp(1.25rem,4.5vw,1.625rem)] font-semibold text-white tracking-tight leading-tight mb-1">
                 Hola, {userName} 👋
               </h1>
-              <p className="text-[11px] sm:text-[12px] text-[var(--text-secondary)]">
+              <p className="text-[11px] min-[400px]:text-xs text-[var(--text-secondary)]">
                 {todayLabel} {shouldShowTimezone && `· ${tenantTimezone}`}
               </p>
             </div>
 
-            {/* Estado del día + Selector de periodo */}
-            <div className="flex items-center gap-2.5">
-              <div className={cn("px-2 py-1 rounded-full text-[10px] font-medium", dayStatus.color)}>
+            {/* Estado del día + Selector de periodo (wrap + táctil en viewports estrechos) */}
+            <div className="flex flex-wrap items-center gap-2 min-[400px]:gap-2.5 shrink-0">
+              <div className={cn("inline-flex items-center min-h-9 px-2.5 py-1 rounded-full text-[10px] min-[400px]:text-[11px] font-medium", dayStatus.color)}>
                 {dayStatus.label}
               </div>
 
               {/* Selector de periodo */}
-              <div className="inline-flex items-center rounded-full bg-[var(--bg-card)]/60 backdrop-blur-xl p-0.5 text-[11px] sm:text-[12px] border border-white/10">
+              <div className="inline-flex items-center min-h-11 rounded-full bg-[var(--bg-card)]/60 backdrop-blur-xl p-0.5 text-[11px] sm:text-xs border border-white/10">
                 {periodOptions.map((option) => (
                   <button
                     key={option.id}
                     type="button"
                     onClick={() => setPeriod(option.id as "today" | "week" | "month")}
                     className={cn(
-                      "px-2.5 sm:px-3 py-1 rounded-full transition-all duration-150",
+                      "min-h-10 min-w-[2.75rem] px-3 sm:px-3.5 py-2 rounded-full transition-all duration-150 lg:min-h-0 lg:min-w-0 lg:py-1",
                       period === option.id
                         ? "bg-white text-slate-900 font-semibold shadow-sm"
-                        : "text-[var(--text-secondary)] hover:text-white"
+                        : "text-[var(--text-secondary)] hover:text-white active:bg-white/10"
                     )}
                   >
                     {option.label}
@@ -474,13 +474,13 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             animate="visible"
             variants={sectionVariants}
             transition={{ duration: 0.2, delay: 0.05 }}
-            className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mb-5"
+            className="grid grid-cols-1 min-[400px]:grid-cols-2 lg:grid-cols-4 gap-3 min-[480px]:gap-3.5 lg:gap-4 mb-4 sm:mb-5"
           >
             {/* KPI: Reservas - Label dinámico según periodo */}
             <motion.div
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(79,227,193,0.12)" }}
               onClick={() => router.push("/panel/agenda")}
-              className="cursor-pointer glass rounded-xl p-2.5 sm:p-3 border border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.03] transition-all duration-200"
+              className="cursor-pointer glass rounded-xl p-3.5 sm:p-4 border border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.03] transition-all duration-200"
             >
               <div className="flex items-center gap-2 mb-2">
                 <div className="p-1.5 rounded-lg bg-emerald-500/15">
@@ -494,8 +494,8 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                   {bookingsKPI.trend === 'up' ? '↑' : bookingsKPI.trend === 'down' ? '↓' : '~'}
                 </span>
               </div>
-              <div className="text-[22px] sm:text-[26px] font-bold text-white leading-[1.2] mb-0.5">{bookingsKPI.value}</div>
-              <div className="text-[11px] sm:text-[12px] text-[var(--text-secondary)] uppercase tracking-wider">
+              <div className="text-[clamp(1.25rem,4vw,1.625rem)] font-bold text-white leading-tight mb-0.5">{bookingsKPI.value}</div>
+              <div className="text-[11px] min-[400px]:text-xs text-[var(--text-secondary)] uppercase tracking-wider">
                 {period === 'today' ? 'Reservas hoy' : period === 'week' ? 'Reservas 7d' : 'Reservas 30d'}
               </div>
             </motion.div>
@@ -504,7 +504,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             <motion.div
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(52,211,153,0.12)" }}
               onClick={() => router.push("/panel/monedero")}
-              className="cursor-pointer glass rounded-xl p-3 sm:p-4 border border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.03] transition-all duration-200"
+              className="cursor-pointer glass rounded-xl p-3.5 sm:p-4 border border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.03] transition-all duration-200"
             >
               <div className="flex items-center gap-2 mb-2">
                 <div className="p-1.5 rounded-lg bg-emerald-500/15">
@@ -518,8 +518,8 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                   {revenueKPI.trend === 'up' ? '↑' : revenueKPI.trend === 'down' ? '↓' : '~'}
                 </span>
               </div>
-              <div className="text-[22px] sm:text-[26px] font-bold text-white leading-[1.2] mb-0.5">{revenueKPI.value}</div>
-              <div className="text-[11px] sm:text-[12px] text-[var(--text-secondary)] uppercase tracking-wider">
+              <div className="text-[clamp(1.25rem,4vw,1.625rem)] font-bold text-white leading-tight mb-0.5">{revenueKPI.value}</div>
+              <div className="text-[11px] min-[400px]:text-xs text-[var(--text-secondary)] uppercase tracking-wider">
                 {period === 'today' ? 'Ingresos hoy' : period === 'week' ? 'Ingresos 7d' : 'Ingresos 30d'}
               </div>
             </motion.div>
@@ -528,7 +528,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             <motion.div
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(59,130,246,0.12)" }}
               onClick={() => router.push("/panel/agenda")}
-              className="cursor-pointer glass rounded-xl p-3 sm:p-4 border border-white/10 hover:border-blue-500/30 hover:bg-white/[0.03] transition-all duration-200"
+              className="cursor-pointer glass rounded-xl p-3.5 sm:p-4 border border-white/10 hover:border-blue-500/30 hover:bg-white/[0.03] transition-all duration-200"
             >
               <div className="flex items-center gap-2 mb-2">
                 <div className="p-1.5 rounded-lg bg-blue-500/15">
@@ -538,32 +538,63 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                   {staffMembers.length} prof.
                 </span>
               </div>
-              <div className="text-[22px] sm:text-[26px] font-bold text-white leading-[1.2] mb-0.5">
+              <div className="text-[clamp(1.25rem,4vw,1.625rem)] font-bold text-white leading-tight mb-0.5">
                 {currentOccupancy}%
               </div>
-              <div className="text-[11px] sm:text-[12px] text-[var(--text-secondary)] uppercase tracking-wider">{getOccupancyLabel(period)}</div>
+              <div className="text-[11px] min-[400px]:text-xs text-[var(--text-secondary)] uppercase tracking-wider">{getOccupancyLabel(period)}</div>
             </motion.div>
 
             {/* KPI: Ticket medio - Siempre 7 días (referencia estable) */}
             <motion.div
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(168,85,247,0.12)" }}
               onClick={() => router.push("/panel/monedero")}
-              className="cursor-pointer glass rounded-xl p-3 sm:p-4 border border-white/10 hover:border-purple-500/30 hover:bg-white/[0.03] transition-all duration-200"
+              className="cursor-pointer glass rounded-xl p-3.5 sm:p-4 border border-white/10 hover:border-purple-500/30 hover:bg-white/[0.03] transition-all duration-200"
             >
               <div className="flex items-center gap-2 mb-2">
                 <div className="p-1.5 rounded-lg bg-purple-500/15">
                   <Sparkles className="h-3.5 w-3.5 text-purple-400" />
                 </div>
               </div>
-              <div className="text-[22px] sm:text-[26px] font-bold text-white leading-[1.2] mb-0.5">{formatCurrency(currentAvgTicket)}</div>
-              <div className="text-[11px] sm:text-[12px] text-[var(--text-secondary)] uppercase tracking-wider">{getTicketLabel(period)}</div>
+              <div className="text-[clamp(1.25rem,4vw,1.625rem)] font-bold text-white leading-tight mb-0.5">{formatCurrency(currentAvgTicket)}</div>
+              <div className="text-[11px] min-[400px]:text-xs text-[var(--text-secondary)] uppercase tracking-wider">{getTicketLabel(period)}</div>
             </motion.div>
           </motion.div>
+
+          {/* Atajos si sidebar/Acciones no están: solo por breakpoint (ancho útil), no por dispositivo */}
+          <div className="lg:hidden mb-4 sm:mb-5 flex flex-col flex-wrap gap-2 min-[440px]:flex-row min-[440px]:items-stretch">
+            <motion.button
+              whileTap={{ scale: 0.99 }}
+              type="button"
+              onClick={() => openCreate()}
+              className="flex min-h-12 w-full min-[440px]:flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600/90 to-emerald-500/90 px-4 py-3 text-sm font-semibold text-white shadow-sm active:opacity-95"
+            >
+              <Plus className="h-4 w-4 shrink-0" />
+              Nueva cita
+            </motion.button>
+            <div className="grid grid-cols-2 gap-2 min-[440px]:contents min-[440px]:gap-2">
+              <button
+                type="button"
+                onClick={() => router.push("/panel/agenda")}
+                className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2.5 text-xs font-medium text-white active:bg-white/10 min-[440px]:min-w-[7.5rem]"
+              >
+                <Calendar className="h-4 w-4 text-emerald-400/90" />
+                Agenda
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/panel/clientes")}
+                className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2.5 text-xs font-medium text-white active:bg-white/10 min-[440px]:min-w-[7.5rem]"
+              >
+                <User className="h-4 w-4 text-blue-400/90" />
+                Clientes
+              </button>
+            </div>
+          </div>
 
           {/* ═══════════════════════════════════════════════════════════════
               GRID PRINCIPAL - Responsive: stack en móvil, 12 cols en desktop
               ═══════════════════════════════════════════════════════════════ */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 mb-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-5 mb-4 sm:mb-5">
 
             {/* ═══════════════════════════════════════════════════════════════
                 FILA 3: PRÓXIMAS RESERVAS (8/12) + STAFF (4/12)
@@ -576,7 +607,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
               animate="visible"
               variants={sectionVariants}
               transition={{ duration: 0.2, delay: 0.1 }}
-              className="lg:col-span-8"
+              className="hidden lg:block lg:col-span-8"
               whileHover={{ boxShadow: "0 12px 40px rgba(0,0,0,0.2)" }}
             >
               <div className="glass rounded-xl border border-white/10 hover:border-white/15 transition-all overflow-hidden">
@@ -669,11 +700,11 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
               whileHover={{ boxShadow: "0 12px 40px rgba(0,0,0,0.2)" }}
             >
               <div className="glass rounded-xl border border-white/10 hover:border-white/15 transition-all overflow-hidden h-full flex flex-col">
-                <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
-                  <h2 className="text-[14px] sm:text-[15px] font-semibold text-white">Staff hoy</h2>
+                <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-2 border-b border-white/10">
+                  <h2 className="text-sm min-[400px]:text-[15px] font-semibold text-white">Staff hoy</h2>
                   <span className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">{staffMembers.length} activo{staffMembers.length !== 1 ? 's' : ''}</span>
                 </div>
-                <div className="px-2.5 py-2 flex-1">
+                <div className="px-2.5 sm:px-3 py-2 flex-1">
                   {staffMembers.length > 0 ? (
                     <div className="divide-y divide-white/[0.06]">
                       {staffMembers.slice(0, 4).map((staff: any, i: number) => {
@@ -681,7 +712,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                         const occ = staff.occupancyPercent || 0;
                         const initial = staff.name?.charAt(0)?.toUpperCase() || "?";
                         return (
-                          <div key={staff.id} className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
+                          <div key={staff.id} className="flex items-center justify-between py-2.5 sm:py-2 lg:py-2 first:pt-0 last:pb-0 min-h-[3rem] sm:min-h-0">
                             <div className="flex items-center gap-2">
                               {staff.avatar_url ? (
                                 <img src={staff.avatar_url} alt={staff.name} className="w-6 h-6 rounded-full object-cover" />
@@ -722,7 +753,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
           {/* ═══════════════════════════════════════════════════════════════
               FILA 4: PERFORMANCE (8/12) + ACCIONES (4/12)
               ═══════════════════════════════════════════════════════════════ */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-5 pb-1 md:pb-0">
             {/* Performance - COMPACTADO */}
             <motion.div
               initial="hidden"
@@ -733,26 +764,28 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
               whileHover={{ boxShadow: "0 12px 40px rgba(0,0,0,0.2)" }}
             >
               <div className="glass rounded-xl border border-white/10 hover:border-white/15 transition-all overflow-hidden">
-                <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
-                  <h2 className="text-[14px] sm:text-[15px] font-semibold text-white">Performance</h2>
-                  <div className="flex gap-0.5">
+                <div className="flex items-center justify-between gap-2 px-3 sm:px-4 py-2.5 sm:py-2 border-b border-white/10">
+                  <h2 className="text-sm min-[400px]:text-[15px] font-semibold text-white">Performance</h2>
+                  <div className="flex shrink-0 gap-1">
                     <button
+                      type="button"
                       onClick={() => setPerformancePeriod("7d")}
                       className={cn(
-                        "px-1.5 py-0.5 text-[9px] sm:text-[10px] rounded-lg transition-colors",
-                        performancePeriod === "7d" ? "bg-white/10 text-white font-medium" : "bg-white/5 text-[var(--text-secondary)] hover:bg-white/10"
+                        "min-h-9 min-w-[2.5rem] px-2 py-1.5 text-[10px] sm:text-[11px] rounded-lg transition-colors lg:min-h-0",
+                        performancePeriod === "7d" ? "bg-white/10 text-white font-medium" : "bg-white/5 text-[var(--text-secondary)] hover:bg-white/10 active:bg-white/15"
                       )}
                     >7d</button>
                     <button
+                      type="button"
                       onClick={() => setPerformancePeriod("30d")}
                       className={cn(
-                        "px-1.5 py-0.5 text-[9px] sm:text-[10px] rounded-lg transition-colors",
-                        performancePeriod === "30d" ? "bg-white/10 text-white font-medium" : "bg-white/5 text-[var(--text-secondary)] hover:bg-white/10"
+                        "min-h-9 min-w-[2.5rem] px-2 py-1.5 text-[10px] sm:text-[11px] rounded-lg transition-colors lg:min-h-0",
+                        performancePeriod === "30d" ? "bg-white/10 text-white font-medium" : "bg-white/5 text-[var(--text-secondary)] hover:bg-white/10 active:bg-white/15"
                       )}
                     >30d</button>
                   </div>
                 </div>
-                <div className="px-3 py-2">
+                <div className="px-3 sm:px-4 py-2.5 sm:py-3">
                   {/* Header del gráfico con divisor */}
                   <div className="flex items-center justify-between pb-1.5 border-b border-white/[0.06] mb-2">
                     <div>
@@ -769,10 +802,10 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                     </div>
                   </div>
 
-                  {/* Gráfico de barras - max-w-[85%] centrado */}
-                  <div className="max-w-[85%] mx-auto">
+                  {/* Gráfico: ancho fluido según viewport (no solo "móvil/desktop") */}
+                  <div className="w-full max-w-full min-[420px]:max-w-[92%] sm:max-w-[88%] lg:max-w-[85%] mx-auto">
                     {showChartBars ? (
-                      <div className="flex items-end gap-1 h-16 sm:h-20 mb-2">
+                      <div className="flex items-end gap-0.5 min-[400px]:gap-1 h-[4.25rem] min-[480px]:h-20 sm:h-24 mb-2 sm:mb-3">
                         {bookingValues.map((count: number, index: number) => {
                           const height = chartMax > 0 ? (count / chartMax) * 100 : 0;
                           return (
@@ -828,13 +861,13 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
               </div>
             </motion.div>
 
-            {/* Acciones - COMPACTADO */}
+            {/* Acciones - solo desktop (móvil: simplificar UI) */}
             <motion.div
               initial="hidden"
               animate="visible"
               variants={sectionVariants}
               transition={{ duration: 0.2, delay: 0.25 }}
-              className="lg:col-span-4"
+              className="hidden lg:block lg:col-span-4"
               whileHover={{ boxShadow: "0 12px 40px rgba(0,0,0,0.2)" }}
             >
               <div className="glass rounded-xl border border-white/10 hover:border-white/15 transition-all overflow-hidden h-full">

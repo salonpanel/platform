@@ -53,7 +53,7 @@ export function NewBookingModal({
 
   const [activeTab, setActiveTab] = useState<"details" | "notes">("details");
   const fieldBaseClass =
-    "w-full rounded-[12px] border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all";
+    "w-full min-w-0 max-w-full rounded-[12px] border border-white/10 bg-white/5 px-3 sm:px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all h-11 box-border";
 
   // New Customer Search Logic
   const { query, setQuery, results, loading: searching, search } = useCustomerSearch(tenantId);
@@ -385,9 +385,10 @@ export function NewBookingModal({
                   )}
                 </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-white mb-2">Fecha</label>
+              {/* Fecha + hora + duración: grid sin anidar (evita solapes). Móvil: fecha ancho completo, hora|duración 50/50. sm+: 3 columnas iguales */}
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-4">
+                <div className="col-span-2 sm:col-span-1 min-w-0 flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-white shrink-0">Fecha</label>
                   <input
                     type="date"
                     value={bookingDate}
@@ -395,31 +396,29 @@ export function NewBookingModal({
                     className={fieldBaseClass}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="min-w-0">
-                    <label className="text-sm font-semibold text-white mb-2">Hora inicio</label>
-                    <input
-                      type="time"
-                      value={bookingTime}
-                      onChange={(e) => setBookingTime(e.target.value)}
-                      className={fieldBaseClass}
-                    />
-                  </div>
-                  <div className="min-w-0">
-                    <label className="text-sm font-semibold text-white mb-2">Duración (min)</label>
-                    <input
-                      type="number"
-                      min={5}
-                      step={5}
-                      value={durationMin}
-                      onChange={(e) => {
-                        durationDirtyRef.current = true;
-                        const next = Number(e.target.value);
-                        setDurationMin(Number.isFinite(next) ? next : 30);
-                      }}
-                      className={fieldBaseClass}
-                    />
-                  </div>
+                <div className="min-w-0 flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-white shrink-0">Hora inicio</label>
+                  <input
+                    type="time"
+                    value={bookingTime}
+                    onChange={(e) => setBookingTime(e.target.value)}
+                    className={cn(fieldBaseClass, "[color-scheme:dark]")}
+                  />
+                </div>
+                <div className="min-w-0 flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-white shrink-0">Duración (min)</label>
+                  <input
+                    type="number"
+                    min={5}
+                    step={5}
+                    value={durationMin}
+                    onChange={(e) => {
+                      durationDirtyRef.current = true;
+                      const next = Number(e.target.value);
+                      setDurationMin(Number.isFinite(next) ? next : 30);
+                    }}
+                    className={cn(fieldBaseClass, "tabular-nums")}
+                  />
                 </div>
               </div>
 

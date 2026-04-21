@@ -57,7 +57,7 @@ export function ConversationHeader({
 	}
 
 	return (
-		<div className="border-b border-white/5 p-4 flex items-center justify-between bg-white/[0.02]">
+		<div className="relative z-20 flex shrink-0 items-center justify-between border-b border-white/5 bg-white/[0.02] p-4">
 			<div className="flex items-center gap-3 min-w-0">
 				{isMobile && onBack && (
 					<button

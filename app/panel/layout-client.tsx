@@ -407,7 +407,7 @@ function PanelLayoutContent({
         {/* Page Content - pb-nav-safe reserva var(--bottom-nav-offset) (tab + safe area, refinado en cliente) */}
         <main className="flex-1 overflow-y-auto bg-[var(--bg-primary)] pb-nav-safe md:pb-0">
           <TenantProvider tenant={tenant} isLoading={loading}>
-            <PageContainer>{children}</PageContainer>
+            <PageContainer sidebarCollapsed={sidebarCollapsed}>{children}</PageContainer>
           </TenantProvider>
         </main>
       </div>

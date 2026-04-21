@@ -80,7 +80,7 @@ export function MessageBubble({
 				)}
 			>
 				<div className={cn(
-					"relative flex flex-col group/bubble max-w-[85%] md:max-w-[65%]", 
+					"relative flex min-w-0 max-w-[85%] flex-col group/bubble md:max-w-[65%]",
 					isOwn ? "items-end" : "items-start"
 				)}>
 					<div
@@ -170,7 +170,7 @@ export function MessageBubble({
 
 					{/* Message Content + Metadata */}
 					<div className="flex flex-wrap items-end justify-end gap-x-2">
-						<p className="text-[14.2px] leading-[1.45] whitespace-pre-wrap break-words min-w-[40px] flex-1 py-0.5 px-0.5">
+						<p className="min-w-0 flex-1 whitespace-pre-wrap break-words px-0.5 py-0.5 text-[14.2px] leading-[1.45] [overflow-wrap:anywhere]">
 							{message.body}
 						</p>
 						

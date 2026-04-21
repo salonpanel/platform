@@ -145,38 +145,47 @@ export function MessageList({
 
 	if (loading && messages.length === 0) {
 		return (
-			<div className="flex-1 flex items-center justify-center">
+			<div className="flex min-h-0 flex-1 items-center justify-center bg-transparent">
 				<Spinner />
 			</div>
 		);
 	}
 
+	const padBottomForWhatsAppLayout = !hasMoreMessages && messages.length > 0;
+
 	return (
-		<div className="flex-1 relative overflow-hidden flex flex-col bg-transparent">
-			<div 
-				ref={containerRef} 
+		<div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-transparent">
+			<div
+				ref={containerRef}
 				className={cn(
-					"flex-1 overflow-y-auto pb-6 scroll-smooth relative z-10",
-					"flex flex-col"
+					"relative z-10 min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain pb-6",
+					"scroll-smooth [scrollbar-gutter:stable]"
 				)}
 			>
-				{/* Empujar mensajes hacia abajo si no hay histórico por cargar */}
-				{!hasMoreMessages && messages.length > 0 && <div className="flex-1" />}
+				<div
+					className={cn(
+						"flex flex-col",
+						padBottomForWhatsAppLayout && "min-h-full",
+						messages.length === 0 && !loadError && "min-h-full"
+					)}
+				>
+					{/* Con poco histórico, empuja el bloque de mensajes hacia abajo como WhatsApp */}
+					{padBottomForWhatsAppLayout && <div className="min-h-0 flex-1" aria-hidden />}
 
-				{/* Cargador de historial */}
-				{hasMoreMessages && (
-					<div className="flex justify-center py-4">
-						{loading ? <Spinner size="sm" /> : <div className="h-4" />}
-					</div>
-				)}
+					{/* Cargador de historial (arriba) */}
+					{hasMoreMessages && (
+						<div className="flex shrink-0 justify-center py-4">
+							{loading ? <Spinner size="sm" /> : <div className="h-4" />}
+						</div>
+					)}
 
-				{messages.length === 0 && !loadError && (
-					<div className="h-full flex items-center justify-center text-[#8696a0] text-sm italic">
-						<p>No hay mensajes en esta conversación</p>
-					</div>
-				)}
+					{messages.length === 0 && !loadError && (
+						<div className="flex min-h-0 flex-1 items-center justify-center px-4 text-center text-sm italic text-[#8696a0]">
+							<p>No hay mensajes en esta conversación</p>
+						</div>
+					)}
 
-				{dateKeys.map((dateKey) => {
+					{dateKeys.map((dateKey) => {
 					const dayMessages = messagesWithDates[dateKey];
 					return (
 						<div key={dateKey} className="flex flex-col space-y-0.5">
@@ -228,6 +237,7 @@ export function MessageList({
 						</div>
 					);
 				})}
+				</div>
 			</div>
 		</div>
 	);
