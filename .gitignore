@@ -55,6 +55,9 @@ supabase.exe
 .vscode/
 .idea/
 
+# Cursor MCP (puede incluir tokens; la plantilla versionada es mcp.json.example)
+.cursor/mcp.json
+
 # Local dev-only artifacts
 *.local
 .env.local
