@@ -25,7 +25,8 @@ function isRpcUserRoleAndPermissions(obj: any): obj is RpcUserRoleAndPermissions
 }
 
 export function PermissionsProvider({ children, initialPermissions, initialRole, initialTenantId }: { children: ReactNode; initialPermissions?: UserPermissions | null; initialRole?: string | null; initialTenantId?: string | null }) {
-  const [permissions, setPermissions] = useState<UserPermissions>(initialPermissions ?? FULL_PERMISSIONS);
+  // Seguridad: por defecto, permisos mínimos hasta cargar desde RPC.
+  const [permissions, setPermissions] = useState<UserPermissions>(initialPermissions ?? DEFAULT_PERMISSIONS);
   const [role, setRole] = useState<string | null>(initialRole ?? null);
   const [loading, setLoading] = useState(initialPermissions ? false : true);
   const [tenantId, setTenantId] = useState<string | null>(initialTenantId ?? null);
@@ -80,7 +81,7 @@ export function PermissionsProvider({ children, initialPermissions, initialRole,
       setLoading(false);
     } catch (error) {
       console.error("Error loading permissions (rpc):", error);
-      setPermissions(FULL_PERMISSIONS);
+      setPermissions(DEFAULT_PERMISSIONS);
       setRole(null);
       setLoading(false);
     }

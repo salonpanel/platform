@@ -47,7 +47,8 @@ function isRpcUserRoleAndPermissions(obj: any): obj is RpcUserRoleAndPermissions
 
 export function useUserPermissions(tenantId: string | null) {
   const supabase = useMemo(() => getSupabaseBrowser(), []);
-  const [permissions, setPermissions] = useState<UserPermissions>(FULL_PERMISSIONS);
+  // Seguridad: por defecto, permisos mínimos hasta cargar desde RPC.
+  const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS);
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -94,7 +95,7 @@ export function useUserPermissions(tenantId: string | null) {
       setLoading(false);
     } catch (error) {
       console.error("Error loading permissions (rpc):", error);
-      setPermissions(FULL_PERMISSIONS);
+      setPermissions(DEFAULT_PERMISSIONS);
       setRole(null);
       setLoading(false);
     }

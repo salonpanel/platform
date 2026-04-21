@@ -40,7 +40,9 @@ export default async function DashboardDataWrapper({ impersonateOrgId }: Props) 
 
     // If not impersonating, get from Context
     if (!targetTenantId) {
-        const context = await getTenantContextSafe(sb, user.id, lastTenantId);
+        // IMPORTANTE: `getTenantContextSafe` llama a RPCs que dependen de `auth.uid()`.
+        // Con service_role (`sb`) no hay usuario → `auth.uid()` es NULL → "Access Denied".
+        const context = await getTenantContextSafe(supabase, user.id, lastTenantId);
         if (context.status === "OK" && context.tenant) {
             targetTenantId = context.tenant.id;
         }

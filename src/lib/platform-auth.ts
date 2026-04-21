@@ -1,6 +1,5 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 import { supabaseServer } from "./supabase";
+import { createClientForServer } from "@/lib/supabase/server-client";
 
 /**
  * Verifica si un usuario es platform admin (cualquier rol activo)
@@ -8,21 +7,7 @@ import { supabaseServer } from "./supabase";
  */
 export async function isPlatformAdmin(userId?: string): Promise<boolean> {
   if (!userId) {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            // No necesitamos setAll para solo lectura
-          },
-        },
-      }
-    );
+    const supabase = await createClientForServer({ cookieName: "sb-panel-auth" });
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -50,21 +35,7 @@ export async function isPlatformAdmin(userId?: string): Promise<boolean> {
  */
 export async function canModifyPlatform(userId?: string): Promise<boolean> {
   if (!userId) {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            // No necesitamos setAll para solo lectura
-          },
-        },
-      }
-    );
+    const supabase = await createClientForServer({ cookieName: "sb-panel-auth" });
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -94,21 +65,7 @@ export async function canModifyPlatform(userId?: string): Promise<boolean> {
  * Obtiene el usuario platform admin actual
  */
 export async function getPlatformAdmin() {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          // No necesitamos setAll para solo lectura
-        },
-      },
-    }
-  );
+  const supabase = await createClientForServer({ cookieName: "sb-panel-auth" });
   const {
     data: { user },
   } = await supabase.auth.getUser();
