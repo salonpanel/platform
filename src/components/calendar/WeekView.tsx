@@ -5,16 +5,17 @@ import React from "react";
 import { format, startOfWeek, addDays, parseISO, isSameDay, startOfToday } from "date-fns";
 import { AppointmentCard } from "@/components/agenda/AppointmentCard";
 import { toTenantLocalDate, formatInTenantTz } from "@/lib/timezone";
-import { Booking, StaffBlocking, StaffSchedule } from "@/types/agenda";
+import { Booking, Staff, StaffBlocking, StaffSchedule } from "@/types/agenda";
 import { buildStaffWindowsForDay, type TimeWindow } from "@/components/agenda/utils/timeWindows";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { GlassEmptyState } from "@/components/ui/glass";
 import { Calendar } from "lucide-react";
+import { MobileStaffSwitcher } from "@/components/agenda/MobileStaffSwitcher";
 
 interface WeekViewProps {
   bookings: Booking[];
-  staffList: Array<{ id: string; name: string }>;
+  staffList: Staff[];
   selectedDate: string;
   timezone: string;
   onBookingClick: (booking: Booking) => void;
@@ -22,6 +23,10 @@ interface WeekViewProps {
   onBookingContextMenu?: (e: React.MouseEvent, booking: Booking) => void;
   staffSchedules?: StaffSchedule[];
   staffBlockings?: StaffBlocking[];
+  // Mobile: show staff switcher under day chips, and filter to one staff
+  mobileSelectedStaffId?: string | null;
+  onMobileStaffChange?: (staffId: string | null) => void;
+  bookingCounts?: Record<string, number>;
 }
 
 export const WeekView = React.memo(function WeekView({
@@ -34,6 +39,9 @@ export const WeekView = React.memo(function WeekView({
   onBookingContextMenu,
   staffSchedules,
   staffBlockings,
+  mobileSelectedStaffId,
+  onMobileStaffChange,
+  bookingCounts,
 }: WeekViewProps) {
   const weekStart = startOfWeek(parseISO(selectedDate), { weekStartsOn: 1 }); // Lunes
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
@@ -158,7 +166,15 @@ export const WeekView = React.memo(function WeekView({
 
   // Mobile view: day chips + filtered list
   if (isMobile) {
-    const mobileDayBookings = bookingsByDay.get(selectedMobileDay) || [];
+    const activeStaffId =
+      mobileSelectedStaffId && staffList.some((s) => s.id === mobileSelectedStaffId)
+        ? mobileSelectedStaffId
+        : (staffList[0]?.id ?? null);
+
+    const mobileDayBookingsAll = bookingsByDay.get(selectedMobileDay) || [];
+    const mobileDayBookings = activeStaffId
+      ? mobileDayBookingsAll.filter((b) => b.staff_id === activeStaffId)
+      : mobileDayBookingsAll;
 
     return (
       <div className="w-full h-full flex flex-col overflow-hidden bg-[#0B0C10] relative" role="region" aria-label="Vista semanal móvil">
@@ -226,6 +242,18 @@ export const WeekView = React.memo(function WeekView({
               );
             })}
           </div>
+
+          {/* Staff switcher — MUST be under day chips (mobile) */}
+          {staffList.length > 1 && onMobileStaffChange && (
+            <div className="flex-shrink-0">
+              <MobileStaffSwitcher
+                staffList={staffList}
+                selectedStaffId={activeStaffId}
+                onSelectStaff={onMobileStaffChange}
+                bookingCounts={bookingCounts}
+              />
+            </div>
+          )}
 
           {/* Bookings list for selected day */}
           <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-3 py-3">

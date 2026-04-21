@@ -25,6 +25,8 @@ type MessageListProps = {
 	containerRef: RefObject<HTMLDivElement | null>;
 	membersDirectory?: Record<string, { displayName: string; profilePhotoUrl?: string }>;
 	conversationType?: "all" | "direct" | "group";
+	/** Para receipts: último last_read_at de cualquier otro miembro (no el viewer) */
+	otherLastReadAt?: string | null;
 	onLoadMore?: () => void;
 	hasMoreMessages?: boolean;
 	/** Si la RPC falló, no mostrar el vacío “sin mensajes” (mensaje real va en el padre) */
@@ -74,6 +76,7 @@ export function MessageList({
 	containerRef,
 	membersDirectory = {},
 	conversationType = "direct",
+	otherLastReadAt = null,
 	onLoadMore,
 	hasMoreMessages = false,
 	loadError = null,
@@ -186,6 +189,8 @@ export function MessageList({
 
 							{dayMessages.map((msg, idx) => {
 								const isOwn = msg.sender_id === currentUserId;
+								const isReadByOther =
+									isOwn && !!otherLastReadAt && otherLastReadAt >= msg.created_at;
 								const senderInfo = membersDirectory[msg.sender_id] ?? {
 									displayName: `Usuario`,
 								};
@@ -210,6 +215,7 @@ export function MessageList({
 										<MessageBubble
 											message={msg}
 											isOwn={isOwn}
+											isRead={isReadByOther}
 											senderName={senderInfo.displayName}
 											senderAvatar={senderInfo.profilePhotoUrl}
 											showSenderName={showSenderName}

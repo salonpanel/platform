@@ -133,6 +133,9 @@ export interface Booking {
   status: BookingStatus;
   booking_state?: BookingState | null;
   payment_status?: PaymentStatus | null;
+  deposit_amount_cents?: number | null;
+  deposit_percent_bp?: number | null;
+  deposit_currency?: string | null;
   customer_id: string | null;
   service_id: string | null;
   staff_id: string | null;

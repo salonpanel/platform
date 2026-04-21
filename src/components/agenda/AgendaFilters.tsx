@@ -26,6 +26,7 @@ interface AgendaFiltersProps {
   activeFilters: ActiveFilter[];
   onResetFilters: () => void;
   density?: "default" | "compact" | "ultra-compact";
+  hideStaff?: boolean;
 }
 
 export function AgendaFilters({
@@ -37,9 +38,10 @@ export function AgendaFilters({
   onSearchChange,
   onSearchClose,
   density = "default",
+  hideStaff = false,
 }: AgendaFiltersProps) {
   const { isMobile } = useResponsive();
-  const showStaff = staffList.length > 1;
+  const showStaff = staffList.length > 1 && !hideStaff;
 
   if (!searchOpen && !showStaff) return null;
 

@@ -370,6 +370,8 @@ export default function AgendaPageClient({
           onSearchClose={() => { setSearchOpen(false); setSearchTerm(""); }}
           activeFilters={[]}
           onResetFilters={() => setFilters(DEFAULT_FILTERS)}
+          // In mobile week view, staff selector should live under the day strip (inside WeekView)
+          hideStaff={viewMode === "week"}
         />
 
         {/* Calendar content */}

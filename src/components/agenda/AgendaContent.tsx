@@ -319,6 +319,9 @@ export function AgendaContent({
                             onBookingContextMenu={onBookingContextMenu}
                             staffSchedules={staffSchedules}
                             staffBlockings={staffBlockings}
+                            mobileSelectedStaffId={isMobile ? mobileActiveStaffId : null}
+                            onMobileStaffChange={isMobile ? (id) => setMobileSelectedStaffId(id) : undefined}
+                            bookingCounts={isMobile ? bookingCountsByStaff : undefined}
                           />
                         ) : (
                           <div className="h-full flex items-center justify-center p-8">

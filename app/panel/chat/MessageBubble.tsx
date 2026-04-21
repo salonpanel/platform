@@ -17,6 +17,8 @@ type MessageBubbleProps = {
 		metadata?: any;
 	};
 	isOwn: boolean;
+	/** True solo cuando el/los otros miembros han leído este mensaje */
+	isRead?: boolean;
 	senderName: string;
 	senderAvatar?: string;
 	showSenderName: boolean;
@@ -32,6 +34,7 @@ function formatTimestamp(iso: string): string {
 export function MessageBubble({
 	message,
 	isOwn,
+	isRead = false,
 	senderName,
 	showSenderName,
 	onReply,
@@ -176,7 +179,13 @@ export function MessageBubble({
 								{formatTimestamp(message.created_at)}
 							</span>
 							{isOwn && (
-								<CheckCheck className="h-3.5 w-3.5 text-[#53bdeb]/80" />
+								<CheckCheck
+									className={cn(
+										"h-3.5 w-3.5",
+										isRead ? "text-[#53bdeb]/80" : "text-[#8696a0]/70"
+									)}
+									aria-label={isRead ? "Visto" : "Enviado"}
+								/>
 							)}
 						</div>
 					</div>

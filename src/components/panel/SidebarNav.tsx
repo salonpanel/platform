@@ -21,7 +21,8 @@ import {
   Menu,
   X,
   Wallet,
-  Target
+  Target,
+  Sparkles
 } from "lucide-react";
 import { usePermissions } from "@/contexts/PermissionsContext";
 
@@ -29,6 +30,12 @@ interface NavItem {
   href: string;
   label: string;
   icon?: string | null;
+}
+
+interface FeaturedNavItem {
+  href: string;
+  label: string;
+  description?: string;
 }
 
 interface SidebarNavProps {
@@ -40,6 +47,8 @@ interface SidebarNavProps {
   onClose?: () => void;
   onToggleCollapse?: () => void;
   autoCollapseOnClick?: boolean;
+  /** Entrada destacada que aparece al final del menú, antes del logout */
+  featuredItem?: FeaturedNavItem;
 }
 
 export function SidebarNav({
@@ -51,6 +60,7 @@ export function SidebarNav({
   onClose,
   onToggleCollapse,
   autoCollapseOnClick = true,
+  featuredItem,
 }: SidebarNavProps) {
   const pathname = usePathname();
   const [isHovered, setIsHovered] = useState(false);
@@ -88,17 +98,14 @@ export function SidebarNav({
     });
   }, [items, permissions, role]);
 
-  // Agregar item de logout al final de la navegación
-  const navigationItems = useMemo(() => {
-    const items = [...filteredItems];
-    // Agregar logout al final
-    items.push({
-      href: "/logout",
-      label: "Cerrar sesión",
-      icon: "logout"
-    });
-    return items;
-  }, [filteredItems]);
+  // Items normales de navegación (el logout se renderiza por separado al final
+  // para permitir que el featuredItem se sitúe entre la nav principal y el logout)
+  const navigationItems = useMemo(() => filteredItems, [filteredItems]);
+
+  const logoutItem: NavItem = useMemo(
+    () => ({ href: "/logout", label: "Cerrar sesión", icon: "logout" }),
+    []
+  );
 
   const getNavIcon = useCallback((href: string): React.ReactNode => {
     const iconClass = "h-5 w-5";
@@ -623,6 +630,131 @@ export function SidebarNav({
               );
             })}
           </motion.ul>
+
+          {/* Featured item (BookFast AI) — destacado al final del nav, antes del logout */}
+          {featuredItem && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              className="mt-6 mb-3"
+            >
+              <Link
+                href={featuredItem.href}
+                prefetch
+                onClick={() => {
+                  if (typeof window !== "undefined" && window.innerWidth < 768) {
+                    if (onClose) onClose();
+                  } else if (autoCollapseOnClick && !isCollapsed && onToggleCollapse) {
+                    setTimeout(() => {
+                      onToggleCollapse();
+                      if (typeof window !== "undefined") {
+                        localStorage.setItem("sidebarCollapsed", "true");
+                      }
+                    }, 150);
+                  }
+                }}
+                className={cn(
+                  "group relative flex items-center rounded-[var(--radius-md)] overflow-hidden",
+                  "transition-all duration-300",
+                  isExpanded ? "gap-3 px-3 py-3" : "justify-center px-3 py-3",
+                  // Estilo destacado: aurora gradient + glow + ring
+                  isActive(featuredItem.href)
+                    ? "bg-gradient-to-r from-violet-500 via-fuchsia-500 to-sky-500 text-white shadow-[0_8px_28px_rgba(168,85,247,0.45)] ring-1 ring-white/30"
+                    : "bg-gradient-to-r from-violet-500/15 via-fuchsia-500/15 to-sky-500/15 text-white/85 ring-1 ring-white/12 hover:from-violet-500/25 hover:via-fuchsia-500/25 hover:to-sky-500/25 hover:ring-white/20 hover:shadow-[0_6px_20px_rgba(123,92,255,0.3)]"
+                )}
+                style={{
+                  borderRadius: "var(--radius-md)",
+                  minHeight: "48px",
+                }}
+                title={!isExpanded ? featuredItem.label : undefined}
+              >
+                {/* Halo animado (solo cuando expandido) */}
+                {isExpanded && (
+                  <motion.div
+                    className="pointer-events-none absolute -inset-1 rounded-[var(--radius-md)] opacity-40 blur-xl"
+                    style={{
+                      background:
+                        "radial-gradient(circle at 30% 50%, rgba(168,85,247,0.6) 0%, transparent 60%)",
+                    }}
+                    animate={{ opacity: [0.3, 0.55, 0.3] }}
+                    transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                )}
+
+                <motion.span
+                  animate={{ rotate: [0, 12, -8, 0], scale: [1, 1.1, 1] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  className="relative z-10 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-sky-500 shadow-[0_4px_14px_rgba(123,92,255,0.5)] ring-1 ring-white/25"
+                >
+                  <Sparkles className="h-4 w-4 text-white" />
+                </motion.span>
+
+                <AnimatePresence mode="wait">
+                  {isExpanded && (
+                    <motion.div
+                      key="featured-label"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      transition={{ duration: 0.25 }}
+                      className="relative z-10 flex flex-col min-w-0"
+                    >
+                      <span className="text-sm font-semibold font-satoshi tracking-tight truncate">
+                        {featuredItem.label}
+                      </span>
+                      {featuredItem.description && (
+                        <span className="text-[11px] text-white/55 truncate font-inter">
+                          {featuredItem.description}
+                        </span>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </Link>
+            </motion.div>
+          )}
+
+          {/* Logout — siempre al final del nav */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.3 }}
+            className="mt-2"
+          >
+            <Link
+              href={logoutItem.href}
+              prefetch={false}
+              className={cn(
+                "flex items-center rounded-[var(--radius-md)] text-sm font-medium font-satoshi transition-all duration-300 relative group overflow-hidden",
+                isExpanded ? "gap-3 px-3 py-2.5" : "justify-center px-3 py-2.5",
+                "text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:shadow-[0px_2px_12px_rgba(239,68,68,0.1)]"
+              )}
+              style={{
+                borderRadius: "var(--radius-md)",
+                minHeight: "44px",
+              }}
+              title={!isExpanded ? logoutItem.label : undefined}
+            >
+              <span className="flex-shrink-0 relative z-10 flex items-center justify-center text-red-400 group-hover:text-red-300">
+                <LogOut className="h-5 w-5" />
+              </span>
+              <AnimatePresence mode="wait">
+                {isExpanded && (
+                  <motion.span
+                    key="logout-label"
+                    initial={{ opacity: 0, width: 0, x: -10 }}
+                    animate={{ opacity: 1, width: "auto", x: 0 }}
+                    exit={{ opacity: 0, width: 0, x: -10 }}
+                    transition={{ duration: 0.25 }}
+                    className="flex-1 truncate whitespace-nowrap relative z-10"
+                  >
+                    {logoutItem.label}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </Link>
+          </motion.div>
         </nav>
 
       </motion.aside>

@@ -412,141 +412,200 @@ function ClientesPageContent() {
 
   return (
     <ProtectedRoute requiredPermission="clientes">
-      <div className="space-y-6">
-        {/* Actions row */}
-        <div className="flex flex-col sm:flex-row gap-2 justify-end items-stretch sm:items-center pt-1">
-          <GlassButton
-            variant="secondary"
-            onClick={handleExportCsv}
-            disabled={isLoading}
-            className="w-full sm:w-auto"
-            leftIcon={<Download className="w-4 h-4" />}
-          >
-            Exportar CSV
-          </GlassButton>
-          <GlassButton
-            variant="primary"
-            onClick={openNewModal}
-            className="w-full sm:w-auto"
-            leftIcon={<Plus className="w-4 h-4" />}
-          >
-            Nuevo Cliente
-          </GlassButton>
-        </div>
-
-        {/* KPIs Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <GlassCard className="p-4" noPadding={false}>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-1.5 rounded-lg bg-emerald-500/10">
-                <Users className="h-4 w-4 text-emerald-400" />
+      <div className="space-y-4 md:space-y-6">
+        {/* Compact header (mobile-first) */}
+        <GlassCard className="p-3 sm:p-4 md:p-5" noPadding={false}>
+          <div className="space-y-3 md:space-y-4">
+            {/* Search + actions */}
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div className="flex-1">
+                <GlassInput
+                  placeholder="Buscar por nombre, email o teléfono…"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="bg-white/5 border-white/10"
+                />
               </div>
-              <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Total Clientes</span>
-            </div>
-            <div className="text-2xl font-bold text-white">{customerStats.total}</div>
-          </GlassCard>
 
-          <GlassCard className="p-4" noPadding={false}>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-1.5 rounded-lg bg-blue-500/10">
-                <Calendar className="h-4 w-4 text-blue-400" />
+              <div className="grid grid-cols-2 gap-2 md:flex md:gap-2 md:justify-end">
+                <GlassButton
+                  variant="secondary"
+                  onClick={handleExportCsv}
+                  disabled={isLoading}
+                  className="w-full md:w-auto"
+                  leftIcon={<Download className="w-4 h-4" />}
+                >
+                  Exportar
+                </GlassButton>
+                <GlassButton
+                  variant="primary"
+                  onClick={openNewModal}
+                  className="w-full md:w-auto"
+                  leftIcon={<Plus className="w-4 h-4" />}
+                >
+                  Nuevo
+                </GlassButton>
               </div>
-              <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Con Reservas</span>
-            </div>
-            <div className="text-2xl font-bold text-white">{customerStats.withBookings}</div>
-          </GlassCard>
-
-          <GlassCard className="p-4" noPadding={false}>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-1.5 rounded-lg bg-purple-500/10">
-                <Star className="h-4 w-4 text-purple-400" />
-              </div>
-              <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">VIP</span>
-            </div>
-            <div className="text-2xl font-bold text-white">{customerStats.vip}</div>
-          </GlassCard>
-
-          <GlassCard className="p-4" noPadding={false}>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-1.5 rounded-lg bg-amber-500/10">
-                <Users className="h-4 w-4 text-amber-400" />
-              </div>
-              <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Sin Contacto</span>
-            </div>
-            <div className="text-2xl font-bold text-white">{customerStats.withoutContact}</div>
-          </GlassCard>
-        </div>
-
-        {/* Filters Section */}
-        <GlassSection title="Filtros y Búsqueda" containerClassName="bg-white/[0.02]">
-          <div className="space-y-4">
-            <GlassInput
-              placeholder="Buscar por nombre, email o teléfono..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-white/5 border-white/10"
-            />
-
-            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              <GlassSelect
-                label="Visitas"
-                value={visitFilter}
-                onChange={(e) => setVisitFilter(e.target.value as typeof visitFilter)}
-                className="h-11"
-              >
-                <option value="all">Todas</option>
-                <option value="with">Con reservas</option>
-                <option value="without">Sin reservas</option>
-              </GlassSelect>
-
-              <GlassSelect
-                label="Actividad"
-                value={activityFilter}
-                onChange={(e) => setActivityFilter(e.target.value as typeof activityFilter)}
-                className="h-11"
-              >
-                <option value="all">Todas</option>
-                <option value="active90">Activas 90d</option>
-                <option value="inactive90">Inactivas +90d</option>
-              </GlassSelect>
-
-              <GlassSelect
-                label="Segmento"
-                value={segmentFilter}
-                onChange={(e) => setSegmentFilter(e.target.value as typeof segmentFilter)}
-                className="h-11"
-              >
-                <option value="all">Todos</option>
-                <option value="vip">VIP</option>
-                <option value="banned">Baneados</option>
-                <option value="marketing">Marketing</option>
-                <option value="no_contact">Sin contacto</option>
-              </GlassSelect>
-
-              <GlassSelect
-                label="Ordenar"
-                value={sortOption}
-                onChange={(e) => setSortOption(e.target.value as typeof sortOption)}
-                className="h-11"
-              >
-                <option value="recent">Recientes</option>
-                <option value="value">Mayor gasto</option>
-              </GlassSelect>
             </div>
 
-            {/* Filtered Stats Summary */}
-            {(filteredStats.total !== customerStats.total || searchTerm || visitFilter !== "all" || activityFilter !== "all" || segmentFilter !== "all") && (
-              <div className="pt-4 border-t border-white/5 grid grid-cols-3 gap-2 sm:grid-cols-6">
-                {Object.entries(filteredStats).map(([key, value]) => (
-                  <div key={key}>
-                    <p className="text-[9px] uppercase tracking-wide text-[var(--text-secondary)]">{key === 'withBookings' ? 'Reservas' : key === 'withoutContact' ? 'Sin contacto' : key}</p>
-                    <p className="font-mono font-bold text-white text-sm">{value}</p>
+            {/* KPIs (compact) */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+              <GlassCard className="p-3 md:p-4" noPadding={false}>
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-emerald-500/10">
+                    <Users className="h-4 w-4 text-emerald-400" />
                   </div>
-                ))}
-              </div>
-            )}
+                  <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Total</span>
+                </div>
+                <div className="mt-1 text-xl md:text-2xl font-bold text-white">{customerStats.total}</div>
+              </GlassCard>
+
+              <GlassCard className="p-3 md:p-4" noPadding={false}>
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-blue-500/10">
+                    <Calendar className="h-4 w-4 text-blue-400" />
+                  </div>
+                  <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Reservas</span>
+                </div>
+                <div className="mt-1 text-xl md:text-2xl font-bold text-white">{customerStats.withBookings}</div>
+              </GlassCard>
+
+              <GlassCard className="p-3 md:p-4" noPadding={false}>
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-purple-500/10">
+                    <Star className="h-4 w-4 text-purple-400" />
+                  </div>
+                  <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">VIP</span>
+                </div>
+                <div className="mt-1 text-xl md:text-2xl font-bold text-white">{customerStats.vip}</div>
+              </GlassCard>
+
+              <GlassCard className="p-3 md:p-4" noPadding={false}>
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-amber-500/10">
+                    <Users className="h-4 w-4 text-amber-400" />
+                  </div>
+                  <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Sin contacto</span>
+                </div>
+                <div className="mt-1 text-xl md:text-2xl font-bold text-white">{customerStats.withoutContact}</div>
+              </GlassCard>
+            </div>
+
+            {/* Filters */}
+            <div className="md:hidden">
+              <details className="rounded-xl border border-white/10 bg-white/[0.03]">
+                <summary className="cursor-pointer select-none px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
+                  Filtros avanzados
+                </summary>
+                <div className="p-3 pt-2 grid grid-cols-2 gap-2">
+                  <GlassSelect
+                    label="Visitas"
+                    value={visitFilter}
+                    onChange={(e) => setVisitFilter(e.target.value as typeof visitFilter)}
+                    className="h-10"
+                  >
+                    <option value="all">Todas</option>
+                    <option value="with">Con reservas</option>
+                    <option value="without">Sin reservas</option>
+                  </GlassSelect>
+                  <GlassSelect
+                    label="Actividad"
+                    value={activityFilter}
+                    onChange={(e) => setActivityFilter(e.target.value as typeof activityFilter)}
+                    className="h-10"
+                  >
+                    <option value="all">Todas</option>
+                    <option value="active90">Activas 90d</option>
+                    <option value="inactive90">Inactivas +90d</option>
+                  </GlassSelect>
+                  <GlassSelect
+                    label="Segmento"
+                    value={segmentFilter}
+                    onChange={(e) => setSegmentFilter(e.target.value as typeof segmentFilter)}
+                    className="h-10"
+                  >
+                    <option value="all">Todos</option>
+                    <option value="vip">VIP</option>
+                    <option value="banned">Baneados</option>
+                    <option value="marketing">Marketing</option>
+                    <option value="no_contact">Sin contacto</option>
+                  </GlassSelect>
+                  <GlassSelect
+                    label="Ordenar"
+                    value={sortOption}
+                    onChange={(e) => setSortOption(e.target.value as typeof sortOption)}
+                    className="h-10"
+                  >
+                    <option value="recent">Recientes</option>
+                    <option value="value">Mayor gasto</option>
+                  </GlassSelect>
+                </div>
+              </details>
+            </div>
+
+            <div className="hidden md:block">
+              <GlassSection title="Filtros y Búsqueda" containerClassName="bg-white/[0.02]">
+                <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                  <GlassSelect
+                    label="Visitas"
+                    value={visitFilter}
+                    onChange={(e) => setVisitFilter(e.target.value as typeof visitFilter)}
+                    className="h-11"
+                  >
+                    <option value="all">Todas</option>
+                    <option value="with">Con reservas</option>
+                    <option value="without">Sin reservas</option>
+                  </GlassSelect>
+
+                  <GlassSelect
+                    label="Actividad"
+                    value={activityFilter}
+                    onChange={(e) => setActivityFilter(e.target.value as typeof activityFilter)}
+                    className="h-11"
+                  >
+                    <option value="all">Todas</option>
+                    <option value="active90">Activas 90d</option>
+                    <option value="inactive90">Inactivas +90d</option>
+                  </GlassSelect>
+
+                  <GlassSelect
+                    label="Segmento"
+                    value={segmentFilter}
+                    onChange={(e) => setSegmentFilter(e.target.value as typeof segmentFilter)}
+                    className="h-11"
+                  >
+                    <option value="all">Todos</option>
+                    <option value="vip">VIP</option>
+                    <option value="banned">Baneados</option>
+                    <option value="marketing">Marketing</option>
+                    <option value="no_contact">Sin contacto</option>
+                  </GlassSelect>
+
+                  <GlassSelect
+                    label="Ordenar"
+                    value={sortOption}
+                    onChange={(e) => setSortOption(e.target.value as typeof sortOption)}
+                    className="h-11"
+                  >
+                    <option value="recent">Recientes</option>
+                    <option value="value">Mayor gasto</option>
+                  </GlassSelect>
+                </div>
+
+                {(filteredStats.total !== customerStats.total || searchTerm || visitFilter !== "all" || activityFilter !== "all" || segmentFilter !== "all") && (
+                  <div className="pt-4 border-t border-white/5 grid grid-cols-3 gap-2 sm:grid-cols-6">
+                    {Object.entries(filteredStats).map(([key, value]) => (
+                      <div key={key}>
+                        <p className="text-[9px] uppercase tracking-wide text-[var(--text-secondary)]">{key === 'withBookings' ? 'Reservas' : key === 'withoutContact' ? 'Sin contacto' : key}</p>
+                        <p className="font-mono font-bold text-white text-sm">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </GlassSection>
+            </div>
           </div>
-        </GlassSection>
+        </GlassCard>
 
         {/* Toast Notifications - handled globally now, but keeping component if strictly needed for other non-hook errors */}
         {/*

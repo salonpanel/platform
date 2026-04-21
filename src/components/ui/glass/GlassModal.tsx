@@ -112,9 +112,9 @@ export function GlassModal({
                                             variant="ghost"
                                             size="sm"
                                             onClick={onClose}
-                                            className="h-8 w-8 p-0 ml-4 rounded-full hover:bg-white/10"
+                                            className="h-9 w-9 p-0 ml-3 rounded-full hover:bg-white/10"
                                         >
-                                            <X className="w-4 h-4" />
+                                            <X className="w-5 h-5" />
                                         </GlassButton>
                                     </div>
                                 )}
@@ -126,7 +126,12 @@ export function GlassModal({
 
                                 {/* Footer */}
                                 {footer && (
-                                    <div className="px-5 pt-5 border-t border-white/5 bg-white/[0.02] pb-modal-footer">
+                                    <div
+                                        className={cn(
+                                            "px-5 border-t border-white/5 bg-white/[0.02]",
+                                            mobileSheet ? "pt-4 pb-4 safe-area-pb" : "pt-5 pb-modal-footer"
+                                        )}
+                                    >
                                         {footer}
                                     </div>
                                 )}

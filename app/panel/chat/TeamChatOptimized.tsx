@@ -79,6 +79,7 @@ type ConversationMember = {
 	displayName: string;
 	role: "member" | "admin";
 	joinedAt: string;
+	lastReadAt?: string | null;
 	profilePhotoUrl?: string;
 };
 
@@ -371,7 +372,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 				try {
 					const { data, error } = await supabase
 						.from("team_conversation_members")
-						.select("user_id, role, joined_at")
+						.select("user_id, role, joined_at, last_read_at")
 						.eq("conversation_id", conversationId);
 
 					if (error) throw error;
@@ -385,6 +386,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 									displayName: fromDirectory.displayName,
 									role: (member.role as "member" | "admin") ?? "member",
 									joinedAt: member.joined_at,
+									lastReadAt: (member as any).last_read_at ?? null,
 									profilePhotoUrl: fromDirectory.profilePhotoUrl,
 								};
 							}
@@ -409,6 +411,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 								displayName,
 								role: (member.role as "member" | "admin") ?? "member",
 								joinedAt: member.joined_at,
+								lastReadAt: (member as any).last_read_at ?? null,
 								profilePhotoUrl: undefined,
 							};
 						})
@@ -429,6 +432,12 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 			},
 			[supabase, membersDirectory, membersByConversation, tenantId, currentUserId]
 		);
+
+	// Para receipts ("visto"), necesitamos el last_read_at de otros miembros.
+	useEffect(() => {
+		if (!selectedConversationId) return;
+		void loadMembersForConversation(selectedConversationId);
+	}, [selectedConversationId, loadMembersForConversation]);
 
 	// 🚀 FUNCIÓN PARA SCROLL INFINITO: Cargar mensajes más antiguos
 	const handleLoadMoreMessages = useCallback(() => {
@@ -627,6 +636,19 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 	const messagesForSelected = selectedConversationId
 		? messagesByConversation[selectedConversationId] ?? []
 		: [];
+
+	const otherLastReadAtForSelected = useMemo(() => {
+		if (!selectedConversationId) return null;
+		const members = membersByConversation[selectedConversationId] ?? [];
+		const others = members.filter((m) => m.userId && m.userId !== currentUserId);
+		let max: string | null = null;
+		for (const m of others) {
+			const ts = m.lastReadAt ?? null;
+			if (!ts) continue;
+			if (!max || ts > max) max = ts;
+		}
+		return max;
+	}, [selectedConversationId, membersByConversation, currentUserId]);
 
 	const uploadPendingAttachments = useCallback(
 		async (conversationId: string, files: PendingAttachment[]) => {
@@ -936,6 +958,8 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 									onReply={setReplyToMessage}
 									typingUsers={Array.from(typingUsers[selectedConversationId || ""] || [])}
 									membersDirectory={membersDirectory}
+									conversationType={selectedConversation.type}
+									otherLastReadAt={otherLastReadAtForSelected}
 									loading={messagesLoading}
 									containerRef={messageContainerRef}
 									onLoadMore={handleLoadMoreMessages}

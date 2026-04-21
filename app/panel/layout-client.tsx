@@ -348,16 +348,24 @@ function PanelLayoutContent({
     if (pathname === "/panel" || pathname === "/panel/") return "Dashboard";
     // startsWith so sub-routes (/panel/clientes/[id], /panel/ajustes/calendario, …)
     // inherit their section name instead of falling back to the generic "Panel"
-    if (pathname?.startsWith("/panel/agenda"))    return "Agenda";
-    if (pathname?.startsWith("/panel/clientes"))  return "Clientes";
-    if (pathname?.startsWith("/panel/servicios")) return "Servicios";
-    if (pathname?.startsWith("/panel/staff"))     return "Staff";
-    if (pathname?.startsWith("/panel/monedero"))  return "Monedero";
-    if (pathname?.startsWith("/panel/marketing")) return "Marketing";
-    if (pathname?.startsWith("/panel/chat"))      return "Chat";
-    if (pathname?.startsWith("/panel/ajustes"))   return "Ajustes";
-    if (pathname?.startsWith("/panel/config"))    return "Configuración";
+    if (pathname?.startsWith("/panel/agenda"))      return "Agenda";
+    if (pathname?.startsWith("/panel/clientes"))    return "Clientes";
+    if (pathname?.startsWith("/panel/servicios"))   return "Servicios";
+    if (pathname?.startsWith("/panel/staff"))       return "Staff";
+    if (pathname?.startsWith("/panel/monedero"))    return "Monedero";
+    if (pathname?.startsWith("/panel/marketing"))   return "Marketing";
+    if (pathname?.startsWith("/panel/chat"))        return "Chat";
+    if (pathname?.startsWith("/panel/ajustes"))     return "Ajustes";
+    if (pathname?.startsWith("/panel/config"))      return "Configuración";
+    if (pathname?.startsWith("/panel/bookfast-ai")) return "BookFast AI";
     return "Panel";
+  };
+
+  // Entrada destacada del sidebar (BookFast AI)
+  const featuredItem = {
+    href: "/panel/bookfast-ai",
+    label: "BookFast AI",
+    description: "Tu asistente inteligente",
   };
 
   return (
@@ -372,6 +380,7 @@ function PanelLayoutContent({
           isCollapsed={sidebarCollapsed}
           onClose={() => setSidebarOpen(false)}
           onToggleCollapse={handleToggleSidebar}
+          featuredItem={featuredItem}
         />
       </div>
 

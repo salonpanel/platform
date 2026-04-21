@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Settings, LogOut, Building2 } from "lucide-react";
+import { ChevronDown, Settings, LogOut, Building2, Sparkles } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 
@@ -232,6 +233,41 @@ export function TopBar({
               )}
             </AnimatePresence>
           </div>
+
+          {/* BookFast AI — botón circular (visible solo en móvil, a la derecha del avatar) */}
+          <Link
+            href="/panel/bookfast-ai"
+            aria-label="Abrir BookFast AI"
+            className={cn(
+              "md:hidden relative flex items-center justify-center",
+              "h-10 w-10 rounded-full flex-shrink-0",
+              "bg-gradient-to-br from-violet-500 via-fuchsia-500 to-sky-500",
+              "ring-2 ring-white/20",
+              "shadow-[0_6px_20px_rgba(123,92,255,0.45)]",
+              "active:scale-95 transition-transform duration-200",
+              "overflow-hidden"
+            )}
+          >
+            {/* Halo animado discreto */}
+            <motion.span
+              aria-hidden
+              className="absolute inset-0 rounded-full"
+              style={{
+                background:
+                  "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.35) 0%, transparent 60%)",
+              }}
+              animate={{ opacity: [0.4, 0.75, 0.4] }}
+              transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <motion.span
+              aria-hidden
+              animate={{ rotate: [0, 14, -10, 0], scale: [1, 1.08, 1] }}
+              transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
+              className="relative z-10"
+            >
+              <Sparkles className="h-5 w-5 text-white drop-shadow-sm" />
+            </motion.span>
+          </Link>
         </motion.div>
       </div>
     </div>

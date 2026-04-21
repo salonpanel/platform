@@ -20,6 +20,13 @@ export interface BookingMutationPayload {
   status?: BookingStatus;
   booking_state?: BookingState;
   payment_status?: PaymentStatus;
+  /**
+   * Deposit details when payment_status='deposit'.
+   * Exactly one should be provided (amount OR percent).
+   */
+  deposit_amount_cents?: number | null;
+  deposit_percent_bp?: number | null;
+  deposit_currency?: string | null;
   internal_notes?: string | null;
   client_message?: string | null;
   is_highlighted?: boolean;

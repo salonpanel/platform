@@ -121,6 +121,17 @@ export function AgendaTopBar({
     }
   };
 
+  const formatMobileHeaderLabel = () => {
+    const date = parseISO(selectedDate);
+    const MONTHS_LONG  = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+    // In week view, the day strip already shows the range; keep the header minimal.
+    if (viewMode === "week") {
+      const month = MONTHS_LONG[date.getMonth()];
+      return `${month.charAt(0).toUpperCase() + month.slice(1)} ${date.getFullYear()}`;
+    }
+    return formatDateDisplay();
+  };
+
   const isToday = selectedDate === format(new Date(), "yyyy-MM-dd");
 
   const handleStatusToggle = (status: string) => {
@@ -158,16 +169,274 @@ export function AgendaTopBar({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.15 }}
     >
-      <div className="px-3 sm:px-4 py-2 sm:py-2.5 flex flex-col sm:flex-row sm:items-center gap-2">
+      <div className="px-3 sm:px-4 py-2 sm:py-2.5">
+        {/* MOBILE HEADER (2 rows, no overlaps) */}
+        <div className="sm:hidden flex flex-col gap-2">
+          {/* Row 1: Date/context + quick actions */}
+          <div className="flex items-start justify-between gap-2 min-w-0">
+            {/* Date display + stats */}
+            <div className="min-w-0 flex-1">
+              <div ref={datePickerRef} className="relative min-w-0">
+                <button
+                  onClick={() => setShowDatePicker(!showDatePicker)}
+                  className="flex flex-col items-start min-w-0 group text-left"
+                  aria-label="Seleccionar fecha"
+                >
+                  <span
+                    className={cn(
+                      "text-sm font-semibold leading-tight truncate group-hover:text-white/80 transition-colors",
+                      isToday ? "text-white" : "text-white/90"
+                    )}
+                  >
+                    {formatMobileHeaderLabel()}
+                  </span>
+                  {statsLine && (
+                    <span className="text-[11px] text-white/35 font-medium leading-tight mt-0.5 truncate max-w-[18rem]">
+                      {statsLine}
+                    </span>
+                  )}
+                </button>
 
-        {/* ── Row 1 (mobile): Date + actions ── */}
-        <div className="flex items-start justify-between gap-2 min-w-0">
+                <AnimatePresence>
+                  {showDatePicker && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 4, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 4, scale: 0.97 }}
+                      transition={{ duration: 0.12 }}
+                      className="absolute top-full mt-2 left-0 z-[80] rounded-xl bg-[#1A1B1F] border border-white/10 shadow-2xl p-3"
+                    >
+                      <input
+                        type="date"
+                        value={selectedDate}
+                        onChange={(e) => {
+                          onDateChange(e.target.value);
+                          setShowDatePicker(false);
+                        }}
+                        className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-[#4FE3C1]/50 focus:outline-none focus:ring-2 focus:ring-[#4FE3C1]/20"
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+
+            {/* Quick actions */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <motion.button
+                whileTap={{ scale: 0.94 }}
+                onClick={onSearchClick}
+                className="h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
+                aria-label="Buscar"
+              >
+                <Search className="h-3.5 w-3.5 text-white/70" />
+              </motion.button>
+
+              <motion.button
+                whileTap={{ scale: 0.94 }}
+                onClick={onNotificationsClick}
+                className="relative h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
+                aria-label="Notificaciones"
+              >
+                <Bell className="h-3.5 w-3.5 text-white/70" />
+                {unreadNotifications > 0 && (
+                  <motion.span
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="absolute -top-0.5 -right-0.5 h-4 min-w-[1rem] px-1 rounded-full bg-gradient-to-r from-[#4FE3C1] to-[#3A6DFF] text-[9px] font-bold text-[#0E0F11] flex items-center justify-center shadow-[0_4px_12px_rgba(58,109,255,0.4)]"
+                  >
+                    {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                  </motion.span>
+                )}
+              </motion.button>
+
+              {/* Filters */}
+              <div ref={filtersRef} className="relative flex-shrink-0">
+                <motion.button
+                  whileTap={{ scale: 0.94 }}
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={cn(
+                    "h-8 w-8 rounded-xl border flex items-center justify-center relative transition-all",
+                    activeFiltersCount > 0
+                      ? "bg-[#4FE3C1]/15 border-[#4FE3C1]/30 text-[#4FE3C1]"
+                      : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80"
+                  )}
+                  aria-label="Filtros"
+                >
+                  <SlidersHorizontal className="h-3.5 w-3.5" />
+                  {activeFiltersCount > 0 && (
+                    <span className="absolute -top-1 -right-1 h-4 min-w-[1rem] px-1 rounded-full bg-[#4FE3C1] text-[#0E0F11] text-[9px] font-bold flex items-center justify-center">
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </motion.button>
+
+                <AnimatePresence>
+                  {showFilters && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 4, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 4, scale: 0.97 }}
+                      transition={{ duration: 0.12 }}
+                      className="absolute top-full mt-2 right-0 z-[80] w-52 rounded-xl bg-[#1A1B1F] border border-white/10 shadow-2xl overflow-hidden"
+                    >
+                      <div className="p-3 space-y-3">
+                        {/* Status filters */}
+                        <div>
+                          <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-1.5 px-1">Estado</p>
+                          <div className="space-y-0.5">
+                            {(["pending","confirmed","paid","completed","cancelled","no_show"] as BookingStatus[]).map((status) => (
+                              <button
+                                key={status}
+                                onClick={() => handleStatusToggle(status)}
+                                className={cn(
+                                  "w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-all",
+                                  filters.status.includes(status)
+                                    ? "bg-white/10 text-white"
+                                    : "text-white/60 hover:bg-white/5 hover:text-white"
+                                )}
+                              >
+                                <span className={cn(STATUS_COLORS[status], "font-medium")}>
+                                  {BOOKING_STATUS_CONFIG[status].label}
+                                </span>
+                                {filters.status.includes(status) && (
+                                  <CheckCircle className="h-3.5 w-3.5 text-[#4FE3C1]" />
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Highlighted filter */}
+                        <div className="border-t border-white/5 pt-2">
+                          <button
+                            onClick={handleHighlightedToggle}
+                            className={cn(
+                              "w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-all",
+                              filters.highlighted
+                                ? "bg-[#FF6DA3]/15 text-[#FF6DA3]"
+                                : "text-white/60 hover:bg-white/5 hover:text-white"
+                            )}
+                          >
+                            <span className="flex items-center gap-1.5 font-medium">
+                              <Star className="h-3.5 w-3.5" />
+                              Destacadas
+                            </span>
+                            {filters.highlighted && <CheckCircle className="h-3.5 w-3.5" />}
+                          </button>
+                        </div>
+
+                        {/* Clear button */}
+                        {activeFiltersCount > 0 && (
+                          <div className="border-t border-white/5 pt-2">
+                            <button
+                              onClick={handleClearFilters}
+                              className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                            >
+                              <X className="h-3 w-3" />
+                              Limpiar filtros
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 2: date navigation + view mode */}
+          <div className="flex items-center justify-between gap-2">
+            {/* Date navigation */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <motion.button
+                whileTap={{ scale: 0.94 }}
+                onClick={() => handleNavigate("prev")}
+                className="h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
+                aria-label="Fecha anterior"
+              >
+                <ChevronLeft className="h-3.5 w-3.5 text-white/70" />
+              </motion.button>
+
+              <motion.button
+                whileTap={{ scale: 0.94 }}
+                onClick={handleToday}
+                className={cn(
+                  "px-2.5 h-8 rounded-xl text-xs font-semibold transition-all",
+                  isToday
+                    ? "bg-white/10 text-white border border-white/20"
+                    : "bg-gradient-to-r from-[#4FE3C1] to-[#3A6DFF] text-[#0E0F11] shadow-[0_6px_20px_rgba(58,109,255,0.3)]"
+                )}
+              >
+                Hoy
+              </motion.button>
+
+              <motion.button
+                whileTap={{ scale: 0.94 }}
+                onClick={() => handleNavigate("next")}
+                className="h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
+                aria-label="Fecha siguiente"
+              >
+                <ChevronRight className="h-3.5 w-3.5 text-white/70" />
+              </motion.button>
+            </div>
+
+            {/* View: dropdown */}
+            <div ref={viewMenuRef} className="relative flex-shrink-0">
+              <motion.button
+                whileTap={{ scale: 0.94 }}
+                onClick={() => setShowViewMenu((v) => !v)}
+                className="h-8 px-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center gap-1.5 text-xs font-semibold text-white/80"
+                aria-label="Cambiar vista"
+                aria-expanded={showViewMenu}
+              >
+                <span className="text-white/60">Vista</span>
+                <span className="text-white">{VIEW_MODES.find((m) => m.key === viewMode)?.short ?? "—"}</span>
+                <ChevronDown className={cn("h-3.5 w-3.5 text-white/60 transition-transform", showViewMenu && "rotate-180")} />
+              </motion.button>
+
+              <AnimatePresence>
+                {showViewMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.97 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute top-full mt-2 right-0 z-[80] w-40 rounded-xl bg-[#1A1B1F] border border-white/10 shadow-2xl overflow-hidden"
+                  >
+                    <div className="p-1">
+                      {VIEW_MODES.map((mode) => (
+                        <button
+                          key={mode.key}
+                          onClick={() => {
+                            onViewModeChange(mode.key);
+                            setShowViewMenu(false);
+                          }}
+                          className={cn(
+                            "w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-colors",
+                            viewMode === mode.key
+                              ? "bg-white/10 text-white"
+                              : "text-white/70 hover:bg-white/5 hover:text-white"
+                          )}
+                        >
+                          {mode.label}
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+
+        {/* DESKTOP/TABLET HEADER (existing layout) */}
+        <div className="hidden sm:flex sm:items-center gap-2">
+
           {/* Date display + stats */}
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <div
-              ref={datePickerRef}
-              className="relative flex items-center gap-2 min-w-0"
-            >
+            <div ref={datePickerRef} className="relative flex items-center gap-2 min-w-0">
               <button
                 onClick={() => setShowDatePicker(!showDatePicker)}
                 className="flex flex-col items-start min-w-0 group text-left"
@@ -186,11 +455,6 @@ export function AgendaTopBar({
                     </span>
                   )}
                 </span>
-                {statsLine && (
-                  <span className="text-[11px] text-white/35 font-medium leading-tight mt-0.5 sm:hidden truncate max-w-[16rem]">
-                    {statsLine}
-                  </span>
-                )}
               </button>
 
               <AnimatePresence>
@@ -217,38 +481,6 @@ export function AgendaTopBar({
             </div>
           </div>
 
-          {/* Actions: search + bell */}
-          <div className="flex items-center gap-1 flex-shrink-0">
-          <motion.button
-            whileTap={{ scale: 0.94 }}
-            onClick={onSearchClick}
-            className="h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
-            aria-label="Buscar"
-          >
-            <Search className="h-3.5 w-3.5 text-white/70" />
-          </motion.button>
-
-          <motion.button
-            whileTap={{ scale: 0.94 }}
-            onClick={onNotificationsClick}
-            className="relative h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
-            aria-label="Notificaciones"
-          >
-            <Bell className="h-3.5 w-3.5 text-white/70" />
-            {unreadNotifications > 0 && (
-              <motion.span
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="absolute -top-0.5 -right-0.5 h-4 min-w-[1rem] px-1 rounded-full bg-gradient-to-r from-[#4FE3C1] to-[#3A6DFF] text-[9px] font-bold text-[#0E0F11] flex items-center justify-center shadow-[0_4px_12px_rgba(58,109,255,0.4)]"
-              >
-                {unreadNotifications > 9 ? "9+" : unreadNotifications}
-              </motion.span>
-            )}
-          </motion.button>
-        </div>
-
-        {/* ── Row 2 (mobile): navigation + view + filters ── */}
-        <div className="flex items-center justify-between gap-2">
           {/* Date navigation */}
           <div className="flex items-center gap-1 flex-shrink-0">
             <motion.button
@@ -283,10 +515,38 @@ export function AgendaTopBar({
             </motion.button>
           </div>
 
-          {/* Right group: view + filters */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Desktop / tablet */}
-            <div className="hidden sm:flex items-center rounded-xl border border-white/10 bg-white/5 p-0.5 gap-0.5">
+          {/* Actions: search + bell */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <motion.button
+              whileTap={{ scale: 0.94 }}
+              onClick={onSearchClick}
+              className="h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
+              aria-label="Buscar"
+            >
+              <Search className="h-3.5 w-3.5 text-white/70" />
+            </motion.button>
+
+            <motion.button
+              whileTap={{ scale: 0.94 }}
+              onClick={onNotificationsClick}
+              className="relative h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
+              aria-label="Notificaciones"
+            >
+              <Bell className="h-3.5 w-3.5 text-white/70" />
+              {unreadNotifications > 0 && (
+                <motion.span
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="absolute -top-0.5 -right-0.5 h-4 min-w-[1rem] px-1 rounded-full bg-gradient-to-r from-[#4FE3C1] to-[#3A6DFF] text-[9px] font-bold text-[#0E0F11] flex items-center justify-center shadow-[0_4px_12px_rgba(58,109,255,0.4)]"
+                >
+                  {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                </motion.span>
+              )}
+            </motion.button>
+          </div>
+
+          {/* View mode segmented control */}
+          <div className="flex items-center rounded-xl border border-white/10 bg-white/5 p-0.5 gap-0.5 flex-shrink-0">
             {VIEW_MODES.map((mode) => (
               <motion.button
                 key={mode.key}
@@ -304,56 +564,8 @@ export function AgendaTopBar({
             ))}
           </div>
 
-          {/* Mobile: dropdown to save horizontal space */}
-          <div ref={viewMenuRef} className="relative sm:hidden">
-            <motion.button
-              whileTap={{ scale: 0.94 }}
-              onClick={() => setShowViewMenu((v) => !v)}
-              className="h-8 px-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center gap-1.5 text-xs font-semibold text-white/80"
-              aria-label="Cambiar vista"
-              aria-expanded={showViewMenu}
-            >
-              <span className="text-white/60">Vista</span>
-              <span className="text-white">{VIEW_MODES.find((m) => m.key === viewMode)?.short ?? "—"}</span>
-              <ChevronDown className={cn("h-3.5 w-3.5 text-white/60 transition-transform", showViewMenu && "rotate-180")} />
-            </motion.button>
-
-            <AnimatePresence>
-              {showViewMenu && (
-                <motion.div
-                  initial={{ opacity: 0, y: 4, scale: 0.97 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 4, scale: 0.97 }}
-                  transition={{ duration: 0.12 }}
-                  className="absolute top-full mt-2 right-0 z-[80] w-40 rounded-xl bg-[#1A1B1F] border border-white/10 shadow-2xl overflow-hidden"
-                >
-                  <div className="p-1">
-                    {VIEW_MODES.map((mode) => (
-                      <button
-                        key={mode.key}
-                        onClick={() => {
-                          onViewModeChange(mode.key);
-                          setShowViewMenu(false);
-                        }}
-                        className={cn(
-                          "w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-colors",
-                          viewMode === mode.key
-                            ? "bg-white/10 text-white"
-                            : "text-white/70 hover:bg-white/5 hover:text-white"
-                        )}
-                      >
-                        {mode.label}
-                      </button>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-          </div>
-
-        {/* ── Filters button with combined dropdown ── */}
-        <div ref={filtersRef} className="relative flex-shrink-0">
+          {/* Filters button with combined dropdown */}
+          <div ref={filtersRef} className="relative flex-shrink-0">
           <motion.button
             whileTap={{ scale: 0.94 }}
             onClick={() => setShowFilters(!showFilters)}
@@ -444,10 +656,8 @@ export function AgendaTopBar({
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
           </div>
         </div>
-
       </div>
     </motion.div>
   );

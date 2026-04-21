@@ -24,6 +24,9 @@ DECLARE
   v_internal_notes text;
   v_client_message text;
   v_is_highlighted boolean;
+  v_deposit_amount_cents integer;
+  v_deposit_percent_bp integer;
+  v_deposit_currency text;
 BEGIN
   -- Extract fields
   v_booking_id := NULLIF(p_booking->>'id', '')::uuid;
@@ -39,6 +42,9 @@ BEGIN
   v_internal_notes := NULLIF(p_booking->>'internal_notes', '');
   v_client_message := NULLIF(p_booking->>'client_message', '');
   v_is_highlighted := COALESCE((p_booking->>'is_highlighted')::boolean, false);
+  v_deposit_amount_cents := NULLIF(p_booking->>'deposit_amount_cents', '')::integer;
+  v_deposit_percent_bp := NULLIF(p_booking->>'deposit_percent_bp', '')::integer;
+  v_deposit_currency := COALESCE(NULLIF(p_booking->>'deposit_currency', ''), 'EUR');
 
   -- Normalize dual-state model from legacy "status" when not provided
   if v_booking_state is null then
@@ -74,6 +80,17 @@ BEGIN
       else 'pending'
     end;
 
+  -- Deposit normalization: only when payment_status=deposit
+  if v_payment_status <> 'deposit' then
+    v_deposit_amount_cents := null;
+    v_deposit_percent_bp := null;
+  else
+    -- Ensure mutually exclusive; if both provided prefer amount (frontend shouldn't send both)
+    if v_deposit_amount_cents is not null and v_deposit_percent_bp is not null then
+      v_deposit_percent_bp := null;
+    end if;
+  end if;
+
   -- Conflict validation (exclude self when editing)
   IF EXISTS (
     SELECT 1
@@ -103,6 +120,9 @@ BEGIN
       status = v_status,
       booking_state = v_booking_state,
       payment_status = v_payment_status,
+      deposit_amount_cents = v_deposit_amount_cents,
+      deposit_percent_bp = v_deposit_percent_bp,
+      deposit_currency = v_deposit_currency,
       internal_notes = v_internal_notes,
       client_message = v_client_message,
       is_highlighted = v_is_highlighted,
@@ -129,6 +149,9 @@ BEGIN
     status,
     booking_state,
     payment_status,
+    deposit_amount_cents,
+    deposit_percent_bp,
+    deposit_currency,
     internal_notes,
     client_message,
     is_highlighted
@@ -142,6 +165,9 @@ BEGIN
     v_status,
     v_booking_state,
     v_payment_status,
+    v_deposit_amount_cents,
+    v_deposit_percent_bp,
+    v_deposit_currency,
     v_internal_notes,
     v_client_message,
     v_is_highlighted
