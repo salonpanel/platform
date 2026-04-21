@@ -182,7 +182,10 @@ export function useSmartPrefetchData(tenantId: string | null, impersonateOrgId: 
               });
 
             if (!error && conversationsData) {
-              prefetchData(`chat-conversations-${impersonateOrgId || 'default'}`, async () => conversationsData);
+              const chatPageKey = impersonateOrgId
+                ? `chat-page-imp-${impersonateOrgId}`
+                : `chat-page-${tenant.id}`;
+              prefetchData(chatPageKey, async () => conversationsData);
               console.log('[SmartPrefetch] ✅ Chat precargado');
             }
           } catch (error) {

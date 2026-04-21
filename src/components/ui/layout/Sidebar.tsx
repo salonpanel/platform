@@ -56,7 +56,7 @@ export function Sidebar({ tenantName, isOpen = true, onClose }: SidebarProps) {
       {/* Mobile overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/60 z-[52] lg:hidden"
           onClick={onClose}
         />
       )}
@@ -64,7 +64,7 @@ export function Sidebar({ tenantName, isOpen = true, onClose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#111827] border-r border-[#1f2937] flex flex-col transition-transform duration-300 ease-in-out h-screen",
+          "fixed lg:static inset-y-0 left-0 z-[56] w-64 bg-[#111827] border-r border-[#1f2937] flex flex-col transition-transform duration-300 ease-in-out h-screen",
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >

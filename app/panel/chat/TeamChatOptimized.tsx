@@ -10,7 +10,6 @@ import {
 	useState,
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSearchParams } from "next/navigation";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Spinner } from "@/components/ui/Spinner";
 import { Modal } from "@/components/ui/Modal";
@@ -25,8 +24,11 @@ import { MessageComposer } from "./MessageComposer";
 import { MembersModal } from "./MembersModal";
 import { AddMembersModal } from "./AddMembersModal";
 import { UserProfileModal } from "./UserProfileModal";
+import type { ChatPageDataset } from "@/lib/chat-page-data";
 
 type ConversationType = "all" | "direct" | "group";
+
+const MAX_CHAT_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 
 type Conversation = {
 	id: string;
@@ -42,7 +44,7 @@ type Conversation = {
 	viewerRole: "member" | "admin";
 	lastMessageSenderId?: string | null;
 	targetUserId?: string | null;
-	status?: "active" | "unregistered";
+	status?: "active" | "pending_direct";
 };
 
 type TeamMessage = {
@@ -80,27 +82,12 @@ type ConversationMember = {
 
 const MESSAGE_FALLBACK_DATE = "1970-01-01T00:00:00Z";
 
-type ChatPageData = {
-	tenant: {
-		id: string;
-		name: string;
-		timezone: string;
-	};
-	conversations: Conversation[];
-	membersDirectory: Record<string, TenantMemberProfile>;
-};
-
 interface TeamChatOptimizedProps {
-	initialData: ChatPageData;
-	impersonateOrgId: string | null;
+	initialData: ChatPageDataset;
 }
 
-export function TeamChatOptimized({
-	initialData,
-	impersonateOrgId,
-}: TeamChatOptimizedProps) {
+export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 	const supabase = getSupabaseBrowser();
-	const searchParams = useSearchParams();
 
 	// Estados principales con datos iniciales
 	const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -146,6 +133,31 @@ export function TeamChatOptimized({
 	const profileDropdownRef = useRef<HTMLDivElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const messageContainerRef = useRef<HTMLDivElement>(null);
+	const messagesByConversationRef = useRef<Record<string, TeamMessage[]>>({});
+	const realtimeChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+	messagesByConversationRef.current = messagesByConversation;
+
+	const lastSyncedTenantIdRef = useRef<string | null>(null);
+	useEffect(() => {
+		const id = initialData.tenant.id;
+		if (lastSyncedTenantIdRef.current === id) return;
+		lastSyncedTenantIdRef.current = id;
+		setTenantId(id);
+		setConversations(initialData.conversations);
+		setMembersDirectory(initialData.membersDirectory);
+		setMessagesByConversation({});
+		setHasMoreMessages({});
+		setMembersByConversation({});
+		const groupChat = initialData.conversations.find((c) => c.type === "all");
+		setSelectedConversationId(
+			groupChat?.id ?? initialData.conversations[0]?.id ?? null
+		);
+	}, [
+		initialData.tenant.id,
+		initialData.conversations,
+		initialData.membersDirectory,
+	]);
 
 	// 🔥 NUEVO: Procesar conversaciones para resolver nombres dinámicos (estilo WhatsApp)
 	// Y añadir miembros del equipo que aún no tienen cuenta (Ghost conversations)
@@ -176,20 +188,20 @@ export function TeamChatOptimized({
 				if (member.userId && usersWithChat.has(member.userId)) return false;
 				return true;
 			})
-			.map(member => ({
-				id: `ghost-${member.userId || member.displayName.replace(/\s+/g, '-').toLowerCase()}-${Math.random().toString(36).substr(2, 4)}`,
+			.map((member) => ({
+				id: `ghost-${member.userId}`,
 				tenantId: tenantId,
-				type: 'direct',
+				type: 'direct' as const,
 				name: member.displayName,
-				lastMessageBody: 'Pendiente de registro',
+				lastMessageBody: 'Sin conversación directa',
 				lastMessageAt: null,
 				unreadCount: 0,
 				membersCount: 2,
 				lastReadAt: null,
 				createdBy: 'system',
-				viewerRole: 'member',
+				viewerRole: 'member' as const,
 				targetUserId: member.userId,
-				status: 'unregistered'
+				status: 'pending_direct' as const,
 			}));
 
 		return [...mapped, ...ghostConversations];
@@ -228,8 +240,20 @@ export function TeamChatOptimized({
 	// 🔥 CARGAR MENSAJES DE CONVERSACIÓN SELECCIONADA CON RPC OPTIMIZADO
 	const loadMessagesForConversation = useCallback(
 		async (conversationId: string, beforeTimestamp?: string) => {
-			// Si ya hay mensajes (no vacíos) y no es paginación, no recargar
-			if (!beforeTimestamp && (messagesByConversation[conversationId]?.length ?? 0) > 0) return;
+			if (
+				!beforeTimestamp &&
+				messagesByConversationRef.current[conversationId] !== undefined
+			)
+				return;
+
+			if (conversationId.startsWith("ghost-")) {
+				setMessagesByConversation((prev) => ({
+					...prev,
+					[conversationId]: [],
+				}));
+				setHasMoreMessages((prev) => ({ ...prev, [conversationId]: false }));
+				return;
+			}
 
 			setMessagesLoading(true);
 			try {
@@ -310,7 +334,7 @@ export function TeamChatOptimized({
 				setMessagesLoading(false);
 			}
 		},
-		[supabase, currentUserId, messagesByConversation]
+		[supabase, currentUserId]
 	);
 
 		// 🔥 Cargar miembros de la conversación (para modales y contadores precisos)
@@ -396,7 +420,7 @@ export function TeamChatOptimized({
 		loadMessagesForConversation(selectedConversationId, oldestMessage.created_at);
 	}, [selectedConversationId, messagesLoading, messagesByConversation, loadMessagesForConversation]);
 
-	// 🔥 REAL-TIME SUBSCRIPTION OPTIMIZADA
+	// 🔥 REAL-TIME SUBSCRIPTION OPTIMIZADA (mismo canal para postgres + broadcast typing)
 	useEffect(() => {
 		if (!tenantId) return;
 
@@ -404,7 +428,7 @@ export function TeamChatOptimized({
 			.channel(`team_chat_optimized_${tenantId}`, {
 				config: {
 					presence: {
-						key: currentUserId || 'anon',
+						key: currentUserId || "anon",
 					},
 				},
 			})
@@ -421,24 +445,36 @@ export function TeamChatOptimized({
 					if (!newMessage) return;
 
 					const conversationId = newMessage.conversation_id;
-
-					// 🔥 Actualizar conversaciones (lastMessage, unreadCount)
-					setConversations((prev) =>
-						prev.map((conv) =>
-							conv.id === conversationId ? {
-								...conv,
-								lastMessageBody: newMessage.body,
-								lastMessageAt: newMessage.created_at,
-								unreadCount: conv.id === selectedConversationId ? 0 : conv.unreadCount + 1
-							} : conv
-						).sort((a, b) => {
-							const aTime = a.lastMessageAt ?? MESSAGE_FALLBACK_DATE;
-							const bTime = b.lastMessageAt ?? MESSAGE_FALLBACK_DATE;
-							return bTime.localeCompare(aTime);
-						})
+					const isOwnMessage = Boolean(
+						currentUserId && newMessage.sender_id === currentUserId
 					);
 
-					// 🔥 Actualizar mensajes solo si es la conversación activa
+					setConversations((prev) =>
+						prev
+							.map((conv) => {
+								if (conv.id !== conversationId) return conv;
+								const isOpen = conv.id === selectedConversationId;
+								const nextUnread =
+									isOpen || isOwnMessage
+										? isOpen
+											? 0
+											: conv.unreadCount
+										: conv.unreadCount + 1;
+								return {
+									...conv,
+									lastMessageBody: newMessage.body,
+									lastMessageAt: newMessage.created_at,
+									lastMessageSenderId: newMessage.sender_id,
+									unreadCount: nextUnread,
+								};
+							})
+							.sort((a, b) => {
+								const aTime = a.lastMessageAt ?? MESSAGE_FALLBACK_DATE;
+								const bTime = b.lastMessageAt ?? MESSAGE_FALLBACK_DATE;
+								return bTime.localeCompare(aTime);
+							})
+					);
+
 					if (conversationId === selectedConversationId) {
 						setMessagesByConversation((prev) => {
 							const existing = prev[conversationId] ?? [];
@@ -452,8 +488,12 @@ export function TeamChatOptimized({
 				}
 			)
 			.on("broadcast", { event: "typing" }, (payload) => {
-				const { userId, typing, conversationId } = payload.payload;
-				if (userId === currentUserId) return;
+				const { userId, typing, conversationId } = payload.payload as {
+					userId?: string;
+					typing?: boolean;
+					conversationId?: string;
+				};
+				if (!userId || !conversationId || userId === currentUserId) return;
 
 				setTypingUsers((prev) => {
 					const next = { ...prev };
@@ -476,16 +516,25 @@ export function TeamChatOptimized({
 				}
 			});
 
+		realtimeChannelRef.current = channel;
+
 		return () => {
+			if (realtimeChannelRef.current === channel) {
+				realtimeChannelRef.current = null;
+			}
 			supabase.removeChannel(channel);
 		};
-	}, [supabase, tenantId, selectedConversationId]);
+	}, [supabase, tenantId, selectedConversationId, currentUserId]);
 
-	// Cargar mensajes cuando se selecciona conversación
+	// Cargar mensajes cuando se selecciona conversación (undefined = aún no cargado)
 	useEffect(() => {
-		if (selectedConversationId && !messagesByConversation[selectedConversationId]) {
-			loadMessagesForConversation(selectedConversationId);
+		if (
+			!selectedConversationId ||
+			messagesByConversation[selectedConversationId] !== undefined
+		) {
+			return;
 		}
+		void loadMessagesForConversation(selectedConversationId);
 	}, [selectedConversationId, loadMessagesForConversation, messagesByConversation]);
 
 	// Cerrar dropdown al hacer clic fuera
@@ -505,28 +554,38 @@ export function TeamChatOptimized({
 		};
 	}, [showProfileDropdown]);
 
-	// Broadcast typing status
 	const handleTyping = () => {
 		if (!selectedConversationId || !currentUserId || !tenantId) return;
 
+		const channel = realtimeChannelRef.current;
+		if (!channel) return;
+
 		if (!isTyping) {
 			setIsTyping(true);
-			const channel = supabase.channel(`team_chat_optimized_${tenantId}`);
 			void channel.send({
 				type: "broadcast",
 				event: "typing",
-				payload: { userId: currentUserId, typing: true, conversationId: selectedConversationId },
+				payload: {
+					userId: currentUserId,
+					typing: true,
+					conversationId: selectedConversationId,
+				},
 			});
 		}
 
 		if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
 		typingTimeoutRef.current = setTimeout(() => {
 			setIsTyping(false);
-			const channel = supabase.channel(`team_chat_optimized_${tenantId}`);
-			void channel.send({
+			const ch = realtimeChannelRef.current;
+			if (!ch) return;
+			void ch.send({
 				type: "broadcast",
 				event: "typing",
-				payload: { userId: currentUserId, typing: false, conversationId: selectedConversationId },
+				payload: {
+					userId: currentUserId,
+					typing: false,
+					conversationId: selectedConversationId,
+				},
 			});
 		}, 3000);
 	};
@@ -607,6 +666,12 @@ export function TeamChatOptimized({
 		if (!files || files.length === 0 || !selectedConversation || !tenantId) return;
 
 		const file = files[0];
+		if (file.size > MAX_CHAT_ATTACHMENT_BYTES) {
+			console.error(
+				"[TeamChatOptimized] Archivo demasiado grande (máx. 10 MB)"
+			);
+			return;
+		}
 		const fileExt = file.name.split('.').pop();
 		const fileName = `${selectedConversation.id}/${Math.random().toString(36).substring(7)}.${fileExt}`;
 
@@ -669,6 +734,8 @@ export function TeamChatOptimized({
 					lastReadAt: conv.last_read_at,
 					createdBy: conv.created_by,
 					viewerRole: conv.viewer_role as "member" | "admin",
+					lastMessageSenderId: conv.last_message_sender_id ?? null,
+					targetUserId: conv.target_user_id ?? null,
 				}));
 
 				// Ordenar por última actividad
@@ -755,6 +822,26 @@ export function TeamChatOptimized({
 			const targetMember = membersDirectory[targetUserId];
 			const targetDisplay = targetMember?.displayName ?? "Chat directo";
 
+			const { data: existingId, error: findErr } = await supabase.rpc(
+				"find_direct_team_conversation",
+				{
+					p_tenant_id: tenantId,
+					p_user_a: currentUserId,
+					p_user_b: targetUserId,
+				}
+			);
+
+			if (findErr) throw findErr;
+
+			if (existingId) {
+				await refreshConversations();
+				setSelectedConversationId(existingId as string);
+				setShowNewChatModal(false);
+				setSelectedUserIds([]);
+				setGroupName("");
+				return;
+			}
+
 			const { data: conv, error: convError } = await supabase
 				.from("team_conversations")
 				.insert({
@@ -823,7 +910,7 @@ export function TeamChatOptimized({
 									animate={{ opacity: 1, y: 0, scale: 1 }}
 									exit={{ opacity: 0, y: -10, scale: 0.95 }}
 									transition={{ duration: 0.2 }}
-									className="absolute right-0 mt-2 w-56 rounded-xl glass border border-[rgba(255,255,255,0.1)] shadow-[0px_8px_32px_rgba(0,0,0,0.3)] overflow-hidden z-50"
+									className="absolute right-0 mt-2 w-56 rounded-xl glass border border-[rgba(255,255,255,0.1)] shadow-[0px_8px_32px_rgba(0,0,0,0.3)] overflow-hidden z-[80]"
 								>
 									{/* Información del usuario */}
 									<div className="px-4 py-3 border-b border-[rgba(255,255,255,0.1)]">
@@ -921,17 +1008,24 @@ export function TeamChatOptimized({
 									membersDirectory={membersDirectory}
 									loading={messagesLoading}
 									containerRef={messageContainerRef}
+									onLoadMore={handleLoadMoreMessages}
+									hasMoreMessages={
+										selectedConversationId
+											? hasMoreMessages[selectedConversationId] ?? false
+											: false
+									}
 								/>
 							</div>
-							{selectedConversation.status === 'unregistered' ? (
+							{selectedConversation.status === "pending_direct" ? (
 								<div className="p-10 border-t border-white/5 bg-[#202c33] flex flex-col items-center text-center">
 									<div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
 										<UserX className="h-8 w-8 text-[#8696a0]" />
 									</div>
-									<h3 className="text-[#e9edef] font-medium mb-1">Miembro sin cuenta activa</h3>
+									<h3 className="text-[#e9edef] font-medium mb-1">Sin conversación directa</h3>
 									<p className="text-[#8696a0] text-sm max-w-sm">
-										Este miembro del equipo aún no se ha registrado en la plataforma. 
-										Invítalo para que pueda participar en el chat y ver tu historial.
+										Aún no hay un hilo directo con esta persona en el sistema. Usa{" "}
+										<span className="text-[#e9edef] font-medium">Nuevo chat</span>, elige al
+										miembro y se reutilizará la conversación si ya existía.
 									</p>
 								</div>
 							) : (
@@ -967,7 +1061,7 @@ export function TeamChatOptimized({
 								</p>
 								<div className="flex items-center gap-2 text-[#8696a0] text-[12px] opacity-40">
 									<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm4.59-12.42L10 14.17l-2.59-2.58L6 13l4 4 8-8z"></path></svg>
-									<span className="font-medium">Cifrado de extremo a extremo</span>
+									<span className="font-medium">Conexión segura (HTTPS)</span>
 								</div>
 							</div>
 							<div className="absolute bottom-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00a884]/40 to-transparent" />

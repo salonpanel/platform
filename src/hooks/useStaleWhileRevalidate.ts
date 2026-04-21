@@ -392,13 +392,7 @@ export function useRealtimeStaleWhileRevalidate<T>(
           ...(filter && { filter: filter }),
         },
         () => {
-          // Cuando llegan cambios, marcar como stale para revalidar en el próximo render
-          const cached = cache.get(key);
-          if (cached) {
-            cached.isStale = true;
-          }
-          // Forzar re-render para que el SWR normal detecte que está stale
-          setData(current => current);
+          void revalidate();
         }
       )
       .subscribe((status: string) => {
@@ -411,7 +405,7 @@ export function useRealtimeStaleWhileRevalidate<T>(
       supabase.removeChannel(channel);
       console.log(`[Realtime] Desuscrito de ${table} para ${key}`);
     };
-  }, [enabled, realtimeEnabled, supabase, tenantId, table, filter, event, key]);
+  }, [enabled, realtimeEnabled, supabase, tenantId, table, filter, event, key, revalidate]);
 
   return {
     data,

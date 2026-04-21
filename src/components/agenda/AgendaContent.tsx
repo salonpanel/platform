@@ -380,7 +380,7 @@ export function AgendaContent({
             onClick={onNewBooking}
             label="Nueva cita"
             icon={<span className="text-lg font-semibold">+</span>}
-            className="bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-6"
+            className="bottom-[calc(var(--bottom-nav-offset)+1rem)] md:bottom-6"
           />
         </motion.div>
       </AnimatePresence>

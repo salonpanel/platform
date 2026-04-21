@@ -22,7 +22,8 @@ export function MobileHamburgerButton({ onMenuClick, className }: MobileHamburge
       whileTap={{ scale: 0.95 }}
       onClick={onMenuClick}
       className={cn(
-        "fixed bottom-20 right-4 z-40 md:hidden",
+        "fixed right-4 z-[55] md:hidden",
+        "bottom-[calc(var(--bottom-nav-offset)+5rem)]",
         "h-14 w-14 rounded-full",
         "glass border border-[rgba(255,255,255,0.1)]",
         "backdrop-blur-xl",

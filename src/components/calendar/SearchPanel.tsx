@@ -57,7 +57,7 @@ export function SearchPanel({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -8 }}
         transition={{ duration: 0.15 }}
-        className="absolute top-full left-0 right-0 mt-2 z-50"
+        className="absolute top-full left-0 right-0 mt-2 z-[80]"
       >
         <GlassCard variant="popover" padding="md" className="border border-white/10 shadow-[0px_8px_32px_rgba(0,0,0,0.5)]">
           <div className="flex items-center gap-3">

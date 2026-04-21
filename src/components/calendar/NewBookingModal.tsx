@@ -258,7 +258,7 @@ export function NewBookingModal({
 
                     {/* DROPDOWN RESULTS */}
                     {isSearchFocused && (query.trim().length > 0 || results.length > 0) && (
-                      <div className="absolute z-50 mt-2 w-full rounded-xl border border-white/10 bg-[#1b1d21] shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                      <div className="absolute z-[80] mt-2 w-full rounded-xl border border-white/10 bg-[#1b1d21] shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
                         {results.length > 0 ? (
                           <ul className="max-h-[240px] overflow-y-auto py-1">
                             {results.map((c) => (

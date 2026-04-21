@@ -94,7 +94,7 @@ export function AppShell({
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-md z-40 md:hidden transition-opacity animate-fadeIn"
+          className="fixed inset-0 bg-black/70 backdrop-blur-md z-[52] md:hidden transition-opacity animate-fadeIn"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -102,7 +102,7 @@ export function AppShell({
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed md:static inset-y-0 left-0 z-50 w-64 glass flex flex-col transition-transform duration-300 ease-in-out shadow-glass",
+          "fixed md:static inset-y-0 left-0 z-[56] w-64 glass flex flex-col transition-transform duration-300 ease-in-out shadow-glass",
           "bg-[var(--color-bg-primary)] backdrop-blur-xl border-r border-[var(--glass-border)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}

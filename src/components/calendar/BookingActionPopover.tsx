@@ -8,6 +8,7 @@ import { BookingStatus, BOOKING_STATUS_CONFIG } from "@/types/agenda";
 import { GlassCard } from "@/components/agenda/primitives/GlassCard";
 import { theme } from "@/theme/ui";
 import { cn } from "@/lib/utils";
+import { getMobileBottomNavInsetPx } from "@/lib/mobile-viewport";
 
 interface BookingActionPopoverProps {
   isOpen: boolean;
@@ -58,6 +59,7 @@ export function BookingActionPopover({
       const popoverWidth = popover.offsetWidth || 200;
       const popoverHeight = popover.offsetHeight || 150;
       const padding = 10;
+      const viewportBottom = window.innerHeight - getMobileBottomNavInsetPx();
 
       // Ajustar horizontalmente si se sale por la derecha
       if (x + popoverWidth + padding > window.innerWidth) {
@@ -68,13 +70,16 @@ export function BookingActionPopover({
         x = padding;
       }
 
-      // Ajustar verticalmente si se sale por abajo
-      if (y + popoverHeight + padding > window.innerHeight) {
+      // Ajustar verticalmente si se sale por debajo (respetando tab bar móvil)
+      if (y + popoverHeight + padding > viewportBottom) {
         y = position.y - popoverHeight - offset;
       }
-      // Ajustar verticalmente si se sale por arriba
       if (y < padding) {
         y = padding;
+      }
+      const maxY = viewportBottom - popoverHeight - padding;
+      if (y > maxY) {
+        y = Math.max(padding, maxY);
       }
 
       setAdjustedPosition({ x, y });

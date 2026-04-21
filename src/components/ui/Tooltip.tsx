@@ -2,6 +2,7 @@
 
 import { ReactNode, useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { getMobileBottomNavInsetPx } from "@/lib/mobile-viewport";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface TooltipProps {
@@ -53,6 +54,18 @@ export function Tooltip({
         break;
     }
 
+    const pad = 8;
+    const bottomInset = getMobileBottomNavInsetPx();
+    const viewportBottom = window.innerHeight - bottomInset;
+    if (top + tooltipRect.height > viewportBottom - pad) {
+      top = Math.max(pad, viewportBottom - tooltipRect.height - pad);
+    }
+    if (top < pad) top = pad;
+    if (left + tooltipRect.width > window.innerWidth - pad) {
+      left = window.innerWidth - tooltipRect.width - pad;
+    }
+    if (left < pad) left = pad;
+
     setPosition({ top, left });
   };
 
@@ -102,7 +115,7 @@ export function Tooltip({
             exit={{ opacity: 0, scale: 0.9, y: 5 }}
             transition={{ duration: 0.15, ease: "easeOut" as const }}
             className={cn(
-              "fixed z-50 px-3 py-1.5 rounded-lg text-xs font-semibold font-satoshi",
+              "fixed z-[100] px-3 py-1.5 rounded-lg text-xs font-semibold font-satoshi",
               "glass bg-[#15171A] border border-[rgba(255,255,255,0.1)]",
               "text-[var(--text-primary)] shadow-[0px_4px_16px_rgba(0,0,0,0.3)]",
               "backdrop-blur-md",

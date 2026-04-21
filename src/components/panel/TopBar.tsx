@@ -155,7 +155,7 @@ export function TopBar({
                     "bg-[rgba(15,23,42,0.95)] backdrop-blur-xl",
                     "border border-white/[0.08]",
                     "shadow-[0_20px_60px_rgba(0,0,0,0.5)]",
-                    "z-50"
+                    "z-[80]"
                   )}
                 >
                   {/* User info section */}

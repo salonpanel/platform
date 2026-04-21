@@ -2,9 +2,10 @@
 
 import { DashboardDataset, createEmptyDashboardKpis, fetchDashboardDataset } from "@/lib/dashboard-data";
 import { fetchAgendaDataset, getAgendaRange } from "@/lib/agenda-data";
-// import { getCurrentTenant } from "@/lib/panel-tenant"; // Phase 13.1.3: Removed direct usage
 import { useTenant } from "@/contexts/TenantContext"; // Phase 13.1.2 Unified Context
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
+import { getCurrentTenant } from "@/lib/panel-tenant";
+import { useCallback, useMemo } from "react";
 import { useStaleWhileRevalidate, useRealtimeStaleWhileRevalidate } from "./useStaleWhileRevalidate";
 import { ViewMode } from "@/types/agenda";
 
@@ -475,82 +476,91 @@ export function useChatPageData(
 ) {
   const supabase = getSupabaseBrowser();
   const { tenant } = useTenant();
-  const activeTenantId = tenant?.id;
 
-  const enabled = (options?.enabled ?? true) && !!activeTenantId;
+  const cacheKey = useMemo(() => {
+    if (impersonateOrgId) return `chat-page-imp-${impersonateOrgId}`;
+    if (tenant?.id) return `chat-page-${tenant.id}`;
+    return null;
+  }, [impersonateOrgId, tenant?.id]);
 
-  // 🔥 REAL-TIME CHAT: Actualiza automáticamente cuando llegan nuevos mensajes/conversaciones
-  return useRealtimeStaleWhileRevalidate(
-    activeTenantId ? `chat-page-${activeTenantId}` : null,
-    async () => {
-      // 1. Obtener tenant
-      if (!activeTenantId || !tenant) return null;
+  const realtimeTenantId = impersonateOrgId || tenant?.id || null;
 
-      const tenantId = activeTenantId as string;
+  const enabled =
+    (options?.enabled ?? true) && (!!tenant?.id || !!impersonateOrgId);
 
-      // 2. Cargar datos en paralelo: conversaciones + miembros
-      const [conversationsResult, membersResult] = await Promise.all([
-        // Conversaciones optimizadas con RPC
-        supabase.rpc("get_user_conversations_optimized", {
-          p_user_id: null, // Se resolverá en la RPC
-          p_tenant_id: tenantId,
-        }),
+  const fetchChatPage = useCallback(async () => {
+    const { tenant: resolvedTenant, status } = await getCurrentTenant(
+      impersonateOrgId
+    );
+    if (status !== "OK" || !resolvedTenant) return null;
 
-        // Directorio de miembros
-        supabase.rpc("list_tenant_members", { p_tenant_id: tenantId })
-      ]);
+    const tenantId = resolvedTenant.id;
 
-      const conversations = conversationsResult.data || [];
-      const members = membersResult.data || [];
+    const [conversationsResult, membersResult] = await Promise.all([
+      supabase.rpc("get_user_conversations_optimized", {
+        p_user_id: null,
+        p_tenant_id: tenantId,
+      }),
+      supabase.rpc("list_tenant_members", { p_tenant_id: tenantId }),
+    ]);
 
-      // Transformar miembros a formato de directorio
-      const membersDirectory: Record<string, any> = {};
-      for (const member of members) {
-        membersDirectory[member.user_id] = {
-          userId: member.user_id,
-          displayName: member.display_name,
-          tenantRole: member.tenant_role,
-          profilePhotoUrl: member.avatar_url || undefined,
-        };
-      }
+    if (conversationsResult.error) throw conversationsResult.error;
+    if (membersResult.error) throw membersResult.error;
 
-      return {
-        tenant: {
-          id: tenant.id,
-          name: tenant.name || "Tu negocio",
-          timezone: tenant.timezone || "Europe/Madrid",
-        },
-        conversations: conversations.map((conv: any) => ({
-          id: conv.id,
-          tenantId: conv.tenant_id,
-          type: conv.type as "all" | "direct" | "group",
-          name: conv.name,
-          lastMessageBody: conv.last_message_body,
-          lastMessageAt: conv.last_message_at,
-          unreadCount: conv.unread_count || 0,
-          membersCount: conv.members_count || 0,
-          lastReadAt: conv.last_read_at,
-          createdBy: conv.created_by,
-          viewerRole: conv.viewer_role as "member" | "admin",
-          lastMessageSenderId: conv.last_message_sender_id,
-          targetUserId: conv.target_user_id,
-        })),
-        membersDirectory,
+    const conversations = conversationsResult.data || [];
+    const members = membersResult.data || [];
+
+    const membersDirectory: Record<string, any> = {};
+    for (const member of members) {
+      membersDirectory[member.user_id] = {
+        userId: member.user_id,
+        displayName: member.display_name,
+        tenantRole: member.tenant_role,
+        profilePhotoUrl: member.avatar_url || undefined,
       };
-    },
-    // 🔥 CONFIGURACIÓN REAL-TIME: Escucha cambios en mensajes y conversaciones
+    }
+
+    return {
+      tenant: {
+        id: resolvedTenant.id,
+        name: resolvedTenant.name || "Tu negocio",
+        timezone: resolvedTenant.timezone || "Europe/Madrid",
+      },
+      conversations: conversations.map((conv: any) => ({
+        id: conv.id,
+        tenantId: conv.tenant_id,
+        type: conv.type as "all" | "direct" | "group",
+        name: conv.name,
+        lastMessageBody: conv.last_message_body,
+        lastMessageAt: conv.last_message_at,
+        unreadCount: conv.unread_count || 0,
+        membersCount: conv.members_count || 0,
+        lastReadAt: conv.last_read_at,
+        createdBy: conv.created_by,
+        viewerRole: conv.viewer_role as "member" | "admin",
+        lastMessageSenderId: conv.last_message_sender_id,
+        targetUserId: conv.target_user_id,
+      })),
+      membersDirectory,
+    };
+  }, [impersonateOrgId, supabase]);
+
+  return useRealtimeStaleWhileRevalidate(
+    cacheKey,
+    fetchChatPage,
     {
-      table: 'team_messages',
-      filter: activeTenantId ? `tenant_id=eq.${activeTenantId}` : undefined,
-      event: '*',
-      tenantId: activeTenantId || 'default',
+      table: "team_messages",
+      filter: realtimeTenantId ? `tenant_id=eq.${realtimeTenantId}` : undefined,
+      event: "*",
+      tenantId: realtimeTenantId || "default",
       supabase: supabase,
     },
     {
       enabled: enabled,
-      staleTime: 30000, // 30 segundos (chat necesita ser más fresco)
-      realtimeEnabled: true, // 🔥 HABILITADO: Actualiza en tiempo real
-      initialData: options?.initialData
+      staleTime: 30000,
+      // El realtime de mensajes vive en TeamChatOptimized (un solo canal); evitar doble suscripción aquí.
+      realtimeEnabled: false,
+      initialData: options?.initialData,
     }
   );
 }

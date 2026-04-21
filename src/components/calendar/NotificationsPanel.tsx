@@ -94,10 +94,7 @@ export function NotificationsPanel({
         </div>
 
         {/* Lista de notificaciones */}
-        <div 
-          className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-hide"
-          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-        >
+        <div className="flex-1 overflow-y-auto px-4 pt-4 space-y-3 scrollbar-hide pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
           {notifications.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-[#9ca3af] font-['Plus_Jakarta_Sans']">

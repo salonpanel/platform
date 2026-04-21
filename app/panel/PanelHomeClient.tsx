@@ -3,8 +3,9 @@
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { format, subDays } from "date-fns";
+import { format, subDays, addDays } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { motion } from "framer-motion";
 import {
   Calendar,
@@ -44,7 +45,6 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
   const [period, setPeriod] = useState<"today" | "week" | "month">("today");
   const [bookingsTab, setBookingsTab] = useState<"today" | "tomorrow" | "week">("today");
   const [performancePeriod, setPerformancePeriod] = useState<"7d" | "30d">("7d");
-  const [prefetchedData, setPrefetchedData] = useState<DashboardDataset | null>(null);
 
   const currentImpersonation = useMemo(() => {
     return searchParams?.get("impersonate") || impersonateOrgId || null;
@@ -58,21 +58,18 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
   // Hook optimizado: obtiene tenant + datos en UNA llamada con caché
   const dashboardData = useDashboardData(currentImpersonation, {
     tenantId: ctxTenantId,
-    initialData: prefetchedData || initialData, // 🔥 Usar datos prefetched si disponibles
-    timezone: (prefetchedData?.tenant?.timezone) || initialData?.tenant?.timezone,
-    enabled: !!ctxTenantId, // Solo ejecutar cuando tenemos tenantId válido
+    initialData,
+    timezone: initialData?.tenant?.timezone,
+    enabled: !!ctxTenantId,
   });
 
-  // Extraer datos del hook o usar initialData si está disponible
   const { tenant: hookTenant, kpis, upcomingBookings: rawBookings, staffMembers: rawStaffMembers, isLoading: isLoadingStats } = dashboardData;
 
-  // Si tenemos initialData, usarlo inmediatamente; sino usar datos del hook
-  const hasInitialData = !!initialData;
-  const tenant = hasInitialData ? initialData.tenant : hookTenant;
-  const currentKpis = hasInitialData ? initialData.kpis : kpis;
-  const currentUpcomingBookings = hasInitialData ? initialData.upcomingBookings : rawBookings;
-  const currentStaffMembers = hasInitialData ? (initialData as any).staffMembers || [] : rawStaffMembers || [];
-  const isLoading = hasInitialData ? false : isLoadingStats;
+  const tenant = hookTenant;
+  const currentKpis = kpis;
+  const currentUpcomingBookings = rawBookings;
+  const currentStaffMembers = rawStaffMembers || [];
+  const isLoading = isLoadingStats && !hookTenant;
 
   // Validate KPIs in development mode
   useEffect(() => {
@@ -123,28 +120,26 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
     staff: Array.isArray(booking.staff) ? booking.staff[0] : booking.staff,
   }));
 
-  // Filtrar reservas según el tab seleccionado
+  // Filtrar por día según la zona horaria del tenant (no la del navegador)
   const filteredBookings = useMemo(() => {
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const tomorrowStart = new Date(todayStart);
-    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
-    const dayAfterTomorrow = new Date(tomorrowStart);
-    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+    const tz = tenantTimezone;
+    const todayKey = formatInTimeZone(new Date(), tz, "yyyy-MM-dd");
+    const zonedNow = toZonedTime(new Date(), tz);
+    const tomorrowKey = formatInTimeZone(addDays(zonedNow, 1), tz, "yyyy-MM-dd");
 
     return allBookings.filter((booking) => {
-      const bookingDate = new Date(booking.starts_at);
+      const bookingKey = formatInTimeZone(new Date(booking.starts_at), tz, "yyyy-MM-dd");
       switch (bookingsTab) {
         case "today":
-          return bookingDate >= todayStart && bookingDate < tomorrowStart;
+          return bookingKey === todayKey;
         case "tomorrow":
-          return bookingDate >= tomorrowStart && bookingDate < dayAfterTomorrow;
+          return bookingKey === tomorrowKey;
         case "week":
         default:
-          return true; // Mostrar todas las próximas
+          return true;
       }
     });
-  }, [allBookings, bookingsTab]);
+  }, [allBookings, bookingsTab, tenantTimezone]);
 
   const upcomingBookings = filteredBookings;
 
@@ -412,8 +407,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
     return 'Profesional';
   }, [user]);
 
-  // Loading state - mostrar skeleton mientras carga
-  if (isLoading && !hasInitialData) {
+  if (isLoading) {
     return <DashboardSkeleton />;
   }
 

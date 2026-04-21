@@ -531,7 +531,8 @@ export function AgendaSidebar({
             whileTap={{ scale: 0.95 }}
             onClick={handleDrawerOpen}
             className={cn(
-              "fixed bottom-6 right-6 z-40 p-4 rounded-2xl",
+              "fixed right-6 z-[55] p-4 rounded-2xl",
+              "bottom-[calc(var(--bottom-nav-offset)+1.5rem)]",
               "bg-gradient-to-br from-[#4FE3C1]/90 to-[#3A6DFF]/90",
               "text-white shadow-lg shadow-[#4FE3C1]/25",
               "backdrop-blur-xl transition-all duration-300",

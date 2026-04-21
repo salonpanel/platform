@@ -377,9 +377,8 @@ export function SidebarNav({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 bg-black/70 backdrop-blur-md z-40 md:hidden"
+          className="fixed inset-0 bg-black/70 backdrop-blur-md z-[52] md:hidden"
           onClick={onClose}
-          style={{ zIndex: 40 }}
         />
       )}
 
@@ -399,7 +398,7 @@ export function SidebarNav({
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         className={cn(
-          "fixed md:static inset-y-0 left-0 z-50 glass flex flex-col transition-all duration-300 ease-out",
+          "fixed md:static inset-y-0 left-0 z-[56] glass flex flex-col transition-all duration-300 ease-out",
           "bg-[var(--bg-primary)] backdrop-blur-xl border-r border-[rgba(255,255,255,0.1)] sidebar-no-shadow",
           "md:translate-x-0 h-screen md:h-full",
           isOpen ? "translate-x-0" : "-translate-x-full",

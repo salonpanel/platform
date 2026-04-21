@@ -352,13 +352,12 @@ export function AgendaModal({
                   "relative flex flex-col bg-[var(--bg-primary)] border",
                   "border-[var(--glass-border)] shadow-[var(--shadow-premium)]",
                   "backdrop-blur-md",
-                  drawerPosition === "bottom" && "max-w-full w-full mb-0 rounded-t-3xl max-h-[90vh]",
+                  drawerPosition === "bottom" && "max-w-full w-full mb-0 rounded-t-3xl max-h-[90vh] safe-area-pb",
                   drawerPosition === "right" && "h-full max-w-md rounded-l-3xl",
                   className
                 )}
                 style={{
                   ...getMotionSafeProps({}).style,
-                  paddingBottom: drawerPosition === "bottom" ? "env(safe-area-inset-bottom)" : undefined,
                 }}
               >
                 {enhancedHeader}

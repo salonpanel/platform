@@ -199,7 +199,7 @@ export function BookingSlidePanel({
             exit="exit"
             transition={{ duration: 0.3 }}
             onClick={onClose}
-            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
+            className="fixed inset-0 z-[52] bg-black/20 backdrop-blur-sm"
             aria-hidden="true"
           />
 
@@ -213,9 +213,9 @@ export function BookingSlidePanel({
             exit="exit"
             transition={{ duration: 0.35, ease: 'easeOut' }}
             className={cn(
-              'fixed z-50 flex flex-col',
+              'fixed z-[56] flex flex-col',
               isMobile
-                ? 'inset-x-0 bottom-0 w-full max-h-[85vh] rounded-t-2xl'
+                ? 'inset-x-0 bottom-0 w-full max-h-[85vh] rounded-t-2xl safe-area-pb'
                 : 'right-0 top-0 h-full w-[400px] rounded-none'
             )}
             style={{

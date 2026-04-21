@@ -4,8 +4,10 @@
 @import "tailwindcss";
 
 :root {
-  /* Bottom navigation height (nav 48px) - Safe area removed to fix Android PWA gaps */
-  --bottom-nav-height: 60px;
+  /* Fila táctil del tab bar (sin home indicator). Debe coincidir con MobileBottomNav (h-14). */
+  --bottom-nav-height: 56px;
+  /* Espacio total bajo el scroll: fila + home indicator. MobileBottomNav refina vía ResizeObserver. */
+  --bottom-nav-offset: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
   /* ============================================================================
      NUEVO DESIGN SYSTEM - BookFast Platform
      Capsule Shapes + Soft Glass + Premium Gradients + Neo-Glow
@@ -801,6 +803,11 @@ select option {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* Footers de modales a pantalla completa (por encima del tab bar): padding base + home indicator */
+.pb-modal-footer {
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+}
+
 .safe-area-pt {
   padding-top: env(safe-area-inset-top, 0px);
 }
@@ -812,16 +819,7 @@ select option {
   padding-top: max(env(safe-area-inset-top, 0px), 1.25rem);
 }
 
-/* Main content area: must clear both the fixed bottom nav (3.5rem = 56px) AND the
-   iPhone home indicator / Android gesture bar that the nav itself sits on top of.
-   Without this, content scrolls under the nav on gesture-based phones. */
+/* Área principal: reserva exactamente el hueco del tab bar fijo + safe area (ver --bottom-nav-offset). */
 .pb-nav-safe {
-  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
-}
-
-/* PWA standalone mode */
-@media (display-mode: standalone) {
-  :root {
-    --bottom-nav-height: 3rem;
-  }
+  padding-bottom: var(--bottom-nav-offset);
 }

@@ -112,7 +112,7 @@ export function GlassModal({
 
                                 {/* Footer */}
                                 {footer && (
-                                    <div className="p-5 border-t border-white/5 bg-white/[0.02]">
+                                    <div className="px-5 pt-5 border-t border-white/5 bg-white/[0.02] pb-modal-footer">
                                         {footer}
                                     </div>
                                 )}

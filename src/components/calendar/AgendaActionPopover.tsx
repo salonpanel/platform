@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GlassCard } from "@/components/agenda/primitives/GlassCard";
 import { theme } from "@/theme/ui";
 import { cn } from "@/lib/utils";
+import { getMobileBottomNavInsetPx } from "@/lib/mobile-viewport";
 
 interface AgendaActionPopoverProps {
   isOpen: boolean;
@@ -58,10 +59,12 @@ export function AgendaActionPopover({
       const padding = 10;
 
       // Usar el contenedor scroll (offsetParent) como referencia para mantener
-      // el popover dentro de sus límites, en lugar de la ventana completa.
+      // el popover dentro de sus límites. Sin padre (fallback ventana), restar tab bar móvil.
       const parent = popover.offsetParent as HTMLElement | null;
       const containerWidth = parent?.clientWidth ?? window.innerWidth;
-      const containerHeight = parent?.clientHeight ?? window.innerHeight;
+      const bottomInset = parent ? 0 : getMobileBottomNavInsetPx();
+      const containerHeight =
+        (parent?.clientHeight ?? window.innerHeight) - bottomInset;
 
       // Ajustar horizontalmente si se sale por la derecha
       if (x + popoverWidth + padding > containerWidth) {
@@ -76,9 +79,12 @@ export function AgendaActionPopover({
       if (y + popoverHeight + padding > containerHeight) {
         y = position.y - popoverHeight - offset;
       }
-      // Ajustar verticalmente si se sale por arriba
       if (y < padding) {
         y = padding;
+      }
+      const maxY = containerHeight - popoverHeight - padding;
+      if (y > maxY) {
+        y = Math.max(padding, maxY);
       }
 
       setAdjustedPosition({ x, y });

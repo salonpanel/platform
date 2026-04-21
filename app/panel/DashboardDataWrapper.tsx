@@ -1,5 +1,5 @@
 import { supabaseServer } from "@/lib/supabase";
-import { fetchDashboardDataset, DashboardDataset } from "@/lib/dashboard-data";
+import { fetchDashboardDataset } from "@/lib/dashboard-data";
 import { createClientForServer } from "@/lib/supabase/server-client";
 import PanelHomeClient from "./PanelHomeClient";
 import { getTenantContextSafe } from "@/lib/data/tenant-context";
@@ -58,11 +58,14 @@ export default async function DashboardDataWrapper({ impersonateOrgId }: Props) 
         .eq("id", targetTenantId)
         .single();
 
-    if (!tenant) return null;
+    if (!tenant) {
+        return <PanelHomeClient initialData={null} impersonateOrgId={impersonateOrgId} />;
+    }
 
-    // 4. Fetch Dashboard Data (Layer 2)
+    // 4. Dataset del panel: cliente con JWT del usuario (RPC usa auth.uid()).
+    // Service role en sb no lleva usuario → el RPC fallaba en SSR.
     console.log(`[DashboardWrapper] Fetching data for tenant: ${tenant.id}`);
-    const dashboardData = await fetchDashboardDataset(sb, {
+    const dashboardData = await fetchDashboardDataset(supabase, {
         id: tenant.id,
         name: tenant.name,
         timezone: tenant.timezone

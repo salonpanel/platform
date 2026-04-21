@@ -113,11 +113,11 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
       {/* ───────────────── Bottom Navigation Bar ───────────────── */}
       <nav
         ref={navRef}
-        className="fixed bottom-0 left-0 right-0 z-50 md:hidden"
+        className={cn(
+          "fixed bottom-0 left-0 right-0 z-50 md:hidden safe-area-pb",
+          "shadow-[0_-1px_0_rgba(255,255,255,0.06)]"
+        )}
         style={{
-          /* iOS PWA Safe Area fix: Instagram style uses padding to fill the bottom */
-          paddingBottom: "env(safe-area-inset-bottom)",
-          /* Fully opaque background matching the app theme */
           background: "var(--neutral-50)",
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
@@ -132,8 +132,8 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
           }}
         />
 
-        {/* Items row — extremely compact */}
-        <div className="flex items-center justify-around h-[60px] px-1">
+        {/* Items row — altura alineada con --bottom-nav-height (globals.css) */}
+        <div className="flex items-center justify-around h-14 min-h-14 px-1">
           {MAIN_ITEMS.map((item) => {
             const active = isActive(item.href);
             const icon = getNavIcon(item.href);
@@ -223,7 +223,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.18 }}
-              className="fixed inset-0 z-40 md:hidden"
+              className="fixed inset-0 z-[52] md:hidden"
               style={{
                 background: "rgba(0,0,0,0.52)",
                 backdropFilter: "blur(3px)",
@@ -238,7 +238,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 320 }}
-              className="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-area-pb"
+              className="fixed bottom-0 left-0 right-0 z-[56] md:hidden safe-area-pb"
               style={{
                 background: "rgba(17, 33, 45, 0.98)",
                 backdropFilter: "blur(28px)",

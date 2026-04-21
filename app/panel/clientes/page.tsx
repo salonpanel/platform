@@ -554,7 +554,7 @@ export default function ClientesPage() {
         {/* Bulk Actions Bar */}
         {
           selectionActive && (
-            <GlassCard className="bg-emerald-500/10 border-emerald-500/20 sticky bottom-4 z-20 backdrop-blur-xl">
+            <GlassCard className="bg-emerald-500/10 border-emerald-500/20 sticky z-30 backdrop-blur-xl bottom-[calc(var(--bottom-nav-offset)+1rem)] md:bottom-4">
               <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">

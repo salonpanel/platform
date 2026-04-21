@@ -507,7 +507,7 @@ export const UiToast: React.FC<ToastProps> = ({
           exit={{ opacity: 0, y: -20, scale: 0.95 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
           className={cn(
-            "fixed top-4 right-4 z-50 max-w-sm rounded-2xl border backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.6)] p-4",
+            "fixed top-4 right-4 z-[100] max-w-sm rounded-2xl border backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.6)] p-4",
             toneStyles[tone]
           )}
         >
@@ -563,7 +563,11 @@ export const UiFab: React.FC<FabProps> = ({
   return (
     <motion.button
       onClick={onClick}
-      className={cn("fixed bottom-6 right-6 z-[70] flex items-center gap-2 rounded-full bg-[rgba(21,23,26,0.96)] px-4 py-2.5 text-sm font-medium text-white shadow-[0_18px_45px_rgba(0,0,0,0.8)] border border-white/10 backdrop-blur-xl", className)}
+      className={cn(
+        "fixed right-6 z-[70] flex items-center gap-2 rounded-full bg-[rgba(21,23,26,0.96)] px-4 py-2.5 text-sm font-medium text-white shadow-[0_18px_45px_rgba(0,0,0,0.8)] border border-white/10 backdrop-blur-xl",
+        "bottom-[calc(var(--bottom-nav-offset)+1.5rem)] md:bottom-6",
+        className
+      )}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -2, boxShadow: "0 22px 55px rgba(0,0,0,0.9)" }}

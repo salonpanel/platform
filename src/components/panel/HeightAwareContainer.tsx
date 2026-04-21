@@ -71,9 +71,9 @@ export function HeightAwareContainer({ children, className }: HeightAwareContain
   // Calcular altura disponible (considerando headers, footers, etc.)
   useEffect(() => {
     const updateAvailableHeight = () => {
-      // En móvil, restar altura de BottomNavBar si existe (aprox 64px)
+      // En móvil, restar tab bar + zona home (~56px + safe area; margen de seguridad)
       // En desktop/tablet, considerar TopBar (aprox 80px)
-      const offset = deviceType === "mobile" ? 64 : 80;
+      const offset = deviceType === "mobile" ? 88 : 80;
       setAvailableHeight(Math.max(0, height - offset));
     };
 

@@ -188,7 +188,7 @@ export function AgendaTopBar({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 4, scale: 0.97 }}
                   transition={{ duration: 0.12 }}
-                  className="absolute top-full mt-2 left-0 z-50 rounded-xl bg-[#1A1B1F] border border-white/10 shadow-2xl p-3"
+                  className="absolute top-full mt-2 left-0 z-[80] rounded-xl bg-[#1A1B1F] border border-white/10 shadow-2xl p-3"
                 >
                   <input
                     type="date"
@@ -319,7 +319,7 @@ export function AgendaTopBar({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 4, scale: 0.97 }}
                 transition={{ duration: 0.12 }}
-                className="absolute top-full mt-2 right-0 z-50 w-52 rounded-xl bg-[#1A1B1F] border border-white/10 shadow-2xl overflow-hidden"
+                className="absolute top-full mt-2 right-0 z-[80] w-52 rounded-xl bg-[#1A1B1F] border border-white/10 shadow-2xl overflow-hidden"
               >
                 <div className="p-3 space-y-3">
                   {/* Status filters */}

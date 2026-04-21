@@ -277,10 +277,7 @@ export function SmartModal({
           </div>
 
           {/* Footer with actions */}
-          <div 
-            className="flex items-center justify-between p-6 border-t border-[var(--glass-border-subtle)]"
-            style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}
-          >
+          <div className="flex items-center justify-between px-6 pt-6 border-t border-[var(--glass-border-subtle)] pb-modal-footer">
             <div className="flex gap-2">
               {variant === "guided" && steps.length > 0 && (
                 <>

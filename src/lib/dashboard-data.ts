@@ -228,11 +228,22 @@ export async function fetchDashboardDataset(
 
   // If successful, return the dataset
   if (data?.status === "OK") {
+    const rawStaff = (data.staffMembers || []) as any[];
+    const staffMembers: StaffMember[] = rawStaff.map((s) => ({
+      id: s.id,
+      name: s.name ?? "Sin nombre",
+      color: s.color ?? null,
+      avatar_url: s.avatar_url ?? null,
+      bookingsToday: s.bookingsToday ?? 0,
+      occupancyPercent: s.occupancyPercent ?? 0,
+      isActive: s.isActive ?? s.active ?? true,
+    }));
+
     return {
       tenant: data.tenant,
       kpis: validateDashboardKpis(data.kpis),
       upcomingBookings: data.upcomingBookings || [],
-      staffMembers: data.staffMembers || [],
+      staffMembers,
     };
   }
 

@@ -184,7 +184,7 @@ export default function PlatformUsersPage() {
 
       {/* Modal de creación */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50">
           <div className="w-full max-w-md rounded bg-white p-6">
             <h3 className="mb-4 text-lg font-semibold">Crear Platform User</h3>
             <div className="space-y-3">

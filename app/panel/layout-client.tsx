@@ -395,7 +395,7 @@ function PanelLayoutContent({
           sidebarCollapsed={sidebarCollapsed}
         />
 
-        {/* Page Content - pb-nav-safe uses var(--bottom-nav-height) to clear the fixed bottom nav on mobile */}
+        {/* Page Content - pb-nav-safe reserva var(--bottom-nav-offset) (tab + safe area, refinado en cliente) */}
         <main className="flex-1 overflow-y-auto bg-[var(--bg-primary)] pb-nav-safe md:pb-0">
           <TenantProvider tenant={tenant} isLoading={loading}>
             <PageContainer>{children}</PageContainer>

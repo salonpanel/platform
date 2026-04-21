@@ -21,7 +21,7 @@ export function SecondaryColumn({
       {/* Mobile overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/60 z-[52] lg:hidden"
           onClick={onClose}
         />
       )}
@@ -29,7 +29,7 @@ export function SecondaryColumn({
       {/* Secondary Column */}
       <aside
         className={cn(
-          "fixed lg:static inset-y-0 right-0 z-50 w-72 bg-white border-l border-gray-200 flex flex-col transition-transform duration-300 ease-in-out h-screen overflow-y-auto",
+          "fixed lg:static inset-y-0 right-0 z-[56] w-72 bg-white border-l border-gray-200 flex flex-col transition-transform duration-300 ease-in-out h-screen overflow-y-auto",
           isOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"
         )}
       >

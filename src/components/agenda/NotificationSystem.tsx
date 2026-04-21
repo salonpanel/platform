@@ -96,9 +96,11 @@ export function NotificationProvider({
   const positionClasses = {
     "top-right": "top-4 right-4",
     "top-left": "top-4 left-4",
-    "bottom-right": "bottom-4 right-4",
-    "bottom-left": "bottom-4 left-4",
-    "top-center": "top-4 left-1/2 -translate-x-1/2"
+    "bottom-right":
+      "right-4 bottom-[calc(var(--bottom-nav-offset)+1rem)] md:bottom-4",
+    "bottom-left":
+      "left-4 bottom-[calc(var(--bottom-nav-offset)+1rem)] md:bottom-4",
+    "top-center": "top-4 left-1/2 -translate-x-1/2",
   };
 
   return (
@@ -113,7 +115,7 @@ export function NotificationProvider({
       {children}
 
       {/* Notification container */}
-      <div className={cn("fixed z-50 pointer-events-none", positionClasses[position])}>
+      <div className={cn("fixed z-[100] pointer-events-none", positionClasses[position])}>
         <div className="space-y-2">
           <AnimatePresence>
             {notifications.map((notification, index) => (
