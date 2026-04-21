@@ -40,6 +40,8 @@ type Conversation = {
 	lastReadAt: string | null;
 	createdBy: string;
 	viewerRole: "member" | "admin";
+	lastMessageSenderId?: string | null;
+	targetUserId?: string | null;
 };
 
 type TeamMessage = {
@@ -49,6 +51,10 @@ type TeamMessage = {
 	body: string;
 	created_at: string;
 	edited_at: string | null;
+	metadata?: any;
+	parent_message_id?: string | null;
+	parent_message_body?: string | null;
+	parent_author_name?: string | null;
 	// 🚀 Metadatos del RPC para paginación infinita
 	author_name?: string;
 	author_avatar?: string;
@@ -118,14 +124,25 @@ export function TeamChatOptimized({
 	const [showUserProfileModal, setShowUserProfileModal] = useState(false);
 	const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
+	// Estados para respuestas y móvil
+	const [replyToMessage, setReplyToMessage] = useState<TeamMessage | null>(null);
+	const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
+	const [isMobile, setIsMobile] = useState(false);
+
 	// Estados del modal nuevo chat
 	const [newChatType, setNewChatType] = useState<ConversationType>("direct");
 	const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
 	const [groupName, setGroupName] = useState("");
 	const [creatingChat, setCreatingChat] = useState(false);
 
-	const messageContainerRef = useRef<HTMLDivElement>(null);
+	// Typing indicators
+	const [typingUsers, setTypingUsers] = useState<Record<string, Set<string>>>({});
+	const [isTyping, setIsTyping] = useState(false);
+	const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
 	const profileDropdownRef = useRef<HTMLDivElement>(null);
+	const fileInputRef = useRef<HTMLInputElement>(null);
+	const messageContainerRef = useRef<HTMLDivElement>(null);
 
 	// 🔥 BOOTSTRAP OPTIMIZADO: Solo resolver usuario (datos ya precargados)
 	useEffect(() => {
@@ -143,6 +160,14 @@ export function TeamChatOptimized({
 		};
 
 		bootstrap();
+
+		// Detector de móvil
+		const checkMobile = () => {
+			setIsMobile(window.innerWidth < 1024);
+		};
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+		return () => window.removeEventListener('resize', checkMobile);
 	}, [supabase.auth]);
 
 	// 🔥 CARGAR MENSAJES DE CONVERSACIÓN SELECCIONADA CON RPC OPTIMIZADO
@@ -170,6 +195,10 @@ export function TeamChatOptimized({
 					body: msg.body,
 					created_at: msg.created_at,
 					edited_at: msg.edited_at,
+					metadata: msg.metadata,
+					parent_message_id: msg.parent_message_id,
+					parent_message_body: msg.parent_message_body,
+					parent_author_name: msg.parent_author_name,
 					// Metadatos adicionales del RPC (útiles para paginación infinita)
 					author_name: msg.author_name,
 					author_avatar: msg.author_avatar,
@@ -317,7 +346,13 @@ export function TeamChatOptimized({
 		if (!tenantId) return;
 
 		const channel = supabase
-			.channel(`team_chat_optimized_${tenantId}`)
+			.channel(`team_chat_optimized_${tenantId}`, {
+				config: {
+					presence: {
+						key: currentUserId || 'anon',
+					},
+				},
+			})
 			.on(
 				"postgres_changes",
 				{
@@ -361,7 +396,30 @@ export function TeamChatOptimized({
 					}
 				}
 			)
-			.subscribe();
+			.on("broadcast", { event: "typing" }, (payload) => {
+				const { userId, typing, conversationId } = payload.payload;
+				if (userId === currentUserId) return;
+
+				setTypingUsers((prev) => {
+					const next = { ...prev };
+					const users = new Set(next[conversationId] || []);
+					if (typing) {
+						users.add(userId);
+					} else {
+						users.delete(userId);
+					}
+					next[conversationId] = users;
+					return next;
+				});
+			})
+			.subscribe(async (status) => {
+				if (status === "SUBSCRIBED" && currentUserId) {
+					await channel.track({
+						user_id: currentUserId,
+						online_at: new Date().toISOString(),
+					});
+				}
+			});
 
 		return () => {
 			supabase.removeChannel(channel);
@@ -392,6 +450,32 @@ export function TeamChatOptimized({
 		};
 	}, [showProfileDropdown]);
 
+	// Broadcast typing status
+	const handleTyping = () => {
+		if (!selectedConversationId || !currentUserId || !tenantId) return;
+
+		if (!isTyping) {
+			setIsTyping(true);
+			const channel = supabase.channel(`team_chat_optimized_${tenantId}`);
+			void channel.send({
+				type: "broadcast",
+				event: "typing",
+				payload: { userId: currentUserId, typing: true, conversationId: selectedConversationId },
+			});
+		}
+
+		if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+		typingTimeoutRef.current = setTimeout(() => {
+			setIsTyping(false);
+			const channel = supabase.channel(`team_chat_optimized_${tenantId}`);
+			void channel.send({
+				type: "broadcast",
+				event: "typing",
+				payload: { userId: currentUserId, typing: false, conversationId: selectedConversationId },
+			});
+		}, 3000);
+	};
+
 	const visibleConversations = useMemo(
 		() => (showUnreadOnly ? conversations.filter((conv) => conv.unreadCount > 0) : conversations),
 		[conversations, showUnreadOnly]
@@ -406,8 +490,8 @@ export function TeamChatOptimized({
 		? messagesByConversation[selectedConversationId] ?? []
 		: [];
 
-	const handleSendMessage = async (body: string) => {
-		if (!selectedConversation || !tenantId || !currentUserId || !body.trim()) return;
+	const handleSendMessage = async (body: string, attachments: any[] = []) => {
+		if (!selectedConversation || !tenantId || !currentUserId || (!body.trim() && attachments.length === 0)) return;
 
 		const trimmedBody = body.trim();
 		const optimisticId = `optimistic-${Date.now()}`;
@@ -416,9 +500,16 @@ export function TeamChatOptimized({
 			conversation_id: selectedConversation.id,
 			sender_id: currentUserId,
 			body: trimmedBody,
+			metadata: attachments.length > 0 ? { attachments } : null,
 			created_at: new Date().toISOString(),
 			edited_at: null,
+			parent_message_id: replyToMessage?.id || null,
+			parent_message_body: replyToMessage?.body || null,
+			parent_author_name: replyToMessage?.author_name || null,
 		};
+
+		// Limpiar respuesta inmediatamente
+		setReplyToMessage(null);
 
 		// Actualización optimista
 		setMessagesByConversation((prev) => ({
@@ -434,34 +525,67 @@ export function TeamChatOptimized({
 					conversation_id: selectedConversation.id,
 					sender_id: currentUserId,
 					body: trimmedBody,
+					metadata: attachments.length > 0 ? { attachments } : null,
+					parent_message_id: optimisticMessage.parent_message_id,
 				})
 				.select()
 				.single();
 
 			if (error) throw error;
-
+			
 			// Reemplazar mensaje optimista
 			if (data) {
-				setMessagesByConversation((prev) => {
-					const existing = prev[selectedConversation.id] ?? [];
-					return {
-						...prev,
-						[selectedConversation.id]: existing.map((m) =>
-							m.id === optimisticId ? (data as TeamMessage) : m
-						),
-					};
-				});
+				setMessagesByConversation((prev) => ({
+					...prev,
+					[selectedConversation.id]: (prev[selectedConversation.id] ?? []).map((m) =>
+						m.id === optimisticId ? (data as TeamMessage) : m
+					),
+				}));
 			}
 		} catch (err) {
 			console.error("[TeamChatOptimized] Error enviando mensaje", err);
 			// Revertir optimista
-			setMessagesByConversation((prev) => {
-				const existing = prev[selectedConversation.id] ?? [];
-				return {
-					...prev,
-					[selectedConversation.id]: existing.filter((m) => m.id !== optimisticId),
-				};
-			});
+			setMessagesByConversation((prev) => ({
+				...prev,
+				[selectedConversation.id]: (prev[selectedConversation.id] ?? []).filter((m) => m.id !== optimisticId),
+			}));
+		}
+	};
+
+	const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const files = e.target.files;
+		if (!files || files.length === 0 || !selectedConversation || !tenantId) return;
+
+		const file = files[0];
+		const fileExt = file.name.split('.').pop();
+		const fileName = `${selectedConversation.id}/${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+		try {
+			// 1. Subir al Storage
+			const { error: uploadError } = await supabase.storage
+				.from('chat-attachments')
+				.upload(fileName, file);
+
+			if (uploadError) throw uploadError;
+
+			// 2. Obtener URL pública
+			const { data: { publicUrl } } = supabase.storage
+				.from('chat-attachments')
+				.getPublicUrl(fileName);
+
+			// 3. Enviar mensaje con el adjunto
+			await handleSendMessage("", [
+				{
+					name: file.name,
+					url: publicUrl,
+					type: file.type,
+					size: file.size,
+				}
+			]);
+		} catch (err) {
+			console.error("[TeamChatOptimized] Error al subir archivo:", err);
+		} finally {
+			if (fileInputRef.current) fileInputRef.current.value = "";
 		}
 	};
 
@@ -698,50 +822,91 @@ export function TeamChatOptimized({
 			</header>
 
 			{/* Layout principal */}
-			<div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-0">
+			<div className="flex-1 flex flex-col lg:grid lg:grid-cols-3 gap-4 min-h-0 overflow-hidden">
 				{/* Lista de conversaciones */}
-				<div className="lg:col-span-1">
+				<div 
+					className={cn(
+						"lg:col-span-1 h-full min-h-0 transition-all duration-300",
+						isMobile && mobileView === 'chat' ? "hidden" : "block"
+					)}
+				>
 					<ConversationList
 						conversations={visibleConversations}
 						selectedConversationId={selectedConversationId}
-						onSelectConversation={setSelectedConversationId}
+						onSelectConversation={(id) => {
+							setSelectedConversationId(id);
+							if (isMobile) setMobileView('chat');
+						}}
 						showUnreadOnly={showUnreadOnly}
 						onToggleUnread={() => setShowUnreadOnly(!showUnreadOnly)}
+						currentUserId={currentUserId}
 					/>
 				</div>
 
 				{/* Área de mensajes */}
-				<div className="lg:col-span-2 flex flex-col min-h-0">
+				<div 
+					className={cn(
+						"lg:col-span-2 flex flex-col min-h-0 h-full transition-all duration-300 relative",
+						isMobile && mobileView === 'list' ? "hidden" : "flex"
+					)}
+				>
 					{selectedConversation ? (
-						<>
+						<GlassCard className="flex-1 flex flex-col min-h-0 overflow-hidden p-0 relative">
+							{/* Fondo de Chat Estilo WhatsApp (Sutil) */}
+							<div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
+							
 							<ConversationHeader
 								conversation={selectedConversation}
 								onViewMembers={handleOpenMembersModal}
 								onAddMember={handleOpenAddMembers}
+								onBack={() => setMobileView('list')}
+								isMobile={isMobile}
 							/>
-
-							<div className="flex-1 min-h-0 flex flex-col">
-							<MessageList
-								messages={messagesForSelected}
-								currentUserId={currentUserId}
-								membersDirectory={membersDirectory}
-								loading={messagesLoading}
-								containerRef={messageContainerRef}
-								onLoadMore={handleLoadMoreMessages}
-								hasMoreMessages={selectedConversationId ? (hasMoreMessages[selectedConversationId] || false) : false}
-							/>								<MessageComposer
-									onSend={handleSendMessage}
-									disabled={!selectedConversation}
+							<div className="flex-1 min-h-0 relative">
+								<MessageList
+									messages={messagesForSelected}
+									currentUserId={currentUserId || ""}
+									onReply={setReplyToMessage}
+									typingUsers={Array.from(typingUsers[selectedConversationId || ""] || [])}
+									membersDirectory={membersDirectory}
+									loading={messagesLoading}
+									containerRef={messageContainerRef}
 								/>
 							</div>
-						</>
-					) : (
-						<GlassCard className="flex-1 flex items-center justify-center">
-							<div className="text-center">
-								<MessageSquare className="h-12 w-12 text-[var(--text-secondary)] mx-auto mb-4" />
-								<p className="text-[var(--text-secondary)]">Selecciona una conversación para empezar a chatear</p>
-							</div>
+							<MessageComposer
+								onSend={handleSendMessage}
+								onTyping={handleTyping}
+								replyTo={replyToMessage}
+								onCancelReply={() => setReplyToMessage(null)}
+								onAttach={() => fileInputRef.current?.click()}
+							/>
+							<input
+								type="file"
+								ref={fileInputRef}
+								onChange={handleFileUpload}
+								className="hidden"
+								accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"
+							/>
 						</GlassCard>
+					) : (
+						<div className="hidden lg:flex flex-1 flex-col items-center justify-center bg-[#222e35] rounded-xl border border-white/5 relative overflow-hidden">
+							<div className="flex flex-col items-center max-w-sm text-center p-8 z-10 transition-all duration-700 animate-in fade-in zoom-in slide-in-from-bottom-4">
+								<div className="w-48 h-48 mb-8 bg-gradient-to-br from-[#00a884]/15 to-[#53bdeb]/15 rounded-full flex items-center justify-center relative">
+									<div className="absolute inset-0 rounded-full border border-white/5 animate-ping opacity-20" />
+									<MessageSquare className="h-24 w-24 text-[#00a884]/40" />
+								</div>
+								<h2 className="text-2xl font-light text-[#e9edef] mb-3 font-satoshi tracking-tight">BookFast Chat</h2>
+								<p className="text-[#8696a0] text-[14px] leading-relaxed mb-10 px-4">
+									Envía y recibe mensajes sin necesidad de tener tu teléfono conectado.<br/>
+									Usa BookFast Chat en hasta 4 dispositivos vinculados a la vez.
+								</p>
+								<div className="flex items-center gap-2 text-[#8696a0] text-[12px] opacity-40">
+									<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm4.59-12.42L10 14.17l-2.59-2.58L6 13l4 4 8-8z"></path></svg>
+									<span className="font-medium">Cifrado de extremo a extremo</span>
+								</div>
+							</div>
+							<div className="absolute bottom-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00a884]/40 to-transparent" />
+						</div>
 					)}
 				</div>
 			</div>

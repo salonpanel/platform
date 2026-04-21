@@ -532,6 +532,8 @@ export function useChatPageData(
           lastReadAt: conv.last_read_at,
           createdBy: conv.created_by,
           viewerRole: conv.viewer_role as "member" | "admin",
+          lastMessageSenderId: conv.last_message_sender_id,
+          targetUserId: conv.target_user_id,
         })),
         membersDirectory,
       };

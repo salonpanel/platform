@@ -1,7 +1,7 @@
-"use client";
-
 import { GlassCard } from "@/components/ui/GlassCard";
 import { cn } from "@/lib/utils";
+import { Avatar } from "@/components/ui/Avatar";
+import { Check, CheckCheck, Users } from "lucide-react";
 
 type ConversationType = "all" | "direct" | "group";
 
@@ -17,6 +17,8 @@ type Conversation = {
 	lastReadAt: string | null;
 	createdBy: string;
 	viewerRole: "member" | "admin";
+	lastMessageSenderId?: string | null;
+	targetUserId?: string | null;
 };
 
 type ConversationListProps = {
@@ -25,18 +27,8 @@ type ConversationListProps = {
 	onSelectConversation: (id: string) => void;
 	showUnreadOnly: boolean;
 	onToggleUnread: () => void;
+	currentUserId: string | null;
 };
-
-function getConversationSubtitle(type: ConversationType): string {
-	switch (type) {
-		case "all":
-			return "Chat general de la barbería";
-		case "direct":
-			return "Chat 1:1";
-		case "group":
-			return "Grupo de equipo";
-	}
-}
 
 function formatTimestamp(iso: string): string {
 	const date = new Date(iso);
@@ -47,7 +39,14 @@ function formatTimestamp(iso: string): string {
 	if (messageDate.getTime() === today.getTime()) {
 		return date.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 	}
-	return date.toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit" });
+	
+	const yesterday = new Date(today);
+	yesterday.setDate(yesterday.getDate() - 1);
+	if (messageDate.getTime() === yesterday.getTime()) {
+		return "Ayer";
+	}
+
+	return date.toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "2-digit" });
 }
 
 export function ConversationList({
@@ -55,18 +54,18 @@ export function ConversationList({
 	selectedConversationId,
 	onSelectConversation,
 	showUnreadOnly,
-	onToggleUnread,
+	currentUserId,
 }: ConversationListProps) {
 	const filteredConversations = showUnreadOnly
 		? conversations.filter((conv) => conv.unreadCount > 0)
 		: conversations;
 
 	return (
-		<GlassCard className="flex flex-col overflow-hidden p-0">
-			<div className="flex-1 overflow-y-auto">
+		<div className="flex flex-col h-full bg-[#111b21]">
+			<div className="flex-1 overflow-y-auto custom-scrollbar">
 				{filteredConversations.length === 0 ? (
-					<div className="p-4 text-center text-[var(--text-secondary)] text-sm">
-						{showUnreadOnly ? "No hay conversaciones sin leer" : "No hay conversaciones"}
+					<div className="p-8 text-center text-[var(--text-secondary)] text-sm">
+						{showUnreadOnly ? "No hay chats sin leer" : "No hay chats disponibles"}
 					</div>
 				) : (
 					<div className="divide-y divide-white/5">
@@ -75,31 +74,71 @@ export function ConversationList({
 								key={conv.id}
 								onClick={() => onSelectConversation(conv.id)}
 								className={cn(
-									"w-full text-left p-4 transition-smooth hover:bg-white/5",
-									selectedConversationId === conv.id && "bg-[rgba(58,109,255,0.1)] border-l-2 border-[#3A6DFF]"
+									"group w-full flex items-center gap-3 px-4 py-3 transition-all hover:bg-[#202c33]",
+									selectedConversationId === conv.id && "bg-[#2a3942]"
 								)}
 							>
-								<div className="flex items-start justify-between gap-2 mb-1">
-									<h3 className="font-semibold text-white text-sm truncate flex-1">{conv.name}</h3>
-									{conv.unreadCount > 0 && (
-										<span className="px-2 py-0.5 rounded-full bg-[#3A6DFF] text-white text-[10px] font-medium min-w-[20px] text-center">
-											{conv.unreadCount}
-										</span>
-									)}
+								{/* Avatar Section */}
+								<div className="relative flex-shrink-0">
+									<Avatar 
+										size="lg"
+										name={conv.name}
+										className={cn(
+											"shadow-none border-none",
+											conv.type === 'all' && "bg-[#53bdeb] text-white"
+										)}
+									>
+										{conv.type === 'all' && <Users className="h-6 w-6" />}
+									</Avatar>
 								</div>
-								<p className="text-[11px] text-[var(--text-secondary)] mb-1">{getConversationSubtitle(conv.type)}</p>
-								{conv.lastMessageBody && (
-									<p className="text-xs text-[var(--text-secondary)] truncate mb-1">{conv.lastMessageBody}</p>
-								)}
-								{conv.lastMessageAt && (
-									<p className="text-[10px] text-[var(--text-secondary)]">{formatTimestamp(conv.lastMessageAt)}</p>
-								)}
+
+								{/* Content Section */}
+								<div className="flex-1 min-w-0 border-b border-white/5 py-1 flex flex-col justify-center h-[56px]">
+									<div className="flex items-baseline justify-between mb-0.5">
+										<h3 className={cn(
+											"font-medium text-[#e9edef] text-base truncate pr-2",
+											conv.unreadCount > 0 && "font-bold"
+										)}>
+											{conv.name}
+										</h3>
+										{conv.lastMessageAt && (
+											<span className={cn(
+												"text-[12px] flex-shrink-0",
+												conv.unreadCount > 0 ? "text-[#00a884] font-medium" : "text-[#8696a0]"
+											)}>
+												{formatTimestamp(conv.lastMessageAt)}
+											</span>
+										)}
+									</div>
+
+									<div className="flex items-center justify-between">
+										<div className="flex items-center gap-1 min-w-0 flex-1">
+											{conv.lastMessageSenderId === currentUserId && (
+												<CheckCheck className={cn(
+													"h-4 w-4 flex-shrink-0",
+													conv.unreadCount === 0 && conv.lastMessageAt ? "text-[#53bdeb]" : "text-[#8696a0]/60"
+												)} />
+											)}
+											<p className={cn(
+												"text-sm truncate pr-2",
+												conv.unreadCount > 0 ? "text-[#e9edef] font-medium" : "text-[#8696a0]"
+											)}>
+												{conv.lastMessageBody || "Sin mensajes"}
+											</p>
+										</div>
+										{conv.unreadCount > 0 && (
+											<span className="flex items-center justify-center min-w-[20px] h-[20px] px-1.5 rounded-full bg-[#00a884] text-[#111b21] text-[12px] font-bold">
+												{conv.unreadCount}
+											</span>
+										)}
+									</div>
+								</div>
 							</button>
 						))}
 					</div>
 				)}
 			</div>
-		</GlassCard>
+		</div>
 	);
 }
 

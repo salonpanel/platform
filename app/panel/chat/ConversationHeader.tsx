@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, UserPlus, Bell } from "lucide-react";
+import { Users, UserPlus, Bell, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ConversationType = "all" | "direct" | "group";
@@ -24,6 +24,8 @@ type ConversationHeaderProps = {
 	onViewMembers?: () => void;
 	onAddMember?: () => void;
 	onToggleMute?: () => void;
+	onBack?: () => void;
+	isMobile?: boolean;
 };
 
 function ConversationTypeBadge({ type }: { type: ConversationType }) {
@@ -46,23 +48,35 @@ export function ConversationHeader({
 	onViewMembers,
 	onAddMember,
 	onToggleMute,
+	onBack,
+	isMobile,
 }: ConversationHeaderProps) {
 	if (!conversation) {
 		return null;
 	}
 
 	return (
-		<div className="border-b border-white/5 p-4 flex items-center justify-between">
-			<div className="flex-1 min-w-0">
-				<h2 className="font-semibold text-white text-lg truncate">{conversation.name}</h2>
-				<div className="flex items-center gap-2 mt-1">
+		<div className="border-b border-white/5 p-4 flex items-center justify-between bg-white/[0.02]">
+			<div className="flex items-center gap-3 min-w-0">
+				{isMobile && onBack && (
+					<button
+						onClick={onBack}
+						className="p-2 -ml-2 rounded-full text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-smooth lg:hidden"
+					>
+						<ChevronLeft className="h-6 w-6" />
+					</button>
+				)}
+				<div className="min-w-0">
+					<h2 className="font-semibold text-white text-lg truncate leading-tight">{conversation.name}</h2>
+					<div className="flex items-center gap-2">
 					<ConversationTypeBadge type={conversation.type} />
 					<span className="text-[10px] text-[var(--text-secondary)]">
 						{conversation.membersCount} {conversation.membersCount === 1 ? "miembro" : "miembros"}
 					</span>
 				</div>
 			</div>
-			<div className="flex items-center gap-2">
+		</div>
+		<div className="flex items-center gap-2">
 				{onViewMembers && (
 					<button
 						onClick={onViewMembers}

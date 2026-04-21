@@ -2,8 +2,8 @@
 
 import { RefObject, useEffect, useRef, useMemo } from "react";
 import { Spinner } from "@/components/ui/Spinner";
-import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { MessageBubble } from "./MessageBubble";
+import { cn } from "@/lib/utils";
 
 type TeamMessage = {
 	id: string;
@@ -12,6 +12,10 @@ type TeamMessage = {
 	body: string;
 	created_at: string;
 	edited_at: string | null;
+	metadata?: any;
+	parent_message_id?: string | null;
+	parent_message_body?: string | null;
+	parent_author_name?: string | null;
 };
 
 type MessageListProps = {
@@ -21,23 +25,12 @@ type MessageListProps = {
 	containerRef: RefObject<HTMLDivElement | null>;
 	membersDirectory?: Record<string, { displayName: string; profilePhotoUrl?: string }>;
 	conversationType?: "all" | "direct" | "group";
-	tenantId?: string | null;
-	// 🚀 Soporte para scroll infinito
 	onLoadMore?: () => void;
 	hasMoreMessages?: boolean;
+	onReply?: (message: TeamMessage) => void;
+	tenantId?: string | null;
+	typingUsers?: string[];
 };
-
-function formatTimestamp(iso: string): string {
-	const date = new Date(iso);
-	const now = new Date();
-	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-	const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-	if (messageDate.getTime() === today.getTime()) {
-		return date.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
-	}
-	return date.toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit" });
-}
 
 function formatDateHeader(iso: string): string {
 	const date = new Date(iso);
@@ -47,18 +40,23 @@ function formatDateHeader(iso: string): string {
 	yesterday.setDate(yesterday.getDate() - 1);
 	const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-	if (messageDate.getTime() === today.getTime()) {
-		return "Hoy";
+	if (messageDate.getTime() === today.getTime()) return "Hoy";
+	if (messageDate.getTime() === yesterday.getTime()) return "Ayer";
+	
+	const options: Intl.DateTimeFormatOptions = { 
+		day: 'numeric', 
+		month: 'long' 
+	};
+	
+	if (date.getFullYear() !== now.getFullYear()) {
+		options.year = 'numeric';
 	}
-	if (messageDate.getTime() === yesterday.getTime()) {
-		return "Ayer";
-	}
-	return date.toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" });
+	
+	return date.toLocaleDateString("es-ES", options).toUpperCase();
 }
 
 function scrollToBottom(ref: RefObject<HTMLDivElement | null>) {
 	if (ref.current) {
-		// Usar setTimeout para asegurar que el DOM se haya actualizado
 		setTimeout(() => {
 			if (ref.current) {
 				ref.current.scrollTop = ref.current.scrollHeight;
@@ -67,10 +65,6 @@ function scrollToBottom(ref: RefObject<HTMLDivElement | null>) {
 	}
 }
 
-type MessageWithDate = TeamMessage & {
-	dateKey: string;
-};
-
 export function MessageList({
 	messages,
 	currentUserId,
@@ -78,39 +72,35 @@ export function MessageList({
 	containerRef,
 	membersDirectory = {},
 	conversationType = "direct",
-	tenantId,
 	onLoadMore,
 	hasMoreMessages = false,
+	onReply,
+	tenantId,
+	typingUsers = [],
 }: MessageListProps) {
-	const supabase = getSupabaseBrowser();
-	// Flag para evitar múltiples disparos seguidos del load more
 	const isLoadingMoreRef = useRef(false);
-	// Guardamos el scrollHeight antes de cargar para restaurar posición después
 	const prevScrollHeightRef = useRef(0);
-	// ID del último mensaje visible — para distinguir "nuevo mensaje" de "load-more"
 	const lastMessageIdRef = useRef<string | null>(null);
 
-	// Restaurar posición de scroll después de que se añadan mensajes al principio
+	// Restaurar posición de scroll después de cargar mensajes antiguos
 	useEffect(() => {
 		const container = containerRef.current;
 		if (!container || !isLoadingMoreRef.current) return;
 		const newScrollHeight = container.scrollHeight;
 		const diff = newScrollHeight - prevScrollHeightRef.current;
 		if (diff > 0) {
-			// Restaurar scroll síncrono ANTES de que el setTimeout del scrollToBottom lo pise
 			container.scrollTop = diff;
 		}
 		isLoadingMoreRef.current = false;
 	}, [messages.length, containerRef]);
 
-	// 🚀 SCROLL INFINITO: Detectar cuando el usuario scrollea hasta arriba
+	// Scroll infinito
 	useEffect(() => {
 		const container = containerRef.current;
 		if (!container || !onLoadMore || !hasMoreMessages) return;
 
 		const handleScroll = () => {
-			// Evitar disparos múltiples: solo actuar si no estamos cargando ya
-			if (container.scrollTop < 80 && !loading && !isLoadingMoreRef.current) {
+			if (container.scrollTop < 100 && !loading && !isLoadingMoreRef.current) {
 				isLoadingMoreRef.current = true;
 				prevScrollHeightRef.current = container.scrollHeight;
 				onLoadMore();
@@ -121,69 +111,33 @@ export function MessageList({
 		return () => container.removeEventListener('scroll', handleScroll);
 	}, [containerRef, onLoadMore, hasMoreMessages, loading]);
 
-	// Función para obtener nombre y avatar usando RPC si no están en el directorio
-	const getSenderInfo = async (senderId: string): Promise<{ displayName: string; profilePhotoUrl?: string }> => {
-		if (membersDirectory[senderId]) {
-			return membersDirectory[senderId];
-		}
-
-		// Si no está en el directorio, usar función RPC (requiere tenantId)
-		if (tenantId && currentUserId) {
-			try {
-				const displayName = await supabase.rpc("get_user_display_name", {
-					p_viewer_user_id: currentUserId,
-					p_target_user_id: senderId,
-					p_tenant_id: tenantId,
-				});
-				const profilePhotoUrl = await supabase.rpc("get_user_profile_photo", {
-					p_user_id: senderId,
-					p_tenant_id: tenantId,
-				});
-				return {
-					displayName: displayName.data ?? `Usuario ${senderId.slice(0, 6)}`,
-					profilePhotoUrl: profilePhotoUrl.data ?? undefined,
-				};
-			} catch (err) {
-				console.error("[MessageList] Error al obtener info del remitente:", err);
-			}
-		}
-
-		return {
-			displayName: `Usuario ${senderId.slice(0, 6)}`,
-		};
-	};
 	// Agrupar mensajes por fecha
 	const messagesWithDates = useMemo(() => {
 		const grouped: Record<string, TeamMessage[]> = {};
 		messages.forEach((msg) => {
 			const date = new Date(msg.created_at);
 			const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-			if (!grouped[dateKey]) {
-				grouped[dateKey] = [];
-			}
+			if (!grouped[dateKey]) grouped[dateKey] = [];
 			grouped[dateKey].push(msg);
 		});
 		return grouped;
 	}, [messages]);
 
-	const dateKeys = useMemo(() => Object.keys(messagesWithDates).sort(), [messagesWithDates]);
+	const dateKeys = useMemo(() => Object.keys(messagesWithDates).sort((a,b) => a.localeCompare(b)), [messagesWithDates]);
 
-	// Auto-scroll solo cuando llega un mensaje nuevo al FINAL (no en load-more).
-	// Comparamos el ID del último mensaje: si cambió es porque se añadió uno nuevo;
-	// si no cambió, fue un prepend de mensajes antiguos (load-more) → no tocamos scroll.
+	// Auto-scroll al recibir mensajes nuevos
 	useEffect(() => {
 		if (messages.length === 0) return;
 		const newLastId = messages[messages.length - 1].id;
 		if (newLastId !== lastMessageIdRef.current) {
 			lastMessageIdRef.current = newLastId;
-			// Solo auto-scroll si NO estamos en medio de un load-more
 			if (!isLoadingMoreRef.current) {
 				scrollToBottom(containerRef);
 			}
 		}
 	}, [messages, containerRef]);
 
-	if (loading) {
+	if (loading && messages.length === 0) {
 		return (
 			<div className="flex-1 flex items-center justify-center">
 				<Spinner />
@@ -191,73 +145,86 @@ export function MessageList({
 		);
 	}
 
-	if (messages.length === 0) {
-		return (
-			<div className="flex-1 flex items-center justify-center text-[var(--text-secondary)] text-sm">
-				<div className="text-center space-y-2">
-					<p>No hay mensajes todavía. ¡Envía el primero!</p>
-				</div>
-			</div>
-		);
-	}
-
 	return (
-		<div ref={containerRef} className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
-			{/* Spinner durante load-more (loading=true + ya hay mensajes = es un load-more) */}
-			{loading && hasMoreMessages && (
-				<div className="flex items-center justify-center py-2">
-					<Spinner size="sm" />
-					<span className="ml-2 text-xs text-[var(--text-secondary)]">Cargando más mensajes...</span>
-				</div>
-			)}
-			{/* Indicador sutil: hay historial disponible, pero no estamos cargando */}
-			{!loading && hasMoreMessages && (
-				<div className="flex items-center justify-center py-1">
-					<span className="text-[10px] text-[var(--text-secondary)]/50 italic">
-						↑ Sube para ver mensajes anteriores
-					</span>
-				</div>
-			)}
+		<div className="flex-1 relative overflow-hidden flex flex-col bg-[#0b141a]">
+			{/* Chat Wallpaper (Estilo WhatsApp) */}
+			<div 
+				className="absolute inset-0 opacity-[0.4] pointer-events-none"
+				style={{
+					backgroundImage: `url("https://w0.peakpx.com/wallpaper/580/650/wallpaper-whatsapp-dark-mode.jpg")`,
+					backgroundSize: 'cover',
+					backgroundPosition: 'center',
+					mixBlendMode: 'soft-light'
+				}}
+			/>
 
-			{dateKeys.map((dateKey) => {
-				const dayMessages = messagesWithDates[dateKey];
-				const firstMessage = dayMessages[0];
-				return (
-					<div key={dateKey} className="space-y-3">
-						{/* Separador de fecha */}
-						<div className="flex items-center gap-2 my-4">
-							<div className="flex-1 h-px bg-white/10" />
-							<span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wide px-2">
-								{formatDateHeader(firstMessage.created_at)}
-							</span>
-							<div className="flex-1 h-px bg-white/10" />
-						</div>
-
-						{/* Mensajes del día */}
-						{dayMessages.map((msg, idx) => {
-							const isOwn = msg.sender_id === currentUserId;
-							const senderInfo = membersDirectory[msg.sender_id] ?? {
-								displayName: `Usuario ${msg.sender_id.slice(0, 6)}`,
-							};
-							// Mostrar avatar y nombre solo si es grupo/all y no es el mismo remitente que el anterior
-							const prevMessage = idx > 0 ? dayMessages[idx - 1] : null;
-							const showAvatar = conversationType !== "direct" && !isOwn && (prevMessage?.sender_id !== msg.sender_id || idx === 0);
-							const showSenderName = conversationType !== "direct" && !isOwn && (prevMessage?.sender_id !== msg.sender_id || idx === 0);
-							return (
-								<MessageBubble
-									key={msg.id}
-									message={msg}
-									isOwn={isOwn}
-									senderName={senderInfo.displayName}
-									senderAvatar={senderInfo.profilePhotoUrl}
-									showSenderName={showSenderName}
-									showAvatar={showAvatar}
-								/>
-							);
-						})}
+			<div 
+				ref={containerRef} 
+				className="flex-1 overflow-y-auto pb-6 space-y-0.5 scroll-smooth relative z-10"
+			>
+				{/* Cargador de historial */}
+				{hasMoreMessages && (
+					<div className="flex justify-center py-4">
+						{loading ? <Spinner size="sm" /> : <div className="h-4" />}
 					</div>
-				);
-			})}
+				)}
+
+				{messages.length === 0 && (
+					<div className="h-full flex items-center justify-center text-[#8696a0] text-sm italic">
+						<p>No hay mensajes en esta conversación</p>
+					</div>
+				)}
+
+				{dateKeys.map((dateKey) => {
+					const dayMessages = messagesWithDates[dateKey];
+					return (
+						<div key={dateKey} className="flex flex-col">
+							{/* Separador de fecha Estilo WhatsApp */}
+							<div className="sticky top-4 z-20 flex justify-center my-4 pointer-events-none">
+								<span className="px-3 py-1.5 rounded-lg bg-[#182229] text-[12px] text-[#8696a0] shadow-md select-none">
+									{formatDateHeader(dayMessages[0].created_at)}
+								</span>
+							</div>
+
+							{dayMessages.map((msg, idx) => {
+								const isOwn = msg.sender_id === currentUserId;
+								const senderInfo = membersDirectory[msg.sender_id] ?? {
+									displayName: `Usuario`,
+								};
+								
+								const prevMessage = idx > 0 ? dayMessages[idx - 1] : null;
+								
+								// Agrupación inteligente
+								const isFirstInGroup = !prevMessage || prevMessage.sender_id !== msg.sender_id;
+								
+								// Solo mostramos nombre si es grupo y es el primer mensaje de la ráfaga
+								const isGroup = conversationType !== "direct";
+								const showSenderName = isGroup && !isOwn && isFirstInGroup;
+
+								return (
+									<div 
+										key={msg.id} 
+										className={cn(
+											"flex flex-col",
+											isFirstInGroup ? "mt-3" : "mt-[2px]"
+										)}
+									>
+										<MessageBubble
+											message={msg}
+											isOwn={isOwn}
+											senderName={senderInfo.displayName}
+											senderAvatar={senderInfo.profilePhotoUrl}
+											showSenderName={showSenderName}
+											showAvatar={false} // Quitamos avatar de burbuja para ser más WhatsApp
+											onReply={onReply}
+										/>
+									</div>
+								);
+							})}
+						</div>
+					);
+				})}
+			</div>
 		</div>
 	);
 }

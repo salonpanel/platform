@@ -998,6 +998,7 @@ export function TeamChat() {
 					selectedConversationId={selectedConversationId}
 					onSelectConversation={setSelectedConversationId}
 					showUnreadOnly={showUnreadOnly}
+					currentUserId={currentUserId || ""}
 					onToggleUnread={() => setShowUnreadOnly(!showUnreadOnly)}
 				/>
 
