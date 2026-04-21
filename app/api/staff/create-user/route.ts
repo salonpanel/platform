@@ -102,8 +102,9 @@ export async function POST(req: Request) {
     // Llamar a assertMembership
     const membership = await assertMembership(supabaseServer(), session.user.id, tenantId);
 
-    // Verificar que sea owner o admin/manager
-    if (membership.role !== "owner" && membership.role !== "admin" && membership.role !== "manager") {
+    // Verificar que sea owner o admin.
+    // Nota: memberships.role en DB NO incluye "manager"; si existe en UI/legacy se normaliza a "admin".
+    if (membership.role !== "owner" && membership.role !== "admin") {
       return NextResponse.json(
         { error: "Solo owners y admins pueden crear usuarios" },
         { status: 403 }
@@ -111,7 +112,7 @@ export async function POST(req: Request) {
     }
 
     // Validar rol permitido
-    // En la plataforma, "admin" legacy puede mapear a "manager"
+    // Permitimos "manager" como alias de entrada, pero se persiste como "admin" en memberships.
     const allowedRoles = ["owner", "admin", "manager", "staff"];
     if (!allowedRoles.includes(normalizedRole)) {
       return NextResponse.json(
@@ -119,6 +120,8 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+
+    const canonicalMembershipRole = normalizedRole === "manager" ? "admin" : normalizedRole;
 
     // Crear usuario usando Supabase Admin API
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -190,7 +193,7 @@ export async function POST(req: Request) {
           .insert({
             tenant_id: tenantId,
             user_id: existingUser.id,
-            role: normalizedRole,
+            role: canonicalMembershipRole,
           })
           .select()
           .single();
@@ -204,7 +207,7 @@ export async function POST(req: Request) {
         }
 
         try {
-          await ensureLegacyUserRecord(sb, existingUser.id, tenantId, normalizedRole);
+          await ensureLegacyUserRecord(sb, existingUser.id, tenantId, canonicalMembershipRole);
         } catch (legacyError: any) {
           console.error("Error al sincronizar public.users:", legacyError);
           await sb.from("memberships").delete().eq("id", newMembership.id);
@@ -241,7 +244,7 @@ export async function POST(req: Request) {
       .insert({
         tenant_id: tenantId,
         user_id: newUserId,
-        role: normalizedRole,
+        role: canonicalMembershipRole,
       })
       .select()
       .single();
@@ -264,7 +267,7 @@ export async function POST(req: Request) {
     }
 
     try {
-      await ensureLegacyUserRecord(sb, newUserId, tenantId, normalizedRole);
+      await ensureLegacyUserRecord(sb, newUserId, tenantId, canonicalMembershipRole);
     } catch (legacyError: any) {
       console.error("Error al sincronizar public.users:", legacyError);
       await sb.from("memberships").delete().eq("id", newMembership.id);

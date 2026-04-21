@@ -141,6 +141,12 @@ function ClientesPageContent() {
 
   // Clientes filtrados
   const filteredCustomers = useMemo(() => {
+    const safeDate = (value: string | undefined) => {
+      if (!value) return null;
+      const d = new Date(value);
+      return Number.isNaN(d.getTime()) ? null : d;
+    };
+
     let filtered = [...customers];
 
     // Búsqueda
@@ -165,8 +171,8 @@ function ClientesPageContent() {
       ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
       filtered = filtered.filter(c => {
         if (!c.lastVisit) return false;
-        const d = new Date(c.lastVisit);
-        if (Number.isNaN(d.getTime())) return false;
+        const d = safeDate(c.lastVisit);
+        if (!d) return false;
         return d > ninetyDaysAgo;
       });
     } else if (activityFilter === "inactive90") {
@@ -174,8 +180,8 @@ function ClientesPageContent() {
       ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
       filtered = filtered.filter(c => {
         if (!c.lastVisit) return true;
-        const d = new Date(c.lastVisit);
-        if (Number.isNaN(d.getTime())) return true;
+        const d = safeDate(c.lastVisit);
+        if (!d) return true;
         return d <= ninetyDaysAgo;
       });
     }

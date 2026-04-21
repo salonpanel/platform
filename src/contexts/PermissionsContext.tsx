@@ -71,8 +71,8 @@ export function PermissionsProvider({ children, initialPermissions, initialRole,
       }
 
       setRole(data.role);
-      // owner/manager = acceso completo; "admin" se mantiene por compatibilidad legacy
-      if (data.role === "owner" || data.role === "manager" || data.role === "admin") {
+      // owner/admin = acceso completo; "manager" puede existir como alias legacy en UI
+      if (data.role === "owner" || data.role === "admin" || data.role === "manager") {
         setPermissions(FULL_PERMISSIONS);
       } else {
         setPermissions(data.permissions as UserPermissions);

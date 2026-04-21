@@ -263,15 +263,15 @@ export function useCustomersPageData(
       if (error) throw error;
 
       const normalizedCustomers = (customers || []).map((c: any) => {
-        const derivedSegment =
+        const derivedSegment: "normal" | "vip" | "banned" | "marketing" | "no_contact" =
           c?.is_banned
             ? "banned"
             : c?.is_vip
               ? "vip"
-              : c?.marketing_opt_in
-                ? "marketing"
-                : (!c?.email && !c?.phone)
-                  ? "no_contact"
+              : (!c?.email && !c?.phone)
+                ? "no_contact"
+                : c?.marketing_opt_in
+                  ? "marketing"
                   : "normal";
 
         return {

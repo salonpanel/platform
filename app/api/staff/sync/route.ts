@@ -31,7 +31,9 @@ export async function POST(req: Request) {
     // Llamar a assertMembership
     const membership = await assertMembership(supabaseServer(), session.user.id, tenantId);
 
-    if (!["owner", "admin", "manager"].includes(membership.role)) {
+    // En DB (memberships.role) los valores válidos son: owner/admin/staff/viewer.
+    // "manager" es un alias legacy a nivel UI, no un rol persistido en memberships.
+    if (!["owner", "admin"].includes(membership.role)) {
       return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
     }
 
@@ -56,7 +58,7 @@ export async function POST(req: Request) {
     if (usersErr) throw usersErr;
     const existingUserIds = new Set((existingUsers || []).map((u: any) => u.id));
 
-    // 5) Mapear roles de memberships -> roles válidos en public.users
+    // 5) Mapear roles de memberships -> roles usados en public.users (legacy)
     const mapRole = (r: string) => (r === "admin" ? "manager" : r);
 
     // 6) Insertar en public.users si faltan

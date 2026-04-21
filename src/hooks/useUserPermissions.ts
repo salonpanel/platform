@@ -85,8 +85,8 @@ export function useUserPermissions(tenantId: string | null) {
       }
 
       setRole(data.role);
-      // owner/manager = full access; keep "admin" for legacy compatibility
-      if (data.role === "owner" || data.role === "manager" || data.role === "admin") {
+      // owner/admin = full access; accept "manager" if it appears as legacy alias
+      if (data.role === "owner" || data.role === "admin" || data.role === "manager") {
         setPermissions(FULL_PERMISSIONS);
       } else {
         setPermissions(data.permissions as UserPermissions);

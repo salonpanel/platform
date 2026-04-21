@@ -527,7 +527,7 @@ export function ServiciosClient({
     setSearchTerm("");
     setPriceMinInput(priceBounds.min ? priceBounds.min.toFixed(2) : "0");
     setPriceMaxInput(priceBounds.max ? priceBounds.max.toFixed(2) : "0");
-  }, []);
+  }, [priceBounds.min, priceBounds.max]);
 
   const stats = useServiceStats(services);
 

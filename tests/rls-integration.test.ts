@@ -121,32 +121,33 @@ export const RLS_INTEGRATION_TESTS = {
     },
     {
       name: 'Manager puede gestionar bookings y customers',
-      role: 'manager',
+      // Nota: memberships.role no soporta "manager" (solo owner/admin/staff/viewer). Usamos admin como alias.
+      role: 'admin',
       user_id: '33333333-3333-3333-3333-333333333333',
       tenant_id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
       sql: `
-        -- Setup: Autenticar como manager
+        -- Setup: Autenticar como admin (alias manager legacy)
         SET ROLE authenticated;
         SET request.jwt.claim.sub = '33333333-3333-3333-3333-333333333333';
         
-        -- Test: Manager puede leer bookings
+        -- Test: Admin puede leer bookings
         SELECT id FROM public.bookings WHERE tenant_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
         -- Debe retornar bookings
         
-        -- Test: Manager puede crear booking
+        -- Test: Admin puede crear booking
         INSERT INTO public.bookings (tenant_id, customer_id, staff_id, service_id, starts_at, ends_at, status)
         VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'customer-id', 'staff-id', 'service-id', '2024-01-15T10:00:00Z', '2024-01-15T10:30:00Z', 'pending');
         -- Debe insertarse correctamente
         
-        -- Test: Manager puede crear customer
+        -- Test: Admin puede crear customer
         INSERT INTO public.customers (tenant_id, name, email)
         VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Test Customer', 'test@example.com');
         -- Debe insertarse correctamente
         
-        -- Test: Manager NO puede crear service
+        -- Test: Admin puede crear service
         INSERT INTO public.services (tenant_id, name, duration_min, price_cents)
         VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Test Service', 30, 1500);
-        -- Debe fallar con error de permisos
+        -- Debe insertarse correctamente
       `,
     },
     {
@@ -310,7 +311,8 @@ describe('RLS Integration Tests', () => {
     await serviceClient.from('memberships').upsert([
       { tenant_id: tenant1Id, user_id: ownerUserId, role: 'owner' },
       { tenant_id: tenant1Id, user_id: adminUserId, role: 'admin' },
-      { tenant_id: tenant1Id, user_id: managerUserId, role: 'manager' },
+      // Nota: memberships.role no soporta "manager" (solo owner/admin/staff/viewer). Usamos admin como alias.
+      { tenant_id: tenant1Id, user_id: managerUserId, role: 'admin' },
       { tenant_id: tenant1Id, user_id: staffUserId, role: 'staff' },
       { tenant_id: tenant2Id, user_id: ownerUserId, role: 'owner' },
     ]);

@@ -26,8 +26,8 @@ export async function hasTenantPermission(
 
   const role = membership?.role as string | undefined;
   if (!role) return false;
-  // owner/manager = full access; keep "admin" for legacy compatibility
-  if (role === "owner" || role === "manager" || role === "admin") return true;
+  // owner/admin = full access; accept "manager" if it appears as legacy alias
+  if (role === "owner" || role === "admin" || role === "manager") return true;
 
   // 2) Para otros roles (p.ej. staff), consultar permisos granulares
   const { data: up } = await supabase
