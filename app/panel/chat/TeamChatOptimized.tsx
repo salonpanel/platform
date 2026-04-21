@@ -109,9 +109,12 @@ export function TeamChatOptimized({
 	const [membersDirectory, setMembersDirectory] = useState<Record<string, TenantMemberProfile>>(initialData.membersDirectory);
 
 	// Estados de UI
-	const [selectedConversationId, setSelectedConversationId] = useState<string | null>(
-		initialData.conversations.length > 0 ? initialData.conversations[0].id : null
-	);
+	const [selectedConversationId, setSelectedConversationId] = useState<string | null>(() => {
+		if (initialData.conversations.length === 0) return null;
+		// Prioritizar el chat grupal (tipo 'all') como selección inicial
+		const groupChat = initialData.conversations.find(c => c.type === 'all');
+		return groupChat ? groupChat.id : initialData.conversations[0].id;
+	});
 	const [messagesByConversation, setMessagesByConversation] = useState<Record<string, TeamMessage[]>>({});
 	const [messagesLoading, setMessagesLoading] = useState(false);
 	const [hasMoreMessages, setHasMoreMessages] = useState<Record<string, boolean>>({}); // 🚀 Rastrear si hay más mensajes
@@ -139,10 +142,26 @@ export function TeamChatOptimized({
 	const [typingUsers, setTypingUsers] = useState<Record<string, Set<string>>>({});
 	const [isTyping, setIsTyping] = useState(false);
 	const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
 	const profileDropdownRef = useRef<HTMLDivElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const messageContainerRef = useRef<HTMLDivElement>(null);
+
+	// 🔥 NUEVO: Procesar conversaciones para resolver nombres dinámicos (estilo WhatsApp)
+	const processedConversations = useMemo(() => {
+		return conversations.map(conv => {
+			if (conv.type === 'direct' && conv.targetUserId) {
+				const profile = membersDirectory[conv.targetUserId];
+				if (profile) {
+					return { ...conv, name: profile.displayName };
+				}
+			}
+			return conv;
+		});
+	}, [conversations, membersDirectory]);
+
+	const selectedConversation = useMemo(() => 
+		processedConversations.find((c) => c.id === selectedConversationId) || null
+	, [processedConversations, selectedConversationId]);
 
 	// 🔥 BOOTSTRAP OPTIMIZADO: Solo resolver usuario (datos ya precargados)
 	useEffect(() => {
@@ -477,13 +496,8 @@ export function TeamChatOptimized({
 	};
 
 	const visibleConversations = useMemo(
-		() => (showUnreadOnly ? conversations.filter((conv) => conv.unreadCount > 0) : conversations),
-		[conversations, showUnreadOnly]
-	);
-
-	const selectedConversation = useMemo(
-		() => conversations.find((conv) => conv.id === selectedConversationId) ?? null,
-		[conversations, selectedConversationId]
+		() => (showUnreadOnly ? processedConversations.filter((conv) => conv.unreadCount > 0) : processedConversations),
+		[processedConversations, showUnreadOnly]
 	);
 
 	const messagesForSelected = selectedConversationId

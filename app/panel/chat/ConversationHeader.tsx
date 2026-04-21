@@ -17,6 +17,7 @@ type Conversation = {
 	lastReadAt: string | null;
 	createdBy: string;
 	viewerRole: "member" | "admin";
+	targetUserId?: string | null;
 };
 
 type ConversationHeaderProps = {
@@ -67,7 +68,9 @@ export function ConversationHeader({
 					</button>
 				)}
 				<div className="min-w-0">
-					<h2 className="font-semibold text-white text-lg truncate leading-tight">{conversation.name}</h2>
+					<h2 className="font-semibold text-white text-lg truncate leading-tight">
+						{conversation.name}
+					</h2>
 					<div className="flex items-center gap-2">
 					<ConversationTypeBadge type={conversation.type} />
 					<span className="text-[10px] text-[var(--text-secondary)]">
