@@ -1,28 +1,35 @@
 /**
  * POST /api/asistente/chat
  *
- * Endpoint del chat del asistente. En esta Fase 0 NO llama a ningún LLM:
- * solamente pasa el mensaje por toda la cadena de guardrails para verificar
- * que la infraestructura de seguridad funciona extremo a extremo, registra
- * un audit entry y devuelve una respuesta placeholder.
+ * Endpoint del chat del asistente BookFast AI.
  *
- * Cuando conectemos el proveedor de LLM (Claude/OpenAI), el cambio será
- * reemplazar el bloque "placeholder response" por el loop de tool-use.
+ * Flujo:
+ *   1) Auth: supabase.auth.getUser()
+ *   2) Parse + validación del body
+ *   3) Membership + rol del usuario en un tenant
+ *   4) Verificar asistente_enabled del tenant
+ *   5) Guardrails: kill switch + budget + rate limit + sanitización
+ *   6) Resolver o crear sesión
+ *   7) Persistir mensaje del usuario
+ *   8) Cargar historial previo de la sesión
+ *   9) runAssistantTurn (LLM + tool-use loop + persist de pasos)
+ *  10) Actualizar last_message_at
+ *  11) Responder
  *
- * Cadena de comprobaciones (en orden):
- *  1) Auth: supabase.auth.getUser()
- *  2) Membership al tenant
- *  3) Kill switch global + tenant (capability 'chat') vía runChatGuardrails
- *  4) Budget mensual
- *  5) Rate limits IP/user/tenant
- *  6) Sanitización + detección de jailbreak
- *  7) Persist session + message
- *  8) Audit entry
- *  9) Respuesta placeholder
+ * Errores conocidos:
+ *   - 401: no autenticado
+ *   - 400: body inválido / mensaje vacío
+ *   - 403: sin tenant / asistente deshabilitado / sesión de otro usuario
+ *   - 429: rate limited
+ *   - 402: budget excedido
+ *   - 503: kill switch / proveedor LLM no disponible
+ *   - 500: fallo interno (session create, DB, etc.)
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import type { ModelMessage } from "ai";
+
 import { createClientForServer } from "@/lib/supabase/server-client";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { getClientIp } from "@/lib/rate-limit";
@@ -31,6 +38,7 @@ import {
   logAudit,
   logSecurityEvent,
 } from "@/lib/asistente/security";
+import { runAssistantTurn } from "@/lib/asistente/llm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,6 +57,13 @@ type TenantConfigRow = {
   asistente_enabled: boolean;
   asistente_autonomy_mode: "supervised" | "semi" | "autonomous";
 };
+
+/**
+ * Máximo de mensajes previos que se envían al LLM como contexto.
+ * Más = mejor memoria conversacional pero más tokens → más €.
+ * 12 turns (user+assistant) es un buen punto medio para chat operativo.
+ */
+const MAX_PRIOR_MESSAGES = 12;
 
 export async function POST(request: NextRequest) {
   const t0 = Date.now();
@@ -91,7 +106,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // ── 3. Resolver membership + rol ───────────────────────────────────────
+  // ── 3. Membership + rol ────────────────────────────────────────────────
   const { data: membershipData, error: memErr } = await supabaseAuth
     .from("memberships")
     .select("tenant_id, role")
@@ -111,14 +126,17 @@ export async function POST(request: NextRequest) {
   const tenantId = membership.tenant_id;
   const userRole = membership.role;
 
-  // ── 4. Verificar que el asistente está habilitado en el tenant ─────────
+  // ── 4. Verificar tenant ────────────────────────────────────────────────
   const { data: tenantRow } = await supabaseAuth
     .from("tenants")
-    .select("asistente_enabled, asistente_autonomy_mode")
+    .select("asistente_enabled, asistente_autonomy_mode, name, timezone")
     .eq("id", tenantId)
     .maybeSingle();
 
-  const tenantCfg = tenantRow as TenantConfigRow | null;
+  const tenantCfg = tenantRow as
+    | (TenantConfigRow & { name: string; timezone: string | null })
+    | null;
+
   if (!tenantCfg?.asistente_enabled) {
     await logSecurityEvent({
       tenantId,
@@ -140,7 +158,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // ── 5. Guardrails (kill switch + budget + rate limit + sanitización) ──
+  const tenantName = tenantCfg.name ?? "Tu negocio";
+  const tenantTimezone = tenantCfg.timezone ?? "Europe/Madrid";
+
+  // ── 5. Guardrails ──────────────────────────────────────────────────────
   const guardrails = await runChatGuardrails({
     tenantId,
     userId: user.id,
@@ -156,12 +177,11 @@ export async function POST(request: NextRequest) {
       tenantId,
       userId: user.id,
       sessionId: parsed.data.sessionId ?? null,
-      actionType:
-        guardrails.reason?.startsWith("rate_limited")
-          ? "rate_limited"
-          : guardrails.reason === "budget_exceeded"
-            ? "budget_blocked"
-            : "killswitch_blocked",
+      actionType: guardrails.reason?.startsWith("rate_limited")
+        ? "rate_limited"
+        : guardrails.reason === "budget_exceeded"
+          ? "budget_blocked"
+          : "killswitch_blocked",
       status: "denied",
       reason: guardrails.reason ?? null,
       durationMs: Date.now() - t0,
@@ -181,7 +201,7 @@ export async function POST(request: NextRequest) {
   const admin = getSupabaseAdmin();
   let sessionId = parsed.data.sessionId ?? null;
 
-  // ── 6. Resolver o crear la sesión ──────────────────────────────────────
+  // ── 6. Resolver o crear sesión ─────────────────────────────────────────
   if (sessionId) {
     const { data: existing } = await admin
       .from("asistente_sessions")
@@ -211,7 +231,9 @@ export async function POST(request: NextRequest) {
     }
   } else {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: created, error: createErr } = await (admin.from("asistente_sessions") as any)
+    const { data: created, error: createErr } = await (
+      admin.from("asistente_sessions") as any
+    )
       .insert({
         tenant_id: tenantId,
         user_id: user.id,
@@ -247,59 +269,69 @@ export async function POST(request: NextRequest) {
     content: userMessageContent,
   });
 
-  // ── 8. PLACEHOLDER de respuesta del asistente ──────────────────────────
-  // En fases posteriores: loop tool-use con Vercel AI SDK + Claude.
-  // Aquí solo devolvemos un eco controlado para validar infra.
-  const placeholderReply = buildPlaceholderReply({
-    autonomy: tenantCfg.asistente_autonomy_mode,
-    budgetPercent: guardrails.budget?.percentUsed ?? 0,
-  });
+  // ── 8. Cargar historial previo (últimos N mensajes de la sesión) ───────
+  const priorMessages = await loadPriorMessages(admin, sessionId!);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: aiMsg } = await (admin.from("asistente_messages") as any)
-    .insert({
-      session_id: sessionId,
-      tenant_id: tenantId,
-      user_id: null,
-      role: "assistant",
-      content: placeholderReply,
-      model: "placeholder-v0",
-      finish_reason: "placeholder",
-    })
-    .select("id")
-    .single();
+  // ── 9. Ejecutar turn del asistente ─────────────────────────────────────
+  let turnResult: Awaited<ReturnType<typeof runAssistantTurn>>;
+  try {
+    turnResult = await runAssistantTurn({
+      tenantId,
+      tenantName,
+      tenantTimezone,
+      userId: user.id,
+      userRole,
+      autonomyMode: tenantCfg.asistente_autonomy_mode,
+      sessionId: sessionId!,
+      userMessage: userMessageContent,
+      priorMessages,
+      situationalSummary: null,
+      ipAddress: ip,
+      userAgent,
+    });
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[asistente.chat] llm_turn_failed", errMsg);
 
-  // Actualizar last_message_at
+    await logAudit({
+      tenantId,
+      userId: user.id,
+      sessionId,
+      actionType: "tool_call",
+      toolName: "llm_turn",
+      status: "error",
+      reason: errMsg.slice(0, 500),
+      durationMs: Date.now() - t0,
+      ipAddress: ip,
+      userAgent,
+    });
+
+    // Diferenciamos errores de configuración (api key) de errores transitorios.
+    const isMissingKey =
+      errMsg.includes("API_KEY") || errMsg.includes("no configurada");
+    return NextResponse.json(
+      {
+        error: isMissingKey ? "llm_not_configured" : "llm_error",
+        message: isMissingKey
+          ? "El asistente no está configurado. Avisa al administrador."
+          : "No he podido generar respuesta. Prueba otra vez en un momento.",
+      },
+      { status: isMissingKey ? 503 : 502 },
+    );
+  }
+
+  // ── 10. Actualizar last_message_at de la sesión ────────────────────────
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (admin.from("asistente_sessions") as any)
     .update({ last_message_at: new Date().toISOString() })
     .eq("id", sessionId);
 
-  // ── 9. Audit entry ─────────────────────────────────────────────────────
-  await logAudit({
-    tenantId,
-    userId: user.id,
-    sessionId,
-    messageId: (aiMsg as { id: string } | null)?.id ?? null,
-    actionType: "tool_call",
-    toolName: "placeholder_reply",
-    toolCategory: "READ_LOW",
-    toolInput: {
-      suspicious: guardrails.sanitized?.suspiciousPatterns ?? [],
-      truncated: guardrails.sanitized?.truncated ?? false,
-    },
-    status: "ok",
-    durationMs: Date.now() - t0,
-    ipAddress: ip,
-    userAgent,
-  });
-
+  // ── 11. Responder ──────────────────────────────────────────────────────
   return NextResponse.json({
     sessionId,
-    reply: placeholderReply,
+    reply: turnResult.reply,
     meta: {
-      model: "placeholder-v0",
-      autonomy: tenantCfg.asistente_autonomy_mode,
+      ...turnResult.meta,
       suspiciousPatterns: guardrails.sanitized?.suspiciousPatterns ?? [],
       truncated: guardrails.sanitized?.truncated ?? false,
       budget: guardrails.budget ?? null,
@@ -308,23 +340,41 @@ export async function POST(request: NextRequest) {
   });
 }
 
-function buildPlaceholderReply(opts: {
-  autonomy: "supervised" | "semi" | "autonomous";
-  budgetPercent: number;
-}): string {
-  const autonomyLabel = {
-    supervised: "supervisado",
-    semi: "semi-autónomo",
-    autonomous: "autónomo",
-  }[opts.autonomy];
+/**
+ * Carga los últimos MAX_PRIOR_MESSAGES de una sesión y los convierte al
+ * formato ModelMessage del AI SDK. Filtra mensajes sin contenido relevante
+ * (los de role='tool' se omiten porque el LLM los va a reconstruir en el
+ * próximo turn a través de las tools).
+ */
+async function loadPriorMessages(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  sessionId: string,
+): Promise<ModelMessage[]> {
+  const { data, error } = await admin
+    .from("asistente_messages")
+    .select("role, content, created_at")
+    .eq("session_id", sessionId)
+    .in("role", ["user", "assistant"])
+    .order("created_at", { ascending: false })
+    .limit(MAX_PRIOR_MESSAGES + 1); // +1 para descartar el que acabamos de insertar
 
-  return [
-    "🔒 BookFast AI — Fase 0 (infraestructura de seguridad).",
-    "",
-    "Tu mensaje ha pasado todos los guardrails: kill switch, budget, rate limit, sanitización.",
-    `Modo de autonomía actual: ${autonomyLabel}.`,
-    `Uso de budget este mes: ${opts.budgetPercent.toFixed(1)}%.`,
-    "",
-    "El modelo de IA todavía no está conectado. Muy pronto.",
-  ].join("\n");
+  if (error || !data) return [];
+
+  const rows =
+    (data as Array<{ role: "user" | "assistant"; content: string | null }>) ??
+    [];
+
+  // Excluimos el último (que es el que acabamos de insertar) e invertimos.
+  const history = rows.slice(1).reverse();
+
+  const messages: ModelMessage[] = [];
+  for (const r of history) {
+    if (!r.content) continue;
+    if (r.role === "user") {
+      messages.push({ role: "user", content: r.content });
+    } else {
+      messages.push({ role: "assistant", content: r.content });
+    }
+  }
+  return messages;
 }

@@ -35,12 +35,15 @@
     "db:logs": "supabase logs"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.71",
+    "@ai-sdk/mistral": "^3.0.30",
     "@supabase/auth-helpers-react": "^0.5.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.81.0",
     "@upstash/ratelimit": "^2.0.7",
     "@upstash/redis": "^1.35.6",
     "@vercel/speed-insights": "^1.2.0",
+    "ai": "^6.0.168",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
