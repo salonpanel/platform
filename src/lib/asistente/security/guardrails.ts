@@ -111,24 +111,35 @@ export async function runChatGuardrails(
   }
 
   // 3. Rate limits --------------------------------------------------------
+  // Prod sin Upstash: por defecto bloqueamos (fail-safe). Con
+  // ASISTENTE_ALLOW_WITHOUT_RATE_LIMIT=true permitimos pasar dejando un
+  // security event de severidad warn — para fases tempranas donde aún no
+  // hemos montado Redis.
   if (enforce && !isRateLimitAvailable()) {
-    // Prod sin Upstash → fallo crítico.
+    const allowWithout =
+      process.env.ASISTENTE_ALLOW_WITHOUT_RATE_LIMIT === "true";
     await logSecurityEvent({
       tenantId,
       userId,
       sessionId,
       eventType: "rate_limit_exceeded",
-      severity: "critical",
-      payload: { reason: "rate_limit_infra_unavailable" },
+      severity: allowWithout ? "warn" : "critical",
+      payload: {
+        reason: "rate_limit_infra_unavailable",
+        degraded: allowWithout,
+      },
       ipAddress,
       userAgent,
     });
-    return {
-      allowed: false,
-      httpStatus: 503,
-      reason: "rate_limit_infra_unavailable",
-      userMessage: DENIED_GENERIC,
-    };
+    if (!allowWithout) {
+      return {
+        allowed: false,
+        httpStatus: 503,
+        reason: "rate_limit_infra_unavailable",
+        userMessage: DENIED_GENERIC,
+      };
+    }
+    // allowWithout=true → continuamos sin rate limiting
   }
 
   if (isRateLimitAvailable()) {
