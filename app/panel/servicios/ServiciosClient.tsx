@@ -11,7 +11,8 @@ import {
   GlassModal,
   GlassEmptyState,
 } from "@/components/ui/glass";
-import { Loader2, Plus, X, Search, AlertCircle, LayoutGrid, Tag } from "lucide-react";
+import { Slider } from "@/components/ui/Slider";
+import { Loader2, Plus, X, Search, AlertCircle, LayoutGrid, Tag, SlidersHorizontal } from "lucide-react";
 import { ServiceCard } from "./components/ServiceCard";
 import { ServiceForm } from "./components/ServiceForm";
 import { ServicePreviewModal } from "./components/ServicePreviewModal";
@@ -134,8 +135,8 @@ export function ServiciosClient({
       max: Math.max(...values),
     };
   }, [services]);
-  const [priceMinInput, setPriceMinInput] = useState<string>("");
-  const [priceMaxInput, setPriceMaxInput] = useState<string>("");
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 0]);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("name");
   const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[1]);
   const [searchInput, setSearchInput] = useState("");
@@ -173,8 +174,7 @@ export function ServiciosClient({
     if (didInitPriceFilter.current) return;
     if (!services.length) return;
     // Inicializar el filtro de precio a los límites actuales (sin filtrar).
-    setPriceMinInput(priceBounds.min ? priceBounds.min.toFixed(2) : "0");
-    setPriceMaxInput(priceBounds.max ? priceBounds.max.toFixed(2) : "0");
+    setPriceRange([priceBounds.min, priceBounds.max]);
     didInitPriceFilter.current = true;
   }, [services.length, priceBounds.min, priceBounds.max]);
 
@@ -187,16 +187,9 @@ export function ServiciosClient({
       try {
         setPageError(null);
 
-        const parsedMin = Number(priceMinInput);
-        const parsedMax = Number(priceMaxInput);
-        const minEuro = Number.isFinite(parsedMin) ? parsedMin : null;
-        const maxEuro = Number.isFinite(parsedMax) ? parsedMax : null;
-        const effectiveMin = minEuro != null ? Math.max(0, minEuro) : null;
-        const effectiveMax = maxEuro != null ? Math.max(0, maxEuro) : null;
-        const minCents =
-          effectiveMin != null ? Math.round(effectiveMin * 100) : null;
-        const maxCents =
-          effectiveMax != null ? Math.round(effectiveMax * 100) : null;
+        const [minEuro, maxEuro] = priceRange;
+        const minCents = Number.isFinite(minEuro) ? Math.round(Math.max(0, minEuro) * 100) : null;
+        const maxCents = Number.isFinite(maxEuro) ? Math.round(Math.max(0, maxEuro) * 100) : null;
 
         // 🚀 OPTIMIZACIÓN: Usar manage_list_services con filtros del servidor
         const { data, error } = await supabase.rpc('manage_list_services', {
@@ -207,14 +200,8 @@ export function ServiciosClient({
           p_sort_by: sortBy,
           p_sort_direction: 'asc',
           // Filtros adicionales (precio/buffer)
-          p_min_price_cents:
-            minCents != null && maxCents != null && minCents > maxCents
-              ? maxCents
-              : minCents,
-          p_max_price_cents:
-            minCents != null && maxCents != null && minCents > maxCents
-              ? minCents
-              : maxCents,
+          p_min_price_cents: minCents != null && maxCents != null && minCents > maxCents ? maxCents : minCents,
+          p_max_price_cents: minCents != null && maxCents != null && minCents > maxCents ? minCents : maxCents,
           p_buffer_filter: bufferFilter === "all" ? "all" : bufferFilter,
         });
 
@@ -242,7 +229,7 @@ export function ServiciosClient({
         }
       }
     },
-    [supabase, tenantId, filterStatus, filterCategory, searchTerm, sortBy, bufferFilter, priceMinInput, priceMaxInput, services.length]
+    [supabase, tenantId, filterStatus, filterCategory, searchTerm, sortBy, bufferFilter, priceRange, services.length]
   );
 
   // Cargar servicios inicialmente cuando el componente se monta o tenantId cambia
@@ -525,8 +512,7 @@ export function ServiciosClient({
     setSortBy("name");
     setSearchInput("");
     setSearchTerm("");
-    setPriceMinInput(priceBounds.min ? priceBounds.min.toFixed(2) : "0");
-    setPriceMaxInput(priceBounds.max ? priceBounds.max.toFixed(2) : "0");
+    setPriceRange([priceBounds.min, priceBounds.max]);
   }, [priceBounds.min, priceBounds.max]);
 
   const stats = useServiceStats(services);
@@ -608,14 +594,13 @@ export function ServiciosClient({
   }, [showModal, tenantId]);
 
   const hasServices = services.length > 0;
-  const parsedMinForFilter = Number(priceMinInput);
-  const parsedMaxForFilter = Number(priceMaxInput);
+  const [priceMin, priceMax] = priceRange;
   const hasPriceFilterApplied =
     hasServices &&
-    Number.isFinite(parsedMinForFilter) &&
-    Number.isFinite(parsedMaxForFilter) &&
-    (Math.round(parsedMinForFilter * 100) > Math.round(priceBounds.min * 100) ||
-      Math.round(parsedMaxForFilter * 100) < Math.round(priceBounds.max * 100));
+    Number.isFinite(priceMin) &&
+    Number.isFinite(priceMax) &&
+    (Math.round(priceMin * 100) > Math.round(priceBounds.min * 100) ||
+      Math.round(priceMax * 100) < Math.round(priceBounds.max * 100));
   const hasFiltersApplied =
     filterStatus !== "all" ||
     filterCategory !== "all" ||
@@ -642,10 +627,10 @@ export function ServiciosClient({
       parts.push(`Búsqueda: "${searchTerm}"`);
     }
     if (hasPriceFilterApplied) {
-      parts.push(`Precio: ${priceMinInput || "0"}€–${priceMaxInput || "0"}€`);
+      parts.push(`Precio: ${priceMin.toFixed(2)}€–${priceMax.toFixed(2)}€`);
     }
     return parts.join(" · ");
-  }, [filterStatus, filterCategory, bufferFilter, searchTerm, hasPriceFilterApplied, priceMinInput, priceMaxInput]);
+  }, [filterStatus, filterCategory, bufferFilter, searchTerm, hasPriceFilterApplied, priceMin, priceMax]);
 
   const quickAlerts = useMemo(() => {
     const alerts: Array<{
@@ -732,9 +717,10 @@ export function ServiciosClient({
 
       {/* ── Search + filters row ─────────────────────────────────────────── */}
       <GlassCard className="p-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          {/* Search */}
-          <div className="relative flex-1">
+        <div className="flex flex-col gap-3">
+          {/* Row 1: Search + (mobile) filters button */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)] pointer-events-none" />
             <input
               type="text"
@@ -750,58 +736,55 @@ export function ServiciosClient({
             )}
           </div>
 
-          {/* Status filter */}
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as ServiceFilters["status"])}
-            className="h-9 rounded-lg bg-white/5 border border-white/10 text-sm text-white px-3 focus:outline-none focus:border-[var(--accent-blue)]/40 transition-colors"
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value} className="bg-[#1a1a2e]">{opt.label}</option>
-            ))}
-          </select>
-
-          {/* Sort */}
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="h-9 rounded-lg bg-white/5 border border-white/10 text-sm text-white px-3 focus:outline-none focus:border-[var(--accent-blue)]/40 transition-colors"
-          >
-            {SORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value} className="bg-[#1a1a2e]">{opt.label}</option>
-            ))}
-          </select>
-
-          {/* Price range */}
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-secondary)]">€</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                step={0.5}
-                value={priceMinInput}
-                onChange={(e) => setPriceMinInput(e.target.value)}
-                className="h-9 w-24 pl-6 pr-3 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-[var(--accent-blue)]/40 transition-colors"
-                aria-label="Precio mínimo"
-              />
-            </div>
-            <span className="text-xs text-[var(--text-secondary)]">—</span>
-            <div className="relative">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-secondary)]">€</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                step={0.5}
-                value={priceMaxInput}
-                onChange={(e) => setPriceMaxInput(e.target.value)}
-                className="h-9 w-24 pl-6 pr-3 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-[var(--accent-blue)]/40 transition-colors"
-                aria-label="Precio máximo"
-              />
-            </div>
+            <GlassButton
+              className="sm:hidden h-9 px-3"
+              variant="secondary"
+              onClick={() => setFiltersOpen(true)}
+              leftIcon={<SlidersHorizontal className="w-4 h-4" />}
+            >
+              Filtros
+            </GlassButton>
           </div>
+
+          {/* Row 2 (desktop): Status + Sort + Price slider + Clear */}
+          <div className="hidden sm:flex sm:items-center sm:gap-3">
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value as ServiceFilters["status"])}
+              className="h-9 rounded-lg bg-white/5 border border-white/10 text-sm text-white px-3 focus:outline-none focus:border-[var(--accent-blue)]/40 transition-colors"
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value} className="bg-[#1a1a2e]">{opt.label}</option>
+              ))}
+            </select>
+
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              className="h-9 rounded-lg bg-white/5 border border-white/10 text-sm text-white px-3 focus:outline-none focus:border-[var(--accent-blue)]/40 transition-colors"
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value} className="bg-[#1a1a2e]">{opt.label}</option>
+              ))}
+            </select>
+
+            <div className="min-w-[260px] flex-1">
+              <Slider
+                value={priceRange}
+                onChange={(val) => {
+                  if (Array.isArray(val)) setPriceRange(val as [number, number]);
+                }}
+                min={Math.floor(priceBounds.min)}
+                max={Math.ceil(priceBounds.max)}
+                step={0.5}
+                variant="range"
+                showValue={false}
+              />
+              <div className="mt-2 flex items-center justify-between text-xs text-white/70">
+                <span>{priceRange[0].toFixed(2)} €</span>
+                <span>{priceRange[1].toFixed(2)} €</span>
+              </div>
+            </div>
 
           {hasFiltersApplied && (
             <button
@@ -811,6 +794,7 @@ export function ServiciosClient({
               Limpiar
             </button>
           )}
+        </div>
         </div>
       </GlassCard>
 
@@ -873,6 +857,79 @@ export function ServiciosClient({
           </GlassCard>
         )
       }
+
+      <GlassModal
+        isOpen={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        title="Filtros"
+        description="Estado, orden y precio"
+        size="md"
+        footer={
+          <div className="flex w-full items-center justify-between gap-2">
+            <GlassButton
+              variant="ghost"
+              onClick={() => {
+                clearFilters();
+              }}
+            >
+              Limpiar
+            </GlassButton>
+            <GlassButton onClick={() => setFiltersOpen(false)}>Aplicar</GlassButton>
+          </div>
+        }
+      >
+        <div className="space-y-4 sm:hidden">
+          <div className="grid grid-cols-1 gap-3">
+            <div>
+              <p className="text-xs text-[var(--text-secondary)] mb-1">Estado</p>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value as ServiceFilters["status"])}
+                className="h-10 w-full rounded-lg bg-white/5 border border-white/10 text-sm text-white px-3 focus:outline-none focus:border-[var(--accent-blue)]/40 transition-colors"
+              >
+                {STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value} className="bg-[#1a1a2e]">{opt.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <p className="text-xs text-[var(--text-secondary)] mb-1">Orden</p>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="h-10 w-full rounded-lg bg-white/5 border border-white/10 text-sm text-white px-3 focus:outline-none focus:border-[var(--accent-blue)]/40 transition-colors"
+              >
+                {SORT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value} className="bg-[#1a1a2e]">{opt.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <p className="text-xs text-[var(--text-secondary)] mb-2">Precio</p>
+              <Slider
+                value={priceRange}
+                onChange={(val) => {
+                  if (Array.isArray(val)) setPriceRange(val as [number, number]);
+                }}
+                min={Math.floor(priceBounds.min)}
+                max={Math.ceil(priceBounds.max)}
+                step={0.5}
+                variant="range"
+                showValue={false}
+              />
+              <div className="mt-3 flex items-center justify-between text-sm text-white/80">
+                <span>{priceRange[0].toFixed(2)} €</span>
+                <span>{priceRange[1].toFixed(2)} €</span>
+              </div>
+              <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                Desliza para ajustar el rango de precio.
+              </p>
+            </div>
+          </div>
+        </div>
+      </GlassModal>
 
       {/* Service List State Logic */}
       {

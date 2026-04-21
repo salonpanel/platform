@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { format, parseISO, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
-import { ChevronLeft, ChevronRight, Search, Bell, Star, CheckCircle, SlidersHorizontal, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, Bell, Star, CheckCircle, SlidersHorizontal, X, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Staff, BookingStatus, BOOKING_STATUS_CONFIG } from "@/types/agenda";
 import { useState, useRef, useEffect } from "react";
@@ -72,14 +72,17 @@ export function AgendaTopBar({
 }: AgendaTopBarProps) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [showViewMenu, setShowViewMenu] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
   const filtersRef = useRef<HTMLDivElement>(null);
+  const viewMenuRef = useRef<HTMLDivElement>(null);
 
   // Close dropdowns on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) setShowDatePicker(false);
       if (filtersRef.current && !filtersRef.current.contains(e.target as Node)) setShowFilters(false);
+      if (viewMenuRef.current && !viewMenuRef.current.contains(e.target as Node)) setShowViewMenu(false);
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
@@ -155,7 +158,7 @@ export function AgendaTopBar({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.15 }}
     >
-      <div className="px-4 py-2.5 flex items-center gap-2 flex-wrap sm:flex-nowrap">
+      <div className="px-3 sm:px-4 py-2 sm:py-2.5 flex items-center gap-2 flex-nowrap">
 
         {/* ── Date display + stats ── */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -172,10 +175,15 @@ export function AgendaTopBar({
                 "text-sm font-semibold leading-tight truncate group-hover:text-white/80 transition-colors",
                 isToday ? "text-white" : "text-white/90"
               )}>
-                {formatDateDisplay()}
+                <span className="truncate">{formatDateDisplay()}</span>
+                {statsLine && (
+                  <span className="text-[11px] text-white/35 font-medium leading-tight ml-2 truncate hidden sm:inline">
+                    {statsLine}
+                  </span>
+                )}
               </span>
               {statsLine && (
-                <span className="text-[11px] text-white/35 font-medium leading-tight mt-0.5">
+                <span className="text-[11px] text-white/35 font-medium leading-tight mt-0.5 sm:hidden truncate max-w-[16rem]">
                   {statsLine}
                 </span>
               )}
@@ -273,22 +281,72 @@ export function AgendaTopBar({
         <div className="h-5 w-px bg-white/10 hidden sm:block flex-shrink-0" />
 
         {/* ── View mode segmented control ── */}
-        <div className="flex items-center rounded-xl border border-white/10 bg-white/5 p-0.5 gap-0.5 flex-shrink-0">
-          {VIEW_MODES.map((mode) => (
+        <div className="flex-shrink-0">
+          {/* Desktop / tablet */}
+          <div className="hidden sm:flex items-center rounded-xl border border-white/10 bg-white/5 p-0.5 gap-0.5">
+            {VIEW_MODES.map((mode) => (
+              <motion.button
+                key={mode.key}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => onViewModeChange(mode.key)}
+                className={cn(
+                  "px-2.5 py-1 rounded-[10px] text-xs font-medium transition-all duration-150",
+                  viewMode === mode.key
+                    ? "bg-white text-[#0E0F11] shadow-sm"
+                    : "text-white/50 hover:text-white/80"
+                )}
+              >
+                {mode.short}
+              </motion.button>
+            ))}
+          </div>
+
+          {/* Mobile: dropdown to save horizontal space */}
+          <div ref={viewMenuRef} className="relative sm:hidden">
             <motion.button
-              key={mode.key}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => onViewModeChange(mode.key)}
-              className={cn(
-                "px-2.5 py-1 rounded-[10px] text-xs font-medium transition-all duration-150",
-                viewMode === mode.key
-                  ? "bg-white text-[#0E0F11] shadow-sm"
-                  : "text-white/50 hover:text-white/80"
-              )}
+              whileTap={{ scale: 0.94 }}
+              onClick={() => setShowViewMenu((v) => !v)}
+              className="h-8 px-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center gap-1.5 text-xs font-semibold text-white/80"
+              aria-label="Cambiar vista"
+              aria-expanded={showViewMenu}
             >
-              {mode.short}
+              <span className="text-white/60">Vista</span>
+              <span className="text-white">{VIEW_MODES.find((m) => m.key === viewMode)?.short ?? "—"}</span>
+              <ChevronDown className={cn("h-3.5 w-3.5 text-white/60 transition-transform", showViewMenu && "rotate-180")} />
             </motion.button>
-          ))}
+
+            <AnimatePresence>
+              {showViewMenu && (
+                <motion.div
+                  initial={{ opacity: 0, y: 4, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 4, scale: 0.97 }}
+                  transition={{ duration: 0.12 }}
+                  className="absolute top-full mt-2 right-0 z-[80] w-40 rounded-xl bg-[#1A1B1F] border border-white/10 shadow-2xl overflow-hidden"
+                >
+                  <div className="p-1">
+                    {VIEW_MODES.map((mode) => (
+                      <button
+                        key={mode.key}
+                        onClick={() => {
+                          onViewModeChange(mode.key);
+                          setShowViewMenu(false);
+                        }}
+                        className={cn(
+                          "w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-colors",
+                          viewMode === mode.key
+                            ? "bg-white/10 text-white"
+                            : "text-white/70 hover:bg-white/5 hover:text-white"
+                        )}
+                      >
+                        {mode.label}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* ── Filters button with combined dropdown ── */}

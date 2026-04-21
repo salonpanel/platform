@@ -129,6 +129,15 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
         <Link
           href={href}
           prefetch={true}
+          onClick={(e) => {
+            // Si ya estamos en /panel/chat, reutilizar el botón "Chat" como "volver a la lista"
+            if (href === "/panel/chat" && active) {
+              e.preventDefault();
+              try {
+                window.dispatchEvent(new CustomEvent("panel-chat:go-list"));
+              } catch {}
+            }
+          }}
           className="relative flex items-end justify-center min-w-[50px] select-none pb-0"
         >
           <div

@@ -72,7 +72,7 @@ export function SettingsHorarios({ businessHours, onChange, onSave, isLoading }:
     >
       <div className="space-y-1">
         {/* Header row */}
-        <div className="grid grid-cols-[100px_1fr_1fr_80px] gap-3 px-3 pb-1">
+        <div className="grid grid-cols-[minmax(110px,1fr)_minmax(110px,140px)_minmax(110px,140px)_72px] gap-3 px-3 pb-1">
           <span className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold">Día</span>
           <span className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold">Apertura</span>
           <span className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold">Cierre</span>
@@ -86,14 +86,14 @@ export function SettingsHorarios({ businessHours, onChange, onSave, isLoading }:
           return (
             <div
               key={day}
-              className={`grid grid-cols-[100px_1fr_1fr_80px] gap-3 items-center rounded-xl px-3 py-2.5 transition-all duration-200 ${
+              className={`grid grid-cols-[minmax(110px,1fr)_minmax(110px,140px)_minmax(110px,140px)_72px] gap-3 items-center rounded-xl px-3 py-2.5 transition-all duration-200 ${
                 isClosed
                   ? "opacity-50 bg-white/2"
                   : "bg-white/5 hover:bg-white/8"
               }`}
             >
               {/* Day label */}
-              <span className={`text-sm font-medium ${isClosed ? "text-[var(--text-secondary)]" : "text-white"}`}>
+              <span className={`text-sm font-medium pr-2 ${isClosed ? "text-[var(--text-secondary)]" : "text-white"}`}>
                 {DAY_LABELS[day]}
               </span>
 
@@ -102,7 +102,7 @@ export function SettingsHorarios({ businessHours, onChange, onSave, isLoading }:
                 value={schedule.open}
                 onChange={(e) => updateDay(day, "open", e.target.value)}
                 disabled={isClosed || isLoading}
-                className="h-9 rounded-lg bg-white/8 border border-white/10 text-sm text-white px-2 focus:outline-none focus:border-[var(--accent-blue)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="h-9 w-full rounded-lg bg-white/8 border border-white/10 text-sm text-white px-2 focus:outline-none focus:border-[var(--accent-blue)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 {TIME_OPTIONS.map((t) => (
                   <option key={t} value={t} className="bg-[#1a1a2e]">{t}</option>
@@ -114,7 +114,7 @@ export function SettingsHorarios({ businessHours, onChange, onSave, isLoading }:
                 value={schedule.close}
                 onChange={(e) => updateDay(day, "close", e.target.value)}
                 disabled={isClosed || isLoading}
-                className="h-9 rounded-lg bg-white/8 border border-white/10 text-sm text-white px-2 focus:outline-none focus:border-[var(--accent-blue)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="h-9 w-full rounded-lg bg-white/8 border border-white/10 text-sm text-white px-2 focus:outline-none focus:border-[var(--accent-blue)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 {TIME_OPTIONS.map((t) => (
                   <option key={t} value={t} className="bg-[#1a1a2e]">{t}</option>
@@ -127,7 +127,7 @@ export function SettingsHorarios({ businessHours, onChange, onSave, isLoading }:
                   type="button"
                   onClick={() => updateDay(day, "is_closed", !isClosed)}
                   disabled={isLoading}
-                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none disabled:cursor-not-allowed ${
+                  className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none disabled:cursor-not-allowed ${
                     isClosed ? "bg-red-500/60" : "bg-white/20"
                   }`}
                 >

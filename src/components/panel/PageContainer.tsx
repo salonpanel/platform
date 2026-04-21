@@ -46,7 +46,7 @@ export function PageContainer({
   return (
     <div
       className={cn(
-        "h-full w-full mx-auto transition-all duration-300 flex flex-col min-h-0",
+        "min-h-full w-full mx-auto transition-all duration-300 flex flex-col min-h-0",
         maxWidthClasses[maxWidth],
         paddingClasses[padding],
         className

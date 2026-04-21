@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { StaffSelector } from "./StaffSelector";
 import { Search, X } from "lucide-react";
 import { Staff } from "@/types/agenda";
+import { useResponsive } from "@/hooks/useResponsive";
+import { MobileStaffSwitcher } from "./MobileStaffSwitcher";
 
 interface ActiveFilter {
   id: string;
@@ -36,6 +38,7 @@ export function AgendaFilters({
   onSearchClose,
   density = "default",
 }: AgendaFiltersProps) {
+  const { isMobile } = useResponsive();
   const showStaff = staffList.length > 1;
 
   if (!searchOpen && !showStaff) return null;
@@ -44,7 +47,7 @@ export function AgendaFilters({
     <motion.div
       initial={{ opacity: 0, y: -6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex-shrink-0 flex flex-col gap-2 px-4 pb-1"
+      className="flex-shrink-0 flex flex-col gap-2 px-3 sm:px-4 pb-1"
     >
       {/* Search panel */}
       <AnimatePresence>
@@ -86,13 +89,24 @@ export function AgendaFilters({
 
       {/* Staff chips — only if more than one staff */}
       {showStaff && (
-        <StaffSelector
-          staff={staffList}
-          selectedStaffId={selectedStaffId}
-          onSelect={onStaffChange}
-          density="compact"
-          showUtilization={false}
-        />
+        <>
+          {/* Mobile: compact switcher (arrows + bottom-sheet) */}
+          {isMobile ? (
+            <MobileStaffSwitcher
+              staffList={staffList}
+              selectedStaffId={selectedStaffId}
+              onSelectStaff={onStaffChange}
+            />
+          ) : (
+            <StaffSelector
+              staff={staffList}
+              selectedStaffId={selectedStaffId}
+              onSelect={onStaffChange}
+              density="compact"
+              showUtilization={false}
+            />
+          )}
+        </>
       )}
     </motion.div>
   );

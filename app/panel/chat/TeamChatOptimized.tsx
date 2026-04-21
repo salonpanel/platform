@@ -135,6 +135,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 	const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
 	const [isMobile, setIsMobile] = useState(false);
 	const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
+	const touchStartRef = useRef<{ x: number; y: number; at: number } | null>(null);
 
 	// Typing indicators
 	const [typingUsers, setTypingUsers] = useState<Record<string, Set<string>>>({});
@@ -370,7 +371,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 				try {
 					const { data, error } = await supabase
 						.from("team_conversation_members")
-						.select("user_id, role, created_at")
+						.select("user_id, role, joined_at")
 						.eq("conversation_id", conversationId);
 
 					if (error) throw error;
@@ -383,7 +384,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 									userId: member.user_id,
 									displayName: fromDirectory.displayName,
 									role: (member.role as "member" | "admin") ?? "member",
-									joinedAt: member.created_at,
+									joinedAt: member.joined_at,
 									profilePhotoUrl: fromDirectory.profilePhotoUrl,
 								};
 							}
@@ -407,7 +408,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 								userId: member.user_id,
 								displayName,
 								role: (member.role as "member" | "admin") ?? "member",
-								joinedAt: member.created_at,
+								joinedAt: member.joined_at,
 								profilePhotoUrl: undefined,
 							};
 						})
@@ -553,6 +554,15 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 	useEffect(() => {
 		setMessagesLoadError(null);
 	}, [selectedConversationId]);
+
+	// Barra inferior móvil: al tocar "Chat" estando dentro, volver a la lista
+	useEffect(() => {
+		const handler = () => {
+			setMobileView("list");
+		};
+		window.addEventListener("panel-chat:go-list", handler as EventListener);
+		return () => window.removeEventListener("panel-chat:go-list", handler as EventListener);
+	}, []);
 
 	// Cargar mensajes cuando se selecciona conversación (undefined = aún no cargado)
 	useEffect(() => {
@@ -872,6 +882,27 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 						"relative flex min-h-0 h-full flex-col transition-all duration-300 lg:col-span-2",
 						isMobile && mobileView === "list" ? "hidden" : "flex"
 					)}
+					onTouchStart={(e) => {
+						if (!isMobile || mobileView !== "chat") return;
+						const t = e.touches[0];
+						if (!t) return;
+						touchStartRef.current = { x: t.clientX, y: t.clientY, at: Date.now() };
+					}}
+					onTouchEnd={(e) => {
+						if (!isMobile || mobileView !== "chat") return;
+						const start = touchStartRef.current;
+						touchStartRef.current = null;
+						const t = e.changedTouches[0];
+						if (!start || !t) return;
+						const dx = t.clientX - start.x;
+						const dy = t.clientY - start.y;
+						const dt = Date.now() - start.at;
+
+						// Swipe hacia la derecha (similar al gesto back iOS)
+						if (dx > 70 && Math.abs(dy) < 40 && dt < 450) {
+							setMobileView("list");
+						}
+					}}
 				>
 					{selectedConversation ? (
 						<GlassCard className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-[#0b141a] p-0 shadow-none md:rounded-xl md:border md:border-white/5">

@@ -14,6 +14,23 @@ export default function PanelError({
     useEffect(() => {
         // Log error to an error reporting service if available
         console.error("Panel Error:", error);
+
+        // Report to server logs (Vercel runtime logs) to diagnose production-only issues
+        try {
+            fetch("/api/internal/client-error", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({
+                    message: error?.message,
+                    digest: (error as any)?.digest,
+                    stack: error?.stack,
+                    href: typeof window !== "undefined" ? window.location.href : undefined,
+                    pathname: typeof window !== "undefined" ? window.location.pathname : undefined,
+                    userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+                    ts: Date.now(),
+                }),
+            }).catch(() => { });
+        } catch { }
     }, [error]);
 
     return (

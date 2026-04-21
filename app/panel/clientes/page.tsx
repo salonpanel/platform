@@ -18,7 +18,6 @@ import {
   Star,
   CheckSquare
 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import { useCustomersPageData } from "@/hooks/useOptimizedData";
 import { invalidateCache } from "@/hooks/useStaleWhileRevalidate";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
@@ -39,13 +38,8 @@ interface Customer {
 }
 
 function ClientesPageContent() {
-  const searchParams = useSearchParams();
-  // const supabase = getSupabaseBrowser(); // Use hook instead
-
-  const impersonateOrgId = useMemo(() => searchParams?.get("impersonate") || null, [searchParams?.toString()]);
-
   // Hook optimizado: obtiene tenant + clientes en UNA llamada con caché
-  const { data: pageData, isLoading, error } = useCustomersPageData(impersonateOrgId);
+  const { data: pageData, isLoading, error } = useCustomersPageData();
 
   if (isLoading) {
     return (
