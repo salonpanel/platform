@@ -6,6 +6,8 @@ export type ChatPageDataset = {
     id: string;
     name: string;
     timezone: string;
+    /** Logo de la barbería (tenants.logo_url) para el chat grupal */
+    logoUrl?: string | null;
   };
   conversations: Array<{
     id: string;
@@ -79,7 +81,7 @@ export async function getInitialChatPageData(
 
   const { data: tenantRow, error: tenantError } = await serviceClient
     .from("tenants")
-    .select("id, name, timezone")
+    .select("id, name, timezone, logo_url")
     .eq("id", targetTenantId)
     .maybeSingle();
 
@@ -127,6 +129,7 @@ export async function getInitialChatPageData(
         id: tenantRow.id,
         name: tenantRow.name || "Tu negocio",
         timezone: tenantRow.timezone || "Europe/Madrid",
+        logoUrl: (tenantRow as { logo_url?: string | null }).logo_url ?? null,
       },
       conversations: conversations.map((conv: Record<string, unknown>) => ({
         id: conv.id as string,

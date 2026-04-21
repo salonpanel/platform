@@ -7,6 +7,8 @@ export type TenantInfo = {
   name: string;
   slug: string;
   timezone: string;
+  /** URL del logo (tenants.logo_url) */
+  logoUrl?: string | null;
 };
 
 export type UserMembership = {
@@ -195,7 +197,7 @@ export async function getCurrentTenant(
     // Cargar información del tenant
     const { data: tenantData, error: tenantError } = await supabase
       .from("tenants")
-      .select("id, name, slug, timezone")
+      .select("id, name, slug, timezone, logo_url")
       .eq("id", targetTenantId)
       .maybeSingle();
 
@@ -225,6 +227,7 @@ export async function getCurrentTenant(
         name: tenantData.name,
         slug: tenantData.slug,
         timezone: tenantData.timezone || "Europe/Madrid",
+        logoUrl: (tenantData as { logo_url?: string | null }).logo_url ?? null,
       },
       role: userRole,
       isImpersonating,

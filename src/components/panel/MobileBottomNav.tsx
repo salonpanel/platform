@@ -188,7 +188,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
                 className={cn(
                   "flex items-center justify-center w-11 h-11 rounded-2xl transition-all duration-200",
                   "bg-gradient-to-br from-[var(--accent-blue)] to-[var(--accent-aqua)]",
-                  "text-[#0E0F11] shadow-[0_6px_20px_rgba(58,109,255,0.35)]",
+                  "text-[#0E0F11]",
                   agendaActive && "ring-2 ring-[var(--accent-aqua)]/40"
                 )}
               >

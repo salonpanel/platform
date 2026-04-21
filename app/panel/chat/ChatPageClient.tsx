@@ -60,5 +60,9 @@ export default function ChatPageClient({
 		);
 	}
 
-	return <TeamChatOptimized initialData={effective} />;
+	return (
+		<div className="flex min-h-0 flex-1 flex-col -mx-6 px-0 md:-mx-8 -mt-4 md:-mt-6 -mb-4 md:-mb-6 h-[calc(100dvh-8rem)] max-md:h-[calc(100dvh-9rem)] md:h-[calc(100dvh-5.5rem)]">
+			<TeamChatOptimized initialData={effective} />
+		</div>
+	);
 }

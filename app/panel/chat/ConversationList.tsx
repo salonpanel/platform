@@ -1,7 +1,6 @@
-import { GlassCard } from "@/components/ui/GlassCard";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/Avatar";
-import { Check, CheckCheck, Users } from "lucide-react";
+import { CheckCheck, Pin, Users } from "lucide-react";
 
 type ConversationType = "all" | "direct" | "group";
 
@@ -23,6 +22,8 @@ type Conversation = {
 
 type ConversationListProps = {
 	conversations: Conversation[];
+	/** Logo de la barbería para el chat grupal (sin solapar iconos) */
+	tenantLogoUrl?: string | null;
 	selectedConversationId: string | null;
 	onSelectConversation: (id: string) => void;
 	showUnreadOnly: boolean;
@@ -39,7 +40,7 @@ function formatTimestamp(iso: string): string {
 	if (messageDate.getTime() === today.getTime()) {
 		return date.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 	}
-	
+
 	const yesterday = new Date(today);
 	yesterday.setDate(yesterday.getDate() - 1);
 	if (messageDate.getTime() === yesterday.getTime()) {
@@ -49,98 +50,170 @@ function formatTimestamp(iso: string): string {
 	return date.toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "2-digit" });
 }
 
+function GroupChatAvatar({
+	name,
+	logoUrl,
+}: {
+	name: string;
+	logoUrl: string | null | undefined;
+}) {
+	if (logoUrl) {
+		return (
+			<div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-2 border-[#00a884]/40 bg-[#0b141a] shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+				<img src={logoUrl} alt={name} className="h-full w-full object-cover" />
+			</div>
+		);
+	}
+	return (
+		<div
+			className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border-2 border-[#00a884]/35 bg-[#53bdeb] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.06)]"
+			aria-hidden
+		>
+			<Users className="h-6 w-6" />
+		</div>
+	);
+}
+
 export function ConversationList({
 	conversations,
+	tenantLogoUrl,
 	selectedConversationId,
 	onSelectConversation,
 	showUnreadOnly,
+	onToggleUnread,
 	currentUserId,
 }: ConversationListProps) {
-	const filteredConversations = showUnreadOnly
-		? conversations.filter((conv) => conv.unreadCount > 0)
-		: conversations;
+	void onToggleUnread;
+	const pinned = conversations[0]?.type === "all" ? conversations[0] : null;
+	const rest = pinned ? conversations.slice(1) : conversations;
 
 	return (
-		<div className="flex flex-col h-full bg-[#111b21]">
-			<div className="flex-1 overflow-y-auto custom-scrollbar">
-				{filteredConversations.length === 0 ? (
+		<div className="flex h-full flex-col bg-[#111b21]">
+			<div className="custom-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
+				{conversations.length === 0 ? (
 					<div className="p-8 text-center text-[var(--text-secondary)] text-sm">
 						{showUnreadOnly ? "No hay chats sin leer" : "No hay chats disponibles"}
 					</div>
 				) : (
-					<div className="divide-y divide-white/5">
-						{filteredConversations.map((conv) => (
-							<button
-								key={conv.id}
-								onClick={() => onSelectConversation(conv.id)}
-								className={cn(
-									"group w-full flex items-center gap-3 px-4 py-3 transition-all hover:bg-[#202c33]",
-									selectedConversationId === conv.id && "bg-[#2a3942]"
-								)}
-							>
-								{/* Avatar Section */}
-								<div className="relative flex-shrink-0">
-									<Avatar 
-										size="lg"
-										name={conv.name}
-										className={cn(
-											"shadow-none border-none",
-											conv.type === 'all' && "bg-[#53bdeb] text-white"
-										)}
-									>
-										{conv.type === 'all' && <Users className="h-6 w-6" />}
-									</Avatar>
+					<>
+						{pinned && (
+							<div className="sticky top-0 z-20 flex-shrink-0 border-b border-[#00a884]/35 bg-gradient-to-b from-[#1a2c22]/95 to-[#111b21] shadow-[0_6px_20px_rgba(0,0,0,0.45)] backdrop-blur-sm">
+								<div className="flex items-center gap-2 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#4DE2C3]">
+									<Pin className="h-3 w-3" aria-hidden />
+									<span>Chat del equipo</span>
 								</div>
-
-								{/* Content Section */}
-								<div className="flex-1 min-w-0 border-b border-white/5 py-1 flex flex-col justify-center h-[56px]">
-									<div className="flex items-baseline justify-between mb-0.5">
-										<h3 className={cn(
-											"font-medium text-[#e9edef] text-base truncate pr-2",
-											conv.unreadCount > 0 && "font-bold"
-										)}>
-											{conv.name}
-										</h3>
-										{conv.lastMessageAt && (
-											<span className={cn(
-												"text-[12px] flex-shrink-0",
-												conv.unreadCount > 0 ? "text-[#00a884] font-medium" : "text-[#8696a0]"
-											)}>
-												{formatTimestamp(conv.lastMessageAt)}
-											</span>
-										)}
-									</div>
-
-									<div className="flex items-center justify-between">
-										<div className="flex items-center gap-1 min-w-0 flex-1">
-											{conv.lastMessageSenderId === currentUserId && (
-												<CheckCheck className={cn(
-													"h-4 w-4 flex-shrink-0",
-													conv.unreadCount === 0 && conv.lastMessageAt ? "text-[#53bdeb]" : "text-[#8696a0]/60"
-												)} />
-											)}
-											<p className={cn(
-												"text-sm truncate pr-2",
-												conv.unreadCount > 0 ? "text-[#e9edef] font-medium" : "text-[#8696a0]"
-											)}>
-												{conv.lastMessageBody || "Sin mensajes"}
-											</p>
-										</div>
-										{conv.unreadCount > 0 && (
-											<span className="flex items-center justify-center min-w-[20px] h-[20px] px-1.5 rounded-full bg-[#00a884] text-[#111b21] text-[12px] font-bold">
-												{conv.unreadCount}
-											</span>
-										)}
-									</div>
-								</div>
-							</button>
-						))}
-					</div>
+								<ConversationRow
+									conv={pinned}
+									isPinned
+									selected={selectedConversationId === pinned.id}
+									currentUserId={currentUserId}
+									tenantLogoUrl={tenantLogoUrl}
+									onSelect={() => onSelectConversation(pinned.id)}
+								/>
+							</div>
+						)}
+						<div className="divide-y divide-white/5">
+							{rest.map((conv) => (
+								<ConversationRow
+									key={conv.id}
+									conv={conv}
+									isPinned={false}
+									selected={selectedConversationId === conv.id}
+									currentUserId={currentUserId}
+									tenantLogoUrl={tenantLogoUrl}
+									onSelect={() => onSelectConversation(conv.id)}
+								/>
+							))}
+						</div>
+					</>
 				)}
 			</div>
 		</div>
 	);
 }
 
+function ConversationRow({
+	conv,
+	isPinned,
+	selected,
+	currentUserId,
+	tenantLogoUrl,
+	onSelect,
+}: {
+	conv: Conversation;
+	isPinned: boolean;
+	selected: boolean;
+	currentUserId: string | null;
+	tenantLogoUrl?: string | null;
+	onSelect: () => void;
+}) {
+	return (
+		<button
+			type="button"
+			onClick={onSelect}
+			className={cn(
+				"group flex w-full items-center gap-3 px-4 py-3 text-left transition-all hover:bg-[#202c33]",
+				selected && "bg-[#2a3942]",
+				isPinned && "border-l-[3px] border-l-[#00a884]"
+			)}
+		>
+			<div className="relative flex-shrink-0">
+				{conv.type === "all" ? (
+					<GroupChatAvatar name={conv.name || "Chat del equipo"} logoUrl={tenantLogoUrl} />
+				) : (
+					<Avatar size="lg" name={conv.name} className="border-none shadow-none" />
+				)}
+			</div>
 
+			<div className="flex h-[56px] min-w-0 flex-1 flex-col justify-center border-b border-white/5 py-1">
+				<div className="mb-0.5 flex items-baseline justify-between">
+					<h3
+						className={cn(
+							"truncate pr-2 text-base font-medium text-[#e9edef]",
+							conv.unreadCount > 0 && "font-bold",
+							isPinned && "text-[#e9edef]"
+						)}
+					>
+						{conv.name}
+					</h3>
+					{conv.lastMessageAt && (
+						<span
+							className={cn(
+								"flex-shrink-0 text-[12px]",
+								conv.unreadCount > 0 ? "font-medium text-[#00a884]" : "text-[#8696a0]"
+							)}
+						>
+							{formatTimestamp(conv.lastMessageAt)}
+						</span>
+					)}
+				</div>
 
+				<div className="flex items-center justify-between">
+					<div className="flex min-w-0 flex-1 items-center gap-1">
+						{conv.lastMessageSenderId === currentUserId && (
+							<CheckCheck
+								className={cn(
+									"h-4 w-4 flex-shrink-0",
+									conv.unreadCount === 0 && conv.lastMessageAt ? "text-[#53bdeb]" : "text-[#8696a0]/60"
+								)}
+							/>
+						)}
+						<p
+							className={cn(
+								"truncate pr-2 text-sm",
+								conv.unreadCount > 0 ? "font-medium text-[#e9edef]" : "text-[#8696a0]"
+							)}
+						>
+							{conv.lastMessageBody || "Sin mensajes"}
+						</p>
+					</div>
+					{conv.unreadCount > 0 && (
+						<span className="flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-[#00a884] px-1.5 text-[12px] font-bold text-[#111b21]">
+							{conv.unreadCount}
+						</span>
+					)}
+				</div>
+			</div>
+		</button>
+	);
+}

@@ -9,21 +9,17 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Spinner } from "@/components/ui/Spinner";
-import { Modal } from "@/components/ui/Modal";
 import { cn } from "@/lib/utils";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
-import { Plus, MessageSquare, User, Settings, UserX } from "lucide-react";
-import { Avatar } from "@/components/ui/Avatar";
+import { MessageSquare, UserX } from "lucide-react";
 import { ConversationList } from "./ConversationList";
 import { ConversationHeader } from "./ConversationHeader";
 import { MessageList } from "./MessageList";
 import { MessageComposer } from "./MessageComposer";
 import { MembersModal } from "./MembersModal";
 import { AddMembersModal } from "./AddMembersModal";
-import { UserProfileModal } from "./UserProfileModal";
 import type { ChatPageDataset } from "@/lib/chat-page-data";
 
 type ConversationType = "all" | "direct" | "group";
@@ -107,7 +103,6 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 
 	// Estados principales con datos iniciales
 	const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-	const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
 	const [tenantId, setTenantId] = useState<string>(initialData.tenant.id);
 	const [conversations, setConversations] = useState<Conversation[]>(initialData.conversations);
 	const [membersDirectory, setMembersDirectory] = useState<Record<string, TenantMemberProfile>>(initialData.membersDirectory);
@@ -126,28 +121,18 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 	const [membersByConversation, setMembersByConversation] = useState<Record<string, ConversationMember[]>>({});
 	const [membersLoading, setMembersLoading] = useState(false);
 	const [showUnreadOnly, setShowUnreadOnly] = useState(false);
-	const [showNewChatModal, setShowNewChatModal] = useState(false);
 	const [showMembersModal, setShowMembersModal] = useState(false);
 	const [showAddMemberModal, setShowAddMemberModal] = useState(false);
-	const [showUserProfileModal, setShowUserProfileModal] = useState(false);
-	const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
 	// Estados para respuestas y móvil
 	const [replyToMessage, setReplyToMessage] = useState<TeamMessage | null>(null);
 	const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
 	const [isMobile, setIsMobile] = useState(false);
 
-	// Estados del modal nuevo chat
-	const [newChatType, setNewChatType] = useState<ConversationType>("direct");
-	const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
-	const [groupName, setGroupName] = useState("");
-	const [creatingChat, setCreatingChat] = useState(false);
-
 	// Typing indicators
 	const [typingUsers, setTypingUsers] = useState<Record<string, Set<string>>>({});
 	const [isTyping, setIsTyping] = useState(false);
 	const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-	const profileDropdownRef = useRef<HTMLDivElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const messageContainerRef = useRef<HTMLDivElement>(null);
 	const messagesByConversationRef = useRef<Record<string, TeamMessage[]>>({});
@@ -238,7 +223,6 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 				if (!user) throw new Error("No autenticado.");
 
 				setCurrentUserId(user.id);
-				setCurrentUserEmail(user.email || null);
 			} catch (err) {
 				console.error("[TeamChatOptimized] Bootstrap error", err);
 			}
@@ -570,23 +554,6 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 		void loadMessagesForConversation(selectedConversationId);
 	}, [selectedConversationId, loadMessagesForConversation, messagesByConversation]);
 
-	// Cerrar dropdown al hacer clic fuera
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
-				setShowProfileDropdown(false);
-			}
-		};
-
-		if (showProfileDropdown) {
-			document.addEventListener("mousedown", handleClickOutside);
-		}
-
-		return () => {
-			document.removeEventListener("mousedown", handleClickOutside);
-		};
-	}, [showProfileDropdown]);
-
 	const handleTyping = () => {
 		if (!selectedConversationId || !currentUserId || !tenantId) return;
 
@@ -623,10 +590,17 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 		}, 3000);
 	};
 
-	const visibleConversations = useMemo(
-		() => (showUnreadOnly ? processedConversations.filter((conv) => conv.unreadCount > 0) : processedConversations),
-		[processedConversations, showUnreadOnly]
-	);
+	/** Chat grupal (type=all) siempre primero y visible; el resto ordenado por actividad */
+	const conversationsForList = useMemo(() => {
+		const general = processedConversations.find((c) => c.type === "all");
+		const rest = processedConversations.filter((c) => c.type !== "all");
+		const restFiltered = showUnreadOnly ? rest.filter((c) => c.unreadCount > 0) : rest;
+		const sorted = [...restFiltered].sort((a, b) =>
+			(b.lastMessageAt ?? MESSAGE_FALLBACK_DATE).localeCompare(a.lastMessageAt ?? MESSAGE_FALLBACK_DATE)
+		);
+		if (general) return [general, ...sorted];
+		return sorted;
+	}, [processedConversations, showUnreadOnly]);
 
 	const messagesForSelected = selectedConversationId
 		? messagesByConversation[selectedConversationId] ?? []
@@ -843,165 +817,24 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 		setShowAddMemberModal(true);
 	}, [selectedConversation, loadMembersForConversation]);
 
-	const handleCreateNewChat = useCallback(async () => {
-		if (!tenantId || !currentUserId) return;
-		if (creatingChat) return;
-
-		const targetUserId = selectedUserIds[0];
-		if (!targetUserId) return;
-
-		setCreatingChat(true);
-		try {
-			const targetMember = membersDirectory[targetUserId];
-			const targetDisplay = targetMember?.displayName ?? "Chat directo";
-
-			const { data: existingId, error: findErr } = await supabase.rpc(
-				"find_direct_team_conversation",
-				{
-					p_tenant_id: tenantId,
-					p_user_a: currentUserId,
-					p_user_b: targetUserId,
-				}
-			);
-
-			if (findErr) throw findErr;
-
-			if (existingId) {
-				await refreshConversations();
-				setSelectedConversationId(existingId as string);
-				setShowNewChatModal(false);
-				setSelectedUserIds([]);
-				setGroupName("");
-				return;
-			}
-
-			const { data: conv, error: convError } = await supabase
-				.from("team_conversations")
-				.insert({
-					tenant_id: tenantId,
-					type: "direct",
-					name: targetDisplay,
-					created_by: currentUserId,
-				})
-				.select()
-				.single();
-
-			if (convError) throw convError;
-
-			const memberRows = [currentUserId, targetUserId].map((userId) => ({
-				conversation_id: conv.id,
-				user_id: userId,
-				role: "member" as const,
-			}));
-
-			const { error: membersError } = await supabase
-				.from("team_conversation_members")
-				.insert(memberRows);
-
-			if (membersError) throw membersError;
-
-			const updated = await refreshConversations();
-			setSelectedConversationId(conv.id);
-			setShowNewChatModal(false);
-			setSelectedUserIds([]);
-			setGroupName("");
-			return updated;
-		} catch (err) {
-			console.error("[TeamChatOptimized] Error creando chat directo", err);
-		} finally {
-			setCreatingChat(false);
-		}
-	}, [tenantId, currentUserId, creatingChat, selectedUserIds, membersDirectory, supabase, refreshConversations]);
-
 	const availableMembers = useMemo(() => {
 		return Object.values(membersDirectory).filter((member) => member.userId !== currentUserId);
 	}, [membersDirectory, currentUserId]);
 
 	return (
-		<div className="h-full flex flex-col gap-4">
-			<header className="flex items-center justify-end">
-				<div className="flex items-center gap-2">
-					{/* Botón para abrir perfil propio con dropdown */}
-					<div className="relative" ref={profileDropdownRef}>
-						<button
-							onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-							className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-smooth relative z-10"
-							title="Mi perfil"
-						>
-							<Avatar
-								src={membersDirectory[currentUserId ?? ""]?.profilePhotoUrl}
-								name={membersDirectory[currentUserId ?? ""]?.displayName ?? currentUserEmail ?? "Usuario"}
-								size="sm"
-							/>
-						</button>
-
-						{/* Dropdown animado */}
-						<AnimatePresence>
-							{showProfileDropdown && (
-								<motion.div
-									initial={{ opacity: 0, y: -10, scale: 0.95 }}
-									animate={{ opacity: 1, y: 0, scale: 1 }}
-									exit={{ opacity: 0, y: -10, scale: 0.95 }}
-									transition={{ duration: 0.2 }}
-									className="absolute right-0 mt-2 w-56 rounded-xl glass border border-[rgba(255,255,255,0.1)] shadow-[0px_8px_32px_rgba(0,0,0,0.3)] overflow-hidden z-[80]"
-								>
-									{/* Información del usuario */}
-									<div className="px-4 py-3 border-b border-[rgba(255,255,255,0.1)]">
-										<p className="text-sm font-semibold text-white font-satoshi truncate">
-											{membersDirectory[currentUserId ?? ""]?.displayName ?? currentUserEmail?.split("@")[0] ?? "Usuario"}
-										</p>
-										<p className="text-xs text-[var(--text-secondary)] truncate mt-0.5">
-											{currentUserEmail}
-										</p>
-									</div>
-
-									{/* Opciones del menú */}
-									<div className="p-1.5">
-										<button
-											onClick={() => {
-												setShowUserProfileModal(true);
-												setShowProfileDropdown(false);
-											}}
-											className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-smooth"
-										>
-											<User className="h-4 w-4" />
-											<span>Editar perfil</span>
-										</button>
-										<button
-											onClick={() => {
-												setShowProfileDropdown(false);
-											}}
-											className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-smooth"
-										>
-											<Settings className="h-4 w-4" />
-											<span>Configuración</span>
-										</button>
-									</div>
-								</motion.div>
-							)}
-						</AnimatePresence>
-					</div>
-					<button
-						onClick={() => setShowNewChatModal(true)}
-						className="p-2 rounded-lg bg-gradient-to-r from-[var(--accent-aqua)] to-[var(--accent-purple)] text-white hover:shadow-[0px_4px_20px_rgba(123,92,255,0.4)] transition-all duration-200 hover:scale-105"
-						title="Nuevo chat"
-					>
-						<Plus className="h-4 w-4" />
-					</button>
-				</div>
-			</header>
-
-			{/* Layout principal */}
-			<div className="flex-1 flex flex-col lg:grid lg:grid-cols-3 gap-4 min-h-0 overflow-hidden">
+		<div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+			{/* Lista + hilo: sin cabecera local (perfil y acciones en TopBar; chats en la lista) */}
+			<div className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden lg:grid lg:grid-cols-3 lg:gap-0">
 				{/* Lista de conversaciones */}
-				<div 
+				<div
 					className={cn(
-						"lg:col-span-1 h-full min-h-0 transition-all duration-300",
-						isMobile && mobileView === 'chat' ? "hidden" : "block"
+						"min-h-0 h-full border-white/5 transition-all duration-300 lg:col-span-1 lg:border-r",
+						isMobile && mobileView === "chat" ? "hidden" : "flex flex-col"
 					)}
 				>
 					<ConversationList
-						conversations={visibleConversations}
+						conversations={conversationsForList}
+						tenantLogoUrl={initialData.tenant.logoUrl ?? null}
 						selectedConversationId={selectedConversationId}
 						onSelectConversation={(id) => {
 							setSelectedConversationId(id);
@@ -1014,14 +847,14 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 				</div>
 
 				{/* Área de mensajes */}
-				<div 
+				<div
 					className={cn(
-						"lg:col-span-2 flex flex-col min-h-0 h-full transition-all duration-300 relative",
-						isMobile && mobileView === 'list' ? "hidden" : "flex"
+						"relative flex min-h-0 h-full flex-col transition-all duration-300 lg:col-span-2",
+						isMobile && mobileView === "list" ? "hidden" : "flex"
 					)}
 				>
 					{selectedConversation ? (
-						<GlassCard className="flex-1 flex flex-col min-h-0 overflow-hidden p-0 relative">
+						<GlassCard className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-[#0b141a] p-0 shadow-none md:rounded-xl md:border md:border-white/5">
 							{/* Fondo de Chat Estilo WhatsApp (Sutil) */}
 							<div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
 							
@@ -1062,9 +895,9 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 									</div>
 									<h3 className="text-[#e9edef] font-medium mb-1">Sin conversación directa</h3>
 									<p className="text-[#8696a0] text-sm max-w-sm">
-										Aún no hay un hilo directo con esta persona en el sistema. Usa{" "}
-										<span className="text-[#e9edef] font-medium">Nuevo chat</span>, elige al
-										miembro y se reutilizará la conversación si ya existía.
+										Aún no hay un hilo directo en el sistema con esta persona. Elige su entrada en
+										la lista de la izquierda; al enviar el primer mensaje se creará o reutilizará el
+										hilo si ya existía.
 									</p>
 								</div>
 							) : (
@@ -1087,7 +920,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 							)}
 						</GlassCard>
 					) : (
-						<div className="hidden lg:flex flex-1 flex-col items-center justify-center bg-[#222e35] rounded-xl border border-white/5 relative overflow-hidden">
+						<div className="relative hidden min-h-0 flex-1 flex-col items-center justify-center overflow-hidden rounded-none border-0 bg-[#222e35] md:rounded-xl md:border md:border-white/5 lg:flex">
 							<div className="flex flex-col items-center max-w-sm text-center p-8 z-10 transition-all duration-700 animate-in fade-in zoom-in slide-in-from-bottom-4">
 								<div className="w-48 h-48 mb-8 bg-gradient-to-br from-[#00a884]/15 to-[#53bdeb]/15 rounded-full flex items-center justify-center relative">
 									<div className="absolute inset-0 rounded-full border border-white/5 animate-ping opacity-20" />
@@ -1108,69 +941,6 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 					)}
 				</div>
 			</div>
-
-			{/* Modales */}
-			{showNewChatModal && (
-				<Modal
-					isOpen={showNewChatModal}
-					onClose={() => {
-						setShowNewChatModal(false);
-						setSelectedUserIds([]);
-						setGroupName("");
-					}}
-					title="Nuevo chat"
-				>
-					<div className="p-4 space-y-4">
-						<p className="text-sm text-[var(--text-secondary)]">
-							Selecciona un miembro para iniciar un chat directo.
-						</p>
-						<div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-							{availableMembers.length === 0 ? (
-								<p className="text-sm text-[var(--text-secondary)] text-center py-6">No hay miembros disponibles</p>
-							) : (
-								availableMembers.map((member) => (
-									<label
-										key={member.userId}
-										className="flex items-center gap-3 rounded-xl border border-white/10 px-3 py-2 cursor-pointer transition-smooth hover:border-white/20"
-									>
-										<input
-											type="radio"
-											name="new-chat-member"
-											checked={selectedUserIds.includes(member.userId)}
-											onChange={() => setSelectedUserIds([member.userId])}
-											className="accent-[#3A6DFF]"
-										/>
-										<Avatar name={member.displayName} size="sm" className="flex-shrink-0" />
-										<div className="flex-1 min-w-0">
-											<p className="text-sm text-white font-medium truncate">{member.displayName}</p>
-											<p className="text-[11px] text-[var(--text-secondary)] capitalize">{member.tenantRole}</p>
-										</div>
-									</label>
-								))
-							)}
-						</div>
-
-						<div className="flex justify-end gap-2 pt-2">
-							<button
-								onClick={() => {
-									setSelectedUserIds([]);
-									setShowNewChatModal(false);
-								}}
-								className="px-4 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:text-white transition-smooth"
-							>
-								Cancelar
-							</button>
-							<button
-								onClick={() => void handleCreateNewChat()}
-								disabled={selectedUserIds.length === 0 || creatingChat}
-								className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#3A6DFF] to-[#7B5CFF] text-sm font-semibold text-white shadow-[0_10px_30px_rgba(66,92,255,0.35)] disabled:opacity-50 disabled:cursor-not-allowed"
-							>
-								{creatingChat ? "Creando..." : "Crear chat"}
-							</button>
-						</div>
-					</div>
-				</Modal>
-			)}
 
 			{showMembersModal && selectedConversation && (
 				<MembersModal
@@ -1194,14 +964,6 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 				/>
 			)}
 
-			{showUserProfileModal && (
-				<UserProfileModal
-					isOpen={showUserProfileModal}
-					onClose={() => setShowUserProfileModal(false)}
-					currentUserId={currentUserId || ""}
-					tenantId={tenantId || ""}
-				/>
-			)}
 		</div>
 	);
 }

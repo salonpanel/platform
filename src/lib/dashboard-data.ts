@@ -301,8 +301,15 @@ export async function fetchDashboardDataset(
     return null;
   }
 
-  const data = parseJsonObject(rawData) as (typeof rawData & Record<string, unknown>) | null;
-  if (!data || typeof data !== "object") {
+  const data =
+    parseJsonObject(rawData) ??
+    (rawData !== null &&
+    rawData !== undefined &&
+    typeof rawData === "object" &&
+    !Array.isArray(rawData)
+      ? (rawData as Record<string, unknown>)
+      : null);
+  if (!data) {
     console.error("[Dashboard] RPC payload missing or not an object:", rawData);
     return null;
   }

@@ -525,6 +525,7 @@ export function useChatPageData(
         id: resolvedTenant.id,
         name: resolvedTenant.name || "Tu negocio",
         timezone: resolvedTenant.timezone || "Europe/Madrid",
+        logoUrl: resolvedTenant.logoUrl ?? null,
       },
       conversations: conversations.map((conv: any) => ({
         id: conv.id,

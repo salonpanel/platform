@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { DashboardDataset, validateDashboardKpis } from "@/lib/dashboard-data";
 import { useDashboardData } from "@/hooks/useOptimizedData";
 import { usePermissions } from "@/contexts/PermissionsContext";
+import { useTenant } from "@/contexts/TenantContext";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 import { useBookingModal } from "@/contexts/BookingModalContext";
@@ -50,17 +51,18 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
     return searchParams?.get("impersonate") || impersonateOrgId || null;
   }, [searchParams?.toString(), impersonateOrgId]);
 
-  // Preferir tenantId del contexto (ya cargado por el layout) para evitar volver a resolver tenant
+  // Tenant: Permissions puede ir antes que el id; TenantContext (layout) suele traerlo ya.
   const { tenantId: ctxTenantId } = usePermissions();
-
-  // Prefetch logic removed (Phase 15.1)
+  const { tenant: tenantFromLayout } = useTenant();
+  const resolvedTenantId = ctxTenantId ?? tenantFromLayout?.id ?? null;
 
   // Hook optimizado: obtiene tenant + datos en UNA llamada con caché
+  // No pasar enabled: !!ctxTenantId — si Permissions aún no tiene tenantId pero el layout sí,
+  // el fetch quedaba desactivado y el dashboard mostraba todo a 0.
   const dashboardData = useDashboardData(currentImpersonation, {
-    tenantId: ctxTenantId,
+    tenantId: resolvedTenantId,
     initialData,
-    timezone: initialData?.tenant?.timezone,
-    enabled: !!ctxTenantId,
+    timezone: initialData?.tenant?.timezone ?? tenantFromLayout?.timezone,
   });
 
   const { tenant: hookTenant, kpis, upcomingBookings: rawBookings, staffMembers: rawStaffMembers, isLoading: isLoadingStats } = dashboardData;
