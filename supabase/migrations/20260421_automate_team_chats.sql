@@ -132,21 +132,36 @@ BEGIN
         UPDATE public.team_conversations SET name = v_tenant_name WHERE id = v_group_id;
     END IF;
 
-    -- Añadir a todos los miembros actuales al grupo general
+    -- Añadir a todos los miembros actuales al grupo general (desde memberships y staff con user_id)
     INSERT INTO public.team_conversation_members (conversation_id, user_id, role)
-    SELECT v_group_id, m.user_id, 'member'
-    FROM public.memberships m
-    WHERE m.tenant_id = p_tenant_id
+    SELECT DISTINCT v_group_id, u_id, 'member'
+    FROM (
+        SELECT user_id as u_id FROM public.memberships WHERE tenant_id = p_tenant_id
+        UNION
+        SELECT user_id as u_id FROM public.staff WHERE tenant_id = p_tenant_id AND user_id IS NOT NULL
+        UNION
+        SELECT auth.uid() as u_id WHERE auth.uid() IS NOT NULL
+    ) users
+    WHERE u_id IS NOT NULL
     ON CONFLICT (conversation_id, user_id) DO NOTHING;
 
-    -- C. Asegurar CHATS DIRECTOS (1:1) entre todos los miembros
+    -- C. Asegurar CHATS DIRECTOS (1:1) entre todos los que tienen cuenta
     FOR v_pair_record IN 
-        SELECT a.user_id as user_a, b.user_id as user_b
-        FROM public.memberships a
-        CROSS JOIN public.memberships b
-        WHERE a.tenant_id = p_tenant_id 
-          AND b.tenant_id = p_tenant_id 
-          AND a.user_id < b.user_id
+        WITH all_team_users AS (
+            SELECT DISTINCT user_id as u_id 
+            FROM (
+                SELECT user_id FROM public.memberships WHERE tenant_id = p_tenant_id
+                UNION
+                SELECT user_id FROM public.staff WHERE tenant_id = p_tenant_id AND user_id IS NOT NULL
+                UNION
+                SELECT auth.uid() WHERE auth.uid() IS NOT NULL
+            ) t
+            WHERE user_id IS NOT NULL
+        )
+        SELECT a.u_id as user_a, b.u_id as user_b
+        FROM all_team_users a
+        CROSS JOIN all_team_users b
+        WHERE a.u_id < b.u_id
     LOOP
         IF NOT EXISTS (
             SELECT 1 

@@ -16,7 +16,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { Modal } from "@/components/ui/Modal";
 import { cn } from "@/lib/utils";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
-import { Plus, MessageSquare, User, Settings } from "lucide-react";
+import { Plus, MessageSquare, User, Settings, UserX } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { ConversationList } from "./ConversationList";
 import { ConversationHeader } from "./ConversationHeader";
@@ -42,6 +42,7 @@ type Conversation = {
 	viewerRole: "member" | "admin";
 	lastMessageSenderId?: string | null;
 	targetUserId?: string | null;
+	status?: "active" | "unregistered";
 };
 
 type TeamMessage = {
@@ -147,17 +148,52 @@ export function TeamChatOptimized({
 	const messageContainerRef = useRef<HTMLDivElement>(null);
 
 	// 🔥 NUEVO: Procesar conversaciones para resolver nombres dinámicos (estilo WhatsApp)
+	// Y añadir miembros del equipo que aún no tienen cuenta (Ghost conversations)
 	const processedConversations = useMemo(() => {
-		return conversations.map(conv => {
+		// 1. Mapear conversaciones existentes con nombres reales
+		const mapped = conversations.map(conv => {
 			if (conv.type === 'direct' && conv.targetUserId) {
 				const profile = membersDirectory[conv.targetUserId];
 				if (profile) {
-					return { ...conv, name: profile.displayName };
+					return { ...conv, name: profile.displayName, status: 'active' as const };
 				}
 			}
-			return conv;
+			return { ...conv, status: 'active' as const };
 		});
-	}, [conversations, membersDirectory]);
+
+		// 2. Identificar miembros del staff que NO tienen chat directo todavía
+		const usersWithChat = new Set(
+			conversations
+				.filter(c => c.type === 'direct' && c.targetUserId)
+				.map(c => c.targetUserId)
+		);
+
+		const ghostConversations: Conversation[] = Object.values(membersDirectory)
+			.filter(member => {
+				// No incluirse a uno mismo
+				if (currentUserId && member.userId === currentUserId) return false;
+				// No incluir si ya tiene chat
+				if (member.userId && usersWithChat.has(member.userId)) return false;
+				return true;
+			})
+			.map(member => ({
+				id: `ghost-${member.userId || member.displayName.replace(/\s+/g, '-').toLowerCase()}-${Math.random().toString(36).substr(2, 4)}`,
+				tenantId: tenantId,
+				type: 'direct',
+				name: member.displayName,
+				lastMessageBody: 'Pendiente de registro',
+				lastMessageAt: null,
+				unreadCount: 0,
+				membersCount: 2,
+				lastReadAt: null,
+				createdBy: 'system',
+				viewerRole: 'member',
+				targetUserId: member.userId,
+				status: 'unregistered'
+			}));
+
+		return [...mapped, ...ghostConversations];
+	}, [conversations, membersDirectory, currentUserId, tenantId]);
 
 	const selectedConversation = useMemo(() => 
 		processedConversations.find((c) => c.id === selectedConversationId) || null
@@ -887,20 +923,35 @@ export function TeamChatOptimized({
 									containerRef={messageContainerRef}
 								/>
 							</div>
-							<MessageComposer
-								onSend={handleSendMessage}
-								onTyping={handleTyping}
-								replyTo={replyToMessage}
-								onCancelReply={() => setReplyToMessage(null)}
-								onAttach={() => fileInputRef.current?.click()}
-							/>
-							<input
-								type="file"
-								ref={fileInputRef}
-								onChange={handleFileUpload}
-								className="hidden"
-								accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"
-							/>
+							{selectedConversation.status === 'unregistered' ? (
+								<div className="p-10 border-t border-white/5 bg-[#202c33] flex flex-col items-center text-center">
+									<div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
+										<UserX className="h-8 w-8 text-[#8696a0]" />
+									</div>
+									<h3 className="text-[#e9edef] font-medium mb-1">Miembro sin cuenta activa</h3>
+									<p className="text-[#8696a0] text-sm max-w-sm">
+										Este miembro del equipo aún no se ha registrado en la plataforma. 
+										Invítalo para que pueda participar en el chat y ver tu historial.
+									</p>
+								</div>
+							) : (
+								<>
+									<MessageComposer
+										onSend={handleSendMessage}
+										onTyping={handleTyping}
+										replyTo={replyToMessage}
+										onCancelReply={() => setReplyToMessage(null)}
+										onAttach={() => fileInputRef.current?.click()}
+									/>
+									<input
+										type="file"
+										ref={fileInputRef}
+										onChange={handleFileUpload}
+										className="hidden"
+										accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"
+									/>
+								</>
+							)}
 						</GlassCard>
 					) : (
 						<div className="hidden lg:flex flex-1 flex-col items-center justify-center bg-[#222e35] rounded-xl border border-white/5 relative overflow-hidden">
