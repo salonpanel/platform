@@ -167,9 +167,11 @@ export const WeekView = React.memo(function WeekView({
   // Mobile view: day chips + filtered list
   if (isMobile) {
     const activeStaffId =
-      mobileSelectedStaffId && staffList.some((s) => s.id === mobileSelectedStaffId)
-        ? mobileSelectedStaffId
-        : (staffList[0]?.id ?? null);
+      mobileSelectedStaffId === null
+        ? null
+        : (mobileSelectedStaffId && staffList.some((s) => s.id === mobileSelectedStaffId))
+          ? mobileSelectedStaffId
+          : (staffList[0]?.id ?? null);
 
     const mobileDayBookingsAll = bookingsByDay.get(selectedMobileDay) || [];
     const mobileDayBookings = activeStaffId
@@ -251,6 +253,7 @@ export const WeekView = React.memo(function WeekView({
                 selectedStaffId={activeStaffId}
                 onSelectStaff={onMobileStaffChange}
                 bookingCounts={bookingCounts}
+                includeAllOption
               />
             </div>
           )}

@@ -52,6 +52,8 @@ export function NewBookingModal({
   const { showToast, ToastComponent } = useToast();
 
   const [activeTab, setActiveTab] = useState<"details" | "notes">("details");
+  const fieldBaseClass =
+    "w-full rounded-[12px] border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all";
 
   // New Customer Search Logic
   const { query, setQuery, results, loading: searching, search } = useCustomerSearch(tenantId);
@@ -63,6 +65,8 @@ export function NewBookingModal({
   const [staffId, setStaffId] = useState(selectedStaffId || "");
   const [bookingDate, setBookingDate] = useState(selectedDate);
   const [bookingTime, setBookingTime] = useState(selectedTime || "09:00");
+  const [durationMin, setDurationMin] = useState<number>(30);
+  const durationDirtyRef = useRef(false);
   const [bookingState, setBookingState] = useState<BookingState>(DEFAULT_BOOKING_STATE);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(DEFAULT_PAYMENT_STATUS);
   const [depositMode, setDepositMode] = useState<"amount" | "percent">("amount");
@@ -123,8 +127,12 @@ export function NewBookingModal({
       setIsHighlighted(Boolean(editingBooking.is_highlighted));
 
       const start = new Date(editingBooking.starts_at);
+      const end = new Date(editingBooking.ends_at);
       setBookingDate(format(start, "yyyy-MM-dd"));
       setBookingTime(format(start, "HH:mm"));
+      const computedDuration = Math.max(5, Math.round((end.getTime() - start.getTime()) / 60000));
+      setDurationMin(computedDuration);
+      durationDirtyRef.current = false;
     } else {
       setSelectedCustomer(null);
       setServiceId("");
@@ -139,6 +147,16 @@ export function NewBookingModal({
       setIsHighlighted(false);
       setBookingDate(selectedDate);
       setBookingTime(selectedTime || "09:00");
+      // Initialize duration from selected end time if provided, else default 30 or service later
+      if (selectedTime && selectedEndTime) {
+        const s = new Date(`${selectedDate}T${selectedTime}`);
+        const e = new Date(`${selectedDate}T${selectedEndTime}`);
+        const diff = Math.max(5, Math.round((e.getTime() - s.getTime()) / 60000));
+        setDurationMin(diff);
+      } else {
+        setDurationMin(30);
+      }
+      durationDirtyRef.current = false;
     }
     setQuery("");
     setActiveTab("details");
@@ -147,14 +165,24 @@ export function NewBookingModal({
   const selectedService = services.find((svc) => svc.id === serviceId);
   const selectedStaff = staff.find((member) => member.id === staffId);
 
+  // Auto-fill duration from selected service (only if user hasn't manually edited)
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!selectedService) return;
+    if (durationDirtyRef.current) return;
+    const next = selectedService.duration_min ?? 30;
+    if (Number.isFinite(next) && next > 0) {
+      setDurationMin(next);
+    }
+  }, [isOpen, selectedService?.id]);
+
   const estimatedEndTime = useMemo(() => {
     if (selectedEndTime) return selectedEndTime;
-    if (!serviceId) return bookingTime;
-    const duration = selectedService?.duration_min ?? 30;
+    if (!durationMin) return bookingTime;
     const startDate = new Date(`${bookingDate}T${bookingTime}`);
-    const endDate = new Date(startDate.getTime() + duration * 60 * 1000);
+    const endDate = new Date(startDate.getTime() + durationMin * 60 * 1000);
     return format(endDate, "HH:mm");
-  }, [bookingDate, bookingTime, serviceId, selectedEndTime, selectedService]);
+  }, [bookingDate, bookingTime, durationMin, selectedEndTime]);
 
   const handleSave = async () => {
     if (!selectedCustomer) {
@@ -287,7 +315,7 @@ export function NewBookingModal({
                   </label>
 
                   {selectedCustomer ? (
-                    <div className="flex items-center justify-between w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white">
+                    <div className="flex items-center justify-between w-full rounded-[12px] border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
                           <User className="w-4 h-4" />
@@ -313,7 +341,7 @@ export function NewBookingModal({
                             setIsSearchFocused(true);
                           }}
                           onFocus={() => setIsSearchFocused(true)}
-                          className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] pl-10 pr-10 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                          className={cn(fieldBaseClass, "pl-10 pr-10")}
                         />
                         {searching && (
                           <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-400 animate-spin" />
@@ -364,17 +392,34 @@ export function NewBookingModal({
                     type="date"
                     value={bookingDate}
                     onChange={(e) => setBookingDate(e.target.value)}
-                    className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white"
+                    className={fieldBaseClass}
                   />
                 </div>
-                <div>
-                  <label className="text-sm font-semibold text-white mb-2">Hora inicio</label>
-                  <input
-                    type="time"
-                    value={bookingTime}
-                    onChange={(e) => setBookingTime(e.target.value)}
-                    className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="min-w-0">
+                    <label className="text-sm font-semibold text-white mb-2">Hora inicio</label>
+                    <input
+                      type="time"
+                      value={bookingTime}
+                      onChange={(e) => setBookingTime(e.target.value)}
+                      className={fieldBaseClass}
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <label className="text-sm font-semibold text-white mb-2">Duración (min)</label>
+                    <input
+                      type="number"
+                      min={5}
+                      step={5}
+                      value={durationMin}
+                      onChange={(e) => {
+                        durationDirtyRef.current = true;
+                        const next = Number(e.target.value);
+                        setDurationMin(Number.isFinite(next) ? next : 30);
+                      }}
+                      className={fieldBaseClass}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -383,8 +428,11 @@ export function NewBookingModal({
                   <label className="text-sm font-semibold text-white mb-2">Servicio</label>
                   <select
                     value={serviceId}
-                    onChange={(e) => setServiceId(e.target.value)}
-                    className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white"
+                    onChange={(e) => {
+                      durationDirtyRef.current = false;
+                      setServiceId(e.target.value);
+                    }}
+                    className={fieldBaseClass}
                   >
                     <option value="">Selecciona un servicio...</option>
                     {services.map((svc) => (
@@ -399,7 +447,7 @@ export function NewBookingModal({
                   <select
                     value={staffId}
                     onChange={(e) => setStaffId(e.target.value)}
-                    className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white"
+                    className={fieldBaseClass}
                   >
                     <option value="">Selecciona...</option>
                     {staff.map((member) => (
@@ -417,7 +465,7 @@ export function NewBookingModal({
                   <select
                     value={bookingState}
                     onChange={(e) => setBookingState(e.target.value as BookingState)}
-                    className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white"
+                    className={fieldBaseClass}
                   >
                     <option value="pending">Pendiente</option>
                     <option value="confirmed">Confirmada</option>
@@ -432,7 +480,7 @@ export function NewBookingModal({
                   <select
                     value={paymentStatus}
                     onChange={(e) => setPaymentStatus(e.target.value as PaymentStatus)}
-                    className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white"
+                    className={fieldBaseClass}
                   >
                     <option value="unpaid">No pagado</option>
                     <option value="deposit">Adelanto pagado</option>
@@ -486,7 +534,7 @@ export function NewBookingModal({
                               setDepositAmountEUR(e.target.value);
                               setDepositPercent("");
                             }}
-                            className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white placeholder:text-white/30"
+                            className={fieldBaseClass}
                           />
                         </div>
                         <div>
@@ -507,7 +555,7 @@ export function NewBookingModal({
                             setDepositPercent(e.target.value);
                             setDepositAmountEUR("");
                           }}
-                          className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white placeholder:text-white/30"
+                          className={fieldBaseClass}
                         />
                       </div>
                     )}
@@ -535,7 +583,7 @@ export function NewBookingModal({
                   value={internalNotes}
                   onChange={(e) => setInternalNotes(e.target.value)}
                   rows={4}
-                  className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white"
+                  className={fieldBaseClass}
                 />
               </div>
               <div>
@@ -544,7 +592,7 @@ export function NewBookingModal({
                   value={clientMessage}
                   onChange={(e) => setClientMessage(e.target.value)}
                   rows={3}
-                  className="w-full rounded-[12px] border border-white/10 bg-[#1b1d21] px-4 py-2.5 text-sm text-white"
+                  className={fieldBaseClass}
                 />
               </div>
               </TabsContent>

@@ -75,7 +75,6 @@ export function sanitizeUserMessage(raw: string): SanitizeResult {
   }
 
   // Strip control chars excepto \n (0x0A), \r (0x0D), \t (0x09).
-  // eslint-disable-next-line no-control-regex
   cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
 
   // Normalizar whitespace excesivo

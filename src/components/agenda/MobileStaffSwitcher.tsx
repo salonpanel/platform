@@ -12,6 +12,7 @@ interface MobileStaffSwitcherProps {
   selectedStaffId: string | null; // null = "Todos"
   onSelectStaff: (staffId: string | null) => void;
   bookingCounts?: Record<string, number>;
+  includeAllOption?: boolean;
 }
 
 /**
@@ -29,6 +30,7 @@ export function MobileStaffSwitcher({
   selectedStaffId,
   onSelectStaff,
   bookingCounts,
+  includeAllOption = false,
 }: MobileStaffSwitcherProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -37,14 +39,20 @@ export function MobileStaffSwitcher({
     setMounted(true);
   }, []);
 
-  // Build the ordered list of staff
+  // Build the ordered list of options (optionally includes "Todos")
   const staffOptions: Array<{ id: string | null; name: string; color?: string | null }> = [];
-  staffList.forEach((s) =>
-    staffOptions.push({ id: s.id, name: s.display_name || s.name, color: s.color })
-  );
+  if (includeAllOption) {
+    staffOptions.push({ id: null, name: "Todos", color: null });
+  }
+  staffList.forEach((s) => {
+    staffOptions.push({ id: s.id, name: s.display_name || s.name, color: s.color });
+  });
+
+  // If the caller doesn't support "Todos", never treat null as selected
+  const effectiveSelectedId = includeAllOption ? selectedStaffId : (selectedStaffId ?? staffList[0]?.id ?? null);
 
   // Current index in the options list
-  const currentIndex = staffOptions.findIndex((o) => o.id === selectedStaffId);
+  const currentIndex = staffOptions.findIndex((o) => o.id === effectiveSelectedId);
   const safeIndex = currentIndex === -1 ? 0 : currentIndex;
   const current = staffOptions[safeIndex];
 
@@ -89,7 +97,8 @@ export function MobileStaffSwitcher({
   return (
     <>
       {/* Compact switcher bar */}
-      <div className="flex items-center gap-0 bg-[var(--bg-secondary)]/80 backdrop-blur-sm border-b border-[var(--glass-border-subtle)] px-2 py-2">
+      <div className="px-3 py-2">
+        <div className="flex items-center gap-1.5 rounded-2xl border border-[var(--glass-border)] bg-white/[0.04] backdrop-blur-md shadow-[var(--shadow-premium)] px-2 py-2">
         {/* Prev arrow */}
         <motion.button
           id="staff-prev-btn"
@@ -113,7 +122,7 @@ export function MobileStaffSwitcher({
           id="staff-name-picker-btn"
           whileTap={{ scale: 0.97 }}
           onClick={() => setSheetOpen(true)}
-          className="flex-1 flex items-center justify-center gap-2.5 py-1.5 px-2 rounded-xl active:bg-white/5 transition-all duration-150 min-w-0"
+          className="flex-1 flex items-center justify-center gap-2.5 py-1.5 px-2 rounded-xl active:bg-white/5 hover:bg-white/[0.03] transition-all duration-150 min-w-0"
           aria-label="Seleccionar barbero"
         >
           {/* Color dot or "all" icon */}
@@ -159,6 +168,7 @@ export function MobileStaffSwitcher({
         >
           <ChevronRight className="w-5 h-5" />
         </motion.button>
+        </div>
       </div>
 
       {/* Bottom sheet via Portal to escape CSS transforms and z-index issues */}
@@ -208,7 +218,7 @@ export function MobileStaffSwitcher({
               {/* Staff list */}
               <div className="overflow-y-auto max-h-[60vh] p-3 space-y-1.5 pb-4">
                 {staffOptions.map((option, idx) => {
-                  const isSelected = option.id === selectedStaffId;
+                  const isSelected = option.id === effectiveSelectedId;
                   const count = getCount(option.id);
                   const staffColor =
                     option.id !== null
@@ -236,7 +246,7 @@ export function MobileStaffSwitcher({
                     >
                       {/* Avatar / icon */}
                       <div
-                        className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-bold"
+                        className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                         style={
                           staffColor
                             ? {
@@ -251,7 +261,13 @@ export function MobileStaffSwitcher({
                               }
                         }
                       >
-                        {(option.name.charAt(0) || "?").toUpperCase()}
+                        {option.id === null ? (
+                          <Users className="w-4 h-4" />
+                        ) : (
+                          <span className="text-sm font-bold">
+                            {(option.name.charAt(0) || "?").toUpperCase()}
+                          </span>
+                        )}
                       </div>
 
                       {/* Name + count */}

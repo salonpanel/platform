@@ -236,6 +236,7 @@ export function AgendaContent({
                                   selectedStaffId={mobileActiveStaffId}
                                   onSelectStaff={(id) => setMobileSelectedStaffId(id)}
                                   bookingCounts={bookingCountsByStaff}
+                                  includeAllOption={false}
                                 />
                               </div>
                             )}
