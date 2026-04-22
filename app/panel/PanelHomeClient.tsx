@@ -23,7 +23,6 @@ import { DashboardDataset, validateDashboardKpis } from "@/lib/dashboard-data";
 import { useDashboardData } from "@/hooks/useOptimizedData";
 import { usePermissions } from "@/contexts/PermissionsContext";
 import { useTenant } from "@/contexts/TenantContext";
-import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 import { useBookingModal } from "@/contexts/BookingModalContext";
 
@@ -363,43 +362,6 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
   const bookingsKPI = getBookingsKPI();
   const revenueKPI = getRevenueKPI();
 
-  // Estados del componente
-  const [user, setUser] = useState<any>(null);
-
-  // Efecto para obtener información del usuario - usando getSupabaseBrowser como TopBar
-  useEffect(() => {
-    const supabase = getSupabaseBrowser();
-    const loadUser = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        setUser(user);
-      } catch (error) {
-        console.error("Error obteniendo usuario:", error);
-      }
-    };
-    loadUser();
-  }, []);
-
-  // Obtener nombre del usuario de múltiples fuentes
-  const userName = useMemo(() => {
-    // 1. Intentar desde user_metadata
-    const fullName = user?.user_metadata?.full_name || user?.user_metadata?.name;
-    if (fullName) {
-      // Devolver solo el primer nombre
-      return fullName.split(' ')[0];
-    }
-
-    // 2. Intentar desde el email (parte antes del @)
-    if (user?.email) {
-      const emailName = user.email.split('@')[0];
-      // Capitalizar primera letra
-      return emailName.charAt(0).toUpperCase() + emailName.slice(1);
-    }
-
-    // 3. Fallback
-    return 'Profesional';
-  }, [user]);
-
   if (isLoading) {
     return <DashboardSkeleton />;
   }
@@ -425,12 +387,12 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             className="flex flex-row items-start justify-between gap-3 mb-3 sm:mb-4"
           >
             <div className="min-w-0 flex-1 pr-2">
-              <h1 className="text-[clamp(1.25rem,3.6vw+0.4rem,1.875rem)] font-semibold text-white tracking-tight leading-tight mb-1">
-                Hola, {userName} 👋
-              </h1>
-              <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-snug">
-                {todayLabel} {shouldShowTimezone && `· ${tenantTimezone}`}
+              <p className="text-[clamp(1rem,2.5vw+0.2rem,1.375rem)] font-semibold text-white tracking-tight leading-snug">
+                {todayLabel}
               </p>
+              {shouldShowTimezone && (
+                <p className="mt-0.5 text-xs text-[var(--text-secondary)]">{tenantTimezone}</p>
+              )}
             </div>
 
             <div className="relative shrink-0 pt-0.5">

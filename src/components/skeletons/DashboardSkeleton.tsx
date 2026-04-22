@@ -8,11 +8,10 @@ export function DashboardSkeleton() {
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
         <div className="w-full min-w-0 max-w-full px-0 py-2.5 min-[400px]:py-3 sm:py-4">
           <div className="animate-pulse">
-            {/* Hero (título + desplegable periodo) */}
+            {/* Hero (fecha + desplegable periodo) */}
             <div className="mb-3 flex flex-row items-start justify-between gap-3 sm:mb-4">
-              <div className="min-w-0 flex-1 space-y-2 pr-2">
-                <div className="h-8 max-w-[min(18rem,85%)] rounded-lg bg-white/[0.08]" />
-                <div className="h-4 max-w-[min(22rem,92%)] rounded bg-white/[0.05]" />
+              <div className="min-w-0 flex-1 pr-2">
+                <div className="h-6 max-w-[min(16rem,90%)] rounded-md bg-white/[0.08] sm:h-7" />
               </div>
               <div className="h-9 w-[6.75rem] shrink-0 rounded-lg bg-white/[0.06] sm:w-[7.5rem]" />
             </div>

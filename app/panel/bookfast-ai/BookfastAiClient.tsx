@@ -89,6 +89,14 @@ function genId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+/** Altura mínima del textarea (una línea), alineada con el botón enviar (h-10). */
+const COMPOSER_MIN_HEIGHT_PX = 40;
+/** A partir de esta altura de contenido se considera multilínea: botón abajo a la derecha. */
+const COMPOSER_MULTILINE_THRESHOLD_PX = 46;
+/** Máximo de altura del recuadro; luego scroll interno (como WhatsApp / iMessage). */
+const COMPOSER_MAX_HEIGHT_PX = 160;
+const COMPOSER_MAX_CHARS = 8000;
+
 function dispatchBottomNavRecalc() {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new Event("bookfast-ai-composer-change"));
@@ -136,6 +144,7 @@ export default function BookfastAiClient() {
   const scrollAnchorRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [composerMultiline, setComposerMultiline] = useState(false);
 
   const keyboardInset = useVisualKeyboardInset(composerActive);
 
@@ -144,12 +153,20 @@ export default function BookfastAiClient() {
     scrollAnchorRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  // Auto-resize del textarea
+  // Auto-resize del textarea hasta COMPOSER_MAX_HEIGHT_PX; luego scroll interno
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+    const natural = el.scrollHeight;
+    const clamped = Math.min(
+      Math.max(natural, COMPOSER_MIN_HEIGHT_PX),
+      COMPOSER_MAX_HEIGHT_PX,
+    );
+    el.style.height = `${clamped}px`;
+    el.style.overflowY =
+      natural > COMPOSER_MAX_HEIGHT_PX ? "auto" : "hidden";
+    setComposerMultiline(natural > COMPOSER_MULTILINE_THRESHOLD_PX);
   }, [input]);
 
   // Móvil: al escribir ocultamos la tab bar y liberamos el hueco; al salir recalculamos.
@@ -351,7 +368,8 @@ export default function BookfastAiClient() {
             : undefined
         }
         className={cn(
-          "shrink-0 flex items-center gap-2 rounded-2xl p-2",
+          "shrink-0 flex gap-2 rounded-2xl px-3 py-2",
+          composerMultiline ? "items-end" : "items-center",
           "bg-white/[0.04] ring-1 ring-white/10",
           "focus-within:ring-white/20 focus-within:bg-white/[0.06] transition",
           composerPadBottom === undefined && "pb-[max(0.625rem,env(safe-area-inset-bottom))] md:pb-3",
@@ -366,9 +384,11 @@ export default function BookfastAiClient() {
           onBlur={handleComposerBlur}
           placeholder="Pregúntale a BookFast AI lo que necesites…"
           rows={1}
+          maxLength={COMPOSER_MAX_CHARS}
           disabled={loading}
           className={cn(
-            "min-h-10 flex-1 resize-none bg-transparent px-3 py-2.5 text-sm leading-snug text-white/95",
+            "min-h-[40px] w-full min-w-0 flex-1 resize-none bg-transparent",
+            "px-0 py-2 text-sm leading-[1.35] text-white/95",
             "placeholder:text-white/35 focus:outline-none",
             "disabled:opacity-50",
           )}
