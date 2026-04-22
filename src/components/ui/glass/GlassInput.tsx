@@ -15,7 +15,8 @@ export const GlassInput = forwardRef<HTMLInputElement, GlassInputProps>(
                 {label && (
                     <label
                         htmlFor={id}
-                        className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] ml-0.5"
+                        className="block text-xs sm:text-sm font-medium text-[var(--bf-ink-300)] ml-0.5"
+                    style={{ fontFamily: "var(--font-sans)" }}
                     >
                         {label}
                     </label>
@@ -23,7 +24,7 @@ export const GlassInput = forwardRef<HTMLInputElement, GlassInputProps>(
 
                 <div className="relative">
                     {leftIcon && (
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] pointer-events-none">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--bf-ink-400)] pointer-events-none">
                             {leftIcon}
                         </div>
                     )}
@@ -31,10 +32,10 @@ export const GlassInput = forwardRef<HTMLInputElement, GlassInputProps>(
                         ref={ref}
                         id={id}
                         className={cn(
-                            "w-full rounded-lg glass border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-white/20 transition-all duration-200",
-                            "focus:border-emerald-500/50 focus:bg-white/[0.05] focus:outline-none focus:ring-1 focus:ring-emerald-500/50",
+                            "w-full rounded-[var(--r-md)] border bg-[var(--bf-bg-elev)] border-[var(--bf-border-2)] px-3 py-2 text-sm text-[var(--bf-ink-50)] placeholder:text-[var(--bf-ink-400)] transition-all duration-200",
+                            "focus:border-[var(--bf-primary)] focus:outline-none focus:ring-2 focus:ring-[rgba(79,161,216,0.15)]",
                             "disabled:opacity-50 disabled:cursor-not-allowed",
-                            error && "border-red-500/50 focus:border-red-500 focus:ring-red-500/30",
+                            error && "border-[rgba(224,96,114,0.4)] focus:border-[var(--bf-danger)] focus:ring-[rgba(224,96,114,0.2)]",
                             leftIcon && "pl-9",
                             className
                         )}
@@ -45,7 +46,7 @@ export const GlassInput = forwardRef<HTMLInputElement, GlassInputProps>(
                 {helperText && (
                     <p className={cn(
                         "text-[10px] sm:text-xs ml-0.5",
-                        error ? "text-red-400" : "text-[var(--text-secondary)]"
+                        error ? "text-[var(--bf-danger)]" : "text-[var(--bf-ink-400)]"
                     )}>
                         {helperText}
                     </p>

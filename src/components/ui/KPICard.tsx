@@ -54,21 +54,19 @@ export function KPICard({
       transition={{ duration: 0.2, ease: [0.2, 0, 0, 1] }}
       whileHover={onClick ? { scale: 1.02 } : {}}
       className={cn(
-        "rounded-[var(--radius-lg)] border transition-all h-full",
+        "rounded-[var(--r-lg)] border transition-all h-full",
         paddingStyles[density],
         variant === "aurora"
-          ? "bg-[var(--gradient-primary)] border-transparent"
-          : density === "ultra-compact" 
-          ? "glass border-[var(--glass-border)] backdrop-blur-sm"
-          : "glass border-[var(--glass-border)]",
+          ? "bg-[var(--bf-primary)] border-transparent"
+          : "bg-[var(--bf-surface)] border-[var(--bf-border)]",
         onClick && "cursor-pointer",
         className
       )}
       style={{
         boxShadow:
           variant === "aurora"
-            ? "var(--glow-aqua), inset 0px 1px 0px rgba(255,255,255,0.15)"
-            : "var(--shadow-card)",
+            ? "var(--bf-shadow-glow), inset 0 1px 0 rgba(255,255,255,0.12)"
+            : "var(--bf-shadow-card)",
         transitionDuration: "var(--duration-base)",
       }}
       onClick={onClick}
@@ -78,8 +76,11 @@ export function KPICard({
           <p
             className={cn("font-semibold", titleStyles[density])}
             style={{
-              fontFamily: "var(--font-heading)",
-              color: variant === "aurora" ? "rgba(255,255,255,0.9)" : "var(--text-secondary)",
+              fontFamily: "var(--font-mono)",
+              color: variant === "aurora" ? "var(--bf-ink)" : "var(--bf-ink-400)",
+              fontSize: "10px",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase" as const,
             }}
           >
             {title}
@@ -87,8 +88,9 @@ export function KPICard({
           <p
             className={cn("font-semibold", valueStyles[density])}
             style={{
-              fontFamily: "var(--font-kpi)",
-              color: variant === "aurora" ? "#FFFFFF" : "var(--text-primary)",
+              fontFamily: "var(--font-sans)",
+              color: variant === "aurora" ? "var(--bf-ink)" : "var(--bf-ink-50)",
+              letterSpacing: "-0.025em",
             }}
           >
             {value}
@@ -102,15 +104,15 @@ export function KPICard({
                     ? "text-[var(--color-success)]"
                     : "text-[var(--color-danger)]"
                 )}
-                style={{ fontFamily: "var(--font-body)" }}
+                style={{ fontFamily: "var(--font-sans)" }}
               >
                 {trend.positive !== false ? "↑" : "↓"} {Math.abs(trend.value)}%
               </span>
               <span
                 className="text-xs"
                 style={{
-                  fontFamily: "var(--font-body)",
-                  color: variant === "aurora" ? "rgba(255,255,255,0.7)" : "var(--text-tertiary)",
+                  fontFamily: "var(--font-sans)",
+                  color: variant === "aurora" ? "var(--bf-ink)" : "var(--bf-ink-400)",
                 }}
               >
                 {trend.label}
@@ -121,16 +123,16 @@ export function KPICard({
         {Icon && (
           <div
             className={cn(
-              "rounded-[var(--radius-md)] p-3",
+              "rounded-[var(--r-md)] p-3",
               variant === "aurora"
-                ? "bg-white/20"
-                : "bg-[var(--accent-aqua-glass)] border border-[var(--accent-aqua-border)]"
+                ? "bg-[rgba(255,255,255,0.2)]"
+                : "bg-[rgba(79,161,216,0.12)] border border-[rgba(79,161,216,0.35)]"
             )}
           >
             <Icon
               className={cn(
                 "h-5 w-5",
-                variant === "aurora" ? "text-white" : "text-[var(--accent-aqua)]"
+                variant === "aurora" ? "text-[var(--bf-ink)]" : "text-[var(--bf-primary)]"
               )}
             />
           </div>

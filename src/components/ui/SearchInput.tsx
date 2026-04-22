@@ -79,7 +79,7 @@ export const SearchInput = forwardRef<HTMLDivElement, SearchInputProps>(
             onChange={(e) => setLocalValue(e.target.value)}
             placeholder={placeholder}
             disabled={disabled}
-            icon={<Search className="h-4 w-4 text-[var(--text-secondary)]" />}
+            icon={<Search className="h-4 w-4 text-[var(--bf-ink-400)]" />}
             className="pr-10"
           />
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
@@ -88,7 +88,7 @@ export const SearchInput = forwardRef<HTMLDivElement, SearchInputProps>(
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
-                className="h-4 w-4 rounded-full border-2 border-[var(--accent-aqua)] border-t-transparent animate-spin"
+                className="h-4 w-4 rounded-full border-2 border-[var(--bf-primary)] border-t-transparent animate-spin"
               />
             )}
             {!isSearching && localValue && showClearButton && (
@@ -97,7 +97,7 @@ export const SearchInput = forwardRef<HTMLDivElement, SearchInputProps>(
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 onClick={handleClear}
-                className="p-1 rounded-[var(--radius-sm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)] transition-all"
+                className="p-1 rounded-[var(--r-sm)] text-[var(--bf-ink-400)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-bg-elev)] transition-all"
                 style={{ transitionDuration: "var(--duration-base)" }}
                 aria-label="Limpiar búsqueda"
               >

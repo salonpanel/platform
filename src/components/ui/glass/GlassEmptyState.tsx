@@ -47,7 +47,7 @@ export function GlassEmptyState({
             >
                 {Icon && (
                     <div className={cn(
-                        "rounded-full bg-white/5 flex items-center justify-center mb-4",
+                        "rounded-full bg-[rgba(79,161,216,0.10)] border border-[rgba(79,161,216,0.20)] flex items-center justify-center mb-4",
                         isCompact ? "w-12 h-12" : "w-16 h-16"
                     )}>
                         <Icon className={cn(

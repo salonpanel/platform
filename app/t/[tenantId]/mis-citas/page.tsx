@@ -2,7 +2,7 @@ import { createClientForServer } from "@/lib/supabase/server-client";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getPublicTenant } from "@/lib/tenant/public-api";
-import { CancelBookingButton } from "../../../r/[tenantId]/mis-citas/CancelBookingButton";
+import { CancelBookingButton } from "../../components/CancelBookingButton";
 
 export const dynamic = "force-dynamic";
 

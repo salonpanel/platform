@@ -25,8 +25,8 @@ export function FormField({
     <div className={cn("w-full", className)}>
       {label && (
         <label
-          className="mb-2 block text-sm font-semibold text-[var(--text-primary)]"
-          style={{ fontFamily: "var(--font-heading)" }}
+          className="mb-2 block text-sm font-medium text-[var(--bf-ink-300)]"
+          style={{ fontFamily: "var(--font-sans)" }}
         >
           {label}
           {required && (
@@ -40,16 +40,16 @@ export function FormField({
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.15, ease: [0.2, 0, 0, 1] }}
-          className="mt-2 text-xs text-[var(--color-danger)] font-semibold"
-          style={{ fontFamily: "var(--font-body)" }}
+          className="mt-2 text-xs text-[var(--bf-danger)] font-medium"
+          style={{ fontFamily: "var(--font-sans)" }}
         >
           {error}
         </motion.p>
       )}
       {helperText && !error && (
         <p
-          className="mt-2 text-xs text-[var(--text-secondary)] font-medium"
-          style={{ fontFamily: "var(--font-body)" }}
+          className="mt-2 text-xs text-[var(--bf-ink-400)] font-medium"
+          style={{ fontFamily: "var(--font-sans)" }}
         >
           {helperText}
         </p>

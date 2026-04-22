@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchAvailabilityAction, submitBookingAction, createCheckoutSessionAction } from "../../../r/actions";
+import { fetchAvailabilityAction, submitBookingAction, createCheckoutSessionAction } from "../../actions";
 import type { PublicService } from "@/lib/tenant/public-api";
 
 export default function BookingForm({

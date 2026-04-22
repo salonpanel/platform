@@ -4,16 +4,11 @@ import { getHostType, parseSubdomain } from "@/lib/domains";
 
 export async function proxy(request: NextRequest) {
     // 0. STRICT ISOLATION PHASE
-    // Absolute bypass for login (avoid auth loops).
-    // NOTE: we do NOT bypass "/" globally because tenant subdomains
-    // must rewrite "/" -> "/r/{subdomain}" for the public portal.
+    // No global bypass for "/login": on tenant domains, "/login" is a public
+    // route that must rewrite to the tenant portal. Auth-loop prevention is
+    // handled per-domain below.
     const url = request.nextUrl;
     const path = url.pathname;
-
-    if (path.startsWith("/login")) {
-        return NextResponse.next();
-    }
-
 
     // 1. Initialize Response
     let response = NextResponse.next({

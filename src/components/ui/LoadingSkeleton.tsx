@@ -20,11 +20,11 @@ export function LoadingSkeleton({
   count = 1,
   animated = true,
 }: LoadingSkeletonProps) {
-  const baseStyles = "glass rounded-[var(--radius-md)]";
+  const baseStyles = "rounded-[var(--r-md)] bg-[var(--bf-surface)]";
 
   const variantStyles = {
     text: "h-4",
-    circular: "rounded-[var(--radius-pill)]",
+    circular: "rounded-[var(--r-full)]",
     rectangular: "",
     card: "h-32",
   };
@@ -45,9 +45,9 @@ export function LoadingSkeleton({
         height: height,
         background: `linear-gradient(
           90deg,
-          var(--glass-bg) 0%,
-          var(--glass-bg-strong) 50%,
-          var(--glass-bg) 100%
+          var(--bf-surface) 0%,
+          var(--bf-surface-2) 50%,
+          var(--bf-surface) 100%
         )`,
         backgroundSize: "200% 100%",
         animation: animated ? "shimmer 1.5s ease-in-out infinite" : "none",

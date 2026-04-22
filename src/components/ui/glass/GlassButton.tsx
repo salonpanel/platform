@@ -16,17 +16,17 @@ export const GlassButton = forwardRef<HTMLButtonElement, GlassButtonProps>(
         const baseStyles = "inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-white/20 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100";
 
         const variants = {
-            primary: "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 focus:ring-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.1)] hover:shadow-[0_0_15px_rgba(16,185,129,0.2)]",
-            secondary: "bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/20 focus:ring-white/30",
-            danger: "bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 focus:ring-red-500/50 hover:shadow-[0_0_15px_rgba(239,68,68,0.15)]",
-            ghost: "bg-transparent hover:bg-white/5 text-[var(--text-secondary)] hover:text-white border border-transparent",
+            primary:   "bg-[var(--bf-primary)] text-[var(--bf-ink)] border border-transparent hover:bg-[var(--bf-cyan-300)] focus:ring-[rgba(79,161,216,0.3)]",
+            secondary: "bg-[var(--bf-bg-elev)] text-[var(--bf-ink-100)] border border-[var(--bf-border-2)] hover:border-[var(--bf-cyan-600)] hover:text-[var(--bf-primary)] focus:ring-[rgba(79,161,216,0.2)]",
+            danger:    "bg-[rgba(224,96,114,0.10)] text-[var(--bf-danger)] border border-[rgba(224,96,114,0.30)] hover:bg-[rgba(224,96,114,0.18)] focus:ring-[rgba(224,96,114,0.25)]",
+            ghost:     "bg-transparent text-[var(--bf-ink-400)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-bg-elev)] border border-transparent",
         };
 
         const sizes = {
-            sm: "h-7 px-2.5 text-xs rounded-lg gap-1.5",
-            md: "h-9 px-4 text-sm rounded-lg gap-2",
-            lg: "h-11 px-6 text-base rounded-xl gap-2.5",
-            icon: "h-9 w-9 p-0 rounded-lg justify-center",
+            sm:   "h-7 px-2.5 text-xs rounded-[var(--r-md)] gap-1.5",
+            md:   "h-9 px-4 text-sm rounded-[var(--r-md)] gap-2",
+            lg:   "h-11 px-6 text-base rounded-[var(--r-lg)] gap-2.5",
+            icon: "h-9 w-9 p-0 rounded-[var(--r-md)] justify-center",
         };
 
         return (

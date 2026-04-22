@@ -38,7 +38,7 @@ export function FilterPanel({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.15, ease: [0.2, 0, 0, 1] }}
       className={cn(
-        "rounded-[var(--radius-lg)] glass border-[var(--glass-border)] p-4",
+        "rounded-[var(--r-lg)] bg-[var(--bf-surface)] border border-[var(--bf-border)] p-4",
         className
       )}
     >
@@ -46,8 +46,8 @@ export function FilterPanel({
         <div className="mb-4 flex items-center justify-between">
           {title && (
             <h3
-              className="text-sm font-semibold text-[var(--text-primary)]"
-              style={{ fontFamily: "var(--font-heading)" }}
+              className="text-sm font-semibold text-[var(--bf-ink-50)]"
+              style={{ fontFamily: "var(--font-sans)" }}
             >
               {title}
             </h3>
@@ -55,9 +55,9 @@ export function FilterPanel({
           {activeFilters.length > 0 && onClearAll && (
             <button
               onClick={onClearAll}
-              className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
+              className="text-xs text-[var(--bf-ink-400)] hover:text-[var(--bf-primary)] transition-all"
               style={{
-                fontFamily: "var(--font-body)",
+                fontFamily: "var(--font-sans)",
                 transitionDuration: "var(--duration-base)",
               }}
             >
@@ -75,18 +75,18 @@ export function FilterPanel({
               key={filter.id}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="inline-flex items-center gap-2 rounded-[var(--radius-pill)] glass border-[var(--glass-border)] px-3 py-1.5"
+              className="inline-flex items-center gap-2 rounded-[var(--r-full)] bg-[rgba(79,161,216,0.10)] border border-[rgba(79,161,216,0.25)] px-3 py-1.5"
             >
               <span
-                className="text-xs text-[var(--text-primary)]"
-                style={{ fontFamily: "var(--font-body)" }}
+                className="text-xs text-[var(--bf-cyan-200)]"
+                style={{ fontFamily: "var(--font-sans)" }}
               >
                 {filter.label}
               </span>
               {filter.onRemove && (
                 <button
                   onClick={filter.onRemove}
-                  className="p-0.5 rounded-[var(--radius-sm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)] transition-all"
+                  className="p-0.5 rounded-[var(--r-sm)] text-[var(--bf-ink-400)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-bg-elev)] transition-all"
                   style={{ transitionDuration: "var(--duration-base)" }}
                   aria-label="Eliminar filtro"
                 >

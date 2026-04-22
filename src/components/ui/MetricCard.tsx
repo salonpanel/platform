@@ -34,39 +34,39 @@ export function MetricCard({
 }: MetricCardProps) {
   const variants = {
     default: {
-      bg: "bg-slate-800/50",
-      border: "border-slate-700/50",
-      text: "text-slate-200",
-      titleColor: "text-slate-400",
-      valueColor: "text-white"
+      bg: "bg-[var(--bf-surface)]",
+      border: "border-[var(--bf-border)]",
+      text: "text-[var(--bf-ink-200)]",
+      titleColor: "text-[var(--bf-ink-400)]",
+      valueColor: "text-[var(--bf-ink-50)]"
     },
     success: {
-      bg: "bg-emerald-500/10",
-      border: "border-emerald-500/30",
-      text: "text-emerald-300",
-      titleColor: "text-emerald-400",
-      valueColor: "text-emerald-200"
+      bg: "bg-[rgba(30,161,159,0.10)]",
+      border: "border-[rgba(30,161,159,0.30)]",
+      text: "text-[var(--bf-teal-200)]",
+      titleColor: "text-[var(--bf-success)]",
+      valueColor: "text-[var(--bf-teal-100)]"
     },
     warning: {
-      bg: "bg-amber-500/10",
-      border: "border-amber-500/30",
-      text: "text-amber-300",
-      titleColor: "text-amber-400",
-      valueColor: "text-amber-200"
+      bg: "bg-[rgba(232,176,74,0.10)]",
+      border: "border-[rgba(232,176,74,0.30)]",
+      text: "text-[#F2C87A]",
+      titleColor: "text-[var(--bf-warn)]",
+      valueColor: "text-[#F2C87A]"
     },
     danger: {
-      bg: "bg-red-500/10",
-      border: "border-red-500/30",
-      text: "text-red-300",
-      titleColor: "text-red-400",
-      valueColor: "text-red-200"
+      bg: "bg-[rgba(224,96,114,0.10)]",
+      border: "border-[rgba(224,96,114,0.30)]",
+      text: "text-[#F2A0AC]",
+      titleColor: "text-[var(--bf-danger)]",
+      valueColor: "text-[#F2A0AC]"
     },
     info: {
-      bg: "bg-blue-500/10",
-      border: "border-blue-500/30",
-      text: "text-blue-300",
-      titleColor: "text-blue-400",
-      valueColor: "text-blue-200"
+      bg: "bg-[rgba(79,161,216,0.10)]",
+      border: "border-[rgba(79,161,216,0.30)]",
+      text: "text-[var(--bf-cyan-200)]",
+      titleColor: "text-[var(--bf-primary)]",
+      valueColor: "text-[var(--bf-cyan-100)]"
     }
   };
 
@@ -107,12 +107,9 @@ export function MetricCard({
 
   const getTrendColor = (direction: string) => {
     switch (direction) {
-      case 'up':
-        return 'text-emerald-400';
-      case 'down':
-        return 'text-red-400';
-      default:
-        return 'text-slate-400';
+      case 'up':   return 'text-[var(--bf-success)]';
+      case 'down': return 'text-[var(--bf-danger)]';
+      default:     return 'text-[var(--bf-ink-400)]';
     }
   };
 
@@ -123,7 +120,7 @@ export function MetricCard({
       transition={{ duration: 0.3, ease: "easeOut" }}
       whileHover={{ scale: 1.02 }}
       className={cn(
-        "relative overflow-hidden rounded-[var(--radius-lg)] border backdrop-blur-sm",
+        "relative overflow-hidden rounded-[var(--r-lg)] border",
         "transition-all duration-300 hover:shadow-lg",
         style.bg,
         style.border,
@@ -174,9 +171,9 @@ export function MetricCard({
             <div className={cn(
               "flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full border",
               getTrendColor(trend.direction),
-              trend.direction === 'up' && "bg-emerald-500/10 border-emerald-500/30",
-              trend.direction === 'down' && "bg-red-500/10 border-red-500/30",
-              trend.direction === 'neutral' && "bg-slate-500/10 border-slate-500/30"
+              trend.direction === 'up'      && "bg-[rgba(30,161,159,0.10)] border-[rgba(30,161,159,0.30)]",
+              trend.direction === 'down'    && "bg-[rgba(224,96,114,0.10)] border-[rgba(224,96,114,0.30)]",
+              trend.direction === 'neutral' && "bg-[var(--bf-bg-elev)] border-[var(--bf-border)]"
             )}>
               {getTrendIcon(trend.direction)}
               <span>{trend.value}%</span>
@@ -186,7 +183,7 @@ export function MetricCard({
       </div>
 
       {/* Hover effect overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-[var(--radius-lg)]" />
+      <div className="absolute inset-0 bg-[rgba(79,161,216,0.03)] opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-[var(--r-lg)]" />
     </motion.div>
   );
 }

@@ -122,7 +122,7 @@ function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
               exit={{ opacity: 0, x: 100, scale: 0.96 }}
               transition={{ duration: 0.2, ease: [0.2, 0, 0, 1] }}
               className={cn(
-                "rounded-[var(--radius-lg)] border px-4 py-3 shadow-[var(--shadow-modal)] backdrop-blur-md",
+                "rounded-[var(--r-lg)] border px-4 py-3 shadow-[var(--bf-shadow-card)] bg-[var(--bf-surface)]",
                 style.bg,
                 style.border
               )}
@@ -132,14 +132,14 @@ function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
                 <div className="flex-1 min-w-0">
                   <h4
                     className={cn("text-sm font-semibold mb-1", style.text)}
-                    style={{ fontFamily: "var(--font-heading)" }}
+                    style={{ fontFamily: "var(--font-sans)" }}
                   >
                     {toast.title}
                   </h4>
                   {toast.message && (
                     <p
                       className={cn("text-sm", style.text)}
-                      style={{ fontFamily: "var(--font-body)" }}
+                      style={{ fontFamily: "var(--font-sans)" }}
                     >
                       {toast.message}
                     </p>
@@ -148,7 +148,7 @@ function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
                 <button
                   onClick={() => onRemove(toast.id)}
                   className={cn(
-                    "flex-shrink-0 p-1 rounded-[var(--radius-sm)] hover:bg-[rgba(255,255,255,0.1)] transition-colors",
+                    "flex-shrink-0 p-1 rounded-[var(--r-sm)] hover:bg-[rgba(255,255,255,0.06)] transition-colors",
                     style.text
                   )}
                   style={{ transitionDuration: "var(--duration-base)" }}
