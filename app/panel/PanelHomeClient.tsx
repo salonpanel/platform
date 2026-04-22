@@ -471,28 +471,28 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             animate="visible"
             variants={sectionVariants}
             transition={{ duration: 0.2, delay: 0.05 }}
-            className="grid grid-cols-1 min-[400px]:grid-cols-2 lg:grid-cols-4 gap-3 min-[480px]:gap-3.5 lg:gap-4 mb-4 sm:mb-5"
+            className="grid grid-cols-4 gap-1.5 sm:gap-3 lg:gap-4 mb-4 sm:mb-5"
           >
             {/* KPI: Reservas - Label dinámico según periodo */}
             <motion.div
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(79,227,193,0.12)" }}
               onClick={() => router.push("/panel/agenda")}
-              className="cursor-pointer glass rounded-xl p-3.5 sm:p-4 border border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.03] transition-all duration-200"
+              className="cursor-pointer glass min-w-0 rounded-lg sm:rounded-xl p-2 sm:p-3.5 lg:p-4 border border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.03] transition-all duration-200"
             >
-              <div className="flex items-center gap-2 mb-2">
-                <div className="p-1.5 rounded-lg bg-emerald-500/15">
-                  <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
+              <div className="flex items-center gap-0.5 sm:gap-2 mb-1 sm:mb-2">
+                <div className="p-1 sm:p-1.5 rounded-md sm:rounded-lg bg-emerald-500/15 shrink-0">
+                  <TrendingUp className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-400" />
                 </div>
                 <span className={cn(
-                  "text-xs sm:text-sm ml-auto tabular-nums",
+                  "text-[10px] sm:text-xs lg:text-sm ml-auto tabular-nums leading-none",
                   bookingsKPI.trend === 'up' ? "text-emerald-400" :
                     bookingsKPI.trend === 'down' ? "text-red-400" : "text-[var(--text-secondary)]"
                 )}>
                   {bookingsKPI.trend === 'up' ? '↑' : bookingsKPI.trend === 'down' ? '↓' : '~'}
                 </span>
               </div>
-              <div className="text-[clamp(1.3rem,3.2vw+0.5rem,1.75rem)] font-bold text-white leading-tight mb-0.5 tabular-nums">{bookingsKPI.value}</div>
-              <div className="text-xs sm:text-sm text-[var(--text-secondary)] uppercase tracking-wide">
+              <div className="text-[clamp(0.8125rem,2.6vw+0.2rem,1.75rem)] font-bold text-white leading-none sm:leading-tight mb-0.5 tabular-nums">{bookingsKPI.value}</div>
+              <div className="text-[0.5625rem] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wide leading-tight sm:leading-normal">
                 {period === 'today' ? 'Reservas hoy' : period === 'week' ? 'Reservas 7d' : 'Reservas 30d'}
               </div>
             </motion.div>
@@ -501,22 +501,22 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             <motion.div
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(52,211,153,0.12)" }}
               onClick={() => router.push("/panel/monedero")}
-              className="cursor-pointer glass rounded-xl p-3.5 sm:p-4 border border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.03] transition-all duration-200"
+              className="cursor-pointer glass min-w-0 rounded-lg sm:rounded-xl p-2 sm:p-3.5 lg:p-4 border border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.03] transition-all duration-200"
             >
-              <div className="flex items-center gap-2 mb-2">
-                <div className="p-1.5 rounded-lg bg-emerald-500/15">
-                  <Euro className="h-3.5 w-3.5 text-emerald-400" />
+              <div className="flex items-center gap-0.5 sm:gap-2 mb-1 sm:mb-2">
+                <div className="p-1 sm:p-1.5 rounded-md sm:rounded-lg bg-emerald-500/15 shrink-0">
+                  <Euro className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-400" />
                 </div>
                 <span className={cn(
-                  "text-xs sm:text-sm ml-auto tabular-nums",
+                  "text-[10px] sm:text-xs lg:text-sm ml-auto tabular-nums leading-none",
                   revenueKPI.trend === 'up' ? "text-emerald-400" :
                     revenueKPI.trend === 'down' ? "text-red-400" : "text-[var(--text-secondary)]"
                 )}>
                   {revenueKPI.trend === 'up' ? '↑' : revenueKPI.trend === 'down' ? '↓' : '~'}
                 </span>
               </div>
-              <div className="text-[clamp(1.3rem,3.2vw+0.5rem,1.75rem)] font-bold text-white leading-tight mb-0.5 tabular-nums">{revenueKPI.value}</div>
-              <div className="text-xs sm:text-sm text-[var(--text-secondary)] uppercase tracking-wide">
+              <div className="text-[clamp(0.6875rem,2.4vw+0.15rem,1.75rem)] font-bold text-white leading-none sm:leading-tight mb-0.5 tabular-nums break-all sm:break-normal">{revenueKPI.value}</div>
+              <div className="text-[0.5625rem] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wide leading-tight sm:leading-normal">
                 {period === 'today' ? 'Ingresos hoy' : period === 'week' ? 'Ingresos 7d' : 'Ingresos 30d'}
               </div>
             </motion.div>
@@ -525,35 +525,35 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             <motion.div
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(59,130,246,0.12)" }}
               onClick={() => router.push("/panel/agenda")}
-              className="cursor-pointer glass rounded-xl p-3.5 sm:p-4 border border-white/10 hover:border-blue-500/30 hover:bg-white/[0.03] transition-all duration-200"
+              className="cursor-pointer glass min-w-0 rounded-lg sm:rounded-xl p-2 sm:p-3.5 lg:p-4 border border-white/10 hover:border-blue-500/30 hover:bg-white/[0.03] transition-all duration-200"
             >
-              <div className="flex items-center gap-2 mb-2">
-                <div className="p-1.5 rounded-lg bg-blue-500/15">
-                  <BarChart3 className="h-3.5 w-3.5 text-blue-400" />
+              <div className="flex items-center gap-0.5 sm:gap-2 mb-1 sm:mb-2">
+                <div className="p-1 sm:p-1.5 rounded-md sm:rounded-lg bg-blue-500/15 shrink-0">
+                  <BarChart3 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-blue-400" />
                 </div>
-                <span className="text-xs sm:text-sm ml-auto text-[var(--text-secondary)] tabular-nums">
+                <span className="text-[9px] sm:text-xs lg:text-sm ml-auto text-[var(--text-secondary)] tabular-nums leading-none max-sm:max-w-[2.25rem] truncate">
                   {staffMembers.length} prof.
                 </span>
               </div>
-              <div className="text-[clamp(1.3rem,3.2vw+0.5rem,1.75rem)] font-bold text-white leading-tight mb-0.5 tabular-nums">
+              <div className="text-[clamp(0.8125rem,2.6vw+0.2rem,1.75rem)] font-bold text-white leading-none sm:leading-tight mb-0.5 tabular-nums">
                 {currentOccupancy}%
               </div>
-              <div className="text-xs sm:text-sm text-[var(--text-secondary)] uppercase tracking-wide">{getOccupancyLabel(period)}</div>
+              <div className="text-[0.5625rem] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wide leading-tight sm:leading-normal">{getOccupancyLabel(period)}</div>
             </motion.div>
 
             {/* KPI: Ticket medio - Siempre 7 días (referencia estable) */}
             <motion.div
               whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(168,85,247,0.12)" }}
               onClick={() => router.push("/panel/monedero")}
-              className="cursor-pointer glass rounded-xl p-3.5 sm:p-4 border border-white/10 hover:border-purple-500/30 hover:bg-white/[0.03] transition-all duration-200"
+              className="cursor-pointer glass min-w-0 rounded-lg sm:rounded-xl p-2 sm:p-3.5 lg:p-4 border border-white/10 hover:border-purple-500/30 hover:bg-white/[0.03] transition-all duration-200"
             >
-              <div className="flex items-center gap-2 mb-2">
-                <div className="p-1.5 rounded-lg bg-purple-500/15">
-                  <Sparkles className="h-3.5 w-3.5 text-purple-400" />
+              <div className="flex items-center gap-0.5 mb-1 sm:mb-2">
+                <div className="p-1 sm:p-1.5 rounded-md sm:rounded-lg bg-purple-500/15 shrink-0">
+                  <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-purple-400" />
                 </div>
               </div>
-              <div className="text-[clamp(1.3rem,3.2vw+0.5rem,1.75rem)] font-bold text-white leading-tight mb-0.5 tabular-nums">{formatCurrency(currentAvgTicket)}</div>
-              <div className="text-xs sm:text-sm text-[var(--text-secondary)] uppercase tracking-wide">{getTicketLabel(period)}</div>
+              <div className="text-[clamp(0.6875rem,2.4vw+0.15rem,1.75rem)] font-bold text-white leading-none sm:leading-tight mb-0.5 tabular-nums break-all sm:break-normal">{formatCurrency(currentAvgTicket)}</div>
+              <div className="text-[0.5625rem] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wide leading-tight sm:leading-normal">{getTicketLabel(period)}</div>
             </motion.div>
           </motion.div>
 

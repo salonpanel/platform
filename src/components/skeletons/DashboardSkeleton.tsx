@@ -20,19 +20,19 @@ export function DashboardSkeleton() {
               </div>
             </div>
 
-            {/* KPIs */}
-            <div className="grid grid-cols-1 min-[400px]:grid-cols-2 lg:grid-cols-4 gap-3 min-[480px]:gap-3.5 lg:gap-4 mb-4 sm:mb-5">
+            {/* KPIs — misma fila en móvil (4 columnas) */}
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-3 lg:gap-4 mb-4 sm:mb-5">
               {[0, 1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="rounded-xl border border-white/10 bg-white/[0.02] p-3.5 sm:p-4 min-h-[7.25rem]"
+                  className="min-w-0 rounded-lg sm:rounded-xl border border-white/10 bg-white/[0.02] p-2 sm:p-3.5 lg:p-4 min-h-[5.5rem] sm:min-h-[7.25rem]"
                 >
-                  <div className="mb-3 flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-lg bg-white/[0.06]" />
-                    <div className="ml-auto h-3 w-6 rounded bg-white/[0.05]" />
+                  <div className="mb-2 flex items-center gap-0.5 sm:gap-2">
+                    <div className="h-6 w-6 shrink-0 rounded-md sm:h-8 sm:w-8 sm:rounded-lg bg-white/[0.06]" />
+                    <div className="ml-auto h-2.5 w-4 rounded bg-white/[0.05] sm:h-3 sm:w-6" />
                   </div>
-                  <div className="mb-2 h-8 w-2/3 max-w-[8rem] rounded-md bg-white/[0.09]" />
-                  <div className="h-3 w-24 rounded bg-white/[0.05]" />
+                  <div className="mb-1.5 h-5 w-full max-w-[4rem] rounded bg-white/[0.09] sm:mb-2 sm:h-8 sm:max-w-[8rem]" />
+                  <div className="h-2.5 w-full rounded bg-white/[0.05] sm:h-3 sm:w-24" />
                 </div>
               ))}
             </div>
