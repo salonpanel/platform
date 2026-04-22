@@ -76,10 +76,10 @@ function genId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-/** Altura mínima del textarea (una línea), alineada con el botón enviar (h-10). */
-const COMPOSER_MIN_HEIGHT_PX = 40;
+/** Altura mínima del textarea (una línea compacta); crece con el contenido hasta COMPOSER_MAX_HEIGHT_PX. */
+const COMPOSER_MIN_HEIGHT_PX = 34;
 /** A partir de esta altura de contenido se considera multilínea: botón abajo a la derecha. */
-const COMPOSER_MULTILINE_THRESHOLD_PX = 46;
+const COMPOSER_MULTILINE_THRESHOLD_PX = 44;
 /** Máximo de altura del recuadro; luego scroll interno (como WhatsApp / iMessage). */
 const COMPOSER_MAX_HEIGHT_PX = 160;
 const COMPOSER_MAX_CHARS = 8000;
@@ -396,11 +396,11 @@ export default function BookfastAiClient() {
             : undefined
         }
         className={cn(
-          "shrink-0 flex gap-2 rounded-2xl px-3 py-2",
+          "shrink-0 flex gap-2 rounded-xl px-2.5 py-1.5",
           composerMultiline ? "items-end" : "items-center",
           "bg-white/[0.04] ring-1 ring-white/10",
           "focus-within:ring-white/20 focus-within:bg-white/[0.06] transition",
-          composerPadBottom === undefined && "pb-[max(0.625rem,env(safe-area-inset-bottom))] md:pb-3",
+          composerPadBottom === undefined && "pb-[max(0.5rem,env(safe-area-inset-bottom))] md:pb-2.5",
         )}
       >
         <textarea
@@ -414,9 +414,10 @@ export default function BookfastAiClient() {
           rows={1}
           maxLength={COMPOSER_MAX_CHARS}
           disabled={showThinking}
+          style={{ minHeight: COMPOSER_MIN_HEIGHT_PX }}
           className={cn(
-            "min-h-[40px] w-full min-w-0 flex-1 resize-none bg-transparent",
-            "px-0 py-2 text-sm leading-[1.35] text-white/95",
+            "w-full min-w-0 flex-1 resize-none bg-transparent",
+            "px-0 py-1 text-sm leading-snug text-white/95",
             "placeholder:text-white/35 focus:outline-none",
             "disabled:opacity-50",
           )}
@@ -426,18 +427,18 @@ export default function BookfastAiClient() {
           disabled={!input.trim() || showThinking}
           onMouseDown={(e) => e.preventDefault()}
           className={cn(
-            "inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl",
-            "bg-gradient-to-br from-violet-500 to-sky-500 text-white",
-            "shadow-[0_6px_20px_rgba(123,92,255,0.3)] ring-1 ring-white/15",
-            "hover:brightness-110 transition",
+            "inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg",
+            "bg-[var(--bf-primary)] text-[var(--bf-ink)]",
+            "shadow-[var(--bf-shadow-glow)] ring-1 ring-[var(--bf-ink)]/12",
+            "hover:brightness-105 active:brightness-95 transition",
             "disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none",
           )}
           aria-label="Enviar"
         >
           {showThinking ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
-            <Send className="h-4 w-4" />
+            <Send className="h-3.5 w-3.5" />
           )}
         </button>
       </form>

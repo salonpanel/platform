@@ -231,11 +231,11 @@ export function TopBar({
           <h1
             className={cn(
               "truncate leading-snug",
-              /* Móvil: discreto y ligero */
-              "text-sm font-medium tracking-[-0.015em] text-[var(--bf-ink-100)]",
-              /* Tablet/desktop: jerarquía clásica del panel */
-              "md:text-2xl md:font-semibold md:tracking-[-0.025em] md:leading-tight md:text-[var(--bf-ink-50)]",
-              "lg:text-3xl xl:text-4xl"
+              /* Móvil (~mitad del text-sm anterior) */
+              "text-[11px] font-medium tracking-[-0.01em] text-[var(--bf-ink-100)]",
+              /* Desktop (~mitad de 2xl / 3xl / 4xl) */
+              "md:text-sm md:font-semibold md:tracking-[-0.02em] md:leading-tight md:text-[var(--bf-ink-50)]",
+              "lg:text-base xl:text-lg"
             )}
             style={{
               fontFamily: "var(--font-sans)",
