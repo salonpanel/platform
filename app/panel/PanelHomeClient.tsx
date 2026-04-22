@@ -9,6 +9,7 @@ import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { motion } from "framer-motion";
 import {
   Calendar,
+  ChevronDown,
   Euro,
   BarChart3,
   User,
@@ -288,13 +289,6 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
     }
   }, [performancePeriod, totalBookingsInRange, stats.totalBookingsLast30Days]);
 
-  const dayStatus = useMemo((): { label: string; color: string } => {
-    const todayOcc = currentOccupancy;
-    if (todayOcc < 40) return { label: "Día tranquilo", color: "bg-emerald-500/20 text-emerald-400" };
-    if (todayOcc < 70) return { label: "Día equilibrado", color: "bg-blue-500/20 text-blue-400" };
-    return { label: "Día lleno", color: "bg-amber-500/20 text-amber-400" };
-  }, [currentOccupancy]);
-
   const periodOptions = [
     { id: "today", label: "Hoy" },
     { id: "week", label: "Semana" },
@@ -428,9 +422,9 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="flex flex-col min-[520px]:flex-row min-[520px]:items-center min-[520px]:justify-between gap-3 min-[520px]:gap-4 mb-4 sm:mb-5"
+            className="flex flex-row items-start justify-between gap-3 mb-3 sm:mb-4"
           >
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1 pr-2">
               <h1 className="text-[clamp(1.25rem,3.6vw+0.4rem,1.875rem)] font-semibold text-white tracking-tight leading-tight mb-1">
                 Hola, {userName} 👋
               </h1>
@@ -439,30 +433,34 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
               </p>
             </div>
 
-            {/* Estado del día + Selector de periodo (wrap + táctil en viewports estrechos) */}
-            <div className="flex flex-wrap items-center gap-2 min-[400px]:gap-2.5 shrink-0">
-              <div className={cn("inline-flex items-center min-h-9 px-2.5 py-1 rounded-full text-xs font-medium", dayStatus.color)}>
-                {dayStatus.label}
-              </div>
-
-              {/* Selector de periodo */}
-              <div className="inline-flex items-center min-h-11 rounded-full bg-[var(--bg-card)]/60 backdrop-blur-xl p-0.5 text-xs sm:text-sm border border-white/10">
+            <div className="relative shrink-0 pt-0.5">
+              <label htmlFor="dashboard-period" className="sr-only">
+                Periodo de métricas
+              </label>
+              <select
+                id="dashboard-period"
+                value={period}
+                onChange={(e) =>
+                  setPeriod(e.target.value as "today" | "week" | "month")
+                }
+                className={cn(
+                  "h-9 min-w-[6.75rem] sm:min-w-[7.5rem] cursor-pointer appearance-none rounded-lg border border-white/10",
+                  "bg-[var(--bg-card)]/70 py-2 pl-2.5 pr-8 text-xs sm:text-sm font-medium text-white",
+                  "backdrop-blur-xl transition-colors",
+                  "hover:border-white/15 hover:bg-[var(--bg-card)]/85",
+                  "focus:border-emerald-500/40 focus:outline-none focus:ring-2 focus:ring-emerald-500/25"
+                )}
+              >
                 {periodOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => setPeriod(option.id as "today" | "week" | "month")}
-                    className={cn(
-                      "min-h-10 min-w-[2.75rem] px-3 sm:px-3.5 py-2 rounded-full text-xs sm:text-sm transition-all duration-150 lg:min-h-0 lg:min-w-0 lg:py-1",
-                      period === option.id
-                        ? "bg-white text-slate-900 font-semibold shadow-sm"
-                        : "text-[var(--text-secondary)] hover:text-white active:bg-white/10"
-                    )}
-                  >
+                  <option key={option.id} value={option.id}>
                     {option.label}
-                  </button>
+                  </option>
                 ))}
-              </div>
+              </select>
+              <ChevronDown
+                className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-secondary)] sm:h-4 sm:w-4"
+                aria-hidden
+              />
             </div>
           </motion.div>
 

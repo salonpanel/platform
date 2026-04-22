@@ -8,16 +8,13 @@ export function DashboardSkeleton() {
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
         <div className="w-full min-w-0 max-w-full px-0 py-2.5 min-[400px]:py-3 sm:py-4">
           <div className="animate-pulse">
-            {/* Hero (título + pills) */}
-            <div className="flex flex-col min-[520px]:flex-row min-[520px]:items-center min-[520px]:justify-between gap-3 min-[520px]:gap-4 mb-4 sm:mb-5">
-              <div className="min-w-0 space-y-2">
+            {/* Hero (título + desplegable periodo) */}
+            <div className="mb-3 flex flex-row items-start justify-between gap-3 sm:mb-4">
+              <div className="min-w-0 flex-1 space-y-2 pr-2">
                 <div className="h-8 max-w-[min(18rem,85%)] rounded-lg bg-white/[0.08]" />
                 <div className="h-4 max-w-[min(22rem,92%)] rounded bg-white/[0.05]" />
               </div>
-              <div className="flex flex-wrap items-center gap-2 shrink-0">
-                <div className="h-9 w-28 rounded-full bg-white/[0.06]" />
-                <div className="h-11 w-[11.5rem] rounded-full bg-white/[0.06]" />
-              </div>
+              <div className="h-9 w-[6.75rem] shrink-0 rounded-lg bg-white/[0.06] sm:w-[7.5rem]" />
             </div>
 
             {/* KPIs — misma fila en móvil (4 columnas) */}
