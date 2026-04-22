@@ -437,13 +437,50 @@ function MobileWeekView({
   const stripRef = useRef<HTMLDivElement>(null);
   const todayBtnRef = useRef<HTMLButtonElement>(null);
 
-  // Al montar: scroll automático para que hoy sea el primer visible
+  // Entrada: “spin” rápido desde ~1 mes hacia delante hasta la posición de hoy (pista de desliz)
   useEffect(() => {
-    requestAnimationFrame(() => {
-      if (todayBtnRef.current && stripRef.current) {
-        stripRef.current.scrollLeft = todayBtnRef.current.offsetLeft - 8; // 8px de margen izq
+    let cancelled = false;
+    const strip = stripRef.current;
+    const todayEl = todayBtnRef.current;
+    if (!strip || !todayEl) return;
+
+    const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
+
+    const run = () => {
+      if (cancelled) return;
+      const finalLeft = Math.max(0, todayEl.offsetLeft - 8);
+      if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        strip.scrollLeft = finalLeft;
+        return;
       }
+      const approxChip = 52;
+      const jumpDays = 32;
+      const maxScroll = Math.max(0, strip.scrollWidth - strip.clientWidth);
+      const startLeft = Math.min(finalLeft + jumpDays * approxChip, maxScroll);
+      strip.scrollLeft = startLeft;
+
+      const duration = 520;
+      const from = startLeft;
+      const to = finalLeft;
+      const t0 = performance.now();
+
+      const tick = (now: number) => {
+        if (cancelled) return;
+        const u = Math.min(1, (now - t0) / duration);
+        strip.scrollLeft = from + (to - from) * easeOutCubic(u);
+        if (u < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    };
+
+    const raf = requestAnimationFrame(() => {
+      requestAnimationFrame(run);
     });
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+    };
   }, []);
 
   // Mes del día seleccionado (para la cabecera)
@@ -466,35 +503,49 @@ function MobileWeekView({
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden bg-[var(--bf-bg)]" role="region" aria-label="Vista semanal móvil">
-      {/* Mes + acciones (sin duplicar barra superior de la página) */}
+      {/* Mes centrado en pantalla · notificaciones izq · búsqueda+filtros dcha */}
       <div
-        className="flex-shrink-0 px-3 py-2 bg-[var(--bf-bg)]"
-        style={{ borderBottom: "1px solid var(--bf-border)" }}
+        className={cn(
+          "flex-shrink-0 py-2 bg-[var(--bf-bg)] relative",
+          mobileToolbar ? "px-3 pl-12 pr-12" : "px-3"
+        )}
       >
-        <div className="flex flex-col items-center gap-1.5">
-          <div className="flex items-center justify-center gap-2 w-full min-w-0">
-            <h2
-              className="capitalize font-semibold text-sm tracking-tight text-center min-w-0 truncate"
-              style={{
-                fontFamily: "var(--font-sans)",
-                color: "var(--bf-ink-50)",
-                letterSpacing: "-0.01em",
-              }}
-            >
-              {monthLabel}
-            </h2>
-            {mobileToolbar && (
+        {mobileToolbar && (
+          <>
+            <div className="absolute left-2 top-1/2 -translate-y-1/2 z-10">
               <AgendaQuickActions
+                only="notifications"
+                onSearchClick={mobileToolbar.onSearchClick}
+                onNotificationsClick={mobileToolbar.onNotificationsClick}
+                unreadNotifications={mobileToolbar.unreadNotifications}
+                filters={mobileToolbar.filters}
+                onFiltersChange={mobileToolbar.onFiltersChange}
+              />
+            </div>
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 z-10">
+              <AgendaQuickActions
+                only="searchAndFilters"
                 onSearchClick={mobileToolbar.onSearchClick}
                 onNotificationsClick={mobileToolbar.onNotificationsClick}
                 unreadNotifications={mobileToolbar.unreadNotifications}
                 filters={mobileToolbar.filters}
                 onFiltersChange={mobileToolbar.onFiltersChange}
                 filterMenuSide="right"
-                className="flex-shrink-0"
               />
-            )}
-          </div>
+            </div>
+          </>
+        )}
+        <div className="flex flex-col items-center gap-1 min-w-0">
+          <h2
+            className="capitalize font-medium text-[11px] leading-tight tracking-tight text-center w-full truncate"
+            style={{
+              fontFamily: "var(--font-sans)",
+              color: "var(--bf-ink-50)",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            {monthLabel}
+          </h2>
           {statsLine && (
             <p
               className="text-[10px] text-[var(--bf-ink-400)] font-medium text-center truncate max-w-full px-1"
@@ -506,11 +557,10 @@ function MobileWeekView({
         </div>
       </div>
 
-      {/* ── Tira infinita de días ── */}
+      {/* Tira de días (sin líneas divisorias arriba/abajo) */}
       <div
         ref={stripRef}
-        className="flex-shrink-0 flex gap-1.5 px-2 py-2 overflow-x-auto scrollbar-hide"
-        style={{ background: "var(--bf-bg)", borderBottom: "1px solid var(--bf-border)" }}
+        className="flex-shrink-0 flex gap-1.5 px-2 py-2 overflow-x-auto scrollbar-hide bg-[var(--bf-bg)]"
       >
         {allDays.map((day) => {
           const dayKey = format(day, "yyyy-MM-dd");

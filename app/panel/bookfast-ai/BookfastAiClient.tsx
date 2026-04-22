@@ -9,7 +9,6 @@ import {
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Sparkles,
   Send,
   Loader2,
   AlertTriangle,
@@ -594,11 +593,23 @@ function EmptyState({ onPick }: { onPick: (text: string) => void }) {
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         className={cn(
           "mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl md:mb-5 md:h-14 md:w-14",
-          "bg-gradient-to-br from-violet-500 to-sky-500",
-          "shadow-[0_10px_40px_rgba(123,92,255,0.45)] ring-1 ring-white/20",
+          "ring-1 ring-white/20",
         )}
+        style={{
+          background:
+            "linear-gradient(135deg, var(--bf-cyan-300) 0%, var(--bf-primary) 52%, var(--bf-cyan-600) 100%)",
+          boxShadow: "var(--bf-shadow-glow), 0 10px 36px -12px rgba(31, 107, 158, 0.55)",
+        }}
       >
-        <Sparkles className="h-6 w-6 text-white md:h-7 md:w-7" />
+        {/* Isotipo BookFast — mismos stops que `public/bookfast-mark.svg` / Brand Kit */}
+        <img
+          src="/bookfast-mark.svg"
+          alt=""
+          width={28}
+          height={28}
+          className="h-6 w-6 drop-shadow-[0_1px_3px_rgba(5,7,10,0.35)] md:h-7 md:w-7"
+          decoding="async"
+        />
       </motion.div>
       <h2 className="mb-1 font-satoshi text-base font-semibold text-white/95 md:mb-2 md:text-xl">
         ¿En qué puedo ayudarte?
@@ -626,14 +637,15 @@ function EmptyState({ onPick }: { onPick: (text: string) => void }) {
                 "hover:bg-white/[0.06] hover:ring-white/20 transition",
               )}
             >
-              <div
+              <Icon
                 className={cn(
-                  "flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg md:h-8 md:w-8",
-                  "bg-gradient-to-br from-violet-500/80 to-sky-500/70 ring-1 ring-white/15",
+                  "h-4 w-4 flex-shrink-0 md:h-5 md:w-5",
+                  "text-[var(--bf-primary)] transition-colors",
+                  "group-hover:text-[var(--bf-cyan-200)]",
                 )}
-              >
-                <Icon className="h-3.5 w-3.5 text-white md:h-4 md:w-4" />
-              </div>
+                strokeWidth={2}
+                aria-hidden
+              />
               <div className="min-w-0 flex-1">
                 <div className="text-[11px] font-medium leading-tight text-white/90 md:text-sm">
                   {q.label}
