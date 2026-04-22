@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect, useRef } from "react";
 import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { format, startOfWeek, addDays, parseISO, isSameDay, startOfToday } from "date-fns";
 import { AppointmentCard } from "@/components/agenda/AppointmentCard";
 import { toTenantLocalDate, formatInTenantTz } from "@/lib/timezone";
@@ -41,6 +42,8 @@ interface WeekViewProps {
   onMobileStaffChange?: (staffId: string | null) => void;
   bookingCounts?: Record<string, number>;
   mobileToolbar?: MobileAgendaToolbarProps;
+  /** Móvil: sincronizar día con la agenda (URL / datos) */
+  onDateChange?: (date: string) => void;
 }
 
 export const WeekView = React.memo(function WeekView({
@@ -57,6 +60,7 @@ export const WeekView = React.memo(function WeekView({
   onMobileStaffChange,
   bookingCounts,
   mobileToolbar,
+  onDateChange,
 }: WeekViewProps) {
   const weekStart = startOfWeek(parseISO(selectedDate), { weekStartsOn: 1 }); // Lunes
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
@@ -205,6 +209,7 @@ export const WeekView = React.memo(function WeekView({
         onMobileStaffChange={onMobileStaffChange}
         bookingCounts={bookingCounts}
         mobileToolbar={mobileToolbar}
+        onDateChange={onDateChange}
       />
     );
   }
@@ -345,7 +350,8 @@ export const WeekView = React.memo(function WeekView({
     prevProps.onBookingClick === nextProps.onBookingClick &&
     prevProps.onPopoverShow === nextProps.onPopoverShow &&
     prevProps.onBookingContextMenu === nextProps.onBookingContextMenu &&
-    prevProps.mobileToolbar === nextProps.mobileToolbar
+    prevProps.mobileToolbar === nextProps.mobileToolbar &&
+    prevProps.onDateChange === nextProps.onDateChange
   );
 });
 
@@ -368,6 +374,13 @@ interface MobileWeekViewProps {
   onMobileStaffChange?: (staffId: string | null) => void;
   bookingCounts?: Record<string, number>;
   mobileToolbar?: MobileAgendaToolbarProps;
+  onDateChange?: (date: string) => void;
+}
+
+function scrollDayChipIntoView(strip: HTMLDivElement | null, dayKey: string) {
+  if (!strip) return;
+  const btn = strip.querySelector<HTMLButtonElement>(`button[data-day="${dayKey}"]`);
+  btn?.scrollIntoView({ inline: "center", behavior: "smooth", block: "nearest" });
 }
 
 function MobileWeekView({
@@ -383,6 +396,7 @@ function MobileWeekView({
   onMobileStaffChange,
   bookingCounts,
   mobileToolbar,
+  onDateChange,
 }: MobileWeekViewProps) {
   const today = startOfToday();
 
@@ -398,6 +412,30 @@ function MobileWeekView({
     const todayKey = format(today, "yyyy-MM-dd");
     return selectedDate || todayKey;
   });
+
+  const [showCalendarPicker, setShowCalendarPicker] = useState(false);
+  const calendarPopoverRef = useRef<HTMLDivElement>(null);
+  const stripRef = useRef<HTMLDivElement>(null);
+  const todayBtnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (calendarPopoverRef.current && !calendarPopoverRef.current.contains(e.target as Node)) {
+        setShowCalendarPicker(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedDate) return;
+    setSelectedMobileDay((prev) => {
+      if (prev === selectedDate) return prev;
+      requestAnimationFrame(() => scrollDayChipIntoView(stripRef.current, selectedDate));
+      return selectedDate;
+    });
+  }, [selectedDate]);
 
   // Bookings enriquecidos para el día seleccionado
   const activeStaffId =
@@ -433,9 +471,13 @@ function MobileWeekView({
     return map;
   }, [bookings, timezone]);
 
-  // Ref para el scroll del strip de días
-  const stripRef = useRef<HTMLDivElement>(null);
-  const todayBtnRef = useRef<HTMLButtonElement>(null);
+  const stripDateBounds = useMemo(
+    () => ({
+      min: format(allDays[0], "yyyy-MM-dd"),
+      max: format(allDays[allDays.length - 1], "yyyy-MM-dd"),
+    }),
+    [allDays]
+  );
 
   // Entrada: “spin” rápido desde ~1 mes hacia delante hasta la posición de hoy (pista de desliz)
   useEffect(() => {
@@ -506,34 +548,82 @@ function MobileWeekView({
       {/* Mes centrado en pantalla · notificaciones izq · búsqueda+filtros dcha */}
       <div
         className={cn(
-          "flex-shrink-0 py-2 bg-[var(--bf-bg)] relative",
-          mobileToolbar ? "px-3 pl-12 pr-12" : "px-3"
+          "flex-shrink-0 py-2 bg-[var(--bf-bg)] relative px-3",
+          mobileToolbar ? "pl-[6rem] pr-12" : "pl-14 pr-3"
         )}
       >
+        <div
+          ref={calendarPopoverRef}
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex items-center gap-1"
+        >
+          {mobileToolbar && (
+            <AgendaQuickActions
+              only="notifications"
+              onSearchClick={mobileToolbar.onSearchClick}
+              onNotificationsClick={mobileToolbar.onNotificationsClick}
+              unreadNotifications={mobileToolbar.unreadNotifications}
+              filters={mobileToolbar.filters}
+              onFiltersChange={mobileToolbar.onFiltersChange}
+            />
+          )}
+          <div className="relative">
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.94 }}
+              onClick={() => setShowCalendarPicker((o) => !o)}
+              className={cn(
+                "h-8 w-8 rounded-[var(--r-md)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)]",
+                "hover:bg-[var(--bf-surface)] transition-colors flex items-center justify-center"
+              )}
+              aria-label="Ir a una fecha"
+            >
+              <Calendar className="h-3.5 w-3.5 text-[var(--bf-ink-400)]" aria-hidden />
+            </motion.button>
+            <AnimatePresence>
+              {showCalendarPicker && (
+                <motion.div
+                  initial={{ opacity: 0, y: 4, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 4, scale: 0.97 }}
+                  transition={{ duration: 0.12 }}
+                  className="absolute top-full left-0 mt-2 z-[85] rounded-[var(--r-md)] bg-[var(--bf-surface)] border border-[var(--bf-border)] shadow-[var(--bf-shadow-card)] p-3"
+                >
+                  <label className="sr-only" htmlFor="mobile-agenda-jump-date">
+                    Elegir fecha
+                  </label>
+                  <input
+                    id="mobile-agenda-jump-date"
+                    type="date"
+                    min={stripDateBounds.min}
+                    max={stripDateBounds.max}
+                    value={selectedMobileDay}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (!v) return;
+                      setSelectedMobileDay(v);
+                      onDateChange?.(v);
+                      setShowCalendarPicker(false);
+                      requestAnimationFrame(() => scrollDayChipIntoView(stripRef.current, v));
+                    }}
+                    className="rounded-[var(--r-md)] border border-[var(--bf-border-2)] bg-[var(--bf-bg-elev)] px-3 py-2 text-sm text-[var(--bf-ink-50)] focus:border-[var(--bf-primary)] focus:outline-none focus:ring-2 focus:ring-[rgba(79,161,216,0.2)]"
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
         {mobileToolbar && (
-          <>
-            <div className="absolute left-2 top-1/2 -translate-y-1/2 z-10">
-              <AgendaQuickActions
-                only="notifications"
-                onSearchClick={mobileToolbar.onSearchClick}
-                onNotificationsClick={mobileToolbar.onNotificationsClick}
-                unreadNotifications={mobileToolbar.unreadNotifications}
-                filters={mobileToolbar.filters}
-                onFiltersChange={mobileToolbar.onFiltersChange}
-              />
-            </div>
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 z-10">
-              <AgendaQuickActions
-                only="searchAndFilters"
-                onSearchClick={mobileToolbar.onSearchClick}
-                onNotificationsClick={mobileToolbar.onNotificationsClick}
-                unreadNotifications={mobileToolbar.unreadNotifications}
-                filters={mobileToolbar.filters}
-                onFiltersChange={mobileToolbar.onFiltersChange}
-                filterMenuSide="right"
-              />
-            </div>
-          </>
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 z-10">
+            <AgendaQuickActions
+              only="searchAndFilters"
+              onSearchClick={mobileToolbar.onSearchClick}
+              onNotificationsClick={mobileToolbar.onNotificationsClick}
+              unreadNotifications={mobileToolbar.unreadNotifications}
+              filters={mobileToolbar.filters}
+              onFiltersChange={mobileToolbar.onFiltersChange}
+              filterMenuSide="right"
+            />
+          </div>
         )}
         <div className="flex flex-col items-center gap-1 min-w-0">
           <h2
@@ -574,7 +664,12 @@ function MobileWeekView({
               key={dayKey}
               ref={isToday ? todayBtnRef : undefined}
               type="button"
-              onClick={() => setSelectedMobileDay(dayKey)}
+              data-day={dayKey}
+              onClick={() => {
+                setSelectedMobileDay(dayKey);
+                onDateChange?.(dayKey);
+                scrollDayChipIntoView(stripRef.current, dayKey);
+              }}
               className="flex-shrink-0 flex flex-col items-center gap-0.5 rounded-[var(--r-md)] px-2.5 py-1.5 min-w-[46px] transition-all duration-150 relative"
               style={
                 isSelected

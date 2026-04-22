@@ -324,6 +324,7 @@ export function AgendaContent({
                             onMobileStaffChange={isMobile ? (id) => setMobileSelectedStaffId(id) : undefined}
                             bookingCounts={isMobile ? bookingCountsByStaff : undefined}
                             mobileToolbar={isMobile ? mobileToolbar ?? undefined : undefined}
+                            onDateChange={onDateChange}
                           />
                         ) : (
                           <div className="h-full flex items-center justify-center p-8">
