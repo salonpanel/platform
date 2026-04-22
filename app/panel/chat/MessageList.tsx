@@ -180,7 +180,7 @@ export function MessageList({
 					)}
 
 					{messages.length === 0 && !loadError && (
-						<div className="flex min-h-0 flex-1 items-center justify-center px-4 text-center text-sm italic text-[#8696a0]">
+						<div className="flex min-h-0 flex-1 items-center justify-center px-4 text-center text-sm italic text-[var(--bf-ink-400)]">
 							<p>No hay mensajes en esta conversación</p>
 						</div>
 					)}
@@ -191,7 +191,7 @@ export function MessageList({
 						<div key={dateKey} className="flex flex-col space-y-0.5">
 							{/* Separador de fecha Estilo WhatsApp */}
 							<div className="sticky top-4 z-20 flex justify-center my-4 pointer-events-none">
-								<span className="px-3 py-1.5 rounded-lg bg-[#182229] text-[12px] text-[#8696a0] shadow-md select-none">
+								<span className="px-3 py-1.5 rounded-[var(--r-full)] bg-[var(--bf-surface)] border border-[var(--bf-border)] text-[12px] text-[var(--bf-ink-400)] shadow-md select-none" style={{ fontFamily: "var(--font-mono)" }}>
 									{formatDateHeader(dayMessages[0].created_at)}
 								</span>
 							</div>

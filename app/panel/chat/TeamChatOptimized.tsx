@@ -880,7 +880,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 				{/* Lista de conversaciones */}
 				<div
 					className={cn(
-						"min-h-0 h-full border-white/5 transition-all duration-300 lg:col-span-1 lg:border-r",
+						"min-h-0 h-full border-[var(--bf-border)] transition-all duration-300 lg:col-span-1 lg:border-r",
 						isMobile && mobileView === "chat" ? "hidden" : "flex flex-col"
 					)}
 				>
@@ -927,15 +927,15 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 					}}
 				>
 					{selectedConversation ? (
-						<GlassCard className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-[#0b141a] p-0 shadow-none md:rounded-xl md:border md:border-white/5">
-							{/* Fondo de Chat (uniforme para mensajes + composer) */}
+						<GlassCard className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-[var(--bf-bg)] p-0 shadow-none md:rounded-[var(--r-xl)] md:border md:border-[var(--bf-border)]">
+							{/* Fondo sutil brand kit — rejilla de puntos igual que la cover del brand kit */}
 							<div
-								className="absolute inset-0 opacity-[0.25] pointer-events-none"
+								className="absolute inset-0 pointer-events-none opacity-[0.35]"
 								style={{
-									backgroundImage: `url(\"https://w0.peakpx.com/wallpaper/580/650/wallpaper-whatsapp-dark-mode.jpg\")`,
-									backgroundSize: "cover",
-									backgroundPosition: "center",
-									mixBlendMode: "soft-light",
+									backgroundImage:
+										"linear-gradient(rgba(37,48,65,0.28) 1px, transparent 1px), linear-gradient(90deg, rgba(37,48,65,0.28) 1px, transparent 1px)",
+									backgroundSize: "32px 32px",
+									maskImage: "radial-gradient(ellipse at 50% 55%, #000 30%, transparent 75%)",
 								}}
 							/>
 							
@@ -949,7 +949,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 							{/* flex-col + overflow: el hijo MessageList necesita un flex parent para que flex-1 limite altura y el scroll funcione */}
 							<div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
 								{messagesLoadError && (
-									<div className="shrink-0 border-b border-red-500/20 bg-red-500/10 px-4 py-2 text-sm text-red-300">
+									<div className="shrink-0 border-b border-[rgba(224,96,114,0.25)] bg-[rgba(224,96,114,0.08)] px-4 py-2 text-sm text-[#F2A0AC]">
 										{messagesLoadError}
 									</div>
 								)}
@@ -973,19 +973,19 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 								/>
 							</div>
 							{selectedConversation.status === "pending_direct" ? (
-								<div className="flex shrink-0 flex-col items-center border-t border-white/5 bg-[#202c33] p-10 text-center">
-									<div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
-										<UserX className="h-8 w-8 text-[#8696a0]" />
+								<div className="flex shrink-0 flex-col items-center border-t border-[var(--bf-border)] bg-[var(--bf-bg-elev)] p-10 text-center">
+									<div className="w-16 h-16 bg-[rgba(79,161,216,0.08)] border border-[rgba(79,161,216,0.20)] rounded-full flex items-center justify-center mb-4">
+										<UserX className="h-8 w-8 text-[var(--bf-ink-400)]" />
 									</div>
-									<h3 className="text-[#e9edef] font-medium mb-1">Sin conversación directa</h3>
-									<p className="text-[#8696a0] text-sm max-w-sm">
+									<h3 className="text-[var(--bf-ink-50)] font-medium mb-1" style={{ fontFamily: "var(--font-sans)" }}>Sin conversación directa</h3>
+									<p className="text-[var(--bf-ink-400)] text-sm max-w-sm" style={{ fontFamily: "var(--font-sans)" }}>
 										Aún no hay un hilo directo en el sistema con esta persona. Elige su entrada en
 										la lista de la izquierda; al enviar el primer mensaje se creará o reutilizará el
 										hilo si ya existía.
 									</p>
 								</div>
 							) : (
-								<div className="shrink-0 border-t border-white/5 bg-[#0b141a]/95">
+								<div className="shrink-0 border-t border-[var(--bf-border)] bg-[var(--bf-bg-elev)]">
 									{pendingAttachments.length > 0 && (
 										<div className="bg-transparent px-4 py-3">
 											<div className="flex items-center gap-2 overflow-x-auto">
@@ -994,7 +994,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 													return (
 														<div
 															key={att.id}
-															className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border border-white/10 bg-white/5"
+															className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-[var(--r-md)] border border-[var(--bf-border)] bg-[var(--bf-surface)]"
 														>
 															{isImage ? (
 																<img
@@ -1003,7 +1003,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 																	className="h-full w-full object-cover"
 																/>
 															) : (
-																<div className="h-full w-full flex items-center justify-center text-[10px] text-[var(--text-secondary)] px-1 text-center">
+																<div className="h-full w-full flex items-center justify-center text-[10px] text-[var(--bf-ink-400)] px-1 text-center" style={{ fontFamily: "var(--font-sans)" }}>
 																	{att.file.name}
 																</div>
 															)}
@@ -1016,7 +1016,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 																		return next;
 																	})
 																}
-																className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-black/60 border border-white/10 text-white flex items-center justify-center"
+																className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-[var(--bf-bg)] border border-[var(--bf-border)] text-[var(--bf-ink-50)] flex items-center justify-center"
 																aria-label="Quitar adjunto"
 																title="Quitar"
 															>
@@ -1060,23 +1060,33 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 							)}
 						</GlassCard>
 					) : (
-						<div className="relative hidden min-h-0 flex-1 flex-col items-center justify-center overflow-hidden rounded-none border-0 bg-[#222e35] md:rounded-xl md:border md:border-white/5 lg:flex">
+						<div className="relative hidden min-h-0 flex-1 flex-col items-center justify-center overflow-hidden rounded-none border-0 bg-[var(--bf-bg)] md:rounded-[var(--r-xl)] md:border md:border-[var(--bf-border)] lg:flex">
+							{/* Brand kit grid pattern */}
+							<div
+								className="absolute inset-0 pointer-events-none opacity-[0.35]"
+								style={{
+									backgroundImage:
+										"linear-gradient(rgba(37,48,65,0.28) 1px, transparent 1px), linear-gradient(90deg, rgba(37,48,65,0.28) 1px, transparent 1px)",
+									backgroundSize: "32px 32px",
+									maskImage: "radial-gradient(ellipse at 50% 55%, #000 30%, transparent 75%)",
+								}}
+							/>
 							<div className="flex flex-col items-center max-w-sm text-center p-8 z-10 transition-all duration-700 animate-in fade-in zoom-in slide-in-from-bottom-4">
-								<div className="w-48 h-48 mb-8 bg-gradient-to-br from-[#00a884]/15 to-[#53bdeb]/15 rounded-full flex items-center justify-center relative">
-									<div className="absolute inset-0 rounded-full border border-white/5 animate-ping opacity-20" />
-									<MessageSquare className="h-24 w-24 text-[#00a884]/40" />
+								<div className="w-40 h-40 mb-8 bg-[rgba(79,161,216,0.08)] border border-[rgba(79,161,216,0.20)] rounded-full flex items-center justify-center relative">
+									<div className="absolute inset-0 rounded-full border border-[var(--bf-primary)]/20 animate-ping opacity-20" />
+									<MessageSquare className="h-20 w-20 text-[var(--bf-primary)]/40" />
 								</div>
-								<h2 className="text-2xl font-light text-[#e9edef] mb-3 font-satoshi tracking-tight">BookFast Chat</h2>
-								<p className="text-[#8696a0] text-[14px] leading-relaxed mb-10 px-4">
+								<h2 className="text-2xl font-semibold text-[var(--bf-ink-50)] mb-3 tracking-tight" style={{ fontFamily: "var(--font-sans)", letterSpacing: "-0.02em" }}>BookFast Chat</h2>
+								<p className="text-[var(--bf-ink-400)] text-[14px] leading-relaxed mb-8 px-4" style={{ fontFamily: "var(--font-sans)" }}>
 									Envía y recibe mensajes sin necesidad de tener tu teléfono conectado.<br/>
 									Usa BookFast Chat en hasta 4 dispositivos vinculados a la vez.
 								</p>
-								<div className="flex items-center gap-2 text-[#8696a0] text-[12px] opacity-40">
+								<div className="flex items-center gap-2 text-[var(--bf-ink-400)] text-[11px] opacity-60" style={{ fontFamily: "var(--font-mono)" }}>
 									<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm4.59-12.42L10 14.17l-2.59-2.58L6 13l4 4 8-8z"></path></svg>
 									<span className="font-medium">Conexión segura (HTTPS)</span>
 								</div>
 							</div>
-							<div className="absolute bottom-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00a884]/40 to-transparent" />
+							<div className="absolute bottom-0 w-full h-px bg-gradient-to-r from-transparent via-[var(--bf-border)] to-transparent" />
 						</div>
 					)}
 				</div>

@@ -200,18 +200,12 @@ export const WeekView = React.memo(function WeekView({
       : mobileDayBookingsAll;
 
     return (
-      <div className="w-full h-full flex flex-col overflow-hidden bg-[#0B0C10] relative" role="region" aria-label="Vista semanal móvil">
-        {/* Radial Gradient Overlay */}
-        <div
-          className="absolute top-0 left-0 w-[500px] h-[500px] bg-[rgba(79,161,216,0.10)] blur-[100px] rounded-full pointer-events-none z-0"
-          style={{ transform: 'translate(-20%, -20%)' }}
-        />
-
-        <div className="relative z-10 flex flex-col h-full overflow-hidden">
+      <div className="w-full h-full flex flex-col overflow-hidden bg-[var(--bf-bg)]" role="region" aria-label="Vista semanal móvil">
+        <div className="flex flex-col h-full overflow-hidden">
           {/* Day chips — sticky horizontal scroller */}
           <div
-            className="flex-shrink-0 flex gap-2 px-3 py-2 overflow-x-auto scrollbar-hide"
-            style={{ borderBottom: '1px solid var(--glass-border-subtle)' }}
+            className="flex-shrink-0 flex gap-2 px-3 py-2 overflow-x-auto scrollbar-hide bg-[var(--bf-bg-elev)]"
+            style={{ borderBottom: '1px solid var(--bf-border)' }}
           >
             {weekDays.map((day) => {
               const dayKey = format(day, "yyyy-MM-dd");
@@ -231,8 +225,8 @@ export const WeekView = React.memo(function WeekView({
                     backgroundColor: 'rgba(79,161,216,0.1)',
                     border: '1px solid rgba(79,161,216,0.3)',
                   } : {
-                    backgroundColor: 'rgba(255,255,255,0.04)',
-                    border: '1px solid var(--glass-border-subtle)',
+                    backgroundColor: 'var(--bf-bg-elev)',
+                    border: '1px solid var(--bf-border)',
                   }}
                 >
                   <span
@@ -314,21 +308,12 @@ export const WeekView = React.memo(function WeekView({
   }
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden bg-[#0B0C10] relative p-4" role="region" aria-label="Vista semanal de reservas">
-      {/* Radial Gradient Overlay for Neo-Glass effect */}
-      <div 
-        className="absolute top-0 left-0 w-[500px] h-[500px] bg-[rgba(79,161,216,0.10)] blur-[100px] rounded-full pointer-events-none z-0"
-        style={{ transform: 'translate(-20%, -20%)' }}
-      />
-      
-      <div className="relative z-10 flex flex-col h-full overflow-hidden">
-        {/* Header with days of the week - Unified */}
-        <div className="bg-[var(--glass-bg-default)] border border-[var(--bf-border)] backdrop-blur-md rounded-[var(--r-xl)] p-4 mb-4 shadow-[var(--bf-shadow-card)]">
+    <div className="w-full h-full flex flex-col overflow-hidden bg-[var(--bf-bg)]" role="region" aria-label="Vista semanal de reservas">
+      <div className="flex flex-col h-full overflow-hidden">
+        {/* Header días de la semana — plano, sin card flotante */}
+        <div className="border-b border-[var(--bf-border)] bg-[var(--bf-bg-elev)] px-4 py-3">
           <div className="grid grid-cols-8 gap-2">
-            <div className={cn(
-              "text-sm font-semibold border-r border-[var(--glass-border-subtle)] pr-2",
-              "text-[var(--bf-ink-50)] font-[var(--font-sans)]"
-            )}>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--bf-ink-400)] border-r border-[var(--bf-border)] pr-2 flex items-center justify-center" style={{ fontFamily: "var(--font-mono)" }}>
               Hora
             </div>
             {weekDays.map((day, idx) => {
@@ -343,7 +328,7 @@ export const WeekView = React.memo(function WeekView({
                       ? "bg-[var(--bf-primary)]/20 ring-1 ring-[var(--bf-primary)]/50"
                       : isTodayDate
                       ? "bg-[var(--bf-primary)]/15 ring-1 ring-[var(--bf-primary)]/30"
-                      : "hover:bg-[var(--bf-bg-elev)] border-r border-[var(--glass-border-subtle)]"
+                      : "hover:bg-[var(--bf-bg-elev)] border-r border-[var(--bf-border)]/50"
                   )}
                 >
                   <div className={cn(
@@ -375,14 +360,14 @@ export const WeekView = React.memo(function WeekView({
         {/* Timeline - Unified */}
         <div className="relative flex-1 overflow-x-auto overflow-y-auto scrollbar-hide" role="region" aria-label="Timeline semanal">
           <div className="min-w-[800px]">
-            <div className="grid grid-cols-8 gap-px bg-[var(--glass-border-subtle)]">
+            <div className="grid grid-cols-8 gap-px bg-[var(--bf-border)]">
               {/* Time Column */}
-              <div className="bg-[#0B0C10]" role="columnheader">
+              <div className="bg-[var(--bf-bg)]" role="columnheader">
                 {hours.map((hour) => (
                   <div
                     key={hour}
                     className={cn(
-                      "text-xs font-semibold border-b border-[var(--glass-border-subtle)] min-h-[60px] p-2",
+                      "text-xs font-semibold border-b border-[var(--bf-border)]/50 min-h-[60px] p-2",
                       "text-[var(--bf-ink-400)] font-[var(--font-mono)] bg-[var(--bf-bg-elev)]"
                     )}
                     role="cell"
@@ -398,7 +383,7 @@ export const WeekView = React.memo(function WeekView({
                 return (
                   <div
                     key={dayIdx}
-                    className="relative bg-[#0B0C10]"
+                    className="relative bg-[var(--bf-bg)]"
                     style={{
                       minHeight: `${hours.length * 60}px`,
                     }}
@@ -407,7 +392,7 @@ export const WeekView = React.memo(function WeekView({
                     {hours.map((hour) => (
                       <div
                         key={hour}
-                        className="border-b border-[var(--glass-border-subtle)] min-h-[60px] hover:bg-[var(--bf-bg-elev)] transition-colors cursor-pointer"
+                        className="border-b border-[var(--bf-border)]/50 min-h-[60px] hover:bg-[var(--bf-bg-elev)] transition-colors cursor-pointer"
                         onClick={(e) => handleSlotClick(e, day, hour)}
                       />
                     ))}

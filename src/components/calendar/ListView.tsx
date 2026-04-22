@@ -68,7 +68,7 @@ export const ListView = React.memo(function ListView({
         })}
         className="flex items-center justify-center h-full p-6"
       >
-        <div className="bg-[var(--glass-bg-default)] border border-[var(--bf-border)] backdrop-blur-md rounded-[var(--r-xl)] p-6 text-center shadow-[var(--bf-shadow-card)]">
+        <div className="bg-[var(--bf-bg-elev)] border border-[var(--bf-border)] backdrop-blur-md rounded-[var(--r-xl)] p-6 text-center shadow-[var(--bf-shadow-card)]">
           {isEmptySearch ? (
             <>
               <div className="text-4xl mb-4">🔍</div>
@@ -108,19 +108,13 @@ export const ListView = React.memo(function ListView({
   }
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden bg-[#0B0C10] relative p-4" role="region" aria-label="Lista de reservas">
-      {/* Radial Gradient Overlay for Neo-Glass effect */}
-      <div 
-        className="absolute top-0 left-0 w-[500px] h-[500px] bg-[rgba(79,161,216,0.10)] blur-[100px] rounded-full pointer-events-none z-0"
-        style={{ transform: 'translate(-20%, -20%)' }}
-      />
-      
-      <div className="relative z-10 flex-1 overflow-y-auto scrollbar-hide">
+    <div className="w-full h-full flex flex-col overflow-hidden bg-[var(--bf-bg)]" role="region" aria-label="Lista de reservas">
+      <div className="flex-1 overflow-y-auto scrollbar-hide">
         {/* Vista Desktop: Tabla */}
         <div className="hidden md:block overflow-x-auto">
-          <div className="bg-[var(--glass-bg-default)] border border-[var(--bf-border)] backdrop-blur-md rounded-[var(--r-xl)] overflow-hidden shadow-[var(--bf-shadow-card)]">
+          <div className="bg-[var(--bf-bg-elev)] border-b border-[var(--bf-border)] overflow-hidden">
             <table className="w-full" role="table" aria-label="Tabla de reservas">
-              <thead className="border-b border-[var(--glass-border-subtle)]" role="rowgroup">
+              <thead className="border-b border-[var(--bf-border)]/50" role="rowgroup">
                 <tr role="row">
                   <th className={cn(
                     "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider",
@@ -299,7 +293,7 @@ export const ListView = React.memo(function ListView({
               <div key={dateKey} className="space-y-3">
                 {/* Separador de fecha cuando hay múltiples días */}
                 {showDateSeparator && (
-                  <div className="sticky top-0 z-10 py-2 bg-[#0B0C10] border-b border-[var(--glass-border-subtle)] mb-2">
+                  <div className="sticky top-0 z-10 py-2 bg-[var(--bf-bg)] border-b border-[var(--bf-border)]/50 mb-2">
                     <div className={cn(
                       "text-xs font-semibold uppercase tracking-wider",
                       "text-[var(--bf-ink-400)] font-[var(--font-sans)]"

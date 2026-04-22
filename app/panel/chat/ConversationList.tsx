@@ -22,7 +22,6 @@ type Conversation = {
 
 type ConversationListProps = {
 	conversations: Conversation[];
-	/** Logo de la barbería para el chat grupal (sin solapar iconos) */
 	tenantLogoUrl?: string | null;
 	selectedConversationId: string | null;
 	onSelectConversation: (id: string) => void;
@@ -59,14 +58,14 @@ function GroupChatAvatar({
 }) {
 	if (logoUrl) {
 		return (
-			<div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-2 border-[#00a884]/40 bg-[#0b141a] shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+			<div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-2 border-[var(--bf-success)]/40 bg-[var(--bf-bg-elev)]">
 				<img src={logoUrl} alt={name} className="h-full w-full object-cover" />
 			</div>
 		);
 	}
 	return (
 		<div
-			className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border-2 border-[#00a884]/35 bg-[#53bdeb] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.06)]"
+			className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border-2 border-[var(--bf-success)]/35 bg-[rgba(30,161,159,0.15)] text-[var(--bf-success)]"
 			aria-hidden
 		>
 			<Users className="h-6 w-6" />
@@ -88,17 +87,17 @@ export function ConversationList({
 	const rest = pinned ? conversations.slice(1) : conversations;
 
 	return (
-		<div className="flex h-full flex-col bg-[#111b21]">
+		<div className="flex h-full flex-col bg-[var(--bf-bg-elev)]">
 			<div className="custom-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
 				{conversations.length === 0 ? (
-					<div className="p-8 text-center text-[var(--text-secondary)] text-sm">
+					<div className="p-8 text-center text-[var(--bf-ink-400)] text-sm">
 						{showUnreadOnly ? "No hay chats sin leer" : "No hay chats disponibles"}
 					</div>
 				) : (
 					<>
 						{pinned && (
-							<div className="sticky top-0 z-20 flex-shrink-0 border-b border-[#00a884]/35 bg-gradient-to-b from-[#1a2c22]/95 to-[#111b21] shadow-[0_6px_20px_rgba(0,0,0,0.45)] backdrop-blur-sm">
-								<div className="flex items-center gap-2 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#4DE2C3]">
+							<div className="sticky top-0 z-20 flex-shrink-0 border-b border-[var(--bf-border)] bg-[var(--bf-bg-elev)]">
+								<div className="flex items-center gap-2 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--bf-success)]" style={{ fontFamily: "var(--font-mono)" }}>
 									<Pin className="h-3 w-3" aria-hidden />
 									<span>Chat del equipo</span>
 								</div>
@@ -112,7 +111,7 @@ export function ConversationList({
 								/>
 							</div>
 						)}
-						<div className="divide-y divide-white/5">
+						<div className="divide-y divide-[var(--bf-border)]">
 							{rest.map((conv) => (
 								<ConversationRow
 									key={conv.id}
@@ -152,9 +151,9 @@ function ConversationRow({
 			type="button"
 			onClick={onSelect}
 			className={cn(
-				"group flex w-full items-center gap-3 px-4 py-3 text-left transition-all hover:bg-[#202c33]",
-				selected && "bg-[#2a3942]",
-				isPinned && "border-l-[3px] border-l-[#00a884]"
+				"group flex w-full items-center gap-3 px-4 py-3 text-left transition-all hover:bg-[var(--bf-surface)]",
+				selected && "bg-[var(--bf-surface-2)]",
+				isPinned && "border-l-[3px] border-l-[var(--bf-success)]"
 			)}
 		>
 			<div className="relative flex-shrink-0">
@@ -165,13 +164,12 @@ function ConversationRow({
 				)}
 			</div>
 
-			<div className="flex h-[56px] min-w-0 flex-1 flex-col justify-center border-b border-white/5 py-1">
+			<div className="flex h-[56px] min-w-0 flex-1 flex-col justify-center border-b border-[var(--bf-border)] py-1">
 				<div className="mb-0.5 flex items-baseline justify-between">
 					<h3
 						className={cn(
-							"truncate pr-2 text-base font-medium text-[#e9edef]",
-							conv.unreadCount > 0 && "font-bold",
-							isPinned && "text-[#e9edef]"
+							"truncate pr-2 text-base font-medium text-[var(--bf-ink-50)]",
+							conv.unreadCount > 0 && "font-bold"
 						)}
 					>
 						{conv.name}
@@ -180,8 +178,9 @@ function ConversationRow({
 						<span
 							className={cn(
 								"flex-shrink-0 text-[12px]",
-								conv.unreadCount > 0 ? "font-medium text-[#00a884]" : "text-[#8696a0]"
+								conv.unreadCount > 0 ? "font-medium text-[var(--bf-success)]" : "text-[var(--bf-ink-400)]"
 							)}
+							style={{ fontFamily: "var(--font-mono)" }}
 						>
 							{formatTimestamp(conv.lastMessageAt)}
 						</span>
@@ -194,21 +193,21 @@ function ConversationRow({
 							<CheckCheck
 								className={cn(
 									"h-4 w-4 flex-shrink-0",
-									conv.unreadCount === 0 && conv.lastMessageAt ? "text-[#53bdeb]" : "text-[#8696a0]/60"
+									conv.unreadCount === 0 && conv.lastMessageAt ? "text-[var(--bf-primary)]" : "text-[var(--bf-ink-400)]/60"
 								)}
 							/>
 						)}
 						<p
 							className={cn(
 								"truncate pr-2 text-sm",
-								conv.unreadCount > 0 ? "font-medium text-[#e9edef]" : "text-[#8696a0]"
+								conv.unreadCount > 0 ? "font-medium text-[var(--bf-ink-100)]" : "text-[var(--bf-ink-400)]"
 							)}
 						>
 							{conv.lastMessageBody || "Sin mensajes"}
 						</p>
 					</div>
 					{conv.unreadCount > 0 && (
-						<span className="flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-[#00a884] px-1.5 text-[12px] font-bold text-[#111b21]">
+						<span className="flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-[var(--bf-success)] px-1.5 text-[12px] font-bold text-[var(--bf-ink)]">
 							{conv.unreadCount}
 						</span>
 					)}

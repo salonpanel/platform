@@ -104,17 +104,10 @@ export const MonthView = React.memo(function MonthView({
   };
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden bg-[#0B0C10] relative p-4" role="region" aria-label="Vista mensual de reservas">
-      {/* Radial Gradient Overlay for Neo-Glass effect */}
-      <div 
-        className="absolute top-0 left-0 w-[500px] h-[500px] bg-[rgba(79,161,216,0.10)] blur-[100px] rounded-full pointer-events-none z-0"
-        style={{ transform: 'translate(-20%, -20%)' }}
-      />
-      
-      <div className="relative z-10 flex flex-col h-full space-y-4">
-        {/* Month navigation - Unified */}
-        <div className="bg-[var(--glass-bg-default)] border border-[var(--bf-border)] backdrop-blur-md rounded-[var(--r-xl)] p-4 shadow-[var(--bf-shadow-card)]">
-          <div className="flex items-center justify-between">
+    <div className="w-full h-full flex flex-col overflow-hidden bg-[var(--bf-bg)]" role="region" aria-label="Vista mensual de reservas">
+      <div className="flex flex-col h-full">
+        {/* Month navigation */}
+        <div className="bg-[var(--bf-bg-elev)] border-b border-[var(--bf-border)] px-4 py-3 flex items-center justify-between">
             <motion.button
               whileHover={{ opacity: 0.8 }}
               whileTap={{ opacity: 0.9 }}
@@ -143,11 +136,10 @@ export const MonthView = React.memo(function MonthView({
             >
               <ChevronRight className="h-5 w-5" />
             </motion.button>
-          </div>
         </div>
 
-        {/* Calendar grid - Unified */}
-        <div className="grid grid-cols-7 gap-2 flex-1 overflow-y-auto scrollbar-hide" role="grid" aria-label="Calendario mensual">
+        {/* Calendar grid */}
+        <div className="grid grid-cols-7 gap-px bg-[var(--bf-border)] flex-1 overflow-y-auto scrollbar-hide" role="grid" aria-label="Calendario mensual">
           {/* Days of the week - Unified */}
           {["L", "M", "X", "J", "V", "S", "D"].map((day, index) => (
             <div
@@ -179,14 +171,13 @@ export const MonthView = React.memo(function MonthView({
                   transition: { delay: idx * 0.005, duration: 0.15, ease: "easeOut" },
                 })}
                 className={cn(
-                  "rounded-xl min-h-[80px] sm:min-h-[100px] cursor-pointer transition-all duration-200",
-                  "bg-[var(--glass-bg-default)] backdrop-blur-md",
-                  "border border-[var(--bf-border)]",
+                  "min-h-[80px] sm:min-h-[100px] cursor-pointer transition-all duration-200",
+                  "bg-[var(--bf-bg)]",
                   "shadow-[var(--bf-shadow-card)] hover:shadow-[var(--shadow-premium-hover)]",
                   !isCurrentMonth && "opacity-30",
                   isSelected
-                    ? "ring-2 ring-[var(--bf-primary)]/50 bg-[var(--bf-primary)]/10"
-                    : "hover:border-[var(--glass-border-hover)] hover:bg-[var(--bf-bg-elev)]",
+                    ? "bg-[rgba(79,161,216,0.08)] ring-1 ring-inset ring-[var(--bf-primary)]/40"
+                    : "hover:bg-[var(--bf-bg-elev)]",
                   isTodayDate && !isSelected && "ring-1 ring-[var(--bf-primary)]/30 bg-[var(--bf-primary)]/5"
                 )}
                 role="gridcell"
@@ -253,7 +244,7 @@ export const MonthView = React.memo(function MonthView({
                         "w-full text-xs text-center py-1 px-2 rounded-lg cursor-pointer transition-all duration-200",
                         "text-[var(--bf-primary)] hover:text-white font-medium",
                         "bg-[var(--bf-bg-elev)] hover:bg-[var(--bf-primary)]/10",
-                        "border border-[var(--glass-border-subtle)] hover:border-[var(--bf-primary)]/30",
+                        "border border-[var(--bf-border)]/50 hover:border-[var(--bf-primary)]/30",
                         "backdrop-blur-sm"
                       )}
                       title={`Ver los ${dayBookings.length} citas de este día`}
