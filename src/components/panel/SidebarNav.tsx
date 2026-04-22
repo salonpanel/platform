@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { BookFastMarkIcon } from "@/components/brand/BookFastMarkIcon";
 import { usePermissions } from "@/contexts/PermissionsContext";
+import { useBookfastAiNavBadge } from "@/hooks/useBookfastAiNavBadge";
 
 interface NavItem {
   href: string;
@@ -63,6 +64,8 @@ export function SidebarNav({
   featuredItem,
 }: SidebarNavProps) {
   const pathname = usePathname();
+  const { showUnread: bfAiUnread, showPending: bfAiPending } =
+    useBookfastAiNavBadge();
   const [isHovered, setIsHovered] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -656,6 +659,18 @@ export function SidebarNav({
                 <span
                   className="relative z-10 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[var(--r-md)] bg-[var(--bf-primary)] shadow-[var(--bf-shadow-glow)]"
                 >
+                  {bfAiUnread && (
+                    <span
+                      className="absolute -right-1 -top-1 z-10 h-2.5 w-2.5 rounded-full bg-[var(--bf-danger)] ring-2 ring-[var(--bf-surface)]"
+                      aria-hidden
+                    />
+                  )}
+                  {!bfAiUnread && bfAiPending && (
+                    <span
+                      className="absolute -right-1 -top-1 z-10 h-2.5 w-2.5 animate-pulse rounded-full bg-[var(--bf-ink)] ring-2 ring-[var(--bf-primary)]"
+                      aria-hidden
+                    />
+                  )}
                   <BookFastMarkIcon size={18} className="text-[var(--bf-ink)]" aria-hidden />
                 </span>
 

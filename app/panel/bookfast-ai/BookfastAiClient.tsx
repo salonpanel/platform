@@ -19,6 +19,19 @@ import {
   Euro,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  BOOKFAST_AI_PENDING_EVENT,
+  BOOKFAST_AI_STORAGE_EVENT,
+  bookfastAiEmitNavRefresh,
+  clearBookfastAiPending,
+  clearBookfastAiUnreadReply,
+  clearPersistedBookfastAiChat,
+  completeBookfastAiChatRound,
+  getBookfastAiPending,
+  loadPersistedBookfastAiChat,
+  savePersistedBookfastAiChat,
+  type BookfastAiChatMessage,
+} from "@/lib/bookfast-ai-chat";
 
 /**
  * BookFast AI — UI de chat del asistente.
@@ -30,32 +43,7 @@ import { cn } from "@/lib/utils";
  * se resuelve en el servidor. En una fase posterior se migrará a SSE.
  */
 
-type Role = "user" | "assistant";
-
-interface ChatMessage {
-  id: string;
-  role: Role;
-  content: string;
-  meta?: {
-    toolsCalled?: string[];
-    durationMs?: number;
-  };
-}
-
-interface ChatResponse {
-  sessionId: string;
-  reply: string;
-  meta?: {
-    toolsCalled?: string[];
-    durationMs?: number;
-    stepCount?: number;
-  };
-}
-
-interface ChatError {
-  error: string;
-  message: string;
-}
+type ChatMessage = BookfastAiChatMessage;
 
 const QUICK_PROMPTS: Array<{
   icon: typeof CalendarDays;
@@ -95,106 +83,6 @@ const COMPOSER_MULTILINE_THRESHOLD_PX = 46;
 /** Máximo de altura del recuadro; luego scroll interno (como WhatsApp / iMessage). */
 const COMPOSER_MAX_HEIGHT_PX = 160;
 const COMPOSER_MAX_CHARS = 8000;
-
-/** Persiste el hilo en localStorage para conservarlo entre rutas, pestañas y visitas. */
-const CHAT_LOCAL_STORAGE_KEY = "bookfast-ai.chat.v1";
-
-type PersistedChatStateV1 = {
-  v: 1;
-  messages: ChatMessage[];
-  sessionId: string | null;
-};
-
-function sanitizeMessagesFromStorage(raw: unknown): ChatMessage[] {
-  if (!Array.isArray(raw)) return [];
-  const out: ChatMessage[] = [];
-  for (const item of raw) {
-    if (!item || typeof item !== "object") continue;
-    const m = item as Record<string, unknown>;
-    if (
-      typeof m.id !== "string" ||
-      (m.role !== "user" && m.role !== "assistant") ||
-      typeof m.content !== "string"
-    ) {
-      continue;
-    }
-    const msg: ChatMessage = {
-      id: m.id,
-      role: m.role,
-      content: m.content,
-    };
-    if (m.meta && typeof m.meta === "object") {
-      const meta = m.meta as Record<string, unknown>;
-      const toolsCalled = Array.isArray(meta.toolsCalled)
-        ? meta.toolsCalled.filter((t): t is string => typeof t === "string")
-        : undefined;
-      const durationMs =
-        typeof meta.durationMs === "number" ? meta.durationMs : undefined;
-      if (toolsCalled?.length || durationMs !== undefined) {
-        msg.meta = { toolsCalled, durationMs };
-      }
-    }
-    out.push(msg);
-  }
-  return out;
-}
-
-function loadPersistedChatState(): Pick<
-  PersistedChatStateV1,
-  "messages" | "sessionId"
-> | null {
-  if (typeof window === "undefined") return null;
-  try {
-    let raw = localStorage.getItem(CHAT_LOCAL_STORAGE_KEY);
-    if (!raw) {
-      const legacy = sessionStorage.getItem(CHAT_LOCAL_STORAGE_KEY);
-      if (legacy) {
-        localStorage.setItem(CHAT_LOCAL_STORAGE_KEY, legacy);
-        sessionStorage.removeItem(CHAT_LOCAL_STORAGE_KEY);
-        raw = legacy;
-      }
-    }
-    if (!raw) return null;
-    const data = JSON.parse(raw) as Partial<PersistedChatStateV1>;
-    if (data.v !== 1) return null;
-    const messages = sanitizeMessagesFromStorage(data.messages);
-    const sessionId =
-      data.sessionId === null
-        ? null
-        : typeof data.sessionId === "string"
-          ? data.sessionId
-          : null;
-    return { messages, sessionId };
-  } catch {
-    return null;
-  }
-}
-
-function savePersistedChatState(
-  messages: ChatMessage[],
-  sessionId: string | null,
-) {
-  if (typeof window === "undefined") return;
-  try {
-    const payload: PersistedChatStateV1 = {
-      v: 1,
-      messages,
-      sessionId,
-    };
-    localStorage.setItem(CHAT_LOCAL_STORAGE_KEY, JSON.stringify(payload));
-  } catch {
-    // quota, modo privado, etc.
-  }
-}
-
-function clearPersistedChatState() {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.removeItem(CHAT_LOCAL_STORAGE_KEY);
-  } catch {
-    // ignore
-  }
-}
 
 function dispatchBottomNavRecalc() {
   if (typeof window === "undefined") return;
@@ -238,7 +126,7 @@ export default function BookfastAiClient() {
     null,
   );
   if (hydratedRef.current === null) {
-    const p = loadPersistedChatState();
+    const p = loadPersistedBookfastAiChat();
     hydratedRef.current = {
       messages: p?.messages ?? [],
       sessionId: p?.sessionId ?? null,
@@ -258,21 +146,55 @@ export default function BookfastAiClient() {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [composerMultiline, setComposerMultiline] = useState(false);
+  const [navPending, setNavPending] = useState(
+    () => typeof window !== "undefined" && getBookfastAiPending() !== null,
+  );
 
   const keyboardInset = useVisualKeyboardInset(composerActive);
+  const showThinking = loading || navPending;
+
+  useEffect(() => {
+    clearBookfastAiUnreadReply();
+    bookfastAiEmitNavRefresh();
+  }, []);
+
+  useEffect(() => {
+    const syncFromStorage = () => {
+      const p = loadPersistedBookfastAiChat();
+      if (p) {
+        setMessages(p.messages);
+        setSessionId(p.sessionId);
+      } else {
+        setMessages([]);
+        setSessionId(null);
+      }
+    };
+    window.addEventListener(BOOKFAST_AI_STORAGE_EVENT, syncFromStorage);
+    return () =>
+      window.removeEventListener(BOOKFAST_AI_STORAGE_EVENT, syncFromStorage);
+  }, []);
+
+  useEffect(() => {
+    const onPending = () =>
+      setNavPending(typeof window !== "undefined" && getBookfastAiPending() !== null);
+    onPending();
+    window.addEventListener(BOOKFAST_AI_PENDING_EVENT, onPending);
+    return () =>
+      window.removeEventListener(BOOKFAST_AI_PENDING_EVENT, onPending);
+  }, []);
 
   useEffect(() => {
     if (messages.length === 0 && sessionId === null) {
-      clearPersistedChatState();
+      clearPersistedBookfastAiChat();
       return;
     }
-    savePersistedChatState(messages, sessionId);
+    savePersistedBookfastAiChat(messages, sessionId);
   }, [messages, sessionId]);
 
   // Auto-scroll al final cuando se añade mensaje
   useEffect(() => {
     scrollAnchorRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+  }, [messages, showThinking]);
 
   // Auto-resize del textarea hasta COMPOSER_MAX_HEIGHT_PX; luego scroll interno
   useEffect(() => {
@@ -325,7 +247,7 @@ export default function BookfastAiClient() {
   const sendMessage = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
-      if (!trimmed || loading) return;
+      if (!trimmed || loading || navPending) return;
 
       setError(null);
       setInput("");
@@ -335,55 +257,35 @@ export default function BookfastAiClient() {
         role: "user",
         content: trimmed,
       };
-      setMessages((prev) => [...prev, userMsg]);
+      const messagesWithUser = [...messages, userMsg];
+      setMessages(messagesWithUser);
       setLoading(true);
 
-      try {
-        const res = await fetch("/api/asistente/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message: trimmed,
-            sessionId: sessionId ?? undefined,
-          }),
-        });
+      const result = await completeBookfastAiChatRound({
+        trimmed,
+        sessionId,
+        userMsg,
+        messagesWithUser,
+        sessionIdForSave: sessionId,
+      });
 
-        const json = (await res.json()) as ChatResponse | ChatError;
+      setLoading(false);
 
-        if (!res.ok) {
-          const errMsg =
-            (json as ChatError).message ||
-            "No se ha podido enviar el mensaje. Prueba de nuevo.";
-          setError(errMsg);
-          // Si hubo error, quitamos el mensaje del usuario para que pueda reintentarlo
-          setMessages((prev) => prev.filter((m) => m.id !== userMsg.id));
-          setInput(trimmed);
-          return;
-        }
+      const snap = loadPersistedBookfastAiChat();
+      if (snap) {
+        setMessages(snap.messages);
+        setSessionId(snap.sessionId);
+      } else {
+        setMessages([]);
+        setSessionId(null);
+      }
 
-        const ok = json as ChatResponse;
-        if (!sessionId && ok.sessionId) setSessionId(ok.sessionId);
-
-        const asst: ChatMessage = {
-          id: genId(),
-          role: "assistant",
-          content: ok.reply,
-          meta: {
-            toolsCalled: ok.meta?.toolsCalled ?? [],
-            durationMs: ok.meta?.durationMs,
-          },
-        };
-        setMessages((prev) => [...prev, asst]);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : "Error de red";
-        setError(msg);
-        setMessages((prev) => prev.filter((m) => m.id !== userMsg.id));
-        setInput(trimmed);
-      } finally {
-        setLoading(false);
+      if (!result.ok) {
+        setError(result.error);
+        setInput(result.restoreMessageText);
       }
     },
-    [loading, sessionId],
+    [loading, navPending, sessionId, messages],
   );
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -399,11 +301,15 @@ export default function BookfastAiClient() {
   };
 
   const resetConversation = () => {
-    clearPersistedChatState();
+    clearPersistedBookfastAiChat();
+    clearBookfastAiPending();
+    clearBookfastAiUnreadReply();
+    bookfastAiEmitNavRefresh();
     setMessages([]);
     setSessionId(null);
     setError(null);
     setInput("");
+    setNavPending(false);
   };
 
   const isEmpty = messages.length === 0;
@@ -451,7 +357,7 @@ export default function BookfastAiClient() {
                 <MessageBubble key={m.id} message={m} />
               ))}
             </AnimatePresence>
-            {loading && <ThinkingBubble />}
+            {showThinking && <ThinkingBubble />}
             <div ref={scrollAnchorRef} />
           </div>
         )}
@@ -507,7 +413,7 @@ export default function BookfastAiClient() {
           placeholder="Pregúntale a BookFast AI lo que necesites…"
           rows={1}
           maxLength={COMPOSER_MAX_CHARS}
-          disabled={loading}
+          disabled={showThinking}
           className={cn(
             "min-h-[40px] w-full min-w-0 flex-1 resize-none bg-transparent",
             "px-0 py-2 text-sm leading-[1.35] text-white/95",
@@ -517,7 +423,7 @@ export default function BookfastAiClient() {
         />
         <button
           type="submit"
-          disabled={!input.trim() || loading}
+          disabled={!input.trim() || showThinking}
           onMouseDown={(e) => e.preventDefault()}
           className={cn(
             "inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl",
@@ -528,7 +434,7 @@ export default function BookfastAiClient() {
           )}
           aria-label="Enviar"
         >
-          {loading ? (
+          {showThinking ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <Send className="h-4 w-4" />

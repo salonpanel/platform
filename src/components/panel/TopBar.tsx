@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Settings, LogOut, Building2 } from "lucide-react";
 import { BookFastMarkIcon } from "@/components/brand/BookFastMarkIcon";
 import { Avatar } from "@/components/ui/Avatar";
+import { useBookfastAiNavBadge } from "@/hooks/useBookfastAiNavBadge";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 
 interface TopBarProps {
@@ -29,6 +30,8 @@ export function TopBar({
   onMenuClick,
   sidebarCollapsed = false,
 }: TopBarProps) {
+  const { showUnread: bfAiUnread, showPending: bfAiPending } =
+    useBookfastAiNavBadge();
   const supabase = getSupabaseBrowser();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
@@ -226,11 +229,16 @@ export function TopBar({
           className="min-w-0 max-w-[min(36rem,calc(100vw-9.5rem))] text-center justify-self-center"
         >
           <h1
-            className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight truncate"
+            className={cn(
+              "truncate leading-snug",
+              /* Móvil: discreto y ligero */
+              "text-sm font-medium tracking-[-0.015em] text-[var(--bf-ink-100)]",
+              /* Tablet/desktop: jerarquía clásica del panel */
+              "md:text-2xl md:font-semibold md:tracking-[-0.025em] md:leading-tight md:text-[var(--bf-ink-50)]",
+              "lg:text-3xl xl:text-4xl"
+            )}
             style={{
               fontFamily: "var(--font-sans)",
-              color: "var(--bf-ink-50)",
-              letterSpacing: "-0.025em",
             }}
           >
             {title}
@@ -246,7 +254,13 @@ export function TopBar({
         >
           <Link
             href="/panel/bookfast-ai"
-            aria-label="Abrir BookFast AI"
+            aria-label={
+              bfAiUnread
+                ? "BookFast AI: respuesta lista"
+                : bfAiPending
+                  ? "BookFast AI: el asistente está respondiendo"
+                  : "Abrir BookFast AI"
+            }
             className={cn(
               "md:hidden relative flex items-center justify-center",
               "h-10 w-10 rounded-full flex-shrink-0",
@@ -255,6 +269,18 @@ export function TopBar({
               "active:scale-95 transition-transform duration-200",
             )}
           >
+            {bfAiUnread && (
+              <span
+                className="absolute -right-0.5 -top-0.5 z-10 h-2.5 w-2.5 rounded-full bg-[var(--bf-danger)] ring-2 ring-[var(--bf-bg)]"
+                aria-hidden
+              />
+            )}
+            {!bfAiUnread && bfAiPending && (
+              <span
+                className="absolute -right-0.5 -top-0.5 z-10 h-2.5 w-2.5 animate-pulse rounded-full bg-[var(--bf-ink)] ring-2 ring-[var(--bf-primary)]"
+                aria-hidden
+              />
+            )}
             <BookFastMarkIcon size={22} className="text-[var(--bf-ink)]" aria-hidden />
           </Link>
         </motion.div>
