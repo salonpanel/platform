@@ -297,7 +297,7 @@ export default function BookfastAiClient() {
       {/* Área de mensajes: sin scroll en vacío (móvil); solo el hilo con mensajes hace scroll */}
       <div
         className={cn(
-          "min-h-0 flex-1 rounded-2xl bg-white/[0.02] ring-1 ring-white/10",
+          "min-h-0 flex-1",
           isEmpty
             ? "flex min-h-0 flex-col overflow-hidden"
             : "overflow-y-auto",
@@ -351,7 +351,7 @@ export default function BookfastAiClient() {
             : undefined
         }
         className={cn(
-          "shrink-0 flex items-end gap-2 rounded-2xl p-2",
+          "shrink-0 flex items-center gap-2 rounded-2xl p-2",
           "bg-white/[0.04] ring-1 ring-white/10",
           "focus-within:ring-white/20 focus-within:bg-white/[0.06] transition",
           composerPadBottom === undefined && "pb-[max(0.625rem,env(safe-area-inset-bottom))] md:pb-3",
@@ -368,7 +368,7 @@ export default function BookfastAiClient() {
           rows={1}
           disabled={loading}
           className={cn(
-            "flex-1 resize-none bg-transparent px-3 py-2 text-sm text-white/95",
+            "min-h-10 flex-1 resize-none bg-transparent px-3 py-2.5 text-sm leading-snug text-white/95",
             "placeholder:text-white/35 focus:outline-none",
             "disabled:opacity-50",
           )}
@@ -378,7 +378,7 @@ export default function BookfastAiClient() {
           disabled={!input.trim() || loading}
           onMouseDown={(e) => e.preventDefault()}
           className={cn(
-            "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl",
+            "inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl",
             "bg-gradient-to-br from-violet-500 to-sky-500 text-white",
             "shadow-[0_6px_20px_rgba(123,92,255,0.3)] ring-1 ring-white/15",
             "hover:brightness-110 transition",
