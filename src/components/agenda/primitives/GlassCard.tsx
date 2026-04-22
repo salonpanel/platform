@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { theme } from "@/theme/ui";
 
 type GlassVariant = "default" | "elevated" | "inset" | "modal" | "popover";
 
@@ -17,54 +16,28 @@ interface GlassCardProps {
   onClick?: () => void;
 }
 
-const glassVariants = {
-  default: {
-    background: theme.glassmorphism.background,
-    backdropFilter: `blur(${theme.glassmorphism.backdropBlur})`,
-    border: theme.glassmorphism.border,
-  },
-  elevated: {
-    background: theme.glassmorphism.background,
-    backdropFilter: `blur(${theme.glassmorphism.backdropBlur})`,
-    border: theme.glassmorphism.border,
-  },
-  inset: {
-    background: theme.colors.bgSecondary,
-    border: `1px solid ${theme.colors.borderDefault}`,
-  },
-  modal: {
-    background: theme.colors.bgPrimary,
-    backdropFilter: `blur(${theme.glassmorphism.backdropBlur})`,
-    border: theme.glassmorphism.border,
-  },
-  popover: {
-    background: theme.glassmorphism.background,
-    backdropFilter: `blur(${theme.glassmorphism.backdropBlur})`,
-    border: theme.glassmorphism.border,
-  },
-};
-
-const shadowVariants = {
-  none: "",
-  sm: theme.shadows.sm,
-  md: theme.shadows.md,
-  lg: theme.shadows.lg,
-  glow: theme.shadows.neon,
+/* Brand-kit aligned surface system */
+const variantStyle: Record<GlassVariant, React.CSSProperties> = {
+  default:  { background: "var(--bf-surface)",   border: "1px solid var(--bf-border)",   boxShadow: "var(--bf-shadow-card)" },
+  elevated: { background: "var(--bf-surface)",   border: "1px solid var(--bf-border)",   boxShadow: "var(--bf-shadow-card)" },
+  inset:    { background: "var(--bf-bg-elev)",   border: "1px solid var(--bf-border)" },
+  modal:    { background: "var(--bf-surface)",   border: "1px solid var(--bf-border)",   boxShadow: "var(--bf-shadow-card)" },
+  popover:  { background: "var(--bf-surface-2)", border: "1px solid var(--bf-border-2)", boxShadow: "var(--bf-shadow-card)" },
 };
 
 const paddingVariants = {
   none: "",
-  sm: "p-3", // 12px
-  md: "p-4", // 16px
-  lg: "p-6", // 24px
-  xl: "p-8", // 32px
+  sm:   "p-3",
+  md:   "p-4",
+  lg:   "p-6",
+  xl:   "p-8",
 };
 
 const borderRadiusVariants = {
-  sm: "rounded-lg", // 8px
-  md: "rounded-xl", // 12px
-  lg: "rounded-2xl", // 16px
-  xl: "rounded-3xl", // 20px
+  sm:   "rounded-[var(--r-sm)]",
+  md:   "rounded-[var(--r-md)]",
+  lg:   "rounded-[var(--r-lg)]",
+  xl:   "rounded-[var(--r-xl)]",
   full: "rounded-full",
 };
 
@@ -79,28 +52,21 @@ export function GlassCard({
   onClick,
 }: GlassCardProps) {
   const baseClasses = cn(
-    "backdrop-blur-md transition-all duration-200",
+    "transition-all duration-200",
     paddingVariants[padding],
     borderRadiusVariants[borderRadius],
     className
   );
 
-  const style = {
-    background: glassVariants[variant].background,
-    border: glassVariants[variant].border,
-    boxShadow: shadow !== "none" ? shadowVariants[shadow] : undefined,
-    ...(glassVariants[variant] as any).backdropFilter && {
-      backdropFilter: (glassVariants[variant] as any).backdropFilter
-    },
-  };
+  const style = variantStyle[variant];
 
   if (interactive) {
     return (
       <motion.div
         className={cn(baseClasses, "cursor-pointer")}
         style={style}
-        whileHover={{ scale: 1.02, y: -1 }}
-        whileTap={{ scale: 0.98 }}
+        whileHover={{ scale: 1.01, y: -1 }}
+        whileTap={{ scale: 0.99 }}
         onClick={onClick}
       >
         {children}

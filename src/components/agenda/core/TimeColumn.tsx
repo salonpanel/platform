@@ -26,12 +26,12 @@ export function TimeColumn({ startHour, endHour, timezone, slotHeight = SLOT_HEI
 
   return (
     <div
-      className="bg-[#0B0C10]/80 backdrop-blur-xl border-r border-white/5 flex flex-col h-full z-30"
+      className="bg-[var(--bf-bg-elev)] border-r border-[var(--bf-border)] flex flex-col h-full z-30"
       style={{ width: `${TIME_COLUMN_WIDTH_PX}px` }}
     >
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-[#0B0C10]/90 backdrop-blur-md border-b border-white/5 px-0 py-4 flex items-center justify-center flex-shrink-0" style={{ height: `${TIMELINE_HEADER_HEIGHT_PX}px` }}>
-        <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest font-mono">
+      <div className="sticky top-0 z-40 bg-[var(--bf-bg-elev)] border-b border-[var(--bf-border)] px-0 py-4 flex items-center justify-center flex-shrink-0" style={{ height: `${TIMELINE_HEADER_HEIGHT_PX}px` }}>
+        <div className="text-[10px] font-bold text-[var(--bf-ink-400)] uppercase tracking-widest font-mono">
           Hora
         </div>
       </div>
@@ -47,7 +47,7 @@ export function TimeColumn({ startHour, endHour, timezone, slotHeight = SLOT_HEI
               key={time}
               className={cn(
                 "absolute left-0 right-0 flex items-start justify-center",
-                isHour ? "border-t border-white/[0.03]" : "border-t border-white/[0.015]"
+                isHour ? "border-t border-[var(--bf-border)]" : "border-t border-[var(--bf-border)]/40"
               )}
               style={{
                 top: `${index * slotHeight}px`,
@@ -55,7 +55,7 @@ export function TimeColumn({ startHour, endHour, timezone, slotHeight = SLOT_HEI
               }}
             >
               {isHour && (
-                <span className="text-[11px] font-mono font-medium text-gray-500 -mt-2.5 bg-[#0B0C10] px-1">
+                <span className="text-[11px] font-mono font-medium text-[var(--bf-ink-400)] -mt-2.5 bg-[var(--bf-bg-elev)] px-1">
                   {time}
                 </span>
               )}

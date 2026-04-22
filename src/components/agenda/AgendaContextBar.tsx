@@ -34,37 +34,37 @@ export function AgendaContextBar({
   }
 
   return (
-    <div className="flex-shrink-0 px-4 py-3 border-b border-white/5">
-      <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide">
+    <div className="flex-shrink-0 px-4 py-3 border-b border-[var(--bf-border)]">
+      <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
         {/* Bookings count */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5">
-          <Calendar className="h-3.5 w-3.5 text-[#4FA1D8]" />
-          <span className="text-sm font-semibold text-white">{quickStats.totalBookings}</span>
-          <span className="text-xs text-white/50">{quickStats.rangeLabel || "citas"}</span>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-[var(--r-md)] bg-[var(--bf-bg-elev)] border border-[var(--bf-border)]">
+          <Calendar className="h-3.5 w-3.5 text-[var(--bf-primary)]" />
+          <span className="text-sm font-semibold text-[var(--bf-ink-50)]">{quickStats.totalBookings}</span>
+          <span className="text-xs text-[var(--bf-ink-400)]" style={{ fontFamily: "var(--font-mono)" }}>{quickStats.rangeLabel || "citas"}</span>
         </div>
 
         {/* Total time */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5">
-          <Clock className="h-3.5 w-3.5 text-[#4FA1D8]" />
-          <span className="text-sm font-semibold text-white">{quickStats.totalHours}h</span>
-          <span className="text-xs text-white/50">tiempo</span>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-[var(--r-md)] bg-[var(--bf-bg-elev)] border border-[var(--bf-border)]">
+          <Clock className="h-3.5 w-3.5 text-[var(--bf-primary)]" />
+          <span className="text-sm font-semibold text-[var(--bf-ink-50)]">{quickStats.totalHours}h</span>
+          <span className="text-xs text-[var(--bf-ink-400)]" style={{ fontFamily: "var(--font-mono)" }}>tiempo</span>
         </div>
 
         {/* Revenue */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5">
-          <DollarSign className="h-3.5 w-3.5 text-[#4FA1D8]" />
-          <span className="text-sm font-semibold text-white">{(quickStats.totalAmount / 100).toFixed(0)}€</span>
-          <span className="text-xs text-white/50">ingresos</span>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-[var(--r-md)] bg-[var(--bf-bg-elev)] border border-[var(--bf-border)]">
+          <DollarSign className="h-3.5 w-3.5 text-[var(--bf-success)]" />
+          <span className="text-sm font-semibold text-[var(--bf-ink-50)]">{(quickStats.totalAmount / 100).toFixed(0)}€</span>
+          <span className="text-xs text-[var(--bf-ink-400)]" style={{ fontFamily: "var(--font-mono)" }}>ingresos</span>
         </div>
 
         {/* Average per booking */}
         {quickStats.totalBookings > 0 && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5">
-            <TrendingUp className="h-3.5 w-3.5 text-[#4FA1D8]" />
-            <span className="text-sm font-semibold text-white">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-[var(--r-md)] bg-[var(--bf-bg-elev)] border border-[var(--bf-border)]">
+            <TrendingUp className="h-3.5 w-3.5 text-[var(--bf-primary)]" />
+            <span className="text-sm font-semibold text-[var(--bf-ink-50)]">
               {Math.round((quickStats.totalAmount / quickStats.totalBookings) / 100)}€
             </span>
-            <span className="text-xs text-white/50">promedio</span>
+            <span className="text-xs text-[var(--bf-ink-400)]" style={{ fontFamily: "var(--font-mono)" }}>promedio</span>
           </div>
         )}
       </div>

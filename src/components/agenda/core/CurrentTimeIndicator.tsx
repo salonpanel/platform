@@ -83,8 +83,8 @@ export function CurrentTimeIndicator({ currentMinutes, startHour = 8, endHour = 
 
       {/* Time label */}
       <div
-        className="absolute left-5 -top-3 px-1.5 py-0.5 rounded text-[9px] font-bold font-mono tracking-tight text-black select-none"
-        style={{ background: "#4FA1D8" }}
+        className="absolute left-5 -top-3 px-1.5 py-0.5 rounded-[var(--r-sm)] text-[9px] font-bold font-mono tracking-tight text-[var(--bf-ink)] select-none"
+        style={{ background: "var(--bf-primary)" }}
       >
         {displayTime}
       </div>

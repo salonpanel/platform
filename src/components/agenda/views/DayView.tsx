@@ -242,12 +242,7 @@ export function DayView({
   }
 
   return (
-    <div className="w-full h-full min-h-[520px] flex flex-col overflow-hidden bg-[#0B0C10] relative">
-      {/* Radial Gradient Overlay for Neo-Glass effect */}
-      <div
-        className="absolute top-0 left-0 w-[500px] h-[500px] bg-[rgba(79,161,216,0.10)] blur-[100px] rounded-full pointer-events-none z-0"
-        style={{ transform: 'translate(-20%, -20%)' }}
-      />
+    <div className="w-full h-full min-h-[520px] flex flex-col overflow-hidden bg-[var(--bf-bg)] relative">
 
       <div
         ref={timelineRef}

@@ -67,7 +67,7 @@ export function Timeline({
                 ease: "easeInOut"
               }}
             />
-            <div className="absolute left-4 -translate-y-1/2 bg-gradient-to-r from-[#4FA1D8] to-[#4FA1D8] text-white text-[10px] font-medium px-2 py-0.5 rounded-md shadow-lg">
+            <div className="absolute left-4 -translate-y-1/2 bg-[var(--bf-primary)] text-[var(--bf-ink)] text-[10px] font-medium px-2 py-0.5 rounded-[var(--r-sm)] shadow-lg" style={{ fontFamily: "var(--font-mono)" }}>
               {format(new Date(), "HH:mm")}
             </div>
           </div>
@@ -89,7 +89,7 @@ export function Timeline({
             return (
               <div
                 key={`hour-line-${hour}`}
-                className="absolute left-14 right-0 h-px bg-white/5"
+                className="absolute left-14 right-0 h-px bg-[var(--bf-border)]"
                 style={{ top }}
               />
             );
@@ -102,7 +102,7 @@ export function Timeline({
               return (
                 <div
                   key={`half-hour-${hour}`}
-                  className="absolute left-16 right-0 h-px bg-white/[0.02]"
+                  className="absolute left-16 right-0 h-px bg-[var(--bf-border)]/40"
                   style={{ top }}
                 />
               );
@@ -135,7 +135,7 @@ export function Timeline({
       </div>
 
       {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-[#0E0F11] to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-[var(--bf-bg)] to-transparent pointer-events-none" />
     </div>
   );
 }

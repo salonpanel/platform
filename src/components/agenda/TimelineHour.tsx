@@ -39,7 +39,7 @@ export function TimelineHour({
   return (
     <div
       className={cn(
-        "flex border-b border-[var(--glass-border)]/30",
+        "flex border-b border-[var(--bf-border)]",
         hourHeight[density],
         className
       )}
@@ -51,8 +51,8 @@ export function TimelineHour({
           textStyles[density]
         )}
         style={{
-          fontFamily: "var(--font-body)",
-          color: "var(--text-tertiary)",
+          fontFamily: "var(--font-mono)",
+          color: "var(--bf-ink-400)",
         }}
       >
         {formatHour(hour)}

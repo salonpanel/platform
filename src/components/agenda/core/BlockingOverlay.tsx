@@ -20,9 +20,9 @@ interface BlockingOverlayProps {
 }
 
 const blockingColors = {
-  block: "bg-white/[0.03] border-l-[3px] border-white/20 text-gray-400 backdrop-blur-[2px]",
-  absence: "bg-red-500/[0.05] border-l-[3px] border-red-500/40 text-[var(--bf-danger)] backdrop-blur-[2px]",
-  vacation: "bg-blue-500/[0.05] border-l-[3px] border-blue-500/40 text-[var(--bf-primary)] backdrop-blur-[2px]",
+  block:    "bg-[var(--bf-border)]/30 border-l-[3px] border-[var(--bf-border-2)] text-[var(--bf-ink-400)]",
+  absence:  "bg-[rgba(224,96,114,0.06)] border-l-[3px] border-[var(--bf-danger)]/40 text-[var(--bf-danger)]",
+  vacation: "bg-[rgba(79,161,216,0.06)] border-l-[3px] border-[var(--bf-primary)]/40 text-[var(--bf-primary)]",
 };
 
 export function BlockingOverlay({ blockings, timezone, dayStartHour = 8 }: BlockingOverlayProps) {
@@ -71,7 +71,7 @@ export function BlockingOverlay({ blockings, timezone, dayStartHour = 8 }: Block
             key={blocking.id}
             data-blocking
             className={cn(
-              "absolute left-3 right-3 rounded-xl border border-white/5 p-2 z-10 shadow-sm transition-all duration-150 hover:shadow-md group opacity-50 hover:opacity-70",
+              "absolute left-3 right-3 rounded-[var(--r-md)] border border-[var(--bf-border)] p-2 z-10 transition-all duration-150 group opacity-60 hover:opacity-85",
               blockingColors[blocking.type] || blockingColors.block
             )}
             style={{

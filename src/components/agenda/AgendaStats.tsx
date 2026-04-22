@@ -37,9 +37,9 @@ export function AgendaStats({
   const paddingClass = density === "ultra-compact" ? "p-2" : density === "compact" ? "p-3" : "p-4";
 
   const getUtilizationColor = (utilization: number) => {
-    if (utilization < 40) return "text-[var(--accent-blue)] bg-[var(--accent-blue)]/10 border-[var(--accent-blue)]/20";
-    if (utilization < 80) return "text-[var(--accent-aqua)] bg-[var(--accent-aqua)]/10 border-[var(--accent-aqua)]/20";
-    return "text-[var(--accent-purple)] bg-[var(--accent-purple)]/10 border-[var(--accent-purple)]/20";
+    if (utilization < 40) return "text-[var(--bf-primary)] bg-[rgba(79,161,216,0.08)] border-[rgba(79,161,216,0.25)]";
+    if (utilization < 80) return "text-[var(--bf-success)] bg-[rgba(30,161,159,0.08)] border-[rgba(30,161,159,0.25)]";
+    return "text-[var(--bf-warn)] bg-[rgba(232,176,74,0.08)] border-[rgba(232,176,74,0.25)]";
   };
 
   return (
@@ -57,10 +57,10 @@ export function AgendaStats({
           <GlassCard variant="elevated" padding={density === "ultra-compact" ? "sm" : "md"}>
             <div className="flex items-center gap-3">
               <div className={cn(
-                "p-2 rounded-[var(--radius-lg)] bg-[var(--accent-blue-glass)] border border-[var(--accent-blue-border)]",
+                "rounded-[var(--r-md)] bg-[rgba(79,161,216,0.10)] border border-[rgba(79,161,216,0.25)]",
                 density === "ultra-compact" ? "p-1.5" : "p-2"
               )}>
-                <Calendar className={cn(iconSize, "text-[var(--accent-blue)]")} />
+                <Calendar className={cn(iconSize, "text-[var(--bf-primary)]")} />
               </div>
               <div>
                 <div className={cn(
@@ -84,10 +84,10 @@ export function AgendaStats({
           <GlassCard variant="elevated" padding={density === "ultra-compact" ? "sm" : "md"}>
             <div className="flex items-center gap-3">
               <div className={cn(
-                "p-2 rounded-[var(--radius-lg)] bg-[var(--accent-aqua-glass)] border border-[var(--accent-aqua-border)]",
+                "rounded-[var(--r-md)] bg-[rgba(30,161,159,0.10)] border border-[rgba(30,161,159,0.25)]",
                 density === "ultra-compact" ? "p-1.5" : "p-2"
               )}>
-                <Clock className={cn(iconSize, "text-[var(--accent-aqua)]")} />
+                <Clock className={cn(iconSize, "text-[var(--bf-success)]")} />
               </div>
               <div>
                 <div className={cn(
@@ -111,10 +111,10 @@ export function AgendaStats({
           <GlassCard variant="elevated" padding={density === "ultra-compact" ? "sm" : "md"}>
             <div className="flex items-center gap-3">
               <div className={cn(
-                "p-2 rounded-[var(--radius-lg)] bg-[var(--accent-purple-glass)] border border-[var(--accent-purple-border)]",
+                "rounded-[var(--r-md)] bg-[rgba(232,176,74,0.10)] border border-[rgba(232,176,74,0.25)]",
                 density === "ultra-compact" ? "p-1.5" : "p-2"
               )}>
-                <DollarSign className={cn(iconSize, "text-[var(--accent-purple)]")} />
+                <DollarSign className={cn(iconSize, "text-[var(--bf-warn)]")} />
               </div>
               <div>
                 <div className={cn(
@@ -138,10 +138,10 @@ export function AgendaStats({
           <GlassCard variant="elevated" padding={density === "ultra-compact" ? "sm" : "md"}>
             <div className="flex items-center gap-3">
               <div className={cn(
-                "p-2 rounded-[var(--radius-lg)] bg-gradient-to-br from-[var(--accent-blue)]/10 to-[var(--accent-aqua)]/10 border border-[var(--accent-aqua)]/20",
+                "rounded-[var(--r-md)] bg-[rgba(79,161,216,0.10)] border border-[rgba(79,161,216,0.25)]",
                 density === "ultra-compact" ? "p-1.5" : "p-2"
               )}>
-                <TrendingUp className={cn(iconSize, "text-[var(--accent-aqua)]")} />
+                <TrendingUp className={cn(iconSize, "text-[var(--bf-primary)]")} />
               </div>
               <div>
                 <div className={cn(
@@ -183,8 +183,8 @@ export function AgendaStats({
                   transition={{ delay: index * 0.05 }}
                   className="relative"
                 >
-                  <div className={cn(
-                    "rounded-[var(--radius-lg)] border backdrop-blur-sm transition-all duration-200 p-3",
+                  <div                   className={cn(
+                    "rounded-[var(--r-lg)] border transition-all duration-200 p-3",
                     getUtilizationColor(staff.utilization)
                   )}>
                     <div className="flex items-center justify-between mb-2">
@@ -197,7 +197,7 @@ export function AgendaStats({
                     </div>
 
                     {/* Barra de progreso */}
-                    <div className="w-full bg-[var(--bg-primary)]/30 rounded-full h-1.5 overflow-hidden">
+                    <div className="w-full bg-[var(--bf-border)] rounded-full h-1.5 overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${staff.utilization}%` }}

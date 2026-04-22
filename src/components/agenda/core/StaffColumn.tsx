@@ -246,10 +246,10 @@ export const StaffColumn = React.memo(function StaffColumn({
       initial={{ opacity: 0, x: 12 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.05, duration: 0.2, ease: "easeOut" }}
-      className="flex-1 min-w-[300px] border-r border-white/5 last:border-r-0 relative bg-transparent"
+      className="flex-1 min-w-[300px] border-r border-[var(--bf-border)] last:border-r-0 relative bg-transparent"
     >
       {/* Header */}
-      <div className="sticky top-0 z-20 px-3 py-3 flex-shrink-0 bg-[#0B0C10]/95 backdrop-blur border-b border-white/5" style={{ height: "72px" }}>
+      <div className="sticky top-0 z-20 px-3 py-3 flex-shrink-0 bg-[var(--bf-bg-elev)] border-b border-[var(--bf-border)]" style={{ height: "72px" }}>
         <div
           className="h-full rounded-xl p-2 flex items-center gap-3 shadow-inner border"
           style={{
@@ -258,7 +258,7 @@ export const StaffColumn = React.memo(function StaffColumn({
           }}
         >
           <div
-            className="h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold shadow-lg ring-2 ring-[#0B0C10]"
+            className="h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold shadow-lg ring-2 ring-[var(--bf-bg-elev)]"
             style={{
               backgroundColor: staff.color ? `${staff.color}30` : "rgba(255,255,255,0.08)",
               border: `2px solid ${staff.color ? staff.color + "60" : "rgba(255,255,255,0.1)"}`,
@@ -279,7 +279,7 @@ export const StaffColumn = React.memo(function StaffColumn({
                   boxShadow: `0 0 6px ${staff.color || "#4FA1D8"}`,
                 }}
               />
-              <span className="text-[10px] text-gray-500 font-medium">
+                  <span className="text-[10px] text-[var(--bf-ink-400)] font-medium" style={{ fontFamily: "var(--font-mono)" }}>
                 {(() => {
                   const schedule = staffSchedules.find(s => s.staff_id === staff.id);
                   return schedule ? `${schedule.start_time} - ${schedule.end_time}` : "Activo";
@@ -291,10 +291,10 @@ export const StaffColumn = React.memo(function StaffColumn({
               const totalSlots = (dayEndHour - dayStartHour) * 2; // 30min slots
               const usedSlots = Math.min(bookings.length * 2, totalSlots); // estimate 2 slots per booking
               const pct = totalSlots > 0 ? Math.round((usedSlots / totalSlots) * 100) : 0;
-              const barColor = pct >= 80 ? "#EF4444" : pct >= 50 ? "#FFC107" : "#4FA1D8";
+              const barColor = pct >= 80 ? "var(--bf-danger)" : pct >= 50 ? "var(--bf-warn)" : "var(--bf-primary)";
               return (
                 <div className="mt-1.5 flex items-center gap-2">
-                  <div className="flex-1 h-1 rounded-full bg-white/10 overflow-hidden">
+                  <div className="flex-1 h-1 rounded-full bg-[var(--bf-border)] overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-500"
                       style={{ width: `${pct}%`, backgroundColor: barColor }}

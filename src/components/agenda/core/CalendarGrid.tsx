@@ -51,19 +51,23 @@ export function CalendarGrid({ startHour, endHour, onSlotClick, staffId, availab
         return (
           <div
             key={time}
-            onClick={(e) => onSlotClick?.(e, staffId, time)}
+            onClick={(e) => !disabled && onSlotClick?.(e, staffId, time)}
             className={cn(
-              "absolute inset-x-0 cursor-pointer transition-colors duration-150",
+              "absolute inset-x-0 transition-colors duration-150",
               disabled
-                ? "bg-black/40 pointer-events-none bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.03)_0,rgba(255,255,255,0.03)_1px,transparent_1px,transparent_4px)]"
-                : "hover:bg-white/[0.02]"
+                ? "pointer-events-none"
+                : "cursor-pointer hover:bg-[rgba(79,161,216,0.04)]"
             )}
             style={{
               top: index * SLOT_HEIGHT_PX,
               height: SLOT_HEIGHT_PX,
               borderTopWidth: 1,
-              borderTopColor: isHour ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.015)",
+              borderTopColor: isHour ? "var(--bf-border)" : "rgba(29,36,48,0.5)",
               borderTopStyle: "solid",
+              /* Fuera de horario: patrón muy sutil del brand kit, sin oscurecer el fondo */
+              background: disabled
+                ? "repeating-linear-gradient(135deg, rgba(29,36,48,0.25) 0, rgba(29,36,48,0.25) 1px, transparent 1px, transparent 10px)"
+                : undefined,
               zIndex: 0,
             }}
             data-time-slot={time}
