@@ -71,21 +71,12 @@ export function TopBar({
 
   return (
     <div className={cn(
-      "relative pb-8",
+      "pb-8",
       // Mobile: respect status bar (notch / Dynamic Island / home indicator)
       // Use max() so we always have at least 1rem padding even on devices without safe area
       "pt-safe-top md:pt-8",
       sidebarCollapsed ? "px-6 md:px-8" : "px-6 md:px-10"
     )}>
-      {/* Elegant divider line */}
-      <div
-        className="absolute bottom-0 left-6 right-6"
-        style={{
-          height: "1px",
-          background: "linear-gradient(90deg, transparent 0%, var(--bf-border) 20%, var(--bf-border) 80%, transparent 100%)",
-        }}
-      />
-      
       {/* Header: perfil (izq) · título centrado · IA (dch, móvil) */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 w-full">
         {/* User menu — izquierda */}

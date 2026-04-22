@@ -9,7 +9,6 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
 import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "@/lib/utils";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
@@ -927,15 +926,22 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 					}}
 				>
 					{selectedConversation ? (
-						<GlassCard className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-[var(--bf-bg)] p-0 shadow-none md:rounded-[var(--r-xl)] md:border md:border-[var(--bf-border)]">
-							{/* Fondo sutil brand kit — rejilla de puntos igual que la cover del brand kit */}
+						<div
+							className={cn(
+								"relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--bf-bg)]",
+								"rounded-none border-0 p-0 shadow-none",
+								"md:rounded-[var(--r-xl)] md:border md:border-[var(--bf-border)] md:shadow-[var(--bf-shadow-card)]"
+							)}
+						>
+							{/* Textura muy sutil — tinte desde --bf-border (sin matiz azulado ni blur) */}
 							<div
-								className="absolute inset-0 pointer-events-none opacity-[0.35]"
+								className="pointer-events-none absolute inset-0 opacity-[0.18]"
+								aria-hidden
 								style={{
 									backgroundImage:
-										"linear-gradient(rgba(37,48,65,0.28) 1px, transparent 1px), linear-gradient(90deg, rgba(37,48,65,0.28) 1px, transparent 1px)",
+										"linear-gradient(rgba(29,36,48,0.45) 1px, transparent 1px), linear-gradient(90deg, rgba(29,36,48,0.45) 1px, transparent 1px)",
 									backgroundSize: "32px 32px",
-									maskImage: "radial-gradient(ellipse at 50% 55%, #000 30%, transparent 75%)",
+									maskImage: "radial-gradient(ellipse at 50% 45%, #000 28%, transparent 70%)",
 								}}
 							/>
 							
@@ -947,9 +953,12 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 								isMobile={isMobile}
 							/>
 							{/* flex-col + overflow: el hijo MessageList necesita un flex parent para que flex-1 limite altura y el scroll funcione */}
-							<div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+							<div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
 								{messagesLoadError && (
-									<div className="shrink-0 border-b border-[rgba(224,96,114,0.25)] bg-[rgba(224,96,114,0.08)] px-4 py-2 text-sm text-[#F2A0AC]">
+									<div
+										className="shrink-0 border-b border-[rgba(224,96,114,0.28)] bg-[rgba(224,96,114,0.06)] px-4 py-2 text-sm text-[var(--bf-danger)]"
+										style={{ fontFamily: "var(--font-sans)" }}
+									>
 										{messagesLoadError}
 									</div>
 								)}
@@ -973,9 +982,9 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 								/>
 							</div>
 							{selectedConversation.status === "pending_direct" ? (
-								<div className="flex shrink-0 flex-col items-center border-t border-[var(--bf-border)] bg-[var(--bf-bg-elev)] p-10 text-center">
-									<div className="w-16 h-16 bg-[rgba(79,161,216,0.08)] border border-[rgba(79,161,216,0.20)] rounded-full flex items-center justify-center mb-4">
-										<UserX className="h-8 w-8 text-[var(--bf-ink-400)]" />
+								<div className="relative z-10 flex shrink-0 flex-col items-center border-t border-[var(--bf-border)] bg-[var(--bf-bg)] p-10 text-center">
+									<div className="mb-4 flex h-14 w-14 items-center justify-center rounded-[var(--r-lg)] border border-[var(--bf-border)] bg-[var(--bf-surface)] shadow-[var(--bf-shadow-card)]">
+										<UserX className="h-7 w-7 text-[var(--bf-ink-400)]" strokeWidth={1.5} />
 									</div>
 									<h3 className="text-[var(--bf-ink-50)] font-medium mb-1" style={{ fontFamily: "var(--font-sans)" }}>Sin conversación directa</h3>
 									<p className="text-[var(--bf-ink-400)] text-sm max-w-sm" style={{ fontFamily: "var(--font-sans)" }}>
@@ -985,7 +994,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 									</p>
 								</div>
 							) : (
-								<div className="shrink-0 border-t border-[var(--bf-border)] bg-[var(--bf-bg-elev)]">
+								<div className="relative z-10 shrink-0 border-t border-[var(--bf-border)] bg-[var(--bf-bg)]">
 									{pendingAttachments.length > 0 && (
 										<div className="bg-transparent px-4 py-3">
 											<div className="flex items-center gap-2 overflow-x-auto">
@@ -1058,26 +1067,36 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 									/>
 								</div>
 							)}
-						</GlassCard>
+						</div>
 					) : (
-						<div className="relative hidden min-h-0 flex-1 flex-col items-center justify-center overflow-hidden rounded-none border-0 bg-[var(--bf-bg)] md:rounded-[var(--r-xl)] md:border md:border-[var(--bf-border)] lg:flex">
-							{/* Brand kit grid pattern */}
+						<div
+							className={cn(
+								"relative hidden min-h-0 flex-1 flex-col items-center justify-center overflow-hidden bg-[var(--bf-bg)]",
+								"rounded-none border-0 md:rounded-[var(--r-xl)] md:border md:border-[var(--bf-border)] md:shadow-[var(--bf-shadow-card)] lg:flex"
+							)}
+						>
 							<div
-								className="absolute inset-0 pointer-events-none opacity-[0.35]"
+								className="pointer-events-none absolute inset-0 opacity-[0.18]"
+								aria-hidden
 								style={{
 									backgroundImage:
-										"linear-gradient(rgba(37,48,65,0.28) 1px, transparent 1px), linear-gradient(90deg, rgba(37,48,65,0.28) 1px, transparent 1px)",
+										"linear-gradient(rgba(29,36,48,0.45) 1px, transparent 1px), linear-gradient(90deg, rgba(29,36,48,0.45) 1px, transparent 1px)",
 									backgroundSize: "32px 32px",
-									maskImage: "radial-gradient(ellipse at 50% 55%, #000 30%, transparent 75%)",
+									maskImage: "radial-gradient(ellipse at 50% 45%, #000 28%, transparent 70%)",
 								}}
 							/>
-							<div className="flex flex-col items-center max-w-sm text-center p-8 z-10 transition-all duration-700 animate-in fade-in zoom-in slide-in-from-bottom-4">
-								<div className="w-40 h-40 mb-8 bg-[rgba(79,161,216,0.08)] border border-[rgba(79,161,216,0.20)] rounded-full flex items-center justify-center relative">
-									<div className="absolute inset-0 rounded-full border border-[var(--bf-primary)]/20 animate-ping opacity-20" />
-									<MessageSquare className="h-20 w-20 text-[var(--bf-primary)]/40" />
+							<div className="relative z-10 flex max-w-sm flex-col items-center p-8 text-center transition-all duration-700 animate-in fade-in zoom-in slide-in-from-bottom-4">
+								<div className="relative mb-8 flex h-32 w-32 items-center justify-center rounded-[var(--r-xl)] border border-[var(--bf-border)] bg-[var(--bf-surface)] shadow-[var(--bf-shadow-card)]">
+									<div className="absolute inset-0 rounded-[var(--r-xl)] ring-1 ring-[rgba(79,161,216,0.12)]" aria-hidden />
+									<MessageSquare className="h-14 w-14 text-[var(--bf-primary)]" strokeWidth={1.25} />
 								</div>
-								<h2 className="text-2xl font-semibold text-[var(--bf-ink-50)] mb-3 tracking-tight" style={{ fontFamily: "var(--font-sans)", letterSpacing: "-0.02em" }}>BookFast Chat</h2>
-								<p className="text-[var(--bf-ink-400)] text-[14px] leading-relaxed mb-8 px-4" style={{ fontFamily: "var(--font-sans)" }}>
+								<h2
+									className="mb-2 text-lg font-semibold tracking-tight text-[var(--bf-ink-50)] md:text-xl"
+									style={{ fontFamily: "var(--font-sans)", letterSpacing: "-0.02em" }}
+								>
+									BookFast Chat
+								</h2>
+								<p className="mb-8 px-2 text-sm leading-relaxed text-[var(--bf-ink-300)]" style={{ fontFamily: "var(--font-sans)" }}>
 									Envía y recibe mensajes sin necesidad de tener tu teléfono conectado.<br/>
 									Usa BookFast Chat en hasta 4 dispositivos vinculados a la vez.
 								</p>

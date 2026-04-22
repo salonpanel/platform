@@ -82,7 +82,7 @@ export function MessageComposer({
 	};
 
 	return (
-		<div className="border-t border-[var(--bf-border)] p-4 bg-[var(--bf-bg-elev)] relative">
+		<div className="relative border-t border-[var(--bf-border)] bg-[var(--bf-bg)] p-3 md:p-4">
 			{/* Indicador de escritura */}
 			{typingUsers.length > 0 && (
 				<div className="absolute -top-6 left-6 animate-in fade-in slide-in-from-bottom-1 duration-300">

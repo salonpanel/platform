@@ -26,7 +26,7 @@ export default function ChatPageClient({
 			<div className="flex items-center justify-center py-12">
 				<div className="text-center max-w-md">
 					<p className="text-red-400 mb-2">Error al cargar el chat</p>
-					<p className="text-sm text-slate-400">{serverError}</p>
+					<p className="text-sm text-[var(--bf-ink-400)]">{serverError}</p>
 				</div>
 			</div>
 		);
@@ -45,7 +45,7 @@ export default function ChatPageClient({
 			<div className="flex items-center justify-center py-12">
 				<div className="text-center max-w-md">
 					<p className="text-red-400 mb-2">Error al cargar el chat</p>
-					<p className="text-sm text-slate-400">{error.message}</p>
+					<p className="text-sm text-[var(--bf-ink-400)]">{error.message}</p>
 				</div>
 			</div>
 		);

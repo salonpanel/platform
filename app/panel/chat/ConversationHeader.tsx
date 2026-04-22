@@ -55,7 +55,7 @@ export function ConversationHeader({
 	if (!conversation) return null;
 
 	return (
-		<div className="relative z-20 flex shrink-0 items-center justify-between border-b border-[var(--bf-border)] bg-[var(--bf-bg-elev)] p-4">
+		<div className="relative z-20 flex shrink-0 items-center justify-between border-b border-[var(--bf-border)] bg-[var(--bf-bg)] px-4 py-3 md:px-5">
 			<div className="flex items-center gap-3 min-w-0">
 				{isMobile && onBack && (
 					<button
@@ -66,7 +66,10 @@ export function ConversationHeader({
 					</button>
 				)}
 				<div className="min-w-0">
-					<h2 className="font-semibold text-[var(--bf-ink-50)] text-lg truncate leading-tight" style={{ fontFamily: "var(--font-sans)" }}>
+					<h2
+						className="truncate text-base font-semibold leading-tight text-[var(--bf-ink-50)] md:text-lg"
+						style={{ fontFamily: "var(--font-sans)", letterSpacing: "-0.02em" }}
+					>
 						{conversation.name}
 					</h2>
 					<div className="flex items-center gap-2">

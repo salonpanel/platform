@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useRef } from "react";
 import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { format, startOfWeek, addDays, parseISO, isSameDay, startOfToday } from "date-fns";
 import { AppointmentCard } from "@/components/agenda/AppointmentCard";
 import { toTenantLocalDate, formatInTenantTz } from "@/lib/timezone";
@@ -413,20 +413,8 @@ function MobileWeekView({
     return selectedDate || todayKey;
   });
 
-  const [showCalendarPicker, setShowCalendarPicker] = useState(false);
-  const calendarPopoverRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
   const todayBtnRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (calendarPopoverRef.current && !calendarPopoverRef.current.contains(e.target as Node)) {
-        setShowCalendarPicker(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
 
   useEffect(() => {
     if (!selectedDate) return;
@@ -545,105 +533,81 @@ function MobileWeekView({
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden bg-[var(--bf-bg)]" role="region" aria-label="Vista semanal móvil">
-      {/* Mes centrado en pantalla · notificaciones izq · búsqueda+filtros dcha */}
-      <div
-        className={cn(
-          "flex-shrink-0 py-2 bg-[var(--bf-bg)] relative px-3",
-          mobileToolbar ? "pl-[6rem] pr-12" : "pl-14 pr-3"
-        )}
-      >
-        <div
-          ref={calendarPopoverRef}
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex items-center gap-1"
-        >
-          {mobileToolbar && (
-            <AgendaQuickActions
-              only="notifications"
-              onSearchClick={mobileToolbar.onSearchClick}
-              onNotificationsClick={mobileToolbar.onNotificationsClick}
-              unreadNotifications={mobileToolbar.unreadNotifications}
-              filters={mobileToolbar.filters}
-              onFiltersChange={mobileToolbar.onFiltersChange}
-            />
-          )}
-          <div className="relative">
-            <motion.button
-              type="button"
+      {/* Columnas 1fr · auto · 1fr: mes siempre en el centro geométrico de la barra */}
+      <div className="flex-shrink-0 bg-[var(--bf-bg)] px-2 py-2 sm:px-3">
+        <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <div className="flex min-w-0 items-center justify-start gap-1">
+            {mobileToolbar && (
+              <AgendaQuickActions
+                only="notifications"
+                onSearchClick={mobileToolbar.onSearchClick}
+                onNotificationsClick={mobileToolbar.onNotificationsClick}
+                unreadNotifications={mobileToolbar.unreadNotifications}
+                filters={mobileToolbar.filters}
+                onFiltersChange={mobileToolbar.onFiltersChange}
+              />
+            )}
+            <motion.label
               whileTap={{ scale: 0.94 }}
-              onClick={() => setShowCalendarPicker((o) => !o)}
               className={cn(
-                "h-8 w-8 rounded-[var(--r-md)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)]",
-                "hover:bg-[var(--bf-surface)] transition-colors flex items-center justify-center"
+                "relative flex h-8 w-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-[var(--r-md)]",
+                "border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] transition-colors hover:bg-[var(--bf-surface)]"
               )}
-              aria-label="Ir a una fecha"
             >
-              <Calendar className="h-3.5 w-3.5 text-[var(--bf-ink-400)]" aria-hidden />
-            </motion.button>
-            <AnimatePresence>
-              {showCalendarPicker && (
-                <motion.div
-                  initial={{ opacity: 0, y: 4, scale: 0.97 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 4, scale: 0.97 }}
-                  transition={{ duration: 0.12 }}
-                  className="absolute top-full left-0 mt-2 z-[85] rounded-[var(--r-md)] bg-[var(--bf-surface)] border border-[var(--bf-border)] shadow-[var(--bf-shadow-card)] p-3"
-                >
-                  <label className="sr-only" htmlFor="mobile-agenda-jump-date">
-                    Elegir fecha
-                  </label>
-                  <input
-                    id="mobile-agenda-jump-date"
-                    type="date"
-                    min={stripDateBounds.min}
-                    max={stripDateBounds.max}
-                    value={selectedMobileDay}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      if (!v) return;
-                      setSelectedMobileDay(v);
-                      onDateChange?.(v);
-                      setShowCalendarPicker(false);
-                      requestAnimationFrame(() => scrollDayChipIntoView(stripRef.current, v));
-                    }}
-                    className="rounded-[var(--r-md)] border border-[var(--bf-border-2)] bg-[var(--bf-bg-elev)] px-3 py-2 text-sm text-[var(--bf-ink-50)] focus:border-[var(--bf-primary)] focus:outline-none focus:ring-2 focus:ring-[rgba(79,161,216,0.2)]"
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
+              <Calendar className="pointer-events-none h-3.5 w-3.5 text-[var(--bf-ink-400)]" aria-hidden />
+              <input
+                type="date"
+                min={stripDateBounds.min}
+                max={stripDateBounds.max}
+                value={selectedMobileDay}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (!v) return;
+                  setSelectedMobileDay(v);
+                  onDateChange?.(v);
+                  requestAnimationFrame(() => scrollDayChipIntoView(stripRef.current, v));
+                }}
+                className="absolute inset-0 cursor-pointer opacity-0"
+                style={{ fontSize: 16 }}
+                aria-label="Ir a una fecha"
+              />
+            </motion.label>
           </div>
-        </div>
-        {mobileToolbar && (
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 z-10">
-            <AgendaQuickActions
-              only="searchAndFilters"
-              onSearchClick={mobileToolbar.onSearchClick}
-              onNotificationsClick={mobileToolbar.onNotificationsClick}
-              unreadNotifications={mobileToolbar.unreadNotifications}
-              filters={mobileToolbar.filters}
-              onFiltersChange={mobileToolbar.onFiltersChange}
-              filterMenuSide="right"
-            />
-          </div>
-        )}
-        <div className="flex flex-col items-center gap-1 min-w-0">
-          <h2
-            className="capitalize font-medium text-[11px] leading-tight tracking-tight text-center w-full truncate"
-            style={{
-              fontFamily: "var(--font-sans)",
-              color: "var(--bf-ink-50)",
-              letterSpacing: "-0.01em",
-            }}
-          >
-            {monthLabel}
-          </h2>
-          {statsLine && (
-            <p
-              className="text-[10px] text-[var(--bf-ink-400)] font-medium text-center truncate max-w-full px-1"
-              style={{ fontFamily: "var(--font-mono)" }}
+          <div className="min-w-0 max-w-[min(18rem,calc(100vw-8rem))] justify-self-center text-center">
+            <h2
+              className="truncate text-[8.25px] font-medium capitalize leading-tight tracking-tight"
+              style={{
+                fontFamily: "var(--font-sans)",
+                color: "var(--bf-ink-50)",
+                letterSpacing: "-0.01em",
+              }}
             >
-              {statsLine}
-            </p>
-          )}
+              {monthLabel}
+            </h2>
+            {statsLine && (
+              <p
+                className="mt-0.5 truncate px-0.5 text-[7.5px] font-medium text-[var(--bf-ink-400)]"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                {statsLine}
+              </p>
+            )}
+          </div>
+          <div className="flex min-w-0 items-center justify-end">
+            {mobileToolbar ? (
+              <AgendaQuickActions
+                only="searchAndFilters"
+                onSearchClick={mobileToolbar.onSearchClick}
+                onNotificationsClick={mobileToolbar.onNotificationsClick}
+                unreadNotifications={mobileToolbar.unreadNotifications}
+                filters={mobileToolbar.filters}
+                onFiltersChange={mobileToolbar.onFiltersChange}
+                filterMenuSide="right"
+              />
+            ) : (
+              <span className="inline-block w-8 flex-shrink-0" aria-hidden />
+            )}
+          </div>
         </div>
       </div>
 

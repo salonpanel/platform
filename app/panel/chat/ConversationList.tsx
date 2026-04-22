@@ -58,7 +58,7 @@ function GroupChatAvatar({
 }) {
 	if (logoUrl) {
 		return (
-			<div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-2 border-[var(--bf-success)]/40 bg-[var(--bf-bg-elev)]">
+			<div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-2 border-[var(--bf-success)]/40 bg-[var(--bf-surface)]">
 				<img src={logoUrl} alt={name} className="h-full w-full object-cover" />
 			</div>
 		);
@@ -87,7 +87,7 @@ export function ConversationList({
 	const rest = pinned ? conversations.slice(1) : conversations;
 
 	return (
-		<div className="flex h-full flex-col bg-[var(--bf-bg-elev)]">
+		<div className="flex h-full flex-col bg-[var(--bf-bg)]">
 			<div className="custom-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
 				{conversations.length === 0 ? (
 					<div className="p-8 text-center text-[var(--bf-ink-400)] text-sm">
@@ -96,7 +96,7 @@ export function ConversationList({
 				) : (
 					<>
 						{pinned && (
-							<div className="sticky top-0 z-20 flex-shrink-0 border-b border-[var(--bf-border)] bg-[var(--bf-bg-elev)]">
+							<div className="sticky top-0 z-20 flex-shrink-0 border-b border-[var(--bf-border)] bg-[var(--bf-bg)]">
 								<div className="flex items-center gap-2 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--bf-success)]" style={{ fontFamily: "var(--font-mono)" }}>
 									<Pin className="h-3 w-3" aria-hidden />
 									<span>Chat del equipo</span>
@@ -151,8 +151,9 @@ function ConversationRow({
 			type="button"
 			onClick={onSelect}
 			className={cn(
-				"group flex w-full items-center gap-3 px-4 py-3 text-left transition-all hover:bg-[var(--bf-surface)]",
-				selected && "bg-[var(--bf-surface-2)]",
+				"group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors",
+				"hover:bg-[var(--bf-surface)]/70",
+				selected && "bg-[var(--bf-surface)]",
 				isPinned && "border-l-[3px] border-l-[var(--bf-success)]"
 			)}
 		>

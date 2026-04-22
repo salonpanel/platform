@@ -191,7 +191,10 @@ export function MessageList({
 						<div key={dateKey} className="flex flex-col space-y-0.5">
 							{/* Separador de fecha Estilo WhatsApp */}
 							<div className="sticky top-4 z-20 flex justify-center my-4 pointer-events-none">
-								<span className="px-3 py-1.5 rounded-[var(--r-full)] bg-[var(--bf-surface)] border border-[var(--bf-border)] text-[12px] text-[var(--bf-ink-400)] shadow-md select-none" style={{ fontFamily: "var(--font-mono)" }}>
+								<span
+									className="select-none rounded-[var(--r-full)] border border-[var(--bf-border)] bg-[var(--bf-surface)] px-3 py-1.5 text-[12px] text-[var(--bf-ink-400)] shadow-[var(--bf-shadow-card)]"
+									style={{ fontFamily: "var(--font-mono)" }}
+								>
 									{formatDateHeader(dayMessages[0].created_at)}
 								</span>
 							</div>
