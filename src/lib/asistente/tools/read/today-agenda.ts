@@ -96,7 +96,7 @@ export function buildGetTodayAgendaTool(
           let query: any = supabase
             .from("bookings")
             .select(
-              "id, starts_at, ends_at, status, payment_status, customer:customers(name, full_name), service:services(name), staff:staff(name, display_name)",
+              "id, starts_at, ends_at, status, payment_status, customer:customers(name, full_name), service:services(name), staff:staff!bookings_staff_id_fkey(name, display_name)",
             )
             .eq("tenant_id", ctx.tenantId)
             .gte("starts_at", startIso)
