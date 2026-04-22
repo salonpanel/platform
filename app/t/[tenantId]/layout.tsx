@@ -28,7 +28,8 @@ export default async function TenantPublicLayout({
 }) {
   const { tenantId } = await params;
 
-  const pwaEnabled = process.env.NEXT_PUBLIC_PWA_ENABLED === "true";
+  // Portal público ON por defecto. Solo se desactiva explícitamente.
+  const pwaEnabled = process.env.NEXT_PUBLIC_PWA_ENABLED !== "false";
   if (!pwaEnabled) {
     return (
       <div
