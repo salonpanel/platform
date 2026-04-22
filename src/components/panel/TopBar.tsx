@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Settings, LogOut, Building2, Sparkles } from "lucide-react";
+import { ChevronDown, Settings, LogOut, Building2 } from "lucide-react";
+import { BookFastMarkIcon } from "@/components/brand/BookFastMarkIcon";
 import { Avatar } from "@/components/ui/Avatar";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 
@@ -248,7 +249,7 @@ export function TopBar({
               "active:scale-95 transition-transform duration-200",
             )}
           >
-            <Sparkles className="h-5 w-5 text-[var(--bf-ink)]" />
+            <BookFastMarkIcon size={22} className="text-[var(--bf-ink)]" aria-hidden />
           </Link>
         </motion.div>
       </div>

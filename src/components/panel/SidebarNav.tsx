@@ -22,8 +22,8 @@ import {
   X,
   Wallet,
   Target,
-  Sparkles
 } from "lucide-react";
+import { BookFastMarkIcon } from "@/components/brand/BookFastMarkIcon";
 import { usePermissions } from "@/contexts/PermissionsContext";
 
 interface NavItem {
@@ -656,7 +656,7 @@ export function SidebarNav({
                 <span
                   className="relative z-10 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[var(--r-md)] bg-[var(--bf-primary)] shadow-[var(--bf-shadow-glow)]"
                 >
-                  <Sparkles className="h-4 w-4 text-[var(--bf-ink)]" />
+                  <BookFastMarkIcon size={18} className="text-[var(--bf-ink)]" aria-hidden />
                 </span>
 
                 <AnimatePresence mode="wait">
