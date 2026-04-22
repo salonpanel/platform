@@ -32,7 +32,7 @@ type ConversationHeaderProps = {
 function ConversationTypeBadge({ type }: { type: ConversationType }) {
 	const registry: Record<ConversationType, { label: string; className: string }> = {
 		all: { label: "General", className: "bg-[#4DE2C31a] text-[#4DE2C3]" },
-		direct: { label: "Directo", className: "bg-[#3A6DFF1a] text-[#3A6DFF]" },
+		direct: { label: "Directo", className: "bg-[#4FA1D81a] text-[#4FA1D8]" },
 		group: { label: "Grupo", className: "bg-[#FF7AB61a] text-[#FF7AB6]" },
 	};
 

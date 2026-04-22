@@ -25,9 +25,9 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
             className={cn(
               "w-11 h-6 rounded-full transition-all duration-300 relative",
               "bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.15)]",
-              "peer-checked:bg-gradient-to-r peer-checked:from-[#3A6DFF] peer-checked:to-[#4FE3C1] peer-checked:border-transparent",
-              "peer-checked:shadow-[0px_4px_16px_rgba(58,109,255,0.4)]",
-              "peer-focus:ring-2 peer-focus:ring-[#3A6DFF]/30 peer-focus:ring-offset-2 peer-focus:ring-offset-[var(--bg-primary)]",
+              "peer-checked:bg-gradient-to-r peer-checked:from-[#4FA1D8] peer-checked:to-[#4FA1D8] peer-checked:border-transparent",
+              "peer-checked:shadow-[0px_4px_16px_rgba(79,161,216,0.4)]",
+              "peer-focus:ring-2 peer-focus:ring-[#4FA1D8]/30 peer-focus:ring-offset-2 peer-focus:ring-offset-[var(--bg-primary)]",
               "peer-disabled:opacity-50 peer-disabled:cursor-not-allowed",
               "cursor-pointer backdrop-blur-sm",
               className

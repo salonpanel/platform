@@ -67,7 +67,7 @@ export function FreeSlotOverlay({
             }}
             className={cn(
               "absolute left-3 right-3 rounded-xl border border-dashed cursor-pointer transition-all duration-200 z-0 group",
-              "border-[#4FE3C1]/30 bg-[#4FE3C1]/[0.02] hover:bg-[#4FE3C1]/10 hover:border-[#4FE3C1]/60"
+              "border-[#4FA1D8]/30 bg-[#4FA1D8]/[0.02] hover:bg-[#4FA1D8]/10 hover:border-[#4FA1D8]/60"
             )}
             style={{
               top: `${top}px`,
@@ -82,10 +82,10 @@ export function FreeSlotOverlay({
               gap.duration < 45 ? "opacity-0 group-hover:opacity-100" : "opacity-100"
             )}>
               <div className="text-center">
-                <div className="text-xs font-semibold mb-0.5 text-[#4FE3C1] font-sans drop-shadow-sm">
+                <div className="text-xs font-semibold mb-0.5 text-[#4FA1D8] font-sans drop-shadow-sm">
                   Libre {durationLabel}
                 </div>
-                <div className="text-[10px] font-mono text-[#4FE3C1]/70">
+                <div className="text-[10px] font-mono text-[#4FA1D8]/70">
                   {minutesToTime(gap.startMinutes)} - {minutesToTime(gap.endMinutes)}
                 </div>
               </div>

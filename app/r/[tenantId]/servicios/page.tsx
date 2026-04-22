@@ -18,83 +18,146 @@ export default async function ServicesPage({
 
     // Group by category
     const groupedServices = services.reduce((acc, service) => {
-        const cat = service.category || "Otros";
+        const cat = service.category || "Servicios";
         if (!acc[cat]) acc[cat] = [];
         acc[cat].push(service);
         return acc;
     }, {} as Record<string, typeof services>);
 
-    // Helper currency formatter
-    const formatPrice = (cents: number) => {
-        return new Intl.NumberFormat("es-ES", {
-            style: "currency",
-            currency: tenant.settings.currency || "EUR",
-        }).format(cents / 100);
-    };
+    const formatPrice = (cents: number) =>
+        new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(cents / 100);
+
+    const brand = tenant.primary_color || "#4FA1D8";
 
     return (
-        <div className="max-w-md mx-auto min-h-screen bg-slate-50 flex flex-col pb-20">
+        <div style={{ maxWidth: "440px", margin: "0 auto", minHeight: "100vh", display: "flex", flexDirection: "column", paddingBottom: "80px" }}>
+
             {/* Header */}
-            <header className="bg-white p-4 border-b border-slate-100 flex items-center gap-4 sticky top-0 z-10 shadow-sm">
-                <Link href={`/r/${tenantId}`} className="p-2 -ml-2 text-slate-400 hover:text-slate-900 rounded-full hover:bg-slate-50 transition-colors">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
+            <header style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "16px 20px",
+                borderBottom: "1px solid #1d2430",
+                background: "#0f131b",
+                position: "sticky",
+                top: 0,
+                zIndex: 10,
+            }}>
+                <Link
+                    href={`/r/${tenantId}`}
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "36px",
+                        height: "36px",
+                        borderRadius: "10px",
+                        background: "#ffffff08",
+                        border: "1px solid #1d2430",
+                        color: "#8898aa",
+                        textDecoration: "none",
+                        fontSize: "18px",
+                        lineHeight: 1,
+                    }}
+                >
+                    ←
                 </Link>
-                <h1 className="font-bold text-slate-900 text-lg">Servicios</h1>
+                <h1 style={{ fontSize: "17px", fontWeight: 700, color: "#f2f5fa", margin: 0 }}>Servicios</h1>
             </header>
 
             {/* Content */}
-            <div className="p-4 space-y-8">
+            <div style={{ padding: "20px", flex: 1 }}>
                 {services.length === 0 ? (
-                    <div className="text-center py-12">
-                        <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                            <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <h3 className="text-slate-900 font-medium">No hay servicios disponibles</h3>
-                        <p className="text-slate-500 text-sm mt-1">Este negocio aún no ha configurado sus servicios públicos.</p>
+                    <div style={{ textAlign: "center", padding: "60px 24px" }}>
+                        <div style={{
+                            width: "64px", height: "64px",
+                            borderRadius: "50%",
+                            background: "#0f131b",
+                            border: "1px solid #1d2430",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            margin: "0 auto 16px",
+                            fontSize: "28px",
+                        }}>✂️</div>
+                        <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#f2f5fa", margin: "0 0 6px" }}>
+                            Sin servicios disponibles
+                        </h3>
+                        <p style={{ fontSize: "14px", color: "#8898aa", margin: 0, lineHeight: 1.5 }}>
+                            Este negocio aún no ha configurado sus servicios. Vuelve pronto.
+                        </p>
                     </div>
                 ) : (
-                    Object.entries(groupedServices).map(([category, items]) => (
-                        <section key={category}>
-                            <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-1">
-                                {category}
-                            </h2>
-                            <div className="space-y-3">
-                                {items.map((service) => (
-                                    <Link
-                                        key={service.id}
-                                        href={`/r/${tenantId}/reservar?service_id=${service.id}`}
-                                        className="block bg-white p-4 rounded-xl shadow-sm border border-slate-100 active:scale-[0.99] transition-transform"
-                                    >
-                                        <div className="flex justify-between items-start gap-4">
-                                            <div className="flex-1">
-                                                <h3 className="font-semibold text-slate-900 mb-1">{service.name}</h3>
-                                                {service.description && (
-                                                    <p className="text-sm text-slate-500 line-clamp-2 mb-2">{service.description}</p>
-                                                )}
-                                                <div className="flex items-center gap-3 text-xs text-slate-500">
-                                                    <span className="flex items-center gap-1">
-                                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
-                                                        {service.duration_min} min
+                    <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
+                        {Object.entries(groupedServices).map(([category, items]) => (
+                            <section key={category}>
+                                <h2 style={{
+                                    fontSize: "11px",
+                                    fontWeight: 600,
+                                    color: "#8898aa",
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.08em",
+                                    margin: "0 0 12px",
+                                    paddingLeft: "2px",
+                                }}>
+                                    {category}
+                                </h2>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                                    {items.map((service) => (
+                                        <Link
+                                            key={service.id}
+                                            href={`/r/${tenantId}/reservar?service_id=${service.id}`}
+                                            style={{
+                                                display: "block",
+                                                padding: "18px 20px",
+                                                background: "#0f131b",
+                                                border: "1px solid #1d2430",
+                                                borderRadius: "16px",
+                                                textDecoration: "none",
+                                                transition: "border-color 0.15s",
+                                            }}
+                                        >
+                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px" }}>
+                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                    <h3 style={{ fontSize: "15px", fontWeight: 600, color: "#f2f5fa", margin: "0 0 4px" }}>
+                                                        {service.name}
+                                                    </h3>
+                                                    {service.description && (
+                                                        <p style={{ fontSize: "13px", color: "#8898aa", margin: "0 0 8px", lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" } as React.CSSProperties}>
+                                                            {service.description}
+                                                        </p>
+                                                    )}
+                                                    <span style={{ fontSize: "12px", color: "#4a5568" }}>
+                                                        ⏱ {service.duration_min} min
                                                     </span>
                                                 </div>
+                                                <div style={{
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    alignItems: "flex-end",
+                                                    gap: "8px",
+                                                    shrink: 0,
+                                                } as React.CSSProperties}>
+                                                    <span style={{
+                                                        fontSize: "15px",
+                                                        fontWeight: 700,
+                                                        color: "#f2f5fa",
+                                                        background: "#ffffff08",
+                                                        border: "1px solid #1d2430",
+                                                        padding: "4px 10px",
+                                                        borderRadius: "8px",
+                                                        whiteSpace: "nowrap",
+                                                    }}>
+                                                        {formatPrice(service.price_cents)}
+                                                    </span>
+                                                    <span style={{ fontSize: "12px", color: brand }}>Reservar →</span>
+                                                </div>
                                             </div>
-                                            <div className="text-right">
-                                                <span className="block font-bold text-slate-900 bg-slate-50 px-3 py-1 rounded-lg text-sm">
-                                                    {formatPrice(service.price_cents)}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        </section>
-                    ))
+                                        </Link>
+                                    ))}
+                                </div>
+                            </section>
+                        ))}
+                    </div>
                 )}
             </div>
         </div>

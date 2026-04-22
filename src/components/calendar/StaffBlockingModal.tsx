@@ -191,7 +191,7 @@ export default function StaffBlockingModal({
                   type="button"
                   onClick={() => setBlockingType(option)}
                   className={`rounded-[12px] border px-3 py-2 text-sm transition-all ${
-                    blockingType === option ? "border-[#3A6DFF] text-[#3A6DFF] bg-[#3A6DFF]/10" : "border-white/10 text-white/70"
+                    blockingType === option ? "border-[#4FA1D8] text-[#4FA1D8] bg-[#4FA1D8]/10" : "border-white/10 text-white/70"
                   }`}
                 >
                   {option === "block" && "Bloqueo"}

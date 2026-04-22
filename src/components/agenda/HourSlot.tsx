@@ -25,7 +25,7 @@ export function HourSlot({ hour, children, density = "default", className, isCur
     <div
       className={cn(
         "flex gap-2 relative",
-        isCurrentHour ? "bg-[#4FE3C1]/5" : "",
+        isCurrentHour ? "bg-[#4FA1D8]/5" : "",
         className
       )}
       style={{ height: `${hourHeight}px` }}
@@ -35,7 +35,7 @@ export function HourSlot({ hour, children, density = "default", className, isCur
         <div
           className={cn(
             "font-mono font-medium text-right pr-2 transition-colors",
-            isCurrentHour ? "text-[#4FE3C1]" : "text-white/30",
+            isCurrentHour ? "text-[#4FA1D8]" : "text-white/30",
             textSize
           )}
         >

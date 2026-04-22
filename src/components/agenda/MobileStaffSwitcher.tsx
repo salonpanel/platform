@@ -255,9 +255,9 @@ export function MobileStaffSwitcher({
                                 border: `1.5px solid ${staffColor}40`,
                               }
                             : {
-                                backgroundColor: "rgba(79,227,193,0.1)",
+                                backgroundColor: "rgba(79,161,216,0.1)",
                                 color: "var(--accent-aqua)",
-                                border: "1.5px solid rgba(79,227,193,0.25)",
+                                border: "1.5px solid rgba(79,161,216,0.25)",
                               }
                         }
                       >

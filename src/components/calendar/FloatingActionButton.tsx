@@ -25,11 +25,11 @@ export function FloatingActionButton({ onClick, className }: FloatingActionButto
       className={cn(
         "fixed right-6 h-14 w-14 rounded-full z-[55]",
         "bottom-[calc(var(--bottom-nav-offset)+1.5rem)] md:bottom-6",
-        "bg-gradient-to-r from-[#3A6DFF] to-[#4FE3C1] text-white",
-        "shadow-[0px_8px_32px_rgba(58,109,255,0.4)] hover:shadow-[0px_12px_40px_rgba(79,227,193,0.5)]",
+        "bg-gradient-to-r from-[#4FA1D8] to-[#4FA1D8] text-white",
+        "shadow-[0px_8px_32px_rgba(79,161,216,0.4)] hover:shadow-[0px_12px_40px_rgba(79,161,216,0.5)]",
         "transition-all duration-150",
         "flex items-center justify-center",
-        "focus:outline-none focus:ring-4 focus:ring-[#3A6DFF]/30 focus:ring-offset-2 focus:ring-offset-[#15171A]",
+        "focus:outline-none focus:ring-4 focus:ring-[#4FA1D8]/30 focus:ring-offset-2 focus:ring-offset-[#15171A]",
         className
       )}
       style={{

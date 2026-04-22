@@ -55,10 +55,10 @@ function FilterChip({
   color?: "aqua" | "purple" | "blue" | "pink" | "amber" | "red" | "green" | "gray";
 }) {
   const colorClasses = {
-    aqua: "bg-[#4FE3C1]/10 border-[#4FE3C1]/30 text-[#4FE3C1]",
-    purple: "bg-[#A06BFF]/10 border-[#A06BFF]/30 text-[#A06BFF]",
-    blue: "bg-[#3A6DFF]/10 border-[#3A6DFF]/30 text-[#3A6DFF]",
-    pink: "bg-[#FF6DA3]/10 border-[#FF6DA3]/30 text-[#FF6DA3]",
+    aqua: "bg-[#4FA1D8]/10 border-[#4FA1D8]/30 text-[#4FA1D8]",
+    purple: "bg-[#4FA1D8]/10 border-[#4FA1D8]/30 text-[#4FA1D8]",
+    blue: "bg-[#4FA1D8]/10 border-[#4FA1D8]/30 text-[#4FA1D8]",
+    pink: "bg-[#E06072]/10 border-[#E06072]/30 text-[#E06072]",
     amber: "bg-amber-500/10 border-amber-500/30 text-amber-400",
     red: "bg-red-500/10 border-red-500/30 text-red-400",
     green: "bg-emerald-500/10 border-emerald-500/30 text-emerald-400",
@@ -104,7 +104,7 @@ function SectionHeader({
         </span>
       </div>
       {badge !== undefined && badge > 0 && (
-        <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-[#4FE3C1]/20 text-[#4FE3C1]">
+        <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-[#4FA1D8]/20 text-[#4FA1D8]">
           {badge}
         </span>
       )}
@@ -198,11 +198,11 @@ function SidebarContentComponent({
       >
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-[#4FE3C1]/20 to-[#3A6DFF]/20 border border-[#4FE3C1]/20">
-              <Filter className="h-4 w-4 text-[#4FE3C1]" />
+            <div className="p-2 rounded-xl bg-gradient-to-br from-[#4FA1D8]/20 to-[#4FA1D8]/20 border border-[#4FA1D8]/20">
+              <Filter className="h-4 w-4 text-[#4FA1D8]" />
             </div>
             {activeFiltersCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-[9px] font-bold rounded-full bg-[#4FE3C1] text-[#0E0F11]">
+              <span className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-[9px] font-bold rounded-full bg-[#4FA1D8] text-[#0E0F11]">
                 {activeFiltersCount}
               </span>
             )}
@@ -233,11 +233,11 @@ function SidebarContentComponent({
         className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10 p-4"
       >
         {/* Subtle gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#4FE3C1]/5 via-transparent to-[#A06BFF]/5 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#4FA1D8]/5 via-transparent to-[#4FA1D8]/5 pointer-events-none" />
 
         <div className="relative">
           <SectionHeader
-            icon={<CalendarDays className="h-3.5 w-3.5 text-[#4FE3C1]" />}
+            icon={<CalendarDays className="h-3.5 w-3.5 text-[#4FA1D8]" />}
             title="Fecha"
           />
 
@@ -246,7 +246,7 @@ function SidebarContentComponent({
             <div className="flex items-center justify-center gap-2 mb-1">
               <span className="text-3xl font-bold text-white">{formattedDate.day}</span>
               {formattedDate.isToday && (
-                <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-[#4FE3C1]/20 text-[#4FE3C1] border border-[#4FE3C1]/30">
+                <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-[#4FA1D8]/20 text-[#4FA1D8] border border-[#4FA1D8]/30">
                   Hoy
                 </span>
               )}
@@ -275,8 +275,8 @@ function SidebarContentComponent({
               className={cn(
                 "flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-all duration-200",
                 formattedDate.isToday
-                  ? "bg-[#4FE3C1]/20 border-[#4FE3C1]/30 text-[#4FE3C1]"
-                  : "bg-gradient-to-r from-[#4FE3C1]/10 to-[#3A6DFF]/10 border-[#4FE3C1]/20 text-white hover:from-[#4FE3C1]/20 hover:to-[#3A6DFF]/20"
+                  ? "bg-[#4FA1D8]/20 border-[#4FA1D8]/30 text-[#4FA1D8]"
+                  : "bg-gradient-to-r from-[#4FA1D8]/10 to-[#4FA1D8]/10 border-[#4FA1D8]/20 text-white hover:from-[#4FA1D8]/20 hover:to-[#4FA1D8]/20"
               )}
             >
               <Clock className="h-3.5 w-3.5" />
@@ -321,7 +321,7 @@ function SidebarContentComponent({
             type="date"
             value={selectedDate}
             onChange={(e) => onDateSelect(e.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white transition-all duration-200 hover:border-white/20 focus:border-[#4FE3C1]/50 focus:outline-none focus:ring-2 focus:ring-[#4FE3C1]/20 cursor-pointer"
+            className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white transition-all duration-200 hover:border-white/20 focus:border-[#4FA1D8]/50 focus:outline-none focus:ring-2 focus:ring-[#4FA1D8]/20 cursor-pointer"
           />
         </div>
       </motion.div>
@@ -335,7 +335,7 @@ function SidebarContentComponent({
         transition={{ delay: 0.1 }}
       >
         <SectionHeader
-          icon={<CreditCard className="h-3.5 w-3.5 text-[#A06BFF]" />}
+          icon={<CreditCard className="h-3.5 w-3.5 text-[#4FA1D8]" />}
           title="Pagos"
           badge={filters.payment.length}
         />
@@ -366,7 +366,7 @@ function SidebarContentComponent({
         transition={{ delay: 0.15 }}
       >
         <SectionHeader
-          icon={<CheckCircle className="h-3.5 w-3.5 text-[#3A6DFF]" />}
+          icon={<CheckCircle className="h-3.5 w-3.5 text-[#4FA1D8]" />}
           title="Estado de citas"
           badge={filters.status.length}
         />
@@ -399,7 +399,7 @@ function SidebarContentComponent({
         transition={{ delay: 0.2 }}
       >
         <SectionHeader
-          icon={<Sparkles className="h-3.5 w-3.5 text-[#FF6DA3]" />}
+          icon={<Sparkles className="h-3.5 w-3.5 text-[#E06072]" />}
           title="Especiales"
           badge={filters.highlighted ? 1 : 0}
         />
@@ -533,8 +533,8 @@ export function AgendaSidebar({
             className={cn(
               "fixed right-6 z-[55] p-4 rounded-2xl",
               "bottom-[calc(var(--bottom-nav-offset)+1.5rem)]",
-              "bg-gradient-to-br from-[#4FE3C1]/90 to-[#3A6DFF]/90",
-              "text-white shadow-lg shadow-[#4FE3C1]/25",
+              "bg-gradient-to-br from-[#4FA1D8]/90 to-[#4FA1D8]/90",
+              "text-white shadow-lg shadow-[#4FA1D8]/25",
               "backdrop-blur-xl transition-all duration-300",
               "border border-white/20"
             )}
@@ -589,17 +589,17 @@ export function AgendaSidebar({
             onClick={() => setIsCollapsed(false)}
             className={cn(
               "p-3 rounded-xl transition-all duration-200",
-              "bg-gradient-to-br from-[#4FE3C1]/10 to-[#3A6DFF]/10",
-              "border border-[#4FE3C1]/20",
-              "text-[#4FE3C1] hover:text-white",
-              "hover:from-[#4FE3C1]/20 hover:to-[#3A6DFF]/20"
+              "bg-gradient-to-br from-[#4FA1D8]/10 to-[#4FA1D8]/10",
+              "border border-[#4FA1D8]/20",
+              "text-[#4FA1D8] hover:text-white",
+              "hover:from-[#4FA1D8]/20 hover:to-[#4FA1D8]/20"
             )}
             aria-label="Expandir filtros"
           >
             <div className="relative">
               <Filter className="h-5 w-5" />
               {activeFiltersCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center text-[9px] font-bold rounded-full bg-[#4FE3C1] text-[#0E0F11]">
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center text-[9px] font-bold rounded-full bg-[#4FA1D8] text-[#0E0F11]">
                   {activeFiltersCount}
                 </span>
               )}

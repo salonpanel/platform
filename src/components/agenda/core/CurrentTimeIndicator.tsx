@@ -55,7 +55,7 @@ export function CurrentTimeIndicator({ currentMinutes, startHour = 8, endHour = 
         className="absolute left-3 right-0 top-0"
         style={{
           height: "1.5px",
-          background: "linear-gradient(to right, #4FE3C1, rgba(79,227,193,0.15))",
+          background: "linear-gradient(to right, #4FA1D8, rgba(79,161,216,0.15))",
         }}
       />
 
@@ -64,7 +64,7 @@ export function CurrentTimeIndicator({ currentMinutes, startHour = 8, endHour = 
         {/* Pulse ring */}
         {pulse && (
           <div
-            className="absolute inset-0 rounded-full bg-[#4FE3C1]/40"
+            className="absolute inset-0 rounded-full bg-[#4FA1D8]/40"
             style={{
               width: "20px",
               height: "20px",
@@ -76,15 +76,15 @@ export function CurrentTimeIndicator({ currentMinutes, startHour = 8, endHour = 
         )}
         {/* Core dot */}
         <div
-          className="w-2.5 h-2.5 bg-[#4FE3C1] rounded-full"
-          style={{ boxShadow: "0 0 8px rgba(79,227,193,0.9), 0 0 2px rgba(79,227,193,1)" }}
+          className="w-2.5 h-2.5 bg-[#4FA1D8] rounded-full"
+          style={{ boxShadow: "0 0 8px rgba(79,161,216,0.9), 0 0 2px rgba(79,161,216,1)" }}
         />
       </div>
 
       {/* Time label */}
       <div
         className="absolute left-5 -top-3 px-1.5 py-0.5 rounded text-[9px] font-bold font-mono tracking-tight text-black select-none"
-        style={{ background: "#4FE3C1" }}
+        style={{ background: "#4FA1D8" }}
       >
         {displayTime}
       </div>

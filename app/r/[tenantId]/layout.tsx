@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ tenantId:
     }
 
     return {
-        title: `${tenant.name} - Reserva Online`,
+        title: `${tenant.name} — Reserva Online`,
         description: `Reserva tu cita en ${tenant.name} de forma rápida y sencilla.`,
     };
 }
@@ -32,10 +32,10 @@ export default async function PublicTenantLayout({
     const pwaEnabled = process.env.NEXT_PUBLIC_PWA_ENABLED === "true";
     if (!pwaEnabled) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-800">
-                <div className="text-center p-6">
-                    <h1 className="text-3xl font-bold mb-4">Próximamente</h1>
-                    <p className="text-slate-500">
+            <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#05070a", color: "#f2f5fa" }}>
+                <div style={{ textAlign: "center", padding: "24px" }}>
+                    <h1 style={{ fontSize: "28px", fontWeight: 700, marginBottom: "12px" }}>Próximamente</h1>
+                    <p style={{ color: "#8898aa", fontSize: "15px" }}>
                         El sistema de reservas online estará disponible muy pronto.
                     </p>
                 </div>
@@ -47,17 +47,24 @@ export default async function PublicTenantLayout({
     const tenant = await getPublicTenant(tenantId);
 
     if (!tenant) {
-        notFound(); // Triggers 404 page
+        notFound();
     }
 
     if (!tenant.is_active) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="text-center max-w-sm p-6 bg-white rounded-2xl shadow-sm border border-slate-100">
-                    <h1 className="text-xl font-bold text-slate-900 mb-2">
+            <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#05070a" }}>
+                <div style={{
+                    textAlign: "center",
+                    maxWidth: "360px",
+                    padding: "32px",
+                    background: "#0f131b",
+                    border: "1px solid #1d2430",
+                    borderRadius: "20px",
+                }}>
+                    <h1 style={{ fontSize: "20px", fontWeight: 700, color: "#f2f5fa", marginBottom: "8px" }}>
                         {tenant.name}
                     </h1>
-                    <p className="text-slate-500">
+                    <p style={{ color: "#8898aa", fontSize: "14px", lineHeight: 1.6 }}>
                         Este negocio no está disponible momentáneamente. Por favor contacta directamente con el centro.
                     </p>
                 </div>
@@ -66,23 +73,18 @@ export default async function PublicTenantLayout({
     }
 
     // 3. Render Public Layout with Branding
-    // We use CSS variables for theming which pass down to all children
-    const brandColor = tenant.settings.brand_color || "#0f172a";
+    const brandColor = tenant.primary_color || "#4FA1D8";
 
     return (
         <div
-            className="min-h-screen bg-slate-50 text-slate-900 font-sans"
-            style={
-                {
-                    "--tenant-brand": brandColor,
-                } as React.CSSProperties
-            }
+            style={{
+                minHeight: "100vh",
+                background: "#05070a",
+                color: "#f2f5fa",
+                fontFamily: "var(--font-sans, 'Geist', system-ui, sans-serif)",
+                "--tenant-brand": brandColor,
+            } as React.CSSProperties}
         >
-            {/* 
-        Ideally we would wrap this in a <PublicTenantProvider> 
-        but for Phase 12.1 infra, simple props/css is enough. 
-        We rely on the children pages to fetch specific data or we could pass it down via context if we implement one.
-      */}
             {children}
         </div>
     );

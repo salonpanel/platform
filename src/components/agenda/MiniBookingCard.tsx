@@ -70,7 +70,7 @@ export function MiniBookingCard({
       whileHover={onClick ? {
         scale: 1.02,
         y: -2,
-        boxShadow: "0 8px 25px -8px rgba(79, 227, 193, 0.25), 0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+        boxShadow: "0 8px 25px -8px rgba(79, 161, 216, 0.25), 0 4px 6px -1px rgba(0, 0, 0, 0.1)"
       } : undefined}
       whileTap={onClick ? { scale: 0.98 } : undefined}
       onClick={onClick}

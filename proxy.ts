@@ -130,6 +130,7 @@ export async function proxy(request: NextRequest) {
     }
 
     // C. TENANT DOMAIN ({tenant}.bookfast.es) -> Portal Público
+    // Ej: barberia.bookfast.es → sirve /r/[subdomain][path]
     if (hostType === "tenant" && subdomain) {
         // PROTECCIÓN: Bloquear panel y admin
         if (path.startsWith("/panel")) {
@@ -139,12 +140,23 @@ export async function proxy(request: NextRequest) {
             return NextResponse.redirect(new URL("https://admin.bookfast.es"));
         }
 
-        // REWRITE: Root -> /r/[subdomain]
-        if (path === "/") {
-            return NextResponse.rewrite(new URL(`/r/${subdomain}`, request.url));
+        // Pasar sin reescribir rutas internas (/r/...), API, assets
+        if (
+            path.startsWith("/r/") ||
+            path.startsWith("/api/") ||
+            path.startsWith("/_next/") ||
+            path.startsWith("/static/")
+        ) {
+            return response;
         }
 
-        return response;
+        // REWRITE: Cualquier ruta pública → /r/[subdomain][path]
+        // Ej: /               → /r/barberia
+        //     /servicios       → /r/barberia/servicios
+        //     /reservar        → /r/barberia/reservar
+        //     /mis-citas       → /r/barberia/mis-citas
+        const internalPath = path === "/" ? `/r/${subdomain}` : `/r/${subdomain}${path}`;
+        return NextResponse.rewrite(new URL(internalPath, request.url));
     }
 
     // D. MARKETING / WWW (Default)

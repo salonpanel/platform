@@ -28,6 +28,13 @@ import { buildGetCustomerDetailTool } from "./read/customer-detail";
 import { buildGetBookingDetailTool } from "./read/booking-detail";
 import { buildListStaffTool } from "./read/list-staff";
 import { buildFindAvailableSlotsTool } from "./read/find-available-slots";
+import { buildGetTopCustomersTool } from "./read/top-customers";
+import { buildGetTopServicesTool } from "./read/top-services";
+import { buildGetStaffPerformanceTool } from "./read/staff-performance";
+import { buildListBookingsRangeTool } from "./read/list-bookings-range";
+import { buildListStaffBlockingsTool } from "./read/list-staff-blockings";
+import { buildGetStaffScheduleTool } from "./read/staff-schedule";
+import { buildListPaymentsTool } from "./read/list-payments";
 
 // WRITE
 import { buildCreateServiceTool } from "./write/create-service";
@@ -39,6 +46,11 @@ import { buildCancelBookingTool } from "./write/cancel-booking";
 import { buildRescheduleBookingTool } from "./write/reschedule-booking";
 import { buildMarkBookingPaidTool } from "./write/mark-booking-paid";
 import { buildMarkBookingNoShowTool } from "./write/mark-booking-no-show";
+import { buildBlockStaffTimeTool } from "./write/block-staff-time";
+import { buildAddCustomerNoteTool } from "./write/add-customer-note";
+import { buildConfirmBookingTool } from "./write/confirm-booking";
+import { buildCompleteBookingTool } from "./write/complete-booking";
+import { buildDeleteStaffBlockingTool } from "./write/delete-staff-blocking";
 
 export interface ToolRuntimeContext {
   tenantId: string;
@@ -77,6 +89,13 @@ export function buildToolSet(
     get_booking_detail: buildGetBookingDetailTool(ctx, tz),
     list_staff: buildListStaffTool(ctx),
     find_available_slots: buildFindAvailableSlotsTool(ctx, tz),
+    get_top_customers: buildGetTopCustomersTool(ctx),
+    get_top_services: buildGetTopServicesTool(ctx),
+    get_staff_performance: buildGetStaffPerformanceTool(ctx),
+    list_bookings_range: buildListBookingsRangeTool(ctx, tz),
+    list_staff_blockings: buildListStaffBlockingsTool(ctx, tz),
+    get_staff_schedule: buildGetStaffScheduleTool(ctx),
+    list_payments: buildListPaymentsTool(ctx, tz),
 
     // WRITE — patrón preview (sin confirm) → confirm=true.
     create_service: buildCreateServiceTool(ctx),
@@ -88,5 +107,10 @@ export function buildToolSet(
     reschedule_booking: buildRescheduleBookingTool(ctx, tz),
     mark_booking_paid: buildMarkBookingPaidTool(ctx, tz),
     mark_booking_no_show: buildMarkBookingNoShowTool(ctx, tz),
+    block_staff_time: buildBlockStaffTimeTool(ctx, tz),
+    add_customer_note: buildAddCustomerNoteTool(ctx),
+    confirm_booking: buildConfirmBookingTool(ctx, tz),
+    complete_booking: buildCompleteBookingTool(ctx, tz),
+    delete_staff_blocking: buildDeleteStaffBlockingTool(ctx, tz),
   };
 }

@@ -87,7 +87,7 @@ export function AddMembersModal({
 					<button
 						onClick={handleAdd}
 						disabled={selectedUserIds.length === 0 || adding}
-						className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#3A6DFF] to-[#7B5CFF] text-sm font-semibold text-white shadow-[0_10px_30px_rgba(66,92,255,0.35)] disabled:opacity-50 disabled:cursor-not-allowed"
+						className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#4FA1D8] to-[#7B5CFF] text-sm font-semibold text-white shadow-[0_10px_30px_rgba(66,92,255,0.35)] disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						{adding ? "Añadiendo..." : `Añadir ${selectedUserIds.length > 0 ? `(${selectedUserIds.length})` : ""}`}
 					</button>
@@ -103,7 +103,7 @@ export function AddMembersModal({
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
 						placeholder="Buscar por nombre o rol..."
-						className="w-full rounded-xl border border-white/10 bg-white/5 px-10 py-2 text-sm text-white placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[#3A6DFF]"
+						className="w-full rounded-xl border border-white/10 bg-white/5 px-10 py-2 text-sm text-white placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[#4FA1D8]"
 					/>
 				</div>
 
@@ -120,13 +120,13 @@ export function AddMembersModal({
 								className={cn(
 									"flex items-center gap-3 rounded-xl border px-3 py-2 cursor-pointer transition-smooth",
 									selectedUserIds.includes(member.userId)
-										? "border-[#3A6DFF] bg-[#3A6DFF]/10"
+										? "border-[#4FA1D8] bg-[#4FA1D8]/10"
 										: "border-white/10 hover:border-white/20"
 								)}
 							>
 								<input
 									type="checkbox"
-									className="accent-[#3A6DFF]"
+									className="accent-[#4FA1D8]"
 									checked={selectedUserIds.includes(member.userId)}
 									onChange={() => handleToggleUser(member.userId)}
 								/>

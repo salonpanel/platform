@@ -435,7 +435,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
           >
             {/* KPI: Reservas - Label dinámico según periodo */}
             <motion.div
-              whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(79,227,193,0.12)" }}
+              whileHover={{ y: -1, boxShadow: "0 12px 40px rgba(79,161,216,0.12)" }}
               onClick={() => router.push("/panel/agenda")}
               className="cursor-pointer glass min-w-0 rounded-lg sm:rounded-xl p-2 sm:p-3.5 lg:p-4 border border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.03] transition-all duration-200"
             >

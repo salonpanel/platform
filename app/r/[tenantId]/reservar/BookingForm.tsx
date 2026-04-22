@@ -7,9 +7,11 @@ import { PublicService } from "@/lib/tenant/public-api";
 export default function BookingForm({
     tenantId,
     service,
+    brandColor = "#4FA1D8",
 }: {
     tenantId: string;
     service: PublicService;
+    brandColor?: string;
 }) {
     const [step, setStep] = useState<"slot" | "details" | "success">("slot");
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]);
@@ -19,6 +21,7 @@ export default function BookingForm({
     const [bookingId, setBookingId] = useState<string | null>(null);
     const [redirecting, setRedirecting] = useState(false);
     const [formError, setFormError] = useState<string | null>(null);
+    const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string }>({});
 
     const [guest, setGuest] = useState({ name: "", email: "", phone: "" });
     const [submitting, setSubmitting] = useState(false);
@@ -64,61 +67,12 @@ export default function BookingForm({
         setFormError(null);
         try {
             const { url } = await createCheckoutSessionAction(bookingId);
-            if (url) {
-                window.location.href = url;
-            }
+            if (url) window.location.href = url;
         } catch (err: any) {
             setFormError(err?.message || "Error al iniciar el pago. Inténtalo de nuevo.");
             setRedirecting(false);
         }
     };
-
-    if (step === "success") {
-        return (
-            <div className="text-center p-8 bg-green-50 rounded-2xl border border-green-100">
-                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                </div>
-                <h2 className="text-xl font-bold text-green-900 mb-2">¡Reserva Recibida!</h2>
-                <p className="text-green-700 mb-4">
-                    Hemos recibido tu solicitud de cita para el <strong>{selectedSlot ? new Date(selectedSlot).toLocaleString() : ""}</strong>.
-                </p>
-                <p className="text-sm text-green-600 mb-6">
-                    Revisa tu email ({guest.email}) para confirmar la reserva.
-                </p>
-
-                <div className="space-y-3">
-                    {formError && (
-                        <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
-                            {formError}
-                        </div>
-                    )}
-                    <button
-                        onClick={handlePayment}
-                        disabled={redirecting}
-                        className="w-full py-3 rounded-xl bg-slate-900 text-white font-bold shadow-lg hover:shadow-xl transition-all disabled:opacity-70"
-                        style={{ backgroundColor: "var(--tenant-brand)" }}
-                    >
-                        {redirecting ? "Redirigiendo a Stripe..." : "Pagar Ahora (Stripe)"}
-                    </button>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="w-full py-3 text-slate-400 font-medium"
-                    >
-                        Volver al inicio
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    const formatTime = (iso: string) => {
-        return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    };
-
-    const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string }>({});
 
     const validateField = (field: "name" | "email", value: string) => {
         if (field === "name" && value.trim().length < 2) {
@@ -130,55 +84,162 @@ export default function BookingForm({
         }
     };
 
+    const formatTime = (iso: string) =>
+        new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+    // ── Success screen ──
+    if (step === "success") {
+        return (
+            <div style={{ textAlign: "center", padding: "32px 24px", background: "#0f131b", border: "1px solid #1d2430", borderRadius: "20px" }}>
+                <div style={{
+                    width: "64px", height: "64px",
+                    borderRadius: "50%",
+                    background: "#1EA19F22",
+                    border: "1px solid #1EA19F44",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    margin: "0 auto 16px",
+                    fontSize: "28px",
+                }}>✓</div>
+                <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#f2f5fa", margin: "0 0 8px" }}>¡Reserva recibida!</h2>
+                <p style={{ fontSize: "14px", color: "#8898aa", margin: "0 0 6px", lineHeight: 1.6 }}>
+                    Solicitud de cita para el{" "}
+                    <strong style={{ color: "#c9d6e3" }}>
+                        {selectedSlot ? new Date(selectedSlot).toLocaleString("es-ES", { dateStyle: "long", timeStyle: "short" }) : ""}
+                    </strong>
+                </p>
+                <p style={{ fontSize: "13px", color: "#4a5568", margin: "0 0 24px" }}>
+                    Revisa tu email ({guest.email}) para confirmar.
+                </p>
+
+                {formError && (
+                    <div style={{ padding: "12px 16px", borderRadius: "12px", background: "#ff000015", border: "1px solid #ff000030", color: "#f87171", fontSize: "13px", marginBottom: "16px" }}>
+                        {formError}
+                    </div>
+                )}
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    <button
+                        onClick={handlePayment}
+                        disabled={redirecting}
+                        style={{
+                            width: "100%",
+                            padding: "14px",
+                            borderRadius: "12px",
+                            background: brandColor,
+                            color: "#fff",
+                            fontWeight: 700,
+                            fontSize: "15px",
+                            border: "none",
+                            cursor: "pointer",
+                            opacity: redirecting ? 0.7 : 1,
+                        }}
+                    >
+                        {redirecting ? "Redirigiendo a Stripe..." : "Pagar ahora"}
+                    </button>
+                    <button
+                        onClick={() => window.location.reload()}
+                        style={{
+                            width: "100%",
+                            padding: "12px",
+                            borderRadius: "12px",
+                            background: "transparent",
+                            color: "#8898aa",
+                            fontWeight: 500,
+                            fontSize: "14px",
+                            border: "none",
+                            cursor: "pointer",
+                        }}
+                    >
+                        Volver al inicio
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // ── Shared input style ──
+    const inputStyle: React.CSSProperties = {
+        width: "100%",
+        padding: "12px 14px",
+        borderRadius: "12px",
+        background: "#0f131b",
+        border: "1px solid #1d2430",
+        color: "#f2f5fa",
+        fontSize: "14px",
+        outline: "none",
+        boxSizing: "border-box",
+        appearance: "none",
+        WebkitAppearance: "none",
+    };
+
+    const labelStyle: React.CSSProperties = {
+        display: "block",
+        fontSize: "12px",
+        fontWeight: 600,
+        color: "#8898aa",
+        marginBottom: "6px",
+        textTransform: "uppercase",
+        letterSpacing: "0.06em",
+    };
+
     return (
-        <div className="space-y-6">
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+
             {/* Step 1: Slot Selection */}
             {step === "slot" && (
-                <div className="space-y-4">
+                <>
                     <div>
-                        <label htmlFor="booking-date" className="block text-sm font-medium text-slate-700 mb-1">Fecha</label>
+                        <label htmlFor="booking-date" style={labelStyle}>Fecha</label>
                         <input
                             id="booking-date"
                             type="date"
-                            className="w-full p-3 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-blue-500 outline-none"
                             value={selectedDate}
                             min={new Date().toISOString().split("T")[0]}
                             onChange={(e) => { setSelectedDate(e.target.value); setSelectedSlot(null); }}
+                            style={{ ...inputStyle, colorScheme: "dark" }}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Horas Disponibles</label>
+                        <label style={labelStyle}>Horas disponibles</label>
                         {loadingSlots ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2" aria-label="Cargando horas disponibles">
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
                                 {Array.from({ length: 6 }).map((_, i) => (
-                                    <div key={i} className="h-12 rounded-lg bg-slate-100 animate-pulse" />
+                                    <div key={i} style={{ height: "48px", borderRadius: "10px", background: "#0f131b", animation: "pulse 1.5s infinite" }} />
                                 ))}
                             </div>
                         ) : slots.length === 0 ? (
-                            <div className="flex flex-col items-center gap-2 p-6 bg-slate-100 rounded-xl text-slate-500">
-                                <svg className="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <span className="text-sm">No hay horas disponibles para esta fecha.</span>
-                                <span className="text-xs text-slate-400">Prueba con otro día.</span>
+                            <div style={{ textAlign: "center", padding: "32px 16px", background: "#0f131b", border: "1px solid #1d2430", borderRadius: "14px" }}>
+                                <div style={{ fontSize: "28px", marginBottom: "8px" }}>📅</div>
+                                <p style={{ fontSize: "14px", color: "#8898aa", margin: "0 0 4px" }}>No hay horas disponibles</p>
+                                <p style={{ fontSize: "12px", color: "#4a5568", margin: 0 }}>Prueba con otro día.</p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                {slots.map((slot) => (
-                                    <button
-                                        key={slot.slot_time}
-                                        onClick={() => setSelectedSlot(slot.slot_time)}
-                                        className={`min-h-[48px] rounded-lg text-sm font-medium transition-all active:scale-[0.97] ${selectedSlot === slot.slot_time
-                                            ? 'bg-blue-600 text-white shadow-lg ring-2 ring-blue-600 ring-offset-2'
-                                            : 'bg-white border border-slate-200 text-slate-700 hover:border-blue-400'
-                                            }`}
-                                        style={selectedSlot === slot.slot_time ? { backgroundColor: "var(--tenant-brand)" } : {}}
-                                        aria-pressed={selectedSlot === slot.slot_time}
-                                    >
-                                        {formatTime(slot.slot_time)}
-                                    </button>
-                                ))}
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
+                                {slots.map((slot) => {
+                                    const isSelected = selectedSlot === slot.slot_time;
+                                    return (
+                                        <button
+                                            key={slot.slot_time}
+                                            onClick={() => setSelectedSlot(slot.slot_time)}
+                                            disabled={!slot.available}
+                                            style={{
+                                                minHeight: "48px",
+                                                borderRadius: "10px",
+                                                fontSize: "13px",
+                                                fontWeight: 600,
+                                                border: isSelected ? `2px solid ${brandColor}` : "1px solid #1d2430",
+                                                background: isSelected ? brandColor + "22" : "#0f131b",
+                                                color: isSelected ? brandColor : slot.available ? "#c9d6e3" : "#4a5568",
+                                                cursor: slot.available ? "pointer" : "not-allowed",
+                                                opacity: slot.available ? 1 : 0.4,
+                                                transition: "all 0.15s",
+                                            }}
+                                        >
+                                            {formatTime(slot.slot_time)}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -186,34 +247,61 @@ export default function BookingForm({
                     <button
                         disabled={!selectedSlot}
                         onClick={() => setStep("details")}
-                        className="w-full py-4 rounded-xl bg-slate-900 text-white font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed mt-4 active:scale-[0.98] transition-transform"
-                        style={{ backgroundColor: "var(--tenant-brand)" }}
+                        style={{
+                            width: "100%",
+                            padding: "16px",
+                            borderRadius: "14px",
+                            background: brandColor,
+                            color: "#fff",
+                            fontWeight: 700,
+                            fontSize: "16px",
+                            border: "none",
+                            cursor: selectedSlot ? "pointer" : "not-allowed",
+                            opacity: selectedSlot ? 1 : 0.4,
+                            marginTop: "4px",
+                        }}
                     >
                         Continuar
                     </button>
-                </div>
+                </>
             )}
 
+            {/* Step 2: Guest Details */}
             {step === "details" && (
-                <form onSubmit={handleSubmit} className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
+                    {/* Selected slot reminder */}
+                    <div style={{
+                        padding: "12px 16px",
+                        background: brandColor + "15",
+                        border: `1px solid ${brandColor}33`,
+                        borderRadius: "12px",
+                        fontSize: "13px",
+                        color: brandColor,
+                        fontWeight: 500,
+                    }}>
+                        📅 {selectedSlot ? new Date(selectedSlot).toLocaleString("es-ES", { dateStyle: "long", timeStyle: "short" }) : ""}
+                    </div>
+
                     <div>
-                        <label htmlFor="guest-name" className="block text-sm font-medium text-slate-700 mb-1">Nombre Completo</label>
+                        <label htmlFor="guest-name" style={labelStyle}>Nombre completo</label>
                         <input
                             id="guest-name"
                             type="text"
                             required
                             autoComplete="name"
                             autoCapitalize="words"
-                            className={`w-full p-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition-shadow ${fieldErrors.name ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
                             placeholder="Ej: Juan Pérez"
                             value={guest.name}
                             onChange={e => setGuest({ ...guest, name: e.target.value })}
                             onBlur={e => validateField("name", e.target.value)}
+                            style={{ ...inputStyle, borderColor: fieldErrors.name ? "#f87171" : "#1d2430" }}
                         />
-                        {fieldErrors.name && <p className="mt-1 text-xs text-red-600">{fieldErrors.name}</p>}
+                        {fieldErrors.name && <p style={{ fontSize: "12px", color: "#f87171", margin: "4px 0 0" }}>{fieldErrors.name}</p>}
                     </div>
+
                     <div>
-                        <label htmlFor="guest-email" className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                        <label htmlFor="guest-email" style={labelStyle}>Email</label>
                         <input
                             id="guest-email"
                             type="email"
@@ -222,59 +310,72 @@ export default function BookingForm({
                             autoCapitalize="none"
                             autoCorrect="off"
                             spellCheck={false}
-                            className={`w-full p-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition-shadow ${fieldErrors.email ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
                             placeholder="juan@ejemplo.com"
                             value={guest.email}
                             onChange={e => setGuest({ ...guest, email: e.target.value })}
                             onBlur={e => validateField("email", e.target.value)}
+                            style={{ ...inputStyle, borderColor: fieldErrors.email ? "#f87171" : "#1d2430" }}
                         />
-                        {fieldErrors.email && <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>}
+                        {fieldErrors.email && <p style={{ fontSize: "12px", color: "#f87171", margin: "4px 0 0" }}>{fieldErrors.email}</p>}
                     </div>
+
                     <div>
-                        <label htmlFor="guest-phone" className="block text-sm font-medium text-slate-700 mb-1">
-                            Teléfono <span className="text-slate-400 font-normal">(Opcional)</span>
+                        <label htmlFor="guest-phone" style={labelStyle}>
+                            Teléfono <span style={{ color: "#4a5568", textTransform: "none", fontWeight: 400 }}>(Opcional)</span>
                         </label>
                         <input
                             id="guest-phone"
                             type="tel"
                             autoComplete="tel"
                             inputMode="tel"
-                            className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-shadow"
                             placeholder="+34 600 000 000"
                             value={guest.phone}
                             onChange={e => setGuest({ ...guest, phone: e.target.value })}
+                            style={inputStyle}
                         />
                     </div>
 
                     {formError && (
-                        <div role="alert" className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+                        <div role="alert" style={{ padding: "12px 16px", borderRadius: "12px", background: "#ff000015", border: "1px solid #ff000030", color: "#f87171", fontSize: "13px" }}>
                             {formError}
                         </div>
                     )}
 
-                    <div className="flex gap-3 pt-4">
+                    <div style={{ display: "flex", gap: "10px", paddingTop: "4px" }}>
                         <button
                             type="button"
                             onClick={() => setStep("slot")}
-                            className="flex-1 py-4 rounded-xl bg-slate-100 text-slate-600 font-bold active:scale-[0.98] transition-transform"
+                            style={{
+                                flex: 1,
+                                padding: "14px",
+                                borderRadius: "12px",
+                                background: "#0f131b",
+                                border: "1px solid #1d2430",
+                                color: "#8898aa",
+                                fontWeight: 600,
+                                fontSize: "14px",
+                                cursor: "pointer",
+                            }}
                         >
                             Atrás
                         </button>
                         <button
                             type="submit"
                             disabled={submitting || Object.keys(fieldErrors).length > 0}
-                            className="flex-[2] py-4 rounded-xl bg-slate-900 text-white font-bold shadow-lg disabled:opacity-70 active:scale-[0.98] transition-transform"
-                            style={{ backgroundColor: "var(--tenant-brand)" }}
+                            style={{
+                                flex: 2,
+                                padding: "14px",
+                                borderRadius: "12px",
+                                background: brandColor,
+                                border: "none",
+                                color: "#fff",
+                                fontWeight: 700,
+                                fontSize: "15px",
+                                cursor: submitting ? "not-allowed" : "pointer",
+                                opacity: (submitting || Object.keys(fieldErrors).length > 0) ? 0.7 : 1,
+                            }}
                         >
-                            {submitting ? (
-                                <span className="flex items-center justify-center gap-2">
-                                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                    </svg>
-                                    Confirmando...
-                                </span>
-                            ) : "Confirmar Reserva"}
+                            {submitting ? "Confirmando..." : "Confirmar reserva"}
                         </button>
                     </div>
                 </form>

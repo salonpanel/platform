@@ -24,22 +24,22 @@ export const theme = {
     textTertiary: "#9ca3af",
     
     // Acentos
-    accentBlue: "#3A6DFF",
-    accentAqua: "#4FE3C1",
-    accentPurple: "#A06BFF",
-    accentPink: "#FF6DA3",
+    accentBlue: "#4FA1D8",
+    accentAqua: "#4FA1D8",
+    accentPurple: "#4FA1D8",
+    accentPink: "#E06072",
     
     // Estados de citas (pastel)
     statusPending: "rgba(255, 193, 7, 0.2)", // Amarillo suave
-    statusConfirmed: "rgba(79, 227, 193, 0.2)", // Verde pastel
+    statusConfirmed: "rgba(79, 161, 216, 0.2)", // Verde pastel
     statusCancelled: "rgba(239, 68, 68, 0.2)", // Rojo suave
-    statusNoShow: "rgba(255, 109, 163, 0.2)", // Rosa apagado
-    statusCompleted: "rgba(58, 109, 255, 0.2)", // Azul suave
+    statusNoShow: "rgba(224, 96, 114, 0.2)", // Rosa apagado
+    statusCompleted: "rgba(79, 161, 216, 0.2)", // Azul suave
     
     // Bordes
     borderDefault: "rgba(255,255,255,0.06)",
     borderHover: "rgba(255,255,255,0.1)",
-    borderFocus: "rgba(58, 109, 255, 0.3)",
+    borderFocus: "rgba(79, 161, 216, 0.3)",
   },
   
   typography: {
@@ -92,7 +92,7 @@ export const theme = {
     lg: "0px 6px 20px rgba(0,0,0,0.45)",
     xl: "0px 8px 32px rgba(0,0,0,0.5)",
     glass: "0px 4px 20px rgba(0,0,0,0.15), inset 0px 1px 0px rgba(255,255,255,0.05)",
-    neon: "0px 0px 20px rgba(58, 109, 255, 0.4)",
+    neon: "0px 0px 20px rgba(79, 161, 216, 0.4)",
   },
   
   animations: {
@@ -123,10 +123,10 @@ export const theme = {
       shadow: "0px 2px 8px rgba(255, 193, 7, 0.15)"
     },
     confirmed: {
-      bg: "rgba(79, 227, 193, 0.12)",
-      border: "rgba(79, 227, 193, 0.25)",
-      text: "#4FE3C1",
-      shadow: "0px 2px 8px rgba(79, 227, 193, 0.15)"
+      bg: "rgba(79, 161, 216, 0.12)",
+      border: "rgba(79, 161, 216, 0.25)",
+      text: "#4FA1D8",
+      shadow: "0px 2px 8px rgba(79, 161, 216, 0.15)"
     },
     cancelled: {
       bg: "rgba(239, 68, 68, 0.12)",
@@ -135,16 +135,16 @@ export const theme = {
       shadow: "0px 2px 8px rgba(239, 68, 68, 0.15)"
     },
     completed: {
-      bg: "rgba(58, 109, 255, 0.12)",
-      border: "rgba(58, 109, 255, 0.25)",
-      text: "#3A6DFF",
-      shadow: "0px 2px 8px rgba(58, 109, 255, 0.15)"
+      bg: "rgba(79, 161, 216, 0.12)",
+      border: "rgba(79, 161, 216, 0.25)",
+      text: "#4FA1D8",
+      shadow: "0px 2px 8px rgba(79, 161, 216, 0.15)"
     },
     "no-show": {
-      bg: "rgba(255, 109, 163, 0.12)",
-      border: "rgba(255, 109, 163, 0.25)",
-      text: "#FF6DA3",
-      shadow: "0px 2px 8px rgba(255, 109, 163, 0.15)"
+      bg: "rgba(224, 96, 114, 0.12)",
+      border: "rgba(224, 96, 114, 0.25)",
+      text: "#E06072",
+      shadow: "0px 2px 8px rgba(224, 96, 114, 0.15)"
     }
   },
 } as const;

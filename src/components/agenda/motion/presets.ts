@@ -45,7 +45,7 @@ export const interactionPresets = {
     hover: {
       scale: 1.02,
       y: -2,
-      boxShadow: "0px 4px 20px rgba(58,109,255,0.25), inset 0px 1px 0px rgba(255,255,255,0.1)",
+      boxShadow: "0px 4px 20px rgba(79,161,216,0.25), inset 0px 1px 0px rgba(255,255,255,0.1)",
       transition: { duration: 0.15 }
     },
     tap: {
@@ -54,7 +54,7 @@ export const interactionPresets = {
     },
     drag: {
       scale: 1.05,
-      boxShadow: "0px 8px 32px rgba(58, 109, 255, 0.4)",
+      boxShadow: "0px 8px 32px rgba(79, 161, 216, 0.4)",
       transition: { duration: 0.15 }
     }
   },

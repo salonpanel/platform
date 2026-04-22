@@ -109,7 +109,7 @@ export function NotificationsPanel({
                   key={notification.id}
                   className={cn(
                     "p-4 cursor-pointer bg-white/3 border border-white/5 rounded-[14px] hover:bg-white/5 transition-colors",
-                    !notification.read && "border-l-4 border-[#3A6DFF]"
+                    !notification.read && "border-l-4 border-[#4FA1D8]"
                   )}
                 >
                   <div className="flex items-start gap-3">
@@ -125,7 +125,7 @@ export function NotificationsPanel({
                           {notification.title}
                         </h4>
                         {!notification.read && (
-                          <div className="h-2 w-2 rounded-full bg-[#3A6DFF] flex-shrink-0 mt-1" />
+                          <div className="h-2 w-2 rounded-full bg-[#4FA1D8] flex-shrink-0 mt-1" />
                         )}
                       </div>
                       <p className="text-xs text-[#d1d4dc] mt-1 font-['Plus_Jakarta_Sans']">

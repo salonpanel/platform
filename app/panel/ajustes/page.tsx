@@ -55,6 +55,7 @@ function AjustesContent() {
     contact_phone: "",
     address: "",
     portal_url: "",
+    public_subdomain: "",
   });
 
   // ── Horarios ──
@@ -108,6 +109,7 @@ function AjustesContent() {
             id, name, timezone, slug,
             logo_url, primary_color,
             contact_email, contact_phone, address, portal_url,
+            public_subdomain,
             business_hours,
             slot_duration_min, buffer_between_bookings_min,
             cancellation_hours_notice, booking_window_days,
@@ -133,6 +135,7 @@ function AjustesContent() {
             contact_phone: t.contact_phone || "",
             address: t.address || "",
             portal_url: t.portal_url || `/r/${t.slug || ""}`,
+            public_subdomain: (t as any).public_subdomain || "",
           });
 
           if (t.business_hours) setBusinessHours(t.business_hours as BusinessHours);
@@ -241,6 +244,9 @@ function AjustesContent() {
   const saveNotificaciones = () =>
     saveFields(notifPrefs as unknown as Record<string, unknown>, "Preferencias de notificaciones guardadas");
 
+  const savePortal = (slug: string) =>
+    saveFields({ public_subdomain: slug.trim() || null }, "Subdominio guardado correctamente");
+
   // ── Handlers ────────────────────────────────────────────────────────────────
 
   const handleFieldChange = (field: string, value: string) =>
@@ -345,9 +351,9 @@ function AjustesContent() {
 
           {/* 7. Portal */}
           <SettingsPortal
-            portalUrl={form.portal_url}
-            onChange={(v) => handleFieldChange("portal_url", v)}
-            onSave={saveGeneral}
+            subdomain={form.public_subdomain}
+            tenantId={tenant?.id ?? ""}
+            onSave={savePortal}
             isLoading={saving || !canEdit}
           />
 

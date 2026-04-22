@@ -88,7 +88,7 @@ export function BookingCard({
     "bg-[#1a1d24]/90 text-white",
     "border border-white/10 shadow-lg backdrop-blur-md",
     "rounded-2xl",
-    "focus:outline-none focus:ring-2 focus:ring-[#4FE3C1]/50 focus:ring-offset-0",
+    "focus:outline-none focus:ring-2 focus:ring-[#4FA1D8]/50 focus:ring-offset-0",
     "hover:shadow-xl hover:-translate-y-0.5",
     canDrag && "cursor-grab active:cursor-grabbing",
     isDragging && "opacity-60 shadow-2xl scale-[1.02] z-50",

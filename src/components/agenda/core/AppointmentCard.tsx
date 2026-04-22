@@ -21,9 +21,9 @@ const STATE_COLORS: Record<string, string> = {
   pending: "#FFC107",
   confirmed: "#38BDF8",
   in_progress: "#A78BFA",
-  completed: "#4FE3C1",
+  completed: "#4FA1D8",
   cancelled: "#9CA3AF",
-  no_show: "#FF6DA3",
+  no_show: "#E06072",
 };
 
 const getStateColor = (state: string) => STATE_COLORS[state] || STATE_COLORS.pending;
@@ -96,7 +96,7 @@ export const AppointmentCard = React.memo(function AppointmentCard({
         isDragging && !isGhost
           ? "cursor-grabbing z-50 shadow-2xl scale-[1.02] ring-1 ring-white/20"
           : "cursor-grab z-20",
-        "group focus:outline-none focus:ring-2 focus:ring-[#4FE3C1]/50 focus:ring-offset-0"
+        "group focus:outline-none focus:ring-2 focus:ring-[#4FA1D8]/50 focus:ring-offset-0"
       )}
       style={{
         top: `${top}px`,

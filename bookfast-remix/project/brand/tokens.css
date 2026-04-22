@@ -1,0 +1,101 @@
+/* ───── Bookfast Brand Tokens ───── */
+:root {
+  /* Fonts */
+  --font-sans: "Geist", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-serif: "Instrument Serif", Georgia, serif;
+
+  /* Core brand colors */
+  --bf-primary: #4FA1D8;      /* cyan */
+  --bf-success: #1EA19F;      /* teal */
+  --bf-warn: #E8B04A;
+  --bf-danger: #E06072;
+  --bf-ink: #05070A;
+
+  /* Cyan scale */
+  --bf-cyan-50:  #EAF5FC;
+  --bf-cyan-100: #CDE7F7;
+  --bf-cyan-200: #9BCFEF;
+  --bf-cyan-300: #6FB8E4;
+  --bf-cyan-400: #4FA1D8;
+  --bf-cyan-500: #2E87C2;
+  --bf-cyan-600: #1F6B9E;
+  --bf-cyan-700: #144C75;
+  --bf-cyan-800: #0B3250;
+  --bf-cyan-900: #051E33;
+
+  /* Teal scale */
+  --bf-teal-50:  #E6F6F5;
+  --bf-teal-100: #C1EAE8;
+  --bf-teal-200: #8BD6D4;
+  --bf-teal-300: #55C0BD;
+  --bf-teal-400: #2DAFAC;
+  --bf-teal-500: #1EA19F;
+  --bf-teal-600: #14807E;
+  --bf-teal-700: #0D5F5E;
+  --bf-teal-800: #083E3D;
+  --bf-teal-900: #042322;
+
+  /* Ink scale */
+  --bf-ink-50:  #F5F7FA;
+  --bf-ink-100: #E4E8EF;
+  --bf-ink-200: #C5CBD6;
+  --bf-ink-300: #959DAC;
+  --bf-ink-400: #666F7E;
+  --bf-ink-500: #3C4452;
+  --bf-ink-600: #222934;
+  --bf-ink-700: #161B23;
+  --bf-ink-800: #0E1218;
+  --bf-ink-900: #080A0F;
+  --bf-ink-950: #05070A;
+
+  /* Surfaces */
+  --bf-bg:        #05070A;
+  --bf-bg-elev:   #0B0E14;
+  --bf-surface:   #0F131B;
+  --bf-surface-2: #161B25;
+  --bf-border:    #1D2430;
+  --bf-border-2:  #262F3D;
+
+  /* Radii */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-full: 999px;
+
+  /* Spacing */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+  --s-9: 96px;
+
+  /* Shadows */
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.03) inset, 0 10px 30px -18px rgba(0,0,0,.6);
+  --shadow-glow: 0 0 40px -10px rgba(79,161,216,.35);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bf-bg);
+  color: var(--bf-ink-50);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  min-width: 1280px;
+}
+
+.mono { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.02em; }
+.muted { color: var(--bf-ink-400); }

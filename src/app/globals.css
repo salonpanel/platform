@@ -1,65 +1,132 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,600,700,900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap");
 @import "tailwindcss";
 @import "../styles/theme.css";
 
 :root {
   /* ============================================================================
-     NUEVO DESIGN SYSTEM - BookFast Platform
-     Capsule Shapes + Soft Glass + Premium Gradients + Neo-Glow
+     BookFast Brand Kit (v1.0 · Abril 2026)
+     Fuente de verdad: bookfast-remix/project/Brand Kit-print.html + tokens.css
      ============================================================================ */
 
   /* ----------------------------------------------------------------------------
-     NEUTROS - Dark Mode Foundation
+     BRAND TOKENS (prefijo bf-)
      ---------------------------------------------------------------------------- */
-  --neutral-50: #06141B;   /* Más oscuro - Background principal */
-  --neutral-100: #11212D;  /* Background secundario */
-  --neutral-200: #253745;  /* Background terciario / Cards */
-  --neutral-300: #4A5C6A;  /* Borders / Dividers */
-  --neutral-400: #9BA8AB;  /* Texto secundario */
-  --neutral-500: #CCD0CF;  /* Texto primario */
+  --font-sans: "Geist", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-serif: "Instrument Serif", Georgia, serif;
 
-  /* Mapeo semántico de neutros */
-  --bg-primary: var(--neutral-50);
-  --bg-secondary: var(--neutral-100);
-  --bg-tertiary: var(--neutral-200);
-  --bg-card: var(--neutral-200);
-  --border-default: var(--neutral-300);
-  --text-primary: var(--neutral-500);
-  --text-secondary: var(--neutral-400);
-  --text-tertiary: var(--neutral-300);
+  --bf-primary: #4fa1d8; /* cyan */
+  --bf-success: #1ea19f; /* teal */
+  --bf-warn: #e8b04a;
+  --bf-danger: #e06072;
+  --bf-ink: #05070a;
 
-  /* Compatibilidad legacy */
-  --color-bg-base: var(--neutral-50);
-  --color-bg-primary: var(--neutral-50);
-  --color-bg-secondary: var(--neutral-100);
-  --color-bg-tertiary: var(--neutral-200);
-  --color-text-primary: var(--neutral-500);
-  --color-text-secondary: var(--neutral-400);
-  --color-text-disabled: var(--neutral-300);
-  --background: var(--neutral-50);
-  --foreground: var(--neutral-500);
+  /* Cyan scale */
+  --bf-cyan-50: #eaf5fc;
+  --bf-cyan-100: #cde7f7;
+  --bf-cyan-200: #9bcfef;
+  --bf-cyan-300: #6fb8e4;
+  --bf-cyan-400: #4fa1d8;
+  --bf-cyan-500: #2e87c2;
+  --bf-cyan-600: #1f6b9e;
+  --bf-cyan-700: #144c75;
+  --bf-cyan-800: #0b3250;
+  --bf-cyan-900: #051e33;
+
+  /* Teal scale */
+  --bf-teal-50: #e6f6f5;
+  --bf-teal-100: #c1eae8;
+  --bf-teal-200: #8bd6d4;
+  --bf-teal-300: #55c0bd;
+  --bf-teal-400: #2dafac;
+  --bf-teal-500: #1ea19f;
+  --bf-teal-600: #14807e;
+  --bf-teal-700: #0d5f5e;
+  --bf-teal-800: #083e3d;
+  --bf-teal-900: #042322;
+
+  /* Ink scale */
+  --bf-ink-50: #f5f7fa;
+  --bf-ink-100: #e4e8ef;
+  --bf-ink-200: #c5cbd6;
+  --bf-ink-300: #959dac;
+  --bf-ink-400: #666f7e;
+  --bf-ink-500: #3c4452;
+  --bf-ink-600: #222934;
+  --bf-ink-700: #161b23;
+  --bf-ink-800: #0e1218;
+  --bf-ink-900: #080a0f;
+  --bf-ink-950: #05070a;
+
+  /* Surfaces */
+  --bf-bg: #05070a;
+  --bf-bg-elev: #0b0e14;
+  --bf-surface: #0f131b;
+  --bf-surface-2: #161b25;
+  --bf-border: #1d2430;
+  --bf-border-2: #262f3d;
+
+  /* Radii */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-full: 999px;
+
+  /* Shadows */
+  --bf-shadow-card: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 10px 30px -18px rgba(0, 0, 0, 0.6);
+  --bf-shadow-glow: 0 0 40px -10px rgba(79, 161, 216, 0.35);
 
   /* ----------------------------------------------------------------------------
-     ACENTOS PREMIUM
+     SEMÁNTICOS (alias para la app actual)
      ---------------------------------------------------------------------------- */
-  --accent-aqua: #4FE3C1;      /* Aqua - Acción principal */
-  --accent-purple: #A06BFF;    /* Purple - Acción secundaria */
-  --accent-blue: #3A6DFF;      /* Blue - Información / Links */
-  --accent-pink: #FF6DA3;      /* Pink - Destacados / Alerts */
+  --neutral-50: var(--bf-bg);
+  --neutral-100: var(--bf-bg-elev);
+  --neutral-200: var(--bf-surface);
+  --neutral-300: var(--bf-border);
+  --neutral-400: var(--bf-ink-400);
+  --neutral-500: var(--bf-ink-50);
+
+  /* Mapeo semántico de neutros */
+  --bg-primary: var(--bf-bg);
+  --bg-secondary: var(--bf-bg-elev);
+  --bg-tertiary: var(--bf-surface);
+  --bg-card: var(--bf-surface);
+  --border-default: var(--bf-border);
+  --text-primary: var(--bf-ink-50);
+  --text-secondary: var(--bf-ink-300);
+  --text-tertiary: var(--bf-ink-400);
+
+  /* Compatibilidad legacy */
+  --color-bg-base: var(--bf-bg);
+  --color-bg-primary: var(--bf-bg);
+  --color-bg-secondary: var(--bf-bg-elev);
+  --color-bg-tertiary: var(--bf-surface);
+  --color-text-primary: var(--bf-ink-50);
+  --color-text-secondary: var(--bf-ink-300);
+  --color-text-disabled: var(--bf-ink-400);
+  --background: var(--bf-bg);
+  --foreground: var(--bf-ink-50);
+
+  /* ----------------------------------------------------------------------------
+     ACENTOS (alineados a la marca)
+     ---------------------------------------------------------------------------- */
+  --accent-aqua: var(--bf-primary);
+  --accent-purple: var(--bf-primary);
+  --accent-blue: var(--bf-primary);
+  --accent-pink: var(--bf-danger);
 
   /* Variantes con opacidad para glass effects */
-  --accent-aqua-glass: rgba(79, 227, 193, 0.12);
-  --accent-purple-glass: rgba(160, 107, 255, 0.12);
-  --accent-blue-glass: rgba(58, 109, 255, 0.12);
-  --accent-pink-glass: rgba(255, 109, 163, 0.12);
+  --accent-aqua-glass: rgba(79, 161, 216, 0.12);
+  --accent-purple-glass: rgba(79, 161, 216, 0.12);
+  --accent-blue-glass: rgba(79, 161, 216, 0.12);
+  --accent-pink-glass: rgba(224, 96, 114, 0.12);
 
   /* Bordes con glow (neo-glow edges) */
-  --accent-aqua-border: rgba(79, 227, 193, 0.3);
-  --accent-purple-border: rgba(160, 107, 255, 0.3);
-  --accent-blue-border: rgba(58, 109, 255, 0.3);
-  --accent-pink-border: rgba(255, 109, 163, 0.3);
+  --accent-aqua-border: rgba(79, 161, 216, 0.35);
+  --accent-purple-border: rgba(79, 161, 216, 0.35);
+  --accent-blue-border: rgba(79, 161, 216, 0.35);
+  --accent-pink-border: rgba(224, 96, 114, 0.35);
 
   /* Legacy compatibility */
   --accent-1: var(--accent-blue);
@@ -69,15 +136,15 @@
   --color-accent-warm: var(--accent-aqua);
 
   /* ----------------------------------------------------------------------------
-     GRADIENTES PREMIUM
+     GRADIENTES (marca)
      ---------------------------------------------------------------------------- */
-  --gradient-primary: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-aqua) 100%);
-  --gradient-secondary: linear-gradient(135deg, var(--accent-aqua) 0%, var(--accent-purple) 100%);
-  --gradient-accent: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-pink) 100%);
+  --gradient-primary: linear-gradient(135deg, var(--bf-success) 0%, var(--bf-primary) 100%);
+  --gradient-secondary: linear-gradient(135deg, var(--bf-primary) 0%, var(--bf-cyan-600) 100%);
+  --gradient-accent: linear-gradient(135deg, var(--bf-primary) 0%, var(--bf-success) 100%);
 
   /* Gradientes radiales para backgrounds */
-  --gradient-radial-primary: radial-gradient(ellipse at top, rgba(58, 109, 255, 0.15) 0%, transparent 70%);
-  --gradient-radial-secondary: radial-gradient(ellipse at top, rgba(79, 227, 193, 0.15) 0%, transparent 70%);
+  --gradient-radial-primary: radial-gradient(ellipse at top, rgba(79, 161, 216, 0.15) 0%, transparent 70%);
+  --gradient-radial-secondary: radial-gradient(ellipse at top, rgba(30, 161, 159, 0.15) 0%, transparent 70%);
 
   /* Legacy compatibility */
   --gradient-1: var(--gradient-primary);
@@ -90,27 +157,27 @@
   /* ----------------------------------------------------------------------------
      COLORES SEMÁNTICOS
      ---------------------------------------------------------------------------- */
-  --color-success: #10B981;
+  --color-success: var(--bf-success);
   --color-success-glass: rgba(16, 185, 129, 0.12);
-  --color-warning: #F59E0B;
+  --color-warning: var(--bf-warn);
   --color-warning-glass: rgba(245, 158, 11, 0.12);
-  --color-danger: #EF4444;
+  --color-danger: var(--bf-danger);
   --color-danger-glass: rgba(239, 68, 68, 0.12);
-  --color-info: #3B82F6;
+  --color-info: var(--bf-primary);
   --color-info-glass: rgba(59, 130, 246, 0.12);
 
   /* ----------------------------------------------------------------------------
      SISTEMA DE GLASS (Soft Glass)
      ---------------------------------------------------------------------------- */
-  /* Glass Base */
-  --glass-bg: rgba(255, 255, 255, 0.06);
-  --glass-bg-subtle: rgba(255, 255, 255, 0.03);
-  --glass-bg-strong: rgba(255, 255, 255, 0.1);
+  /* Glass Base (degradado sutil sobre superficies del kit) */
+  --glass-bg: rgba(11, 14, 20, 0.72);
+  --glass-bg-subtle: rgba(11, 14, 20, 0.45);
+  --glass-bg-strong: rgba(15, 19, 27, 0.82);
 
   /* Glass Borders */
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-border-subtle: rgba(255, 255, 255, 0.04);
-  --glass-border-strong: rgba(255, 255, 255, 0.12);
+  --glass-border: rgba(38, 47, 61, 0.85);
+  --glass-border-subtle: rgba(29, 36, 48, 0.65);
+  --glass-border-strong: rgba(38, 47, 61, 1);
 
   /* Glass Blur */
   --glass-blur: blur(16px);
@@ -118,10 +185,10 @@
   --glass-blur-strong: blur(20px);
 
   /* Glass con Acentos */
-  --glass-aqua: rgba(79, 227, 193, 0.08);
-  --glass-purple: rgba(160, 107, 255, 0.08);
-  --glass-blue: rgba(58, 109, 255, 0.08);
-  --glass-pink: rgba(255, 109, 163, 0.08);
+  --glass-aqua: rgba(79, 161, 216, 0.08);
+  --glass-purple: rgba(79, 161, 216, 0.08);
+  --glass-blue: rgba(79, 161, 216, 0.08);
+  --glass-pink: rgba(224, 96, 114, 0.08);
 
   /* Legacy compatibility */
   --glass: var(--glass-bg);
@@ -130,14 +197,10 @@
   /* ----------------------------------------------------------------------------
      SOMBRAS Y GLOWS PREMIUM
      ---------------------------------------------------------------------------- */
-  /* Sombras de Cards */
-  --shadow-card: 0px 4px 16px rgba(0, 0, 0, 0.3), 
-                 0px 2px 8px rgba(0, 0, 0, 0.2),
-                 inset 0px 1px 0px rgba(255, 255, 255, 0.08);
+  /* Sombras (coherentes con el kit) */
+  --shadow-card: var(--bf-shadow-card);
 
-  --shadow-card-hover: 0px 8px 32px rgba(0, 0, 0, 0.4),
-                        0px 4px 16px rgba(0, 0, 0, 0.3),
-                        inset 0px 1px 0px rgba(255, 255, 255, 0.12);
+  --shadow-card-hover: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 18px 40px -24px rgba(0, 0, 0, 0.75);
 
   /* Sombra de Modal */
   --shadow-modal: 0px 12px 48px rgba(0, 0, 0, 0.5),
@@ -145,21 +208,16 @@
                   inset 0px 1px 0px rgba(255, 255, 255, 0.1);
 
   /* Sombra de Input Focus */
-  --shadow-input-focus: 0px 0px 0px 3px rgba(79, 227, 193, 0.2),
-                        inset 0px 1px 2px rgba(0, 0, 0, 0.1);
+  --shadow-input-focus: 0 0 0 3px rgba(79, 161, 216, 0.15);
 
   /* Glows Neo (neo-glow edges) */
-  --glow-aqua: 0px 0px 16px rgba(79, 227, 193, 0.4),
-               0px 0px 32px rgba(79, 227, 193, 0.2);
+  --glow-aqua: var(--bf-shadow-glow);
 
-  --glow-purple: 0px 0px 16px rgba(160, 107, 255, 0.4),
-                 0px 0px 32px rgba(160, 107, 255, 0.2);
+  --glow-purple: var(--bf-shadow-glow);
 
-  --glow-blue: 0px 0px 16px rgba(58, 109, 255, 0.4),
-               0px 0px 32px rgba(58, 109, 255, 0.2);
+  --glow-blue: var(--bf-shadow-glow);
 
-  --glow-pink: 0px 0px 16px rgba(255, 109, 163, 0.4),
-               0px 0px 32px rgba(255, 109, 163, 0.2);
+  --glow-pink: 0 0 40px -10px rgba(224, 96, 114, 0.35);
 
   /* Glow de Borde (neo-glow edges) */
   --glow-border-aqua: 0px 0px 8px rgba(79, 227, 193, 0.3);
@@ -182,10 +240,10 @@
   /* ----------------------------------------------------------------------------
      SISTEMA DE TIPOGRAFÍA
      ---------------------------------------------------------------------------- */
-  --font-heading: 'Plus Jakarta Sans', 'Satoshi', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  --font-kpi: 'Inter', system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  --font-body: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-kpi: var(--font-sans);
 
   /* Headings */
   --text-h1-size: 32px;
@@ -230,12 +288,12 @@
   /* ----------------------------------------------------------------------------
      SISTEMA DE FORMAS - Border Radius (Capsule System)
      ---------------------------------------------------------------------------- */
-  --radius-xs: 8px;        /* Badges pequeños, tags */
-  --radius-sm: 12px;        /* Inputs pequeños, botones pequeños */
-  --radius-md: 18px;       /* Inputs, botones, cards pequeños */
-  --radius-lg: 24px;       /* Cards medianos, modales pequeños */
-  --radius-xl: 28px;       /* Cards grandes, modales */
-  --radius-2xl: 40px;      /* Containers grandes */
+  --radius-xs: var(--r-sm);
+  --radius-sm: var(--r-md);
+  --radius-md: 18px;
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+  --radius-2xl: 40px;
   --radius-pill: 9999px;   /* Pills / Capsules completas */
 
   /* ----------------------------------------------------------------------------
@@ -311,7 +369,7 @@
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'Inter', 'Satoshi', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.01em;
@@ -321,7 +379,7 @@ body {
 /* Fuente Satoshi/Inter para títulos - mejorada */
 h1, h2, h3, h4, h5, h6,
 .font-satoshi {
-  font-family: 'Satoshi', 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   font-weight: 600;
   letter-spacing: -0.02em;
 }
@@ -345,7 +403,7 @@ label, .label {
 /* Heading system elegante */
 h1 {
   @apply text-[var(--color-text-primary)] tracking-tight;
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-size: 28px;
   font-weight: 600;
   line-height: 1.2;
@@ -353,7 +411,7 @@ h1 {
 
 h2 {
   @apply text-[var(--color-text-primary)] tracking-tight;
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-size: 22px;
   font-weight: 600;
   line-height: 1.3;
@@ -361,7 +419,7 @@ h2 {
 
 h3 {
   @apply text-[var(--color-text-primary)] tracking-tight;
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-size: 18px;
   font-weight: 600;
   line-height: 1.4;
@@ -369,7 +427,7 @@ h3 {
 
 h4 {
   @apply text-lg font-medium text-[var(--color-text-primary)];
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-size: 18px;
   line-height: 24px;
 }
@@ -378,21 +436,21 @@ h4 {
 .body-lg {
   font-size: 16px;
   line-height: 1.5;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 400;
 }
 
 .body-md {
   font-size: 15px;
   line-height: 1.5;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 400;
 }
 
 .body-sm {
   font-size: 13px;
   line-height: 1.5;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 400;
 }
 

@@ -54,9 +54,9 @@ export function Timeline({
           transition={{ duration: 0.4 }}
         >
           <div className="relative">
-            <div className="absolute left-0 w-full h-0.5 bg-gradient-to-r from-[#4FE3C1] via-[#3A6DFF] to-transparent" />
+            <div className="absolute left-0 w-full h-0.5 bg-gradient-to-r from-[#4FA1D8] via-[#4FA1D8] to-transparent" />
             <motion.div
-              className="absolute left-0 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-[#4FE3C1] shadow-lg shadow-[#4FE3C1]/40"
+              className="absolute left-0 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-[#4FA1D8] shadow-lg shadow-[#4FA1D8]/40"
               animate={{
                 scale: [1, 1.2, 1],
                 opacity: [1, 0.8, 1]
@@ -67,7 +67,7 @@ export function Timeline({
                 ease: "easeInOut"
               }}
             />
-            <div className="absolute left-4 -translate-y-1/2 bg-gradient-to-r from-[#4FE3C1] to-[#3A6DFF] text-white text-[10px] font-medium px-2 py-0.5 rounded-md shadow-lg">
+            <div className="absolute left-4 -translate-y-1/2 bg-gradient-to-r from-[#4FA1D8] to-[#4FA1D8] text-white text-[10px] font-medium px-2 py-0.5 rounded-md shadow-lg">
               {format(new Date(), "HH:mm")}
             </div>
           </div>

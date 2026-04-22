@@ -184,7 +184,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
           className="absolute top-0 left-0 right-0 h-px"
           style={{
             background:
-              "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.10) 20%, rgba(79,227,193,0.18) 50%, rgba(255,255,255,0.10) 80%, transparent 100%)",
+              "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.10) 20%, rgba(79,161,216,0.18) 50%, rgba(255,255,255,0.10) 80%, transparent 100%)",
           }}
         />
 
@@ -347,8 +347,8 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
                         style={
                           active
                             ? {
-                                background: "rgba(79,227,193,0.10)",
-                                border: "1px solid rgba(79,227,193,0.22)",
+                                background: "rgba(79,161,216,0.10)",
+                                border: "1px solid rgba(79,161,216,0.22)",
                                 color: "var(--accent-aqua)",
                               }
                             : {

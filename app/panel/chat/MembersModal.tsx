@@ -60,7 +60,7 @@ export function MembersModal({
 								key={member.userId}
 								className={cn(
 									"flex items-center gap-3 rounded-xl border px-3 py-2 transition-smooth",
-									isCurrentUser ? "border-[#3A6DFF]/30 bg-[#3A6DFF]/5" : "border-white/10"
+									isCurrentUser ? "border-[#4FA1D8]/30 bg-[#4FA1D8]/5" : "border-white/10"
 								)}
 							>
 								<Avatar
@@ -87,7 +87,7 @@ export function MembersModal({
 													}}
 													autoFocus
 													placeholder="Apodo..."
-													className="flex-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs text-white placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[#3A6DFF]"
+													className="flex-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs text-white placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[#4FA1D8]"
 												/>
 												<button
 													onClick={() => void handleSetNickname(member.userId)}
@@ -110,7 +110,7 @@ export function MembersModal({
 												<p className="text-sm text-white font-medium truncate">
 													{member.displayName}
 													{isCurrentUser && (
-														<span className="ml-2 text-[10px] text-[#3A6DFF] font-normal">(Tú)</span>
+														<span className="ml-2 text-[10px] text-[#4FA1D8] font-normal">(Tú)</span>
 													)}
 												</p>
 												{!isCurrentUser && onSetNickname && (

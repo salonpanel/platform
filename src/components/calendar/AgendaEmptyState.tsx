@@ -43,11 +43,11 @@ export function AgendaEmptyState({
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.1, duration: 0.2, ease: "easeOut" }}
           >
-            <div className="w-24 h-24 rounded-full bg-gradient-to-r from-[#3A6DFF] to-[#4FE3C1] flex items-center justify-center shadow-[0px_8px_32px_rgba(58,109,255,0.3)]">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-r from-[#4FA1D8] to-[#4FA1D8] flex items-center justify-center shadow-[0px_8px_32px_rgba(79,161,216,0.3)]">
               <Calendar className="h-12 w-12 text-white" strokeWidth={1.5} />
             </div>
             <motion.div
-              className="absolute -top-2 -right-2 w-9 h-9 rounded-full bg-gradient-to-br from-[#FFC107] to-[#FF6DA3] flex items-center justify-center border-2 border-[#15171A] shadow-[0px_4px_12px_rgba(255,193,7,0.4)]"
+              className="absolute -top-2 -right-2 w-9 h-9 rounded-full bg-gradient-to-br from-[#FFC107] to-[#E06072] flex items-center justify-center border-2 border-[#15171A] shadow-[0px_4px_12px_rgba(255,193,7,0.4)]"
               animate={{ rotate: [0, 10, -10, 0] }}
               transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
             >
@@ -86,7 +86,7 @@ export function AgendaEmptyState({
             <GlassButton
               onClick={onCreateBooking}
               size="lg"
-              className="w-full sm:w-auto bg-gradient-to-r from-[#3A6DFF] to-[#4FE3C1] hover:shadow-[0px_4px_12px_rgba(58,109,255,0.3)] border-none text-white"
+              className="w-full sm:w-auto bg-gradient-to-r from-[#4FA1D8] to-[#4FA1D8] hover:shadow-[0px_4px_12px_rgba(79,161,216,0.3)] border-none text-white"
             >
               <Plus className="h-4 w-4 mr-2" />
               Crear reserva manual
@@ -137,7 +137,7 @@ export function AgendaEmptyState({
                     }
                   }}
                   size="sm"
-                  className="text-[#4FE3C1] hover:text-white hover:bg-[rgba(79,227,193,0.15)] bg-transparent border-none h-8 px-3"
+                  className="text-[#4FA1D8] hover:text-white hover:bg-[rgba(79,161,216,0.15)] bg-transparent border-none h-8 px-3"
                 >
                   Copiar
                 </GlassButton>

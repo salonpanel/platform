@@ -46,7 +46,12 @@ interface TabsListProps {
 
 export function TabsList({ children, className }: TabsListProps) {
   return (
-    <div className={cn("flex items-center gap-1 border-b border-white/5", className)}>
+    <div
+      className={cn(
+        "inline-flex items-center gap-1 p-1 bg-[var(--bf-bg-elev)] border border-[var(--bf-border)] rounded-[var(--r-full)]",
+        className
+      )}
+    >
       {children}
     </div>
   );
@@ -69,23 +74,15 @@ export function TabsTrigger({ value, children, className }: TabsTriggerProps) {
     <button
       onClick={() => setActiveTab(value)}
       className={cn(
-        "px-5 py-3 text-sm font-semibold font-['Plus_Jakarta_Sans'] transition-all duration-150 relative",
-        "border-b-2 border-transparent",
+        "px-4 py-2 text-[13px] font-medium transition-all duration-150 relative rounded-[var(--r-full)]",
         isActive
-          ? "text-[#3A6DFF]"
-          : "text-[#9ca3af] hover:text-white",
+          ? "bg-[var(--bf-ink-50)] text-[var(--bf-ink)]"
+          : "text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)]",
         className
       )}
+      style={{ fontFamily: "var(--font-sans)" }}
     >
       {children}
-      {isActive && (
-        <motion.div
-          layoutId="activeTab"
-          className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#3A6DFF] to-[#4FE3C1] rounded-t-full"
-          initial={false}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        />
-      )}
     </button>
   );
 }

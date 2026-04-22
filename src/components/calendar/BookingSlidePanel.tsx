@@ -488,7 +488,7 @@ export function BookingSlidePanel({
                   onClick={() => applyPaymentStatus("paid")}
                   disabled={statusLoading !== null}
                   className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: 'rgba(58,109,255,0.15)', color: 'var(--accent-blue)', border: '1px solid rgba(58,109,255,0.3)' }}
+                  style={{ backgroundColor: 'rgba(79,161,216,0.15)', color: 'var(--accent-blue)', border: '1px solid rgba(79,161,216,0.3)' }}
                 >
                   ✓ Marcar pago como pagado
                 </button>
@@ -499,7 +499,7 @@ export function BookingSlidePanel({
                   onClick={() => applyBookingState("completed")}
                   disabled={statusLoading !== null}
                   className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: 'rgba(79,227,193,0.15)', color: '#4FE3C1', border: '1px solid rgba(79,227,193,0.3)' }}
+                  style={{ backgroundColor: 'rgba(79,161,216,0.15)', color: '#4FA1D8', border: '1px solid rgba(79,161,216,0.3)' }}
                 >
                   ✓ Marcar cita como completada
                 </button>

@@ -68,11 +68,11 @@ export function BookingMoveConfirmModal({
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.15 }}
-          className="p-4 rounded-[16px] bg-gradient-to-br from-[rgba(58,109,255,0.08)] to-[rgba(79,227,193,0.05)] border border-[#3A6DFF]/30 backdrop-blur-sm"
+          className="p-4 rounded-[16px] bg-gradient-to-br from-[rgba(79,161,216,0.08)] to-[rgba(79,161,216,0.05)] border border-[#4FA1D8]/30 backdrop-blur-sm"
         >
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2.5 rounded-[12px] bg-[rgba(58,109,255,0.2)] backdrop-blur-sm">
-              <User className="h-5 w-5 text-[#3A6DFF]" />
+            <div className="p-2.5 rounded-[12px] bg-[rgba(79,161,216,0.2)] backdrop-blur-sm">
+              <User className="h-5 w-5 text-[#4FA1D8]" />
             </div>
             <div>
               <p className="text-[10px] text-[#9ca3af] font-semibold font-['Plus_Jakarta_Sans'] uppercase tracking-wider">Cliente</p>
@@ -94,10 +94,10 @@ export function BookingMoveConfirmModal({
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-[10px] text-[#9ca3af] font-semibold font-['Plus_Jakarta_Sans'] uppercase tracking-wider">
-                <Calendar className="h-3.5 w-3.5 text-[#3A6DFF]" />
+                <Calendar className="h-3.5 w-3.5 text-[#4FA1D8]" />
                 <span>Nuevo horario</span>
               </div>
-              <p className="text-lg font-semibold text-[#3A6DFF] font-['Plus_Jakarta_Sans']">
+              <p className="text-lg font-semibold text-[#4FA1D8] font-['Plus_Jakarta_Sans']">
                 {newTime}
               </p>
             </div>
@@ -108,9 +108,9 @@ export function BookingMoveConfirmModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.05, duration: 0.15 }}
-          className="flex items-start gap-3 p-3.5 rounded-[14px] bg-[rgba(79,227,193,0.08)] border border-[#4FE3C1]/30 backdrop-blur-sm"
+          className="flex items-start gap-3 p-3.5 rounded-[14px] bg-[rgba(79,161,216,0.08)] border border-[#4FA1D8]/30 backdrop-blur-sm"
         >
-          <Bell className="h-5 w-5 text-[#4FE3C1] flex-shrink-0 mt-0.5" />
+          <Bell className="h-5 w-5 text-[#4FA1D8] flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-semibold text-white mb-1 font-['Plus_Jakarta_Sans']">
               Notificación al cliente

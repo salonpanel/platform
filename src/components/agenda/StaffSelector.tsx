@@ -63,7 +63,7 @@ export function StaffSelector({
         )}
         style={{
           background: selectedStaffId === null 
-            ? "linear-gradient(135deg, rgba(79, 227, 193, 0.1) 0%, rgba(58, 109, 255, 0.1) 100%)"
+            ? "linear-gradient(135deg, rgba(79, 161, 216, 0.1) 0%, rgba(79, 161, 216, 0.1) 100%)"
             : undefined
         }}
       >
@@ -116,7 +116,7 @@ export function StaffSelector({
             )}
             style={{
               background: isSelected 
-                ? "linear-gradient(135deg, rgba(79, 227, 193, 0.1) 0%, rgba(58, 109, 255, 0.1) 100%)"
+                ? "linear-gradient(135deg, rgba(79, 161, 216, 0.1) 0%, rgba(79, 161, 216, 0.1) 100%)"
                 : undefined
             }}
           >

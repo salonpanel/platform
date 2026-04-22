@@ -52,10 +52,10 @@ const STATUS_COLORS: Record<BookingStatus, string> = {
   pending:   "text-amber-400",
   confirmed: "text-sky-400",
   paid:      "text-emerald-400",
-  completed: "text-[#4FE3C1]",
+  completed: "text-[#4FA1D8]",
   cancelled: "text-red-400",
   no_show:   "text-white/40",
-  hold:      "text-[#A06BFF]",
+  hold:      "text-[#4FA1D8]",
 };
 
 export function AgendaTopBar({
@@ -213,7 +213,7 @@ export function AgendaTopBar({
                           onDateChange(e.target.value);
                           setShowDatePicker(false);
                         }}
-                        className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-[#4FE3C1]/50 focus:outline-none focus:ring-2 focus:ring-[#4FE3C1]/20"
+                        className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-[#4FA1D8]/50 focus:outline-none focus:ring-2 focus:ring-[#4FA1D8]/20"
                       />
                     </motion.div>
                   )}
@@ -243,7 +243,7 @@ export function AgendaTopBar({
                   <motion.span
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="absolute -top-0.5 -right-0.5 h-4 min-w-[1rem] px-1 rounded-full bg-gradient-to-r from-[#4FE3C1] to-[#3A6DFF] text-[9px] font-bold text-[#0E0F11] flex items-center justify-center shadow-[0_4px_12px_rgba(58,109,255,0.4)]"
+                    className="absolute -top-0.5 -right-0.5 h-4 min-w-[1rem] px-1 rounded-full bg-gradient-to-r from-[#4FA1D8] to-[#4FA1D8] text-[9px] font-bold text-[#0E0F11] flex items-center justify-center shadow-[0_4px_12px_rgba(79,161,216,0.4)]"
                   >
                     {unreadNotifications > 9 ? "9+" : unreadNotifications}
                   </motion.span>
@@ -258,14 +258,14 @@ export function AgendaTopBar({
                   className={cn(
                     "h-8 w-8 rounded-xl border flex items-center justify-center relative transition-all",
                     activeFiltersCount > 0
-                      ? "bg-[#4FE3C1]/15 border-[#4FE3C1]/30 text-[#4FE3C1]"
+                      ? "bg-[#4FA1D8]/15 border-[#4FA1D8]/30 text-[#4FA1D8]"
                       : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80"
                   )}
                   aria-label="Filtros"
                 >
                   <SlidersHorizontal className="h-3.5 w-3.5" />
                   {activeFiltersCount > 0 && (
-                    <span className="absolute -top-1 -right-1 h-4 min-w-[1rem] px-1 rounded-full bg-[#4FE3C1] text-[#0E0F11] text-[9px] font-bold flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 h-4 min-w-[1rem] px-1 rounded-full bg-[#4FA1D8] text-[#0E0F11] text-[9px] font-bold flex items-center justify-center">
                       {activeFiltersCount}
                     </span>
                   )}
@@ -300,7 +300,7 @@ export function AgendaTopBar({
                                   {BOOKING_STATUS_CONFIG[status].label}
                                 </span>
                                 {filters.status.includes(status) && (
-                                  <CheckCircle className="h-3.5 w-3.5 text-[#4FE3C1]" />
+                                  <CheckCircle className="h-3.5 w-3.5 text-[#4FA1D8]" />
                                 )}
                               </button>
                             ))}
@@ -314,7 +314,7 @@ export function AgendaTopBar({
                             className={cn(
                               "w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-all",
                               filters.highlighted
-                                ? "bg-[#FF6DA3]/15 text-[#FF6DA3]"
+                                ? "bg-[#E06072]/15 text-[#E06072]"
                                 : "text-white/60 hover:bg-white/5 hover:text-white"
                             )}
                           >
@@ -366,7 +366,7 @@ export function AgendaTopBar({
                   "px-2.5 h-8 rounded-xl text-xs font-semibold transition-all",
                   isToday
                     ? "bg-white/10 text-white border border-white/20"
-                    : "bg-gradient-to-r from-[#4FE3C1] to-[#3A6DFF] text-[#0E0F11] shadow-[0_6px_20px_rgba(58,109,255,0.3)]"
+                    : "bg-gradient-to-r from-[#4FA1D8] to-[#4FA1D8] text-[#0E0F11] shadow-[0_6px_20px_rgba(79,161,216,0.3)]"
                 )}
               >
                 Hoy
@@ -473,7 +473,7 @@ export function AgendaTopBar({
                         onDateChange(e.target.value);
                         setShowDatePicker(false);
                       }}
-                      className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-[#4FE3C1]/50 focus:outline-none focus:ring-2 focus:ring-[#4FE3C1]/20"
+                      className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-[#4FA1D8]/50 focus:outline-none focus:ring-2 focus:ring-[#4FA1D8]/20"
                     />
                   </motion.div>
                 )}
@@ -499,7 +499,7 @@ export function AgendaTopBar({
                 "px-2.5 h-8 rounded-xl text-xs font-semibold transition-all",
                 isToday
                   ? "bg-white/10 text-white border border-white/20"
-                  : "bg-gradient-to-r from-[#4FE3C1] to-[#3A6DFF] text-[#0E0F11] shadow-[0_6px_20px_rgba(58,109,255,0.3)]"
+                  : "bg-gradient-to-r from-[#4FA1D8] to-[#4FA1D8] text-[#0E0F11] shadow-[0_6px_20px_rgba(79,161,216,0.3)]"
               )}
             >
               Hoy
@@ -537,7 +537,7 @@ export function AgendaTopBar({
                 <motion.span
                   initial={{ scale: 0.5, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className="absolute -top-0.5 -right-0.5 h-4 min-w-[1rem] px-1 rounded-full bg-gradient-to-r from-[#4FE3C1] to-[#3A6DFF] text-[9px] font-bold text-[#0E0F11] flex items-center justify-center shadow-[0_4px_12px_rgba(58,109,255,0.4)]"
+                  className="absolute -top-0.5 -right-0.5 h-4 min-w-[1rem] px-1 rounded-full bg-gradient-to-r from-[#4FA1D8] to-[#4FA1D8] text-[9px] font-bold text-[#0E0F11] flex items-center justify-center shadow-[0_4px_12px_rgba(79,161,216,0.4)]"
                 >
                   {unreadNotifications > 9 ? "9+" : unreadNotifications}
                 </motion.span>
@@ -572,14 +572,14 @@ export function AgendaTopBar({
             className={cn(
               "h-8 w-8 rounded-xl border flex items-center justify-center relative transition-all",
               activeFiltersCount > 0
-                ? "bg-[#4FE3C1]/15 border-[#4FE3C1]/30 text-[#4FE3C1]"
+                ? "bg-[#4FA1D8]/15 border-[#4FA1D8]/30 text-[#4FA1D8]"
                 : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80"
             )}
             aria-label="Filtros"
           >
             <SlidersHorizontal className="h-3.5 w-3.5" />
             {activeFiltersCount > 0 && (
-              <span className="absolute -top-1 -right-1 h-4 min-w-[1rem] px-1 rounded-full bg-[#4FE3C1] text-[#0E0F11] text-[9px] font-bold flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 h-4 min-w-[1rem] px-1 rounded-full bg-[#4FA1D8] text-[#0E0F11] text-[9px] font-bold flex items-center justify-center">
                 {activeFiltersCount}
               </span>
             )}
@@ -614,7 +614,7 @@ export function AgendaTopBar({
                             {BOOKING_STATUS_CONFIG[status].label}
                           </span>
                           {filters.status.includes(status) && (
-                            <CheckCircle className="h-3.5 w-3.5 text-[#4FE3C1]" />
+                            <CheckCircle className="h-3.5 w-3.5 text-[#4FA1D8]" />
                           )}
                         </button>
                       ))}
@@ -628,7 +628,7 @@ export function AgendaTopBar({
                       className={cn(
                         "w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-all",
                         filters.highlighted
-                          ? "bg-[#FF6DA3]/15 text-[#FF6DA3]"
+                          ? "bg-[#E06072]/15 text-[#E06072]"
                           : "text-white/60 hover:bg-white/5 hover:text-white"
                       )}
                     >

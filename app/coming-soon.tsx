@@ -11,7 +11,7 @@ export default function ComingSoonPage() {
         <motion.div 
           className="absolute top-0 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-20"
           style={{
-            background: "radial-gradient(circle, rgba(79, 227, 193, 0.3) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(79, 161, 216, 0.3) 0%, transparent 70%)",
           }}
           animate={{
             scale: [1, 1.1, 1],
@@ -26,7 +26,7 @@ export default function ComingSoonPage() {
         <motion.div 
           className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full blur-3xl opacity-20"
           style={{
-            background: "radial-gradient(circle, rgba(160, 107, 255, 0.3) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(79, 161, 216, 0.3) 0%, transparent 70%)",
           }}
           animate={{
             scale: [1, 1.1, 1],

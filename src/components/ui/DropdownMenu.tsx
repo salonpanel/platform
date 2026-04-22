@@ -138,7 +138,7 @@ export function DropdownMenuItem({
         "transition-all duration-200",
         variant === "danger"
           ? "text-red-400 hover:bg-[rgba(239,68,68,0.15)]"
-          : "text-[var(--text-primary)] hover:bg-[rgba(58,109,255,0.15)]",
+          : "text-[var(--text-primary)] hover:bg-[rgba(79,161,216,0.15)]",
         disabled && "opacity-50 cursor-not-allowed",
         className
       )}

@@ -118,7 +118,7 @@ export function DraggableBookingCard({
     dragging: {
       scale: 1.05,
       opacity: 0.9,
-      boxShadow: "0px 20px 40px -10px rgba(58, 109, 255, 0.3), 0px 10px 20px -5px rgba(79, 227, 193, 0.2)",
+      boxShadow: "0px 20px 40px -10px rgba(79, 161, 216, 0.3), 0px 10px 20px -5px rgba(79, 161, 216, 0.2)",
       zIndex: 50,
     },
     conflict: {

@@ -209,7 +209,7 @@ function NotificationToast({ notification, onDismiss, index }: NotificationToast
       )}
       style={{
         background: notification.type === "achievement"
-          ? "linear-gradient(135deg, rgba(160,107,255,0.1) 0%, rgba(255,109,163,0.1) 100%)"
+          ? "linear-gradient(135deg, rgba(79,161,216,0.1) 0%, rgba(224,96,114,0.1) 100%)"
           : undefined,
       }}
     >

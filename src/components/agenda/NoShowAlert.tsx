@@ -49,13 +49,13 @@ export function NoShowAlert({ bookings, tenantTimezone, className }: NoShowAlert
               key={booking.id}
               className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs"
               style={{
-                backgroundColor: "rgba(255,109,163,0.08)",
-                border: "1px solid rgba(255,109,163,0.2)",
+                backgroundColor: "rgba(224,96,114,0.08)",
+                border: "1px solid rgba(224,96,114,0.2)",
               }}
             >
-              <AlertCircle size={13} style={{ color: "#FF6DA3", flexShrink: 0 }} />
+              <AlertCircle size={13} style={{ color: "#E06072", flexShrink: 0 }} />
               <span style={{ color: "var(--text-secondary)" }}>
-                <span className="font-semibold" style={{ color: "#FF6DA3" }}>
+                <span className="font-semibold" style={{ color: "#E06072" }}>
                   {booking.customer?.name || "Cliente"}
                 </span>{" "}
                 · {minutesLate} min de retraso

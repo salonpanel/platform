@@ -5,12 +5,8 @@ export type PublicTenantProfile = {
     name: string;
     slug: string;
     public_subdomain: string | null;
-    settings: {
-        brand_color?: string;
-        logo_url?: string;
-        theme?: "light" | "dark";
-        currency?: string;
-    };
+    logo_url: string | null;
+    primary_color: string | null;
     is_active: boolean;
 };
 
@@ -25,7 +21,7 @@ export async function getPublicTenant(slug: string): Promise<PublicTenantProfile
     try {
         const { data, error } = await supabase
             .from("tenants")
-            .select("id, name, slug, public_subdomain, settings, is_active")
+            .select("id, name, slug, public_subdomain, logo_url, primary_color, is_active")
             .or(`slug.eq.${slug},public_subdomain.eq.${slug}`)
             .maybeSingle();
 
@@ -36,21 +32,14 @@ export async function getPublicTenant(slug: string): Promise<PublicTenantProfile
 
         if (!data) return null;
 
-        // Normalize settings
-        const settings = (data.settings as any) || {};
-
         return {
-            id: data.id,
-            name: data.name,
-            slug: data.slug,
-            public_subdomain: data.public_subdomain,
-            settings: {
-                brand_color: settings.brand_color || "#0f172a", // Default Slate-900
-                logo_url: settings.logo_url || null,
-                theme: settings.theme || "light",
-                currency: settings.currency || "EUR",
-            },
-            is_active: data.is_active ?? true, // Default to true if column missing
+            id: (data as any).id,
+            name: (data as any).name,
+            slug: (data as any).slug,
+            public_subdomain: (data as any).public_subdomain ?? null,
+            logo_url: (data as any).logo_url ?? null,
+            primary_color: (data as any).primary_color ?? "#4FA1D8",
+            is_active: (data as any).is_active ?? true,
         };
     } catch (err) {
         console.error("[getPublicTenant] Critical Error:", err);

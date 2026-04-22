@@ -45,7 +45,7 @@ export function Avatar({
         "relative inline-flex items-center justify-center rounded-full",
         "gradient-aurora-1 text-white font-satoshi font-bold",
         "overflow-hidden border-2 border-[rgba(255,255,255,0.2)]",
-        "shadow-[0px_4px_16px_rgba(58,109,255,0.3)]",
+        "shadow-[0px_4px_16px_rgba(79,161,216,0.3)]",
         sizeClasses[size],
         className
       )}

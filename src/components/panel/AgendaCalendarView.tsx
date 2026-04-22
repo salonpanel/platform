@@ -62,10 +62,10 @@ interface StatusTokens {
 const getStatusTokens = (status: string): StatusTokens => {
   const statusMap: Record<string, StatusTokens> = {
     pending: theme.statusTokens?.pending || { bg: "rgba(255,193,7,0.12)", border: "rgba(255,193,7,0.25)", text: "#FFC107" },
-    confirmed: theme.statusTokens?.confirmed || { bg: "rgba(79,227,193,0.12)", border: "rgba(79,227,193,0.25)", text: "#4FE3C1" },
+    confirmed: theme.statusTokens?.confirmed || { bg: "rgba(79,161,216,0.12)", border: "rgba(79,161,216,0.25)", text: "#4FA1D8" },
     cancelled: theme.statusTokens?.cancelled || { bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.25)", text: "#EF4444" },
-    completed: theme.statusTokens?.completed || { bg: "rgba(58,109,255,0.12)", border: "rgba(58,109,255,0.25)", text: "#3A6DFF" },
-    "no-show": theme.statusTokens?.["no-show"] || { bg: "rgba(255,109,163,0.12)", border: "rgba(255,109,163,0.25)", text: "#FF6DA3" },
+    completed: theme.statusTokens?.completed || { bg: "rgba(79,161,216,0.12)", border: "rgba(79,161,216,0.25)", text: "#4FA1D8" },
+    "no-show": theme.statusTokens?.["no-show"] || { bg: "rgba(224,96,114,0.12)", border: "rgba(224,96,114,0.25)", text: "#E06072" },
   };
   return statusMap[status] || statusMap.pending;
 };
@@ -74,17 +74,17 @@ const getStatusTokens = (status: string): StatusTokens => {
 const statusColors = {
   hold: "border-[#FFC107]/30 bg-[rgba(255,193,7,0.12)] text-[#FFC107]",
   pending: "border-[#FFC107]/30 bg-[rgba(255,193,7,0.12)] text-[#FFC107]",
-  paid: "border-[#3A6DFF]/30 bg-[rgba(58,109,255,0.12)] text-[#3A6DFF]",
-  completed: "border-[#4FE3C1]/30 bg-[rgba(79,227,193,0.12)] text-[#4FE3C1]",
+  paid: "border-[#4FA1D8]/30 bg-[rgba(79,161,216,0.12)] text-[#4FA1D8]",
+  completed: "border-[#4FA1D8]/30 bg-[rgba(79,161,216,0.12)] text-[#4FA1D8]",
   cancelled: "border-white/10 bg-white/3 text-[#9ca3af] opacity-60",
-  no_show: "border-[#FF6DA3]/30 bg-[rgba(255,109,163,0.12)] text-[#FF6DA3]",
+  no_show: "border-[#E06072]/30 bg-[rgba(224,96,114,0.12)] text-[#E06072]",
 };
 
 // Colores y estilos para bloqueos según tipo - Menos intrusivos
 const blockingColors = {
   block: "bg-white/3 border-l-[3px] border-white/10 text-[#9ca3af] opacity-50 backdrop-blur-sm",
   absence: "bg-[rgba(239,68,68,0.08)] border-l-[3px] border-[#EF4444]/30 text-[#EF4444] opacity-60 backdrop-blur-sm",
-  vacation: "bg-[rgba(58,109,255,0.08)] border-l-[3px] border-[#3A6DFF]/30 text-[#3A6DFF] opacity-60 backdrop-blur-sm",
+  vacation: "bg-[rgba(79,161,216,0.08)] border-l-[3px] border-[#4FA1D8]/30 text-[#4FA1D8] opacity-60 backdrop-blur-sm",
 };
 
 // Constantes centralizadas para cálculos de posición

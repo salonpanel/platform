@@ -29,7 +29,8 @@ export function Button({
   className,
   icon,
 }: ButtonProps) {
-  const baseStyles = "inline-flex items-center justify-center gap-2 font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+  const baseStyles =
+    "inline-flex items-center justify-center gap-2 font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--bf-bg)] disabled:opacity-50 disabled:cursor-not-allowed";
   
   // Usar variables CSS para tipografía
   const fontStyle = {
@@ -37,12 +38,18 @@ export function Button({
   };
 
   const variants = {
-    primary: "bg-[var(--gradient-primary)] text-white shadow-[var(--glow-aqua)] hover:shadow-[var(--glow-aqua),0px_0px_24px_rgba(79,227,193,0.6)] focus:ring-[var(--accent-aqua)]/30 backdrop-blur-sm",
-    secondary: "glass text-[var(--text-primary)] border-[var(--glass-border)] hover:border-[var(--accent-aqua-border)] hover:bg-[var(--accent-aqua-glass)] focus:ring-[var(--accent-aqua)]/30",
-    outline: "bg-transparent text-[var(--text-primary)] border-2 border-[var(--accent-aqua-border)] hover:bg-[var(--accent-aqua-glass)] hover:border-[var(--accent-aqua)] focus:ring-[var(--accent-aqua)]/30",
-    ghost: "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)] focus:ring-[var(--accent-blue)]/30",
-    danger: "bg-[var(--color-danger-glass)] text-[var(--color-danger)] border border-[var(--color-danger)]/30 hover:bg-[rgba(239,68,68,0.18)] hover:border-[var(--color-danger)]/50 focus:ring-[var(--color-danger)]/30 backdrop-blur-sm",
-    destructive: "bg-[var(--color-danger)] text-white border border-[var(--color-danger)] hover:bg-[rgba(239,68,68,0.9)] hover:shadow-[0px_0px_16px_rgba(239,68,68,0.4)] focus:ring-[var(--color-danger)]/30",
+    primary:
+      "bg-[var(--bf-primary)] text-[var(--bf-ink)] border border-transparent hover:bg-[var(--bf-cyan-300)] focus:ring-[rgba(79,161,216,0.3)]",
+    secondary:
+      "bg-[var(--bf-surface)] text-[var(--bf-ink-50)] border border-[var(--bf-border-2)] hover:border-[var(--bf-cyan-600)] hover:text-[var(--bf-primary)] focus:ring-[rgba(79,161,216,0.25)]",
+    outline:
+      "bg-transparent text-[var(--bf-ink-100)] border border-[var(--bf-border-2)] hover:bg-[rgba(255,255,255,0.01)] hover:border-[var(--bf-cyan-600)] focus:ring-[rgba(79,161,216,0.25)]",
+    ghost:
+      "bg-transparent text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-bg-elev)] focus:ring-[rgba(79,161,216,0.2)]",
+    danger:
+      "bg-transparent text-[var(--bf-danger)] border border-[rgba(224,96,114,0.4)] hover:border-[rgba(224,96,114,0.55)] hover:bg-[rgba(224,96,114,0.08)] focus:ring-[rgba(224,96,114,0.25)]",
+    destructive:
+      "bg-[var(--bf-danger)] text-[var(--bf-ink)] border border-transparent hover:bg-[rgba(224,96,114,0.9)] focus:ring-[rgba(224,96,114,0.25)]",
   };
 
   const sizes = {

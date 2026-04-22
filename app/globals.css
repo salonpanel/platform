@@ -1,308 +1,308 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,600,700,900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap");
 @import "tailwindcss";
 
 :root {
   /* Fila táctil del tab bar. Debe coincidir con MobileBottomNav (h-14). */
   --bottom-nav-height: 56px;
-  /* Hueco que reserva el scroll principal bajo el tab fijo (sin padding extra bajo iconos). */
   --bottom-nav-offset: var(--bottom-nav-height);
+
   /* ============================================================================
-     NUEVO DESIGN SYSTEM - BookFast Platform
-     Capsule Shapes + Soft Glass + Premium Gradients + Neo-Glow
+     BookFast Brand Kit (v1.0 · Abril 2026)
+     Fuente de verdad: bookfast-remix/project/Brand Kit-print.html + tokens.css
      ============================================================================ */
 
   /* ----------------------------------------------------------------------------
-     NEUTROS - Dark Mode Foundation
+     BRAND TOKENS (prefijo bf-)
      ---------------------------------------------------------------------------- */
-  --neutral-50: #06141B;   /* Más oscuro - Background principal */
-  --neutral-100: #11212D;  /* Background secundario */
-  --neutral-200: #253745;  /* Background terciario / Cards */
-  --neutral-300: #4A5C6A;  /* Borders / Dividers */
-  --neutral-400: #9BA8AB;  /* Texto secundario */
-  --neutral-500: #CCD0CF;  /* Texto primario */
+  --font-sans: "Geist", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-serif: "Instrument Serif", Georgia, serif;
 
-  /* Mapeo semántico de neutros */
-  --bg-primary: var(--neutral-50);
-  --bg-secondary: var(--neutral-100);
-  --bg-tertiary: var(--neutral-200);
-  --bg-card: var(--neutral-200);
-  --border-default: var(--neutral-300);
-  --text-primary: var(--neutral-500);
-  --text-secondary: var(--neutral-400);
-  --text-tertiary: var(--neutral-300);
+  --bf-primary: #4fa1d8; /* cyan */
+  --bf-success: #1ea19f; /* teal */
+  --bf-warn: #e8b04a;
+  --bf-danger: #e06072;
+  --bf-ink: #05070a;
 
-  /* Compatibilidad legacy */
-  --color-bg-base: var(--neutral-50);
-  --color-bg-primary: var(--neutral-50);
-  --color-bg-secondary: var(--neutral-100);
-  --color-bg-tertiary: var(--neutral-200);
-  --color-text-primary: var(--neutral-500);
-  --color-text-secondary: var(--neutral-400);
-  --color-text-disabled: var(--neutral-300);
-  --background: var(--neutral-50);
-  --foreground: var(--neutral-500);
+  /* Cyan scale */
+  --bf-cyan-50:  #eaf5fc;
+  --bf-cyan-100: #cde7f7;
+  --bf-cyan-200: #9bcfef;
+  --bf-cyan-300: #6fb8e4;
+  --bf-cyan-400: #4fa1d8;
+  --bf-cyan-500: #2e87c2;
+  --bf-cyan-600: #1f6b9e;
+  --bf-cyan-700: #144c75;
+  --bf-cyan-800: #0b3250;
+  --bf-cyan-900: #051e33;
+
+  /* Teal scale */
+  --bf-teal-50:  #e6f6f5;
+  --bf-teal-100: #c1eae8;
+  --bf-teal-200: #8bd6d4;
+  --bf-teal-300: #55c0bd;
+  --bf-teal-400: #2dafac;
+  --bf-teal-500: #1ea19f;
+  --bf-teal-600: #14807e;
+  --bf-teal-700: #0d5f5e;
+  --bf-teal-800: #083e3d;
+  --bf-teal-900: #042322;
+
+  /* Ink scale */
+  --bf-ink-50:  #f5f7fa;
+  --bf-ink-100: #e4e8ef;
+  --bf-ink-200: #c5cbd6;
+  --bf-ink-300: #959dac;
+  --bf-ink-400: #666f7e;
+  --bf-ink-500: #3c4452;
+  --bf-ink-600: #222934;
+  --bf-ink-700: #161b23;
+  --bf-ink-800: #0e1218;
+  --bf-ink-900: #080a0f;
+  --bf-ink-950: #05070a;
+
+  /* Surfaces */
+  --bf-bg:        #05070a;
+  --bf-bg-elev:   #0b0e14;
+  --bf-surface:   #0f131b;
+  --bf-surface-2: #161b25;
+  --bf-border:    #1d2430;
+  --bf-border-2:  #262f3d;
+
+  /* Radii (brand kit) */
+  --r-sm:   8px;
+  --r-md:   12px;
+  --r-lg:   20px;
+  --r-xl:   28px;
+  --r-full: 999px;
+
+  /* Shadows (brand kit) */
+  --bf-shadow-card: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 10px 30px -18px rgba(0, 0, 0, 0.6);
+  --bf-shadow-glow: 0 0 40px -10px rgba(79, 161, 216, 0.35);
 
   /* ----------------------------------------------------------------------------
-     ACENTOS PREMIUM
+     SEMÁNTICOS — alias para la app existente
+     Todos apuntan a los tokens del brand kit.
      ---------------------------------------------------------------------------- */
-  --accent-aqua: #4FE3C1;      /* Aqua - Acción principal */
-  --accent-purple: #A06BFF;    /* Purple - Acción secundaria */
-  --accent-blue: #3A6DFF;      /* Blue - Información / Links */
-  --accent-pink: #FF6DA3;      /* Pink - Destacados / Alerts */
 
-  /* Variantes con opacidad para glass effects */
-  --accent-aqua-glass: rgba(79, 227, 193, 0.12);
-  --accent-purple-glass: rgba(160, 107, 255, 0.12);
-  --accent-blue-glass: rgba(58, 109, 255, 0.12);
-  --accent-pink-glass: rgba(255, 109, 163, 0.12);
+  /* Neutros */
+  --neutral-50:  var(--bf-bg);
+  --neutral-100: var(--bf-bg-elev);
+  --neutral-200: var(--bf-surface);
+  --neutral-300: var(--bf-border);
+  --neutral-400: var(--bf-ink-400);
+  --neutral-500: var(--bf-ink-50);
 
-  /* Bordes con glow (neo-glow edges) */
-  --accent-aqua-border: rgba(79, 227, 193, 0.3);
-  --accent-purple-border: rgba(160, 107, 255, 0.3);
-  --accent-blue-border: rgba(58, 109, 255, 0.3);
-  --accent-pink-border: rgba(255, 109, 163, 0.3);
+  --bg-primary:   var(--bf-bg);
+  --bg-secondary: var(--bf-bg-elev);
+  --bg-tertiary:  var(--bf-surface);
+  --bg-card:      var(--bf-surface);
+  --border-default: var(--bf-border);
+  --text-primary:   var(--bf-ink-50);
+  --text-secondary: var(--bf-ink-300);
+  --text-tertiary:  var(--bf-ink-400);
 
   /* Legacy compatibility */
+  --color-bg-base:      var(--bf-bg);
+  --color-bg-primary:   var(--bf-bg);
+  --color-bg-secondary: var(--bf-bg-elev);
+  --color-bg-tertiary:  var(--bf-surface);
+  --color-text-primary:   var(--bf-ink-50);
+  --color-text-secondary: var(--bf-ink-300);
+  --color-text-disabled:  var(--bf-ink-400);
+  --background: var(--bf-bg);
+  --foreground: var(--bf-ink-50);
+
+  /* ----------------------------------------------------------------------------
+     ACENTOS — alineados a la marca (cyan como acento principal)
+     ---------------------------------------------------------------------------- */
+  --accent-aqua:   var(--bf-primary);
+  --accent-purple: var(--bf-primary);
+  --accent-blue:   var(--bf-primary);
+  --accent-pink:   var(--bf-danger);
+
+  /* Variantes con opacidad para glass effects */
+  --accent-aqua-glass:   rgba(79, 161, 216, 0.12);
+  --accent-purple-glass: rgba(79, 161, 216, 0.12);
+  --accent-blue-glass:   rgba(79, 161, 216, 0.12);
+  --accent-pink-glass:   rgba(224, 96, 114, 0.12);
+
+  /* Bordes con glow */
+  --accent-aqua-border:   rgba(79, 161, 216, 0.35);
+  --accent-purple-border: rgba(79, 161, 216, 0.35);
+  --accent-blue-border:   rgba(79, 161, 216, 0.35);
+  --accent-pink-border:   rgba(224, 96, 114, 0.35);
+
+  /* Legacy */
   --accent-1: var(--accent-blue);
   --accent-2: var(--accent-aqua);
   --accent-3: var(--accent-purple);
-  --color-accent: var(--accent-purple);
+  --color-accent:      var(--accent-purple);
   --color-accent-warm: var(--accent-aqua);
 
   /* ----------------------------------------------------------------------------
-     GRADIENTES PREMIUM
+     GRADIENTES
      ---------------------------------------------------------------------------- */
-  --gradient-primary: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-aqua) 100%);
-  --gradient-secondary: linear-gradient(135deg, var(--accent-aqua) 0%, var(--accent-purple) 100%);
-  --gradient-accent: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-pink) 100%);
+  --gradient-primary:   linear-gradient(135deg, var(--bf-success) 0%, var(--bf-primary) 100%);
+  --gradient-secondary: linear-gradient(135deg, var(--bf-primary) 0%, var(--bf-cyan-600) 100%);
+  --gradient-accent:    linear-gradient(135deg, var(--bf-primary) 0%, var(--bf-success) 100%);
 
-  /* Gradientes radiales para backgrounds */
-  --gradient-radial-primary: radial-gradient(ellipse at top, rgba(58, 109, 255, 0.15) 0%, transparent 70%);
-  --gradient-radial-secondary: radial-gradient(ellipse at top, rgba(79, 227, 193, 0.15) 0%, transparent 70%);
+  --gradient-radial-primary:   radial-gradient(ellipse at top, rgba(79, 161, 216, 0.15) 0%, transparent 70%);
+  --gradient-radial-secondary: radial-gradient(ellipse at top, rgba(30, 161, 159, 0.15) 0%, transparent 70%);
 
-  /* Legacy compatibility */
+  /* Legacy */
   --gradient-1: var(--gradient-primary);
   --gradient-2: var(--gradient-secondary);
-  --gradient-primary-start: #3A6DFF;
-  --gradient-primary-end: #4FE3C1;
-  --gradient-secondary-start: #4FE3C1;
-  --gradient-secondary-end: #A06BFF;
+  --gradient-primary-start: var(--bf-success);
+  --gradient-primary-end:   var(--bf-primary);
+  --gradient-secondary-start: var(--bf-primary);
+  --gradient-secondary-end:   var(--bf-cyan-600);
 
   /* ----------------------------------------------------------------------------
      COLORES SEMÁNTICOS
      ---------------------------------------------------------------------------- */
-  --color-success: #10B981;
-  --color-success-glass: rgba(16, 185, 129, 0.12);
-  --color-warning: #F59E0B;
-  --color-warning-glass: rgba(245, 158, 11, 0.12);
-  --color-danger: #EF4444;
-  --color-danger-glass: rgba(239, 68, 68, 0.12);
-  --color-info: #3B82F6;
-  --color-info-glass: rgba(59, 130, 246, 0.12);
+  --color-success:       var(--bf-success);
+  --color-success-glass: rgba(30, 161, 159, 0.12);
+  --color-warning:       var(--bf-warn);
+  --color-warning-glass: rgba(232, 176, 74, 0.12);
+  --color-danger:        var(--bf-danger);
+  --color-danger-glass:  rgba(224, 96, 114, 0.12);
+  --color-info:          var(--bf-primary);
+  --color-info-glass:    rgba(79, 161, 216, 0.12);
 
   /* ----------------------------------------------------------------------------
-     SISTEMA DE GLASS (Soft Glass)
+     SISTEMA DE GLASS
      ---------------------------------------------------------------------------- */
-  /* Glass Base */
-  --glass-bg: rgba(255, 255, 255, 0.06);
-  --glass-bg-subtle: rgba(255, 255, 255, 0.03);
-  --glass-bg-strong: rgba(255, 255, 255, 0.1);
+  --glass-bg:        rgba(11, 14, 20, 0.72);
+  --glass-bg-subtle: rgba(11, 14, 20, 0.45);
+  --glass-bg-strong: rgba(15, 19, 27, 0.82);
 
-  /* Glass Borders */
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-border-subtle: rgba(255, 255, 255, 0.04);
-  --glass-border-strong: rgba(255, 255, 255, 0.12);
+  --glass-border:        rgba(38, 47, 61, 0.85);
+  --glass-border-subtle: rgba(29, 36, 48, 0.65);
+  --glass-border-strong: rgba(38, 47, 61, 1);
 
-  /* Glass Blur */
-  --glass-blur: blur(16px);
+  --glass-blur:        blur(16px);
   --glass-blur-subtle: blur(12px);
   --glass-blur-strong: blur(20px);
 
-  /* Glass con Acentos */
-  --glass-aqua: rgba(79, 227, 193, 0.08);
-  --glass-purple: rgba(160, 107, 255, 0.08);
-  --glass-blue: rgba(58, 109, 255, 0.08);
-  --glass-pink: rgba(255, 109, 163, 0.08);
+  --glass-aqua:   rgba(79, 161, 216, 0.08);
+  --glass-purple: rgba(79, 161, 216, 0.08);
+  --glass-blue:   rgba(79, 161, 216, 0.08);
+  --glass-pink:   rgba(224, 96, 114, 0.08);
 
-  /* Legacy compatibility */
+  /* Legacy */
   --glass: var(--glass-bg);
   --glass-border-old: rgba(255, 255, 255, 0.06);
 
   /* ----------------------------------------------------------------------------
-     SOMBRAS Y GLOWS PREMIUM
+     SOMBRAS Y GLOWS
      ---------------------------------------------------------------------------- */
-  /* Sombras de Cards */
-  --shadow-card: 0px 4px 16px rgba(0, 0, 0, 0.3), 
-                 0px 2px 8px rgba(0, 0, 0, 0.2),
-                 inset 0px 1px 0px rgba(255, 255, 255, 0.08);
+  --shadow-card: var(--bf-shadow-card);
 
-  --shadow-card-hover: 0px 8px 32px rgba(0, 0, 0, 0.4),
-                        0px 4px 16px rgba(0, 0, 0, 0.3),
-                        inset 0px 1px 0px rgba(255, 255, 255, 0.12);
+  --shadow-card-hover: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
+                       0 18px 40px -24px rgba(0, 0, 0, 0.75);
 
-  /* Sombra de Modal */
   --shadow-modal: 0px 12px 48px rgba(0, 0, 0, 0.5),
                   0px 4px 16px rgba(0, 0, 0, 0.3),
                   inset 0px 1px 0px rgba(255, 255, 255, 0.1);
 
-  /* Sombra de Input Focus */
-  --shadow-input-focus: 0px 0px 0px 3px rgba(79, 227, 193, 0.2),
-                        inset 0px 1px 2px rgba(0, 0, 0, 0.1);
+  --shadow-input-focus: 0 0 0 3px rgba(79, 161, 216, 0.15);
 
-  /* Glows Neo (neo-glow edges) */
-  --glow-aqua: 0px 0px 16px rgba(79, 227, 193, 0.4),
-               0px 0px 32px rgba(79, 227, 193, 0.2);
+  --glow-aqua:  var(--bf-shadow-glow);
+  --glow-purple: var(--bf-shadow-glow);
+  --glow-blue:  var(--bf-shadow-glow);
+  --glow-pink:  0 0 40px -10px rgba(224, 96, 114, 0.35);
 
-  --glow-purple: 0px 0px 16px rgba(160, 107, 255, 0.4),
-                 0px 0px 32px rgba(160, 107, 255, 0.2);
+  --glow-border-aqua:   0px 0px 8px rgba(79, 161, 216, 0.35);
+  --glow-border-purple: 0px 0px 8px rgba(79, 161, 216, 0.35);
+  --glow-border-blue:   0px 0px 8px rgba(79, 161, 216, 0.35);
+  --glow-border-pink:   0px 0px 8px rgba(224, 96, 114, 0.3);
 
-  --glow-blue: 0px 0px 16px rgba(58, 109, 255, 0.4),
-               0px 0px 32px rgba(58, 109, 255, 0.2);
-
-  --glow-pink: 0px 0px 16px rgba(255, 109, 163, 0.4),
-                 0px 0px 32px rgba(255, 109, 163, 0.2);
-
-  /* Glow de Borde (neo-glow edges) */
-  --glow-border-aqua: 0px 0px 8px rgba(79, 227, 193, 0.3);
-  --glow-border-purple: 0px 0px 8px rgba(160, 107, 255, 0.3);
-  --glow-border-blue: 0px 0px 8px rgba(58, 109, 255, 0.3);
-  --glow-border-pink: 0px 0px 8px rgba(255, 109, 163, 0.3);
-
-  /* Legacy compatibility */
-  --shadow-premium: var(--shadow-card);
-  --shadow-glass: 0px 8px 32px rgba(0, 0, 0, 0.35);
-  --shadow-neon-glow-blue: var(--glow-blue);
+  /* Legacy */
+  --shadow-premium:          var(--shadow-card);
+  --shadow-glass:            0px 8px 32px rgba(0, 0, 0, 0.35);
+  --shadow-neon-glow-blue:   var(--glow-blue);
   --shadow-neon-glow-purple: var(--glow-purple);
-  --shadow-glow-blue: var(--glow-blue);
-  --shadow-glow-pink: var(--glow-pink);
+  --shadow-glow-blue:        var(--glow-blue);
+  --shadow-glow-pink:        var(--glow-pink);
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 
   /* ----------------------------------------------------------------------------
-     SISTEMA DE TIPOGRAFÍA - Apple-like Scale
-     ----------------------------------------------------------------------------
-     H1: 28px semibold (Hero titles, main headings)
-     H2: 22px semibold (Section headers, important labels)
-     H3: 18px medium (Card titles, component headers)
-     H4: 18px (Subtitles, secondary info)
-     Body Large: 16px regular (Primary content)
-     Body Medium: 15px regular (Secondary content)
-     Body Small: 13px regular (Tertiary content, captions)
-     Label: 13px medium (Form labels, buttons)
-     Caption: 11px (Metadata, status text)
-     ------------------------------------------------------------------------- */
-
-  /* Headings - Apple Scale */
-  --text-h1-size: 28px;
-  --text-h1-line: 1.2;
-  --text-h1-weight: 600;
-  --text-h1-letter: -0.02em;
-
-  --text-h2-size: 22px;
-  --text-h2-line: 1.3;
-  --text-h2-weight: 600;
-  --text-h2-letter: -0.02em;
-
-  --text-h3-size: 18px;
-  --text-h3-line: 1.4;
-  --text-h3-weight: 500;
-  --text-h3-letter: -0.01em;
-
-  --text-h4-size: 16px;
-  --text-h4-line: 1.4;
-  --text-h4-weight: 500;
-  --text-h4-letter: -0.01em;
-
-  /* Body Text - Apple Scale */
-  --text-body-lg-size: 16px;
-  --text-body-lg-line: 1.5;
-  --text-body-lg-weight: 400;
-
-  --text-body-md-size: 15px;
-  --text-body-md-line: 1.5;
-  --text-body-md-weight: 400;
-
-  --text-body-sm-size: 13px;
-  --text-body-sm-line: 1.5;
-  --text-body-sm-weight: 400;
-
-  /* Labels & Interactive */
-  --text-label-size: 13px;
-  --text-label-line: 1.4;
-  --text-label-weight: 500;
-
-  --text-caption-size: 11px;
-  --text-caption-line: 1.4;
-  --text-caption-weight: 400;
-
-  /* ----------------------------------------------------------------------------
-     SISTEMA DE FORMAS - Border Radius (Capsule System)
+     TIPOGRAFÍA
      ---------------------------------------------------------------------------- */
-  --radius-xs: 8px;        /* Badges pequeños, tags */
-  --radius-sm: 12px;        /* Inputs pequeños, botones pequeños */
-  --radius-md: 18px;       /* Inputs, botones, cards pequeños */
-  --radius-lg: 24px;       /* Cards medianos, modales pequeños */
-  --radius-xl: 28px;       /* Cards grandes, modales */
-  --radius-2xl: 40px;      /* Containers grandes */
-  --radius-pill: 9999px;   /* Pills / Capsules completas */
+  --font-heading: var(--font-sans);
+  --font-body:    var(--font-sans);
+  --font-kpi:     var(--font-sans);
+
+  --text-h1-size: 32px; --text-h1-line: 1.2; --text-h1-weight: 700; --text-h1-letter: -0.03em;
+  --text-h2-size: 24px; --text-h2-line: 1.3; --text-h2-weight: 600; --text-h2-letter: -0.02em;
+  --text-h3-size: 20px; --text-h3-line: 1.4; --text-h3-weight: 600; --text-h3-letter: -0.02em;
+  --text-h4-size: 18px; --text-h4-line: 1.4; --text-h4-weight: 600; --text-h4-letter: -0.01em;
+
+  --text-body-lg-size: 16px; --text-body-lg-line: 1.5; --text-body-lg-weight: 400;
+  --text-body-md-size: 15px; --text-body-md-line: 1.5; --text-body-md-weight: 400;
+  --text-body-sm-size: 13px; --text-body-sm-line: 1.5; --text-body-sm-weight: 400;
+
+  --text-label-size: 13px; --text-label-line: 1.4; --text-label-weight: 500;
+  --text-caption-size: 11px; --text-caption-line: 1.4; --text-caption-weight: 400;
+
+  --text-kpi-size: 28px; --text-kpi-line: 1.2; --text-kpi-weight: 600; --text-kpi-letter: -0.01em;
 
   /* ----------------------------------------------------------------------------
-     SISTEMA DE ESPACIADO
+     FORMAS — Border Radius
+     ---------------------------------------------------------------------------- */
+  --radius-xs:   var(--r-sm);   /* 8px  */
+  --radius-sm:   var(--r-md);   /* 12px */
+  --radius-md:   18px;
+  --radius-lg:   var(--r-lg);   /* 20px */
+  --radius-xl:   var(--r-xl);   /* 28px */
+  --radius-2xl:  40px;
+  --radius-pill: 9999px;
+
+  /* ----------------------------------------------------------------------------
+     ESPACIADO
      ---------------------------------------------------------------------------- */
   --spacing-0: 0px;
-  --spacing-1: 4px;
-  --spacing-2: 8px;
-  --spacing-3: 12px;
-  --spacing-4: 16px;
-  --spacing-5: 20px;
-  --spacing-6: 24px;
-  --spacing-7: 32px;
-  --spacing-8: 40px;
-  --spacing-9: 48px;
-  --spacing-10: 64px;
+  --spacing-1: 4px;  --spacing-2: 8px;  --spacing-3: 12px; --spacing-4: 16px;
+  --spacing-5: 20px; --spacing-6: 24px; --spacing-7: 32px; --spacing-8: 40px;
+  --spacing-9: 48px; --spacing-10: 64px;
 
-  /* Spacing Semántico */
-  --spacing-xs: var(--spacing-2);
-  --spacing-sm: var(--spacing-3);
-  --spacing-md: var(--spacing-4);
-  --spacing-lg: var(--spacing-6);
-  --spacing-xl: var(--spacing-8);
-  --spacing-2xl: var(--spacing-10);
+  --spacing-xs: var(--spacing-2); --spacing-sm: var(--spacing-3);
+  --spacing-md: var(--spacing-4); --spacing-lg: var(--spacing-6);
+  --spacing-xl: var(--spacing-8); --spacing-2xl: var(--spacing-10);
 
-  /* Legacy compatibility */
-  --spacing-1-old: 4px;
-  --spacing-2-old: 6px;
-  --spacing-3-old: 8px;
-  --spacing-4-old: 12px;
-  --spacing-5-old: 16px;
-  --spacing-6-old: 20px;
-  --spacing-7-old: 24px;
-  --spacing-8-old: 32px;
-  --spacing-9-old: 40px;
+  /* Legacy */
+  --spacing-1-old: 4px;  --spacing-2-old: 6px;  --spacing-3-old: 8px;
+  --spacing-4-old: 12px; --spacing-5-old: 16px; --spacing-6-old: 20px;
+  --spacing-7-old: 24px; --spacing-8-old: 32px; --spacing-9-old: 40px;
 
   /* ----------------------------------------------------------------------------
-     SISTEMA DE ANIMACIONES Y MOTION
+     ANIMACIONES Y MOTION
      ---------------------------------------------------------------------------- */
-  /* Easing Functions */
-  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-smooth:     cubic-bezier(0.4, 0, 0.2, 1);
   --ease-out-smooth: cubic-bezier(0.2, 0, 0, 1);
-  --ease-in-smooth: cubic-bezier(0.4, 0, 1, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in-smooth:  cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring:     cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* Duración de Transiciones */
-  --duration-fast: 150ms;
-  --duration-base: 200ms;
-  --duration-slow: 300ms;
+  --duration-fast:   150ms;
+  --duration-base:   200ms;
+  --duration-slow:   300ms;
   --duration-slower: 400ms;
 
-  /* Legacy compatibility */
   --transition-fast: var(--duration-fast) var(--ease-smooth);
   --transition-base: var(--duration-base) var(--ease-smooth);
   --transition-slow: var(--duration-slow) var(--ease-smooth);
+
+  /* ----------------------------------------------------------------------------
+     BREAKPOINTS VERTICALES — ZERO SCROLL SYSTEM
+     ---------------------------------------------------------------------------- */
+  --vh-large:  950px;
+  --vh-medium: 800px;
+  --vh-small:  750px;
+  --vh-tiny:   650px;
 }
 
 @theme inline {
@@ -320,41 +320,23 @@ html {
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'Inter', 'Satoshi', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.01em;
   overflow-x: hidden;
 }
 
-/* Fuente Satoshi/Inter para títulos - mejorada */
 h1, h2, h3, h4, h5, h6,
 .font-satoshi {
-  font-family: 'Satoshi', 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   font-weight: 600;
   letter-spacing: -0.02em;
 }
 
-/* Tipografía mejorada */
-h1 {
-  font-weight: 700;
-  letter-spacing: -0.03em;
-}
-
-h2, h3 {
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-label, .label {
-  font-weight: 500;
-  letter-spacing: -0.01em;
-}
-
-/* Heading system elegante - Apple Scale */
 h1 {
   @apply text-[var(--text-primary)] tracking-tight;
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-size: var(--text-h1-size);
   font-weight: var(--text-h1-weight);
   line-height: var(--text-h1-line);
@@ -363,7 +345,7 @@ h1 {
 
 h2 {
   @apply text-[var(--text-primary)] tracking-tight;
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-size: var(--text-h2-size);
   font-weight: var(--text-h2-weight);
   line-height: var(--text-h2-line);
@@ -372,7 +354,7 @@ h2 {
 
 h3 {
   @apply text-[var(--text-primary)] tracking-tight;
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-size: var(--text-h3-size);
   font-weight: var(--text-h3-weight);
   line-height: var(--text-h3-line);
@@ -380,33 +362,38 @@ h3 {
 }
 
 h4 {
-  @apply text-[var(--text-secondary)];
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  @apply text-[var(--text-primary)];
+  font-family: var(--font-sans);
   font-size: var(--text-h4-size);
   font-weight: var(--text-h4-weight);
   line-height: var(--text-h4-line);
   letter-spacing: var(--text-h4-letter);
 }
 
-/* Body text system - Apple Scale */
+label, .label {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* Body text system */
 .body-lg {
   font-size: var(--text-body-lg-size);
   line-height: var(--text-body-lg-line);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-weight: var(--text-body-lg-weight);
 }
 
 .body-md {
   font-size: var(--text-body-md-size);
   line-height: var(--text-body-md-line);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-weight: var(--text-body-md-weight);
 }
 
 .body-sm {
   font-size: var(--text-body-sm-size);
   line-height: var(--text-body-sm-line);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-weight: var(--text-body-sm-weight);
 }
 
@@ -423,7 +410,7 @@ h4 {
 }
 
 /* ============================================================================
-   GLASS UTILITIES - Soft Glass System
+   GLASS UTILITIES
    ============================================================================ */
 .glass {
   background: var(--glass-bg);
@@ -453,16 +440,6 @@ h4 {
   border: 1px solid var(--glass-border-strong);
 }
 
-/* Aurora gradients */
-.gradient-aurora-1 {
-  background: var(--gradient-1);
-}
-
-.gradient-aurora-2 {
-  background: var(--gradient-2);
-}
-
-
 .glass-white {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
@@ -470,58 +447,27 @@ h4 {
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* Aurora gradients */
+.gradient-aurora-1 { background: var(--gradient-1); }
+.gradient-aurora-2 { background: var(--gradient-2); }
+
 /* ============================================================================
    SOMBRAS Y GLOWS UTILITIES
    ============================================================================ */
-.shadow-card {
-  box-shadow: var(--shadow-card);
-}
+.shadow-card       { box-shadow: var(--shadow-card); }
+.shadow-card-hover { box-shadow: var(--shadow-card-hover); }
+.shadow-modal      { box-shadow: var(--shadow-modal); }
+.shadow-input-focus { box-shadow: var(--shadow-input-focus); }
 
-.shadow-card-hover {
-  box-shadow: var(--shadow-card-hover);
-}
+.glow-aqua   { box-shadow: var(--glow-aqua); }
+.glow-purple { box-shadow: var(--glow-purple); }
+.glow-blue   { box-shadow: var(--glow-blue); }
+.glow-pink   { box-shadow: var(--glow-pink); }
 
-.shadow-modal {
-  box-shadow: var(--shadow-modal);
-}
-
-.shadow-input-focus {
-  box-shadow: var(--shadow-input-focus);
-}
-
-/* Glows */
-.glow-aqua {
-  box-shadow: var(--glow-aqua);
-}
-
-.glow-purple {
-  box-shadow: var(--glow-purple);
-}
-
-.glow-blue {
-  box-shadow: var(--glow-blue);
-}
-
-.glow-pink {
-  box-shadow: var(--glow-pink);
-}
-
-/* Glow Borders (neo-glow edges) */
-.glow-border-aqua {
-  box-shadow: var(--glow-border-aqua);
-}
-
-.glow-border-purple {
-  box-shadow: var(--glow-border-purple);
-}
-
-.glow-border-blue {
-  box-shadow: var(--glow-border-blue);
-}
-
-.glow-border-pink {
-  box-shadow: var(--glow-border-pink);
-}
+.glow-border-aqua   { box-shadow: var(--glow-border-aqua); }
+.glow-border-purple { box-shadow: var(--glow-border-purple); }
+.glow-border-blue   { box-shadow: var(--glow-border-blue); }
+.glow-border-pink   { box-shadow: var(--glow-border-pink); }
 
 /* ============================================================================
    CAPSULE & SURFACE UTILITIES
@@ -546,45 +492,21 @@ h4 {
 
 .premium-divider {
   height: 1px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    var(--glass-border),
-    transparent
-  );
+  background: linear-gradient(to right, transparent, var(--glass-border), transparent);
   border: none;
   margin: var(--spacing-4) 0;
 }
 
-/* Legacy compatibility */
-.shadow-premium {
-  box-shadow: var(--shadow-card);
-}
-
-.shadow-glass {
-  box-shadow: var(--shadow-glass);
-}
+/* Legacy */
+.shadow-premium        { box-shadow: var(--shadow-card); }
+.shadow-glass          { box-shadow: var(--shadow-glass); }
+.shadow-glow-blue      { box-shadow: var(--shadow-glow-blue); }
+.shadow-glow-pink      { box-shadow: var(--shadow-glow-pink); }
+.shadow-neon-glow-blue   { box-shadow: var(--shadow-neon-glow-blue); }
+.shadow-neon-glow-purple { box-shadow: var(--shadow-neon-glow-purple); }
 
 /* Sidebar sin sombra para no interferir con contenido */
-aside.sidebar-no-shadow {
-  box-shadow: none !important;
-}
-
-.shadow-glow-blue {
-  box-shadow: var(--shadow-glow-blue);
-}
-
-.shadow-glow-pink {
-  box-shadow: var(--shadow-glow-pink);
-}
-
-.shadow-neon-glow-blue {
-  box-shadow: var(--shadow-neon-glow-blue);
-}
-
-.shadow-neon-glow-purple {
-  box-shadow: var(--shadow-neon-glow-purple);
-}
+aside.sidebar-no-shadow { box-shadow: none !important; }
 
 /* Gradientes premium */
 .gradient-primary {
@@ -605,239 +527,130 @@ aside.sidebar-no-shadow {
 /* ============================================================================
    TRANSICIONES Y MICROINTERACCIONES
    ============================================================================ */
-.transition-smooth {
-  transition: all var(--transition-base);
-}
-
-.transition-fast {
-  transition: all var(--transition-fast);
-}
-
-.transition-slow {
-  transition: all var(--transition-slow);
-}
-
-.transition-slower {
-  transition: all var(--duration-slower) var(--ease-smooth);
-}
+.transition-smooth  { transition: all var(--transition-base); }
+.transition-fast    { transition: all var(--transition-fast); }
+.transition-slow    { transition: all var(--transition-slow); }
+.transition-slower  { transition: all var(--duration-slower) var(--ease-smooth); }
 
 .hover-lift {
   transition: transform var(--transition-base), box-shadow var(--transition-base);
 }
-
 .hover-lift:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-premium);
 }
 
-.hover-scale {
-  transition: transform var(--transition-base);
-}
+.hover-scale { transition: transform var(--transition-base); }
+.hover-scale:hover { transform: scale(1.02); }
 
-.hover-scale:hover {
-  transform: scale(1.02);
-}
-
-/* Scrollbar personalizado premium */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--color-bg-primary);
-  border-radius: 10px;
-}
-
+/* ============================================================================
+   SCROLLBAR
+   ============================================================================ */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--color-bg-primary); border-radius: 10px; }
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   border: 2px solid var(--color-bg-primary);
 }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.15); }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-/* Firefox scrollbar */
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.1) var(--color-bg-primary);
 }
 
 /* ============================================================================
-   ANIMACIONES ESTÁNDAR - Entry, Exit, Micro-interactions
+   ANIMACIONES ESTÁNDAR
    ============================================================================ */
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 @keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(-16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-glow-cyan {
+  0%, 100% { box-shadow: var(--bf-shadow-glow); }
+  50%       { box-shadow: var(--bf-shadow-glow), 0px 0px 24px rgba(79, 161, 216, 0.6); }
 }
 
 @keyframes pulse-glow-aqua {
-  0%, 100% {
-    box-shadow: var(--glow-aqua);
-  }
-  50% {
-    box-shadow: var(--glow-aqua), 0px 0px 24px rgba(79, 227, 193, 0.6);
-  }
+  0%, 100% { box-shadow: var(--glow-aqua); }
+  50%       { box-shadow: var(--glow-aqua), 0px 0px 24px rgba(79, 161, 216, 0.6); }
 }
 
 @keyframes pulse-glow-purple {
-  0%, 100% {
-    box-shadow: var(--glow-purple);
-  }
-  50% {
-    box-shadow: var(--glow-purple), 0px 0px 24px rgba(160, 107, 255, 0.6);
-  }
+  0%, 100% { box-shadow: var(--glow-purple); }
+  50%       { box-shadow: var(--glow-purple), 0px 0px 24px rgba(79, 161, 216, 0.6); }
 }
 
-/* Clases de animación */
-.animate-fadeInUp {
-  animation: fadeInUp var(--duration-base) var(--ease-out-smooth);
-}
-
-.animate-fadeInScale {
-  animation: fadeInScale var(--duration-base) var(--ease-smooth);
-}
-
-.animate-slideInRight {
-  animation: slideInRight var(--duration-base) var(--ease-out-smooth);
-}
-
-.animate-pulse-glow-aqua {
-  animation: pulse-glow-aqua 2s ease-in-out infinite;
-}
-
-.animate-pulse-glow-purple {
-  animation: pulse-glow-purple 2s ease-in-out infinite;
-}
-
-/* Legacy compatibility */
+/* Legacy */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes glow {
-  0%, 100% {
-    box-shadow: 0 0 12px rgba(162, 108, 255, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(162, 108, 255, 0.6);
-  }
+  0%, 100% { box-shadow: 0 0 12px rgba(79, 161, 216, 0.4); }
+  50%       { box-shadow: 0 0 20px rgba(79, 161, 216, 0.6); }
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
-}
+.animate-fadeInUp    { animation: fadeInUp var(--duration-base) var(--ease-out-smooth); }
+.animate-fadeInScale { animation: fadeInScale var(--duration-base) var(--ease-smooth); }
+.animate-slideInRight { animation: slideInRight var(--duration-base) var(--ease-out-smooth); }
+.animate-pulse-glow-cyan   { animation: pulse-glow-cyan 2s ease-in-out infinite; }
+.animate-pulse-glow-aqua   { animation: pulse-glow-aqua 2s ease-in-out infinite; }
+.animate-pulse-glow-purple { animation: pulse-glow-purple 2s ease-in-out infinite; }
+.animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+.animate-glow   { animation: glow 2s ease-in-out infinite; }
 
-.animate-glow {
-  animation: glow 2s ease-in-out infinite;
-}
-
-/* Estilos para selects y options en dark mode */
+/* Selects en dark mode */
 select {
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
 }
-
 select option {
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
 }
 
-/* Ocultar scrollbars pero mantener funcionalidad */
+/* ============================================================================
+   SCROLLBAR UTILITIES
+   ============================================================================ */
 .scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
 
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;  /* Chrome, Safari and Opera */
-}
+.scrollbar-none { scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
 
-/* Ocultar completamente la barra (versión none) */
-.scrollbar-none {
-  scrollbar-width: none; /* Firefox */
-}
-.scrollbar-none::-webkit-scrollbar {
-  display: none; /* WebKit */
-}
+/* ============================================================================
+   SAFE AREA / MOBILE UTILITIES
+   ============================================================================ */
+.safe-area-pb   { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.nav-inset-bottom { padding-bottom: 0; }
+.pb-modal-footer  { padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px)); }
+.safe-area-pt   { padding-top: env(safe-area-inset-top, 0px); }
+.pt-safe-top    { padding-top: max(env(safe-area-inset-top, 0px), 1.25rem); }
+.pb-nav-safe    { padding-bottom: var(--bottom-nav-offset); }
 
-/* Safe area padding for mobile devices with notches */
-.safe-area-pb {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-/* Paneles anclados abajo (tab bar, sheets): sin banda extra bajo el contenido. */
-.nav-inset-bottom {
-  padding-bottom: 0;
-}
-
-/* Footers de modales a pantalla completa (por encima del tab bar): padding base + home indicator */
-.pb-modal-footer {
-  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
-}
-
-.safe-area-pt {
-  padding-top: env(safe-area-inset-top, 0px);
-}
-
-/* TopBar: respects status bar on iOS (notch / Dynamic Island) and Android (status bar).
-   On mobile, padding-top = status bar height + comfortable spacing (min 1.25rem).
-   On desktop md:pt-8 takes over. */
-.pt-safe-top {
-  padding-top: max(env(safe-area-inset-top, 0px), 1.25rem);
-}
-
-/* Área principal: hueco bajo el scroll = altura real del tab bar (ResizeObserver; suele incluir home indicator). */
-/* Márgenes izquierda/derecha con notch: `PageContainer` usa max(env(safe-area-inset-*), clamp(...)). */
-.pb-nav-safe {
-  padding-bottom: var(--bottom-nav-offset);
-}
-
-/* BookFast AI — al enfocar el compositor: ocultar tab bar móvil (solo hace falta subir el input) */
+/* BookFast AI — al enfocar el compositor: ocultar tab bar móvil */
 @media (max-width: 767px) {
   html[data-bookfast-ai-composer="1"] nav.panel-mobile-bottom-nav {
     transform: translate3d(0, 100%, 0);
     opacity: 0;
     pointer-events: none;
-    transition:
-      transform 0.22s ease,
-      opacity 0.18s ease;
+    transition: transform 0.22s ease, opacity 0.18s ease;
   }
 }

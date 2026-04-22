@@ -38,21 +38,21 @@ export function AgendaContextBar({
       <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide">
         {/* Bookings count */}
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5">
-          <Calendar className="h-3.5 w-3.5 text-[#3A6DFF]" />
+          <Calendar className="h-3.5 w-3.5 text-[#4FA1D8]" />
           <span className="text-sm font-semibold text-white">{quickStats.totalBookings}</span>
           <span className="text-xs text-white/50">{quickStats.rangeLabel || "citas"}</span>
         </div>
 
         {/* Total time */}
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5">
-          <Clock className="h-3.5 w-3.5 text-[#4FE3C1]" />
+          <Clock className="h-3.5 w-3.5 text-[#4FA1D8]" />
           <span className="text-sm font-semibold text-white">{quickStats.totalHours}h</span>
           <span className="text-xs text-white/50">tiempo</span>
         </div>
 
         {/* Revenue */}
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5">
-          <DollarSign className="h-3.5 w-3.5 text-[#A06BFF]" />
+          <DollarSign className="h-3.5 w-3.5 text-[#4FA1D8]" />
           <span className="text-sm font-semibold text-white">{(quickStats.totalAmount / 100).toFixed(0)}€</span>
           <span className="text-xs text-white/50">ingresos</span>
         </div>
@@ -60,7 +60,7 @@ export function AgendaContextBar({
         {/* Average per booking */}
         {quickStats.totalBookings > 0 && (
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5">
-            <TrendingUp className="h-3.5 w-3.5 text-[#4FE3C1]" />
+            <TrendingUp className="h-3.5 w-3.5 text-[#4FA1D8]" />
             <span className="text-sm font-semibold text-white">
               {Math.round((quickStats.totalAmount / quickStats.totalBookings) / 100)}€
             </span>

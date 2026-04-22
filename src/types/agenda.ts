@@ -40,9 +40,9 @@ export const BOOKING_STATE_CONFIG: Record<
   },
   completed: {
     label: "Completada",
-    legendColor: "#4FE3C1",
-    legendBg: "rgba(79,227,193,0.12)",
-    legendBorder: "rgba(79,227,193,0.35)",
+    legendColor: "#4FA1D8",
+    legendBg: "rgba(79,161,216,0.12)",
+    legendBorder: "rgba(79,161,216,0.35)",
   },
   cancelled: {
     label: "Cancelada",
@@ -52,9 +52,9 @@ export const BOOKING_STATE_CONFIG: Record<
   },
   no_show: {
     label: "No se presentó",
-    legendColor: "#FF6DA3",
-    legendBg: "rgba(255,109,163,0.12)",
-    legendBorder: "rgba(255,109,163,0.35)",
+    legendColor: "#E06072",
+    legendBg: "rgba(224,96,114,0.12)",
+    legendBorder: "rgba(224,96,114,0.35)",
   },
 };
 
@@ -85,9 +85,9 @@ export const PAYMENT_STATUS_CONFIG: Record<
   paid: {
     label: "Pagado",
     shortLabel: "Pagado",
-    legendColor: "#3A6DFF",
-    legendBg: "rgba(58,109,255,0.12)",
-    legendBorder: "rgba(58,109,255,0.35)",
+    legendColor: "#4FA1D8",
+    legendBg: "rgba(79,161,216,0.12)",
+    legendBorder: "rgba(79,161,216,0.35)",
   },
 };
 
@@ -267,17 +267,17 @@ export const BOOKING_STATUS_CONFIG: Record<BookingStatus, {
     label: "Pagado", 
     color: "bg-emerald-500/10 text-emerald-300", 
     chipVariant: "default",
-    legendColor: "#3A6DFF",
-    legendBg: "rgba(58,109,255,0.12)",
-    legendBorder: "#3A6DFF/30",
+    legendColor: "#4FA1D8",
+    legendBg: "rgba(79,161,216,0.12)",
+    legendBorder: "#4FA1D8/30",
   },
   completed: { 
     label: "Completado", 
     color: "bg-emerald-500/10 text-emerald-300", 
     chipVariant: "outline",
-    legendColor: "#4FE3C1",
-    legendBg: "rgba(79,227,193,0.12)",
-    legendBorder: "#4FE3C1/30",
+    legendColor: "#4FA1D8",
+    legendBg: "rgba(79,161,216,0.12)",
+    legendBorder: "#4FA1D8/30",
   },
   cancelled: { 
     label: "Cancelado", 
@@ -291,9 +291,9 @@ export const BOOKING_STATUS_CONFIG: Record<BookingStatus, {
     label: "No se presentó", 
     color: "bg-rose-500/10 text-rose-300", 
     chipVariant: "outline",
-    legendColor: "#FF6DA3",
-    legendBg: "rgba(255,109,163,0.12)",
-    legendBorder: "#FF6DA3/30",
+    legendColor: "#E06072",
+    legendBg: "rgba(224,96,114,0.12)",
+    legendBorder: "#E06072/30",
   },
 };
 

@@ -116,7 +116,7 @@ export function MessagesWidget({ tenantId }: MessagesWidgetProps) {
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 500, damping: 15 }}
-                  className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-4.5 px-1 rounded-full bg-gradient-to-r from-[#FF6DA3] to-[#FF6F91] text-white text-[10px] font-semibold font-satoshi shadow-lg border-2 border-[var(--bg-primary)]"
+                  className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-4.5 px-1 rounded-full bg-gradient-to-r from-[#E06072] to-[#FF6F91] text-white text-[10px] font-semibold font-satoshi shadow-lg border-2 border-[var(--bg-primary)]"
                 >
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </motion.div>
@@ -139,7 +139,7 @@ export function MessagesWidget({ tenantId }: MessagesWidgetProps) {
 
           <Bell className={cn(
             "h-4 w-4 text-[var(--text-secondary)] transition-colors",
-            unreadCount > 0 && "text-[#3A6DFF]"
+            unreadCount > 0 && "text-[#4FA1D8]"
           )} />
         </div>
       </motion.div>

@@ -111,7 +111,7 @@ export function UserProfileModal({
 					<button
 						onClick={handleSave}
 						disabled={saving}
-						className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#3A6DFF] to-[#7B5CFF] text-sm font-semibold text-white shadow-[0_10px_30px_rgba(66,92,255,0.35)] disabled:opacity-50 disabled:cursor-not-allowed"
+						className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#4FA1D8] to-[#7B5CFF] text-sm font-semibold text-white shadow-[0_10px_30px_rgba(66,92,255,0.35)] disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						{saving ? "Guardando..." : "Guardar"}
 					</button>
@@ -144,7 +144,7 @@ export function UserProfileModal({
 								value={form.profilePhotoUrl}
 								onChange={(e) => setForm((prev) => ({ ...prev, profilePhotoUrl: e.target.value }))}
 								placeholder="https://ejemplo.com/foto.jpg"
-								className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[#3A6DFF]"
+								className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[#4FA1D8]"
 							/>
 							<p className="text-[11px] text-[var(--text-secondary)] mt-1">
 								Pega la URL de tu foto de perfil (por ahora solo URLs, subida de archivos próximamente)
@@ -162,7 +162,7 @@ export function UserProfileModal({
 							value={form.displayName}
 							onChange={(e) => setForm((prev) => ({ ...prev, displayName: e.target.value }))}
 							placeholder="Tu nombre"
-							className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[#3A6DFF]"
+							className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[#4FA1D8]"
 						/>
 						<p className="text-[11px] text-[var(--text-secondary)] mt-1">
 							Este nombre aparecerá en los chats y en el panel
@@ -179,7 +179,7 @@ export function UserProfileModal({
 							onChange={(e) => setForm((prev) => ({ ...prev, bio: e.target.value }))}
 							placeholder="Cuéntanos sobre ti..."
 							rows={3}
-							className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[#3A6DFF] resize-none"
+							className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[#4FA1D8] resize-none"
 						/>
 					</div>
 				</div>

@@ -275,8 +275,8 @@ export const StaffColumn = React.memo(function StaffColumn({
               <div
                 className="h-1.5 w-1.5 rounded-full"
                 style={{
-                  backgroundColor: staff.color || "#4FE3C1",
-                  boxShadow: `0 0 6px ${staff.color || "#4FE3C1"}`,
+                  backgroundColor: staff.color || "#4FA1D8",
+                  boxShadow: `0 0 6px ${staff.color || "#4FA1D8"}`,
                 }}
               />
               <span className="text-[10px] text-gray-500 font-medium">
@@ -291,7 +291,7 @@ export const StaffColumn = React.memo(function StaffColumn({
               const totalSlots = (dayEndHour - dayStartHour) * 2; // 30min slots
               const usedSlots = Math.min(bookings.length * 2, totalSlots); // estimate 2 slots per booking
               const pct = totalSlots > 0 ? Math.round((usedSlots / totalSlots) * 100) : 0;
-              const barColor = pct >= 80 ? "#EF4444" : pct >= 50 ? "#FFC107" : "#4FE3C1";
+              const barColor = pct >= 80 ? "#EF4444" : pct >= 50 ? "#FFC107" : "#4FA1D8";
               return (
                 <div className="mt-1.5 flex items-center gap-2">
                   <div className="flex-1 h-1 rounded-full bg-white/10 overflow-hidden">

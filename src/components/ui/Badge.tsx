@@ -14,16 +14,16 @@ interface BadgeProps {
 }
 
 const variantStyles = {
-  default: "glass border-[var(--glass-border)] text-[var(--text-primary)]",
-  success: "bg-[var(--color-success-glass)] border-[var(--color-success)]/30 text-[var(--color-success)] backdrop-blur-sm",
-  warning: "bg-[var(--color-warning-glass)] border-[var(--color-warning)]/30 text-[var(--color-warning)] backdrop-blur-sm",
-  danger: "bg-[var(--color-danger-glass)] border-[var(--color-danger)]/30 text-[var(--color-danger)] backdrop-blur-sm",
-  info: "bg-[var(--color-info-glass)] border-[var(--color-info)]/30 text-[var(--color-info)] backdrop-blur-sm",
-  aqua: "bg-[var(--accent-aqua-glass)] border-[var(--accent-aqua-border)] text-[var(--accent-aqua)] backdrop-blur-sm",
-  purple: "bg-[var(--accent-purple-glass)] border-[var(--accent-purple-border)] text-[var(--accent-purple)] backdrop-blur-sm",
-  blue: "bg-[var(--accent-blue-glass)] border-[var(--accent-blue-border)] text-[var(--accent-blue)] backdrop-blur-sm",
-  pink: "bg-[var(--accent-pink-glass)] border-[var(--accent-pink-border)] text-[var(--accent-pink)] backdrop-blur-sm",
-  glowing: "bg-[var(--gradient-primary)] border-transparent text-white shadow-[var(--glow-aqua)] backdrop-blur-sm",
+  default: "bg-[var(--bf-bg-elev)] border-[var(--bf-border)] text-[var(--bf-ink-200)]",
+  success: "bg-[rgba(30,161,159,0.12)] border-[rgba(30,161,159,0.35)] text-[var(--bf-teal-200)]",
+  warning: "bg-[rgba(232,176,74,0.1)] border-[rgba(232,176,74,0.3)] text-[#F2C87A]",
+  danger: "bg-[rgba(224,96,114,0.1)] border-[rgba(224,96,114,0.3)] text-[#F2A0AC]",
+  info: "bg-[rgba(79,161,216,0.12)] border-[rgba(79,161,216,0.35)] text-[var(--bf-cyan-200)]",
+  aqua: "bg-[rgba(79,161,216,0.12)] border-[rgba(79,161,216,0.35)] text-[var(--bf-cyan-200)]",
+  purple: "bg-[rgba(79,161,216,0.12)] border-[rgba(79,161,216,0.35)] text-[var(--bf-cyan-200)]",
+  blue: "bg-[rgba(79,161,216,0.12)] border-[rgba(79,161,216,0.35)] text-[var(--bf-cyan-200)]",
+  pink: "bg-[rgba(224,96,114,0.1)] border-[rgba(224,96,114,0.3)] text-[#F2A0AC]",
+  glowing: "bg-[var(--bf-success)] border-transparent text-[var(--bf-ink)]",
 };
 
 const sizeStyles = {

@@ -88,17 +88,17 @@ export function ConflictResolutionModal({
 
         {/* Nuevo horario propuesto */}
         {(newBookingStart || newBookingEnd) && (
-          <div className="p-3 bg-[rgba(58,109,255,0.08)] border border-[#3A6DFF]/30 rounded-[14px] backdrop-blur-sm">
+          <div className="p-3 bg-[rgba(79,161,216,0.08)] border border-[#4FA1D8]/30 rounded-[14px] backdrop-blur-sm">
             <p className="text-[10px] font-semibold text-[#9ca3af] mb-2 font-['Plus_Jakarta_Sans'] uppercase tracking-wider">Nueva cita propuesta:</p>
             <div className="flex items-center gap-2 text-sm text-white font-['Plus_Jakarta_Sans']">
-              <Clock className="h-4 w-4 text-[#3A6DFF]" />
+              <Clock className="h-4 w-4 text-[#4FA1D8]" />
               <span>
                 {formatLocalTime(newBookingStart)} - {formatLocalTime(newBookingEnd)}
               </span>
               {newBookingStaffName && (
                 <>
-                  <span className="text-[#3A6DFF]">•</span>
-                  <User className="h-4 w-4 text-[#3A6DFF]" />
+                  <span className="text-[#4FA1D8]">•</span>
+                  <User className="h-4 w-4 text-[#4FA1D8]" />
                   <span>{newBookingStaffName}</span>
                 </>
               )}
@@ -170,8 +170,8 @@ export function ConflictResolutionModal({
               onClick={() => onResolve("change_time")}
               className="w-full px-4 py-3 text-sm font-semibold text-white bg-white/5 hover:bg-white/8 border border-white/10 rounded-[12px] transition-all duration-150 flex items-center justify-start gap-3 font-['Plus_Jakarta_Sans'] group"
             >
-              <div className="p-1.5 rounded-[8px] bg-[rgba(58,109,255,0.12)] group-hover:bg-[rgba(58,109,255,0.18)] transition-colors">
-                <Clock className="h-4 w-4 text-[#3A6DFF]" />
+              <div className="p-1.5 rounded-[8px] bg-[rgba(79,161,216,0.12)] group-hover:bg-[rgba(79,161,216,0.18)] transition-colors">
+                <Clock className="h-4 w-4 text-[#4FA1D8]" />
               </div>
               <span>Cambiar la hora de la nueva cita</span>
             </motion.button>
@@ -182,8 +182,8 @@ export function ConflictResolutionModal({
               onClick={() => onResolve("change_staff")}
               className="w-full px-4 py-3 text-sm font-semibold text-white bg-white/5 hover:bg-white/8 border border-white/10 rounded-[12px] transition-all duration-150 flex items-center justify-start gap-3 font-['Plus_Jakarta_Sans'] group"
             >
-              <div className="p-1.5 rounded-[8px] bg-[rgba(79,227,193,0.12)] group-hover:bg-[rgba(79,227,193,0.18)] transition-colors">
-                <User className="h-4 w-4 text-[#4FE3C1]" />
+              <div className="p-1.5 rounded-[8px] bg-[rgba(79,161,216,0.12)] group-hover:bg-[rgba(79,161,216,0.18)] transition-colors">
+                <User className="h-4 w-4 text-[#4FA1D8]" />
               </div>
               <span>Asignar a otro empleado</span>
             </motion.button>

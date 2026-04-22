@@ -35,7 +35,7 @@ export function MobileHamburgerButton({ onMenuClick, className }: MobileHamburge
         className
       )}
       style={{
-        boxShadow: "0px 8px 32px rgba(0,0,0,0.4), 0px 0px 16px rgba(79, 227, 193, 0.2), inset 0px 1px 0px rgba(255,255,255,0.1)",
+        boxShadow: "0px 8px 32px rgba(0,0,0,0.4), 0px 0px 16px rgba(79, 161, 216, 0.2), inset 0px 1px 0px rgba(255,255,255,0.1)",
       }}
       aria-label="Abrir menú"
     >

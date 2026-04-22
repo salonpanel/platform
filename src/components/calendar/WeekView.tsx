@@ -225,11 +225,11 @@ export const WeekView = React.memo(function WeekView({
                   onClick={() => setSelectedMobileDay(dayKey)}
                   className="flex-shrink-0 flex flex-col items-center gap-0.5 rounded-xl px-3 py-1.5 min-w-[48px] transition-all duration-200 relative"
                   style={isSelected ? {
-                    backgroundColor: 'rgba(58,109,255,0.2)',
-                    border: '1px solid rgba(58,109,255,0.5)',
+                    backgroundColor: 'rgba(79,161,216,0.2)',
+                    border: '1px solid rgba(79,161,216,0.5)',
                   } : isToday ? {
-                    backgroundColor: 'rgba(79,227,193,0.1)',
-                    border: '1px solid rgba(79,227,193,0.3)',
+                    backgroundColor: 'rgba(79,161,216,0.1)',
+                    border: '1px solid rgba(79,161,216,0.3)',
                   } : {
                     backgroundColor: 'rgba(255,255,255,0.04)',
                     border: '1px solid var(--glass-border-subtle)',
@@ -237,13 +237,13 @@ export const WeekView = React.memo(function WeekView({
                 >
                   <span
                     className="text-[10px] font-semibold uppercase tracking-wider"
-                    style={{ color: isSelected ? '#3A6DFF' : isToday ? '#4FE3C1' : 'var(--text-tertiary)' }}
+                    style={{ color: isSelected ? '#4FA1D8' : isToday ? '#4FA1D8' : 'var(--text-tertiary)' }}
                   >
                     {new Intl.DateTimeFormat("es-ES", { weekday: "short" }).format(day).slice(0, 2)}
                   </span>
                   <span
                     className="text-base font-bold leading-none"
-                    style={{ color: isSelected ? '#3A6DFF' : isToday ? '#4FE3C1' : 'var(--text-primary)' }}
+                    style={{ color: isSelected ? '#4FA1D8' : isToday ? '#4FA1D8' : 'var(--text-primary)' }}
                   >
                     {format(day, "d")}
                   </span>
@@ -251,15 +251,15 @@ export const WeekView = React.memo(function WeekView({
                     <span
                       className="text-[9px] font-semibold leading-none mt-0.5 px-1 rounded-full"
                       style={{
-                        backgroundColor: isSelected ? 'rgba(58,109,255,0.3)' : 'rgba(255,255,255,0.1)',
-                        color: isSelected ? '#3A6DFF' : 'var(--text-secondary)',
+                        backgroundColor: isSelected ? 'rgba(79,161,216,0.3)' : 'rgba(255,255,255,0.1)',
+                        color: isSelected ? '#4FA1D8' : 'var(--text-secondary)',
                       }}
                     >
                       {count}
                     </span>
                   )}
                   {isToday && !isSelected && (
-                    <div className="absolute top-1 right-1 w-1 h-1 rounded-full bg-[#4FE3C1]" />
+                    <div className="absolute top-1 right-1 w-1 h-1 rounded-full bg-[#4FA1D8]" />
                   )}
                 </button>
               );

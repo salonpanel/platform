@@ -59,7 +59,7 @@ export function CustomerQuickView({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/5">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-full bg-[rgba(58,109,255,0.2)] flex items-center justify-center text-lg font-semibold text-[#3A6DFF] font-['Plus_Jakarta_Sans']">
+            <div className="h-12 w-12 rounded-full bg-[rgba(79,161,216,0.2)] flex items-center justify-center text-lg font-semibold text-[#4FA1D8] font-['Plus_Jakarta_Sans']">
               {customer.name.charAt(0).toUpperCase()}
             </div>
             <div>
@@ -68,7 +68,7 @@ export function CustomerQuickView({
               </h2>
               <div className="flex items-center gap-2 mt-1">
                 {customer.isNew && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[rgba(58,109,255,0.15)] border border-[#3A6DFF]/30 text-[#3A6DFF] font-['Plus_Jakarta_Sans'] font-semibold">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[rgba(79,161,216,0.15)] border border-[#4FA1D8]/30 text-[#4FA1D8] font-['Plus_Jakarta_Sans'] font-semibold">
                     Nuevo
                   </span>
                 )}
@@ -147,7 +147,7 @@ export function CustomerQuickView({
           {stats && (
             <div>
               <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2 font-['Plus_Jakarta_Sans']">
-                <TrendingUp className="h-4 w-4 text-[#4FE3C1]" />
+                <TrendingUp className="h-4 w-4 text-[#4FA1D8]" />
                 Métricas
               </h3>
               <div className="grid grid-cols-2 gap-3">
@@ -181,7 +181,7 @@ export function CustomerQuickView({
           {upcomingBookings.length > 0 && (
             <div>
               <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2 font-['Plus_Jakarta_Sans']">
-                <Calendar className="h-4 w-4 text-[#3A6DFF]" />
+                <Calendar className="h-4 w-4 text-[#4FA1D8]" />
                 Próximas citas
               </h3>
               <div className="space-y-2">
