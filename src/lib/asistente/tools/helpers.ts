@@ -10,7 +10,11 @@
 
 import { formatInTimeZone } from "date-fns-tz";
 import { logAudit } from "../security/audit";
-import type { AuditStatus, ToolCategory } from "../security/types";
+import type {
+  AuditActionType,
+  AuditStatus,
+  ToolCategory,
+} from "../security/types";
 
 export function centsToEur(cents: number | null | undefined): string {
   const c = cents ?? 0;
@@ -70,13 +74,79 @@ export interface ToolOutputErr {
   error: string;
   hint?: string;
 }
+export interface ToolOutputPreview<T> {
+  ok: true;
+  needsConfirmation: true;
+  summary: string;
+  data: T;
+  /** Mensaje que el LLM debe presentar al usuario para confirmar. */
+  previewMessage: string;
+}
 export type ToolOutput<T> = ToolOutputOk<T> | ToolOutputErr;
+export type ToolOutputWithPreview<T> =
+  | ToolOutputOk<T>
+  | ToolOutputErr
+  | ToolOutputPreview<T>;
 
 export function ok<T>(summary: string, data: T): ToolOutputOk<T> {
   return { ok: true, summary, data };
 }
 export function err(error: string, hint?: string): ToolOutputErr {
   return { ok: false, error, hint };
+}
+
+/**
+ * Devuelve un preview no ejecutado de una acción de escritura.
+ *
+ * El LLM debe mostrar `previewMessage` al usuario y preguntar si procede.
+ * Cuando el usuario confirma, el LLM vuelve a llamar la MISMA tool con los
+ * mismos inputs + `confirm: true`.
+ *
+ * `data` incluye un resumen estructurado de lo que se haría, para que el
+ * LLM pueda reformularlo con naturalidad si hace falta.
+ */
+export function preview<T>(
+  previewMessage: string,
+  data: T,
+  summary?: string,
+): ToolOutputPreview<T> {
+  return {
+    ok: true,
+    needsConfirmation: true,
+    summary: summary ?? previewMessage,
+    data,
+    previewMessage,
+  };
+}
+
+/** Rechazo por RBAC. Devuelve un error descriptivo y log-friendly. */
+export function denyByRole(
+  action: string,
+  role: string,
+): ToolOutputErr {
+  return err(
+    `Tu rol (${role}) no permite: ${action}.`,
+    "Pide a un responsable que lo haga o contacta con el owner del negocio.",
+  );
+}
+
+/**
+ * Jerarquía de roles: owner > admin > manager > staff.
+ * hasRoleAtLeast("admin", "manager") → false
+ * hasRoleAtLeast("owner", "manager") → true
+ */
+const ROLE_RANK: Record<string, number> = {
+  owner: 4,
+  admin: 3,
+  manager: 2,
+  staff: 1,
+};
+
+export function hasRoleAtLeast(
+  role: string,
+  minimum: "owner" | "admin" | "manager" | "staff",
+): boolean {
+  return (ROLE_RANK[role] ?? 0) >= ROLE_RANK[minimum];
 }
 
 /**
@@ -95,21 +165,27 @@ export async function withAudit<T>(
     ipAddress: string | null;
     userAgent: string | null;
   },
-  fn: () => Promise<ToolOutput<T>>,
-): Promise<ToolOutput<T>> {
+  fn: () => Promise<ToolOutputWithPreview<T>>,
+): Promise<ToolOutputWithPreview<T>> {
   const t0 = Date.now();
   let status: AuditStatus = "ok";
+  let actionType: AuditActionType = "tool_call";
   let reason: string | null = null;
-  let result: ToolOutput<T> | null = null;
+  let result: ToolOutputWithPreview<T> | null = null;
   try {
     result = await fn();
     if (!result.ok) {
       status = "denied";
+      actionType = "tool_denied";
       reason = result.error;
+    } else if ("needsConfirmation" in result && result.needsConfirmation) {
+      status = "pending_confirmation";
+      actionType = "confirmation_required";
     }
     return result;
   } catch (e) {
     status = "error";
+    actionType = "tool_denied";
     reason = e instanceof Error ? e.message : String(e);
     throw e;
   } finally {
@@ -117,7 +193,7 @@ export async function withAudit<T>(
       tenantId: params.tenantId,
       userId: params.userId,
       sessionId: params.sessionId,
-      actionType: status === "ok" ? "tool_call" : "tool_denied",
+      actionType,
       toolName: params.toolName,
       toolCategory: params.toolCategory,
       toolInput: params.toolInput,
