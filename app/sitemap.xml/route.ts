@@ -65,7 +65,7 @@ export async function GET(req: Request) {
         if (tenant.slug) {
           const tenantUrl = isProd
             ? `https://${tenant.slug}.bookfast.es`
-            : `${baseUrl}/r/${tenant.slug}`;
+            : `${baseUrl}/t/${tenant.slug}`;
           urls.push(`  <url>
     <loc>${tenantUrl}</loc>
     <changefreq>daily</changefreq>

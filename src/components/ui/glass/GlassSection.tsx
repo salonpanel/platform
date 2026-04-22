@@ -27,7 +27,7 @@ export function GlassSection({
                         {title}
                     </h3>
                     {description && (
-                        <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
+                        <p className="text-xs sm:text-sm text-[var(--bf-ink-300)] leading-relaxed">
                             {description}
                         </p>
                     )}

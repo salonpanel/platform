@@ -91,7 +91,7 @@ export function CustomerBookingsTimeline({
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <span className="text-sm font-semibold text-[var(--color-text-primary)] font-satoshi">
+                  <span className="text-sm font-semibold text-[var(--color-text-primary)] ">
                     {formatBookingDate(booking.starts_at, tenantTimezone)}
                   </span>
                   <GlassBadge variant={getStatusVariant(booking.status)} size="sm">

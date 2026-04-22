@@ -46,22 +46,22 @@ export function BalanceCard({
 
   const variants = {
     pending: {
-      bg: "bg-amber-500/5",
-      border: "border-amber-500/20",
+      bg: "bg-[rgba(232,176,74,0.05)]",
+      border: "border-[rgba(232,176,74,0.20)]",
       glow: "glow-amber",
-      iconColor: "text-amber-400",
-      titleColor: "text-amber-200",
-      amountColor: "text-amber-100",
-      subtitleColor: "text-amber-300/70"
+      iconColor: "text-[var(--bf-warn)]",
+      titleColor: "text-[#F2C87A]",
+      amountColor: "text-[#FFF3CD]",
+      subtitleColor: "text-[#F2C87A]/70"
     },
     available: {
-      bg: "bg-emerald-500/5",
-      border: "border-emerald-500/20",
+      bg: "bg-[rgba(30,161,159,0.05)]",
+      border: "border-[rgba(30,161,159,0.20)]",
       glow: "glow-emerald",
-      iconColor: "text-emerald-400",
-      titleColor: "text-emerald-200",
-      amountColor: "text-emerald-100",
-      subtitleColor: "text-emerald-300/70"
+      iconColor: "text-[var(--bf-success)]",
+      titleColor: "text-[var(--bf-teal-100)]",
+      amountColor: "text-[var(--bf-teal-50)]",
+      subtitleColor: "text-[var(--bf-teal-200)]/70"
     },
     total: {
       bg: "bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10",
@@ -83,7 +83,7 @@ export function BalanceCard({
       transition={{ duration: 0.3, ease: "easeOut" }}
       whileHover={{ scale: 1.02 }}
       className={cn(
-        "relative overflow-hidden rounded-[var(--radius-xl)] p-6 border backdrop-blur-sm cursor-pointer",
+        "relative overflow-hidden rounded-[var(--r-xl)] p-6 border backdrop-blur-sm cursor-pointer",
         "transition-all duration-300 hover:shadow-[var(--glow-blue)]",
         style.bg,
         style.border,
@@ -100,7 +100,7 @@ export function BalanceCard({
           <div className="flex items-center gap-3">
             {icon && (
               <div className={cn(
-                "rounded-[var(--radius-lg)] p-2.5 border",
+                "rounded-[var(--r-lg)] p-2.5 border",
                 variant === "total" ? "bg-purple-500/20 border-purple-500/30" : "bg-white/5 border-white/10"
               )}>
                 <div className={style.iconColor}>
@@ -148,8 +148,8 @@ export function BalanceCard({
             <div className={cn(
               "flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full",
               trend.isPositive
-                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                : "bg-red-500/20 text-red-300 border border-red-500/30"
+                ? "bg-[rgba(30,161,159,0.20)] text-[var(--bf-teal-200)] border border-[rgba(30,161,159,0.30)]"
+                : "bg-[rgba(224,96,114,0.20)] text-[#F2A0AC] border border-[rgba(224,96,114,0.30)]"
             )}>
               {trend.isPositive ? (
                 <TrendingUp className="h-3 w-3" />

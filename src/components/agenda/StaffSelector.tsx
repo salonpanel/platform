@@ -38,9 +38,9 @@ export function StaffSelector({
   const avatarSize = density === "ultra-compact" ? "h-6 w-6" : density === "compact" ? "h-7 w-7" : "h-8 w-8";
   
   const getUtilizationColor = (utilization: number = 0) => {
-    if (utilization < 40) return "bg-[var(--accent-blue)]/10 border-[var(--accent-blue)]/25 text-[var(--accent-blue)]";
-    if (utilization < 80) return "bg-[var(--accent-aqua)]/10 border-[var(--accent-aqua)]/25 text-[var(--accent-aqua)]";
-    return "bg-[var(--accent-purple)]/10 border-[var(--accent-purple)]/25 text-[var(--accent-purple)]";
+    if (utilization < 40) return "bg-[var(--bf-primary)]/10 border-[var(--bf-primary)]/25 text-[var(--bf-primary)]";
+    if (utilization < 80) return "bg-[var(--bf-primary)]/10 border-[var(--bf-primary)]/25 text-[var(--bf-primary)]";
+    return "bg-[var(--bf-primary)]/10 border-[var(--bf-primary)]/25 text-[var(--bf-primary)]";
   };
 
   return (
@@ -55,11 +55,11 @@ export function StaffSelector({
         whileTap={{ scale: 0.95 }}
         onClick={() => onSelect(null)}
         className={cn(
-          "flex-shrink-0 flex items-center gap-2 rounded-[var(--radius-lg)] border backdrop-blur-sm transition-all duration-200",
+          "flex-shrink-0 flex items-center gap-2 rounded-[var(--r-lg)] border backdrop-blur-sm transition-all duration-200",
           paddingClass,
           selectedStaffId === null
-            ? "bg-gradient-to-r from-[var(--accent-aqua)]/20 to-[var(--accent-blue)]/20 border-[var(--accent-aqua)]/50 text-[var(--accent-aqua)] shadow-lg shadow-[var(--accent-aqua)]/20"
-            : "bg-[var(--glass-bg-subtle)] border-[var(--glass-border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg)]"
+            ? "bg-gradient-to-r from-[var(--bf-primary)]/20 to-[var(--bf-primary)]/20 border-[var(--bf-primary)]/50 text-[var(--bf-primary)] shadow-lg shadow-[var(--bf-primary)]/20"
+            : "bg-[var(--bf-bg-elev)] border-[var(--bf-border)] text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-bg-elev)]"
         )}
         style={{
           background: selectedStaffId === null 
@@ -71,19 +71,19 @@ export function StaffSelector({
           "rounded-full border flex items-center justify-center",
           avatarSize,
           selectedStaffId === null
-            ? "bg-[var(--accent-aqua)]/20 border-[var(--accent-aqua)]/50"
-            : "bg-[var(--glass-bg)] border-[var(--glass-border)]"
+            ? "bg-[var(--bf-primary)]/20 border-[var(--bf-primary)]/50"
+            : "bg-[var(--bf-bg-elev)] border-[var(--bf-border)]"
         )}>
           <User className={cn(
             density === "ultra-compact" ? "h-3 w-3" : density === "compact" ? "h-3.5 w-3.5" : "h-4 w-4"
           )} />
         </div>
-        <span className={cn("font-semibold truncate", textSize)} style={{ fontFamily: "var(--font-heading)" }}>
+        <span className={cn("font-semibold truncate", textSize)} style={{ fontFamily: "var(--font-sans)" }}>
           Todos
         </span>
         {selectedStaffId === null && (
           <Check className={cn(
-            "text-[var(--accent-aqua)]",
+            "text-[var(--bf-primary)]",
             density === "ultra-compact" ? "h-3 w-3" : "h-3.5 w-3.5"
           )} />
         )}
@@ -108,11 +108,11 @@ export function StaffSelector({
             transition={{ delay: index * 0.05 }}
             onClick={() => onSelect(member.id)}
             className={cn(
-              "flex-shrink-0 flex items-center gap-2 rounded-[var(--radius-lg)] border backdrop-blur-sm transition-all duration-200",
+              "flex-shrink-0 flex items-center gap-2 rounded-[var(--r-lg)] border backdrop-blur-sm transition-all duration-200",
               paddingClass,
               isSelected
-                ? "bg-gradient-to-r from-[var(--accent-aqua)]/20 to-[var(--accent-blue)]/20 border-[var(--accent-aqua)]/50 text-[var(--accent-aqua)] shadow-lg shadow-[var(--accent-aqua)]/20"
-                : "bg-[var(--glass-bg-subtle)] border-[var(--glass-border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg)]"
+                ? "bg-gradient-to-r from-[var(--bf-primary)]/20 to-[var(--bf-primary)]/20 border-[var(--bf-primary)]/50 text-[var(--bf-primary)] shadow-lg shadow-[var(--bf-primary)]/20"
+                : "bg-[var(--bf-bg-elev)] border-[var(--bf-border)] text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-bg-elev)]"
             )}
             style={{
               background: isSelected 
@@ -126,8 +126,8 @@ export function StaffSelector({
                 "rounded-full border flex items-center justify-center font-bold",
                 avatarSize,
                 isSelected
-                  ? "bg-[var(--accent-aqua)]/20 border-[var(--accent-aqua)]/50"
-                  : "bg-[var(--glass-bg)] border-[var(--glass-border)]"
+                  ? "bg-[var(--bf-primary)]/20 border-[var(--bf-primary)]/50"
+                  : "bg-[var(--bf-bg-elev)] border-[var(--bf-border)]"
               )}
             >
               {member.avatar ? (
@@ -141,7 +141,7 @@ export function StaffSelector({
                   className={cn(
                     density === "ultra-compact" ? "text-[8px]" : density === "compact" ? "text-[10px]" : "text-xs"
                   )}
-                  style={{ color: isSelected ? "var(--accent-aqua)" : "var(--text-primary)" }}
+                  style={{ color: isSelected ? "var(--bf-primary)" : "var(--bf-ink-50)" }}
                 >
                   {initials}
                 </span>
@@ -150,7 +150,7 @@ export function StaffSelector({
             
             {/* Nombre y utilización */}
             <div className="flex flex-col items-start min-w-0">
-              <span className={cn("font-semibold truncate max-w-[100px]", textSize)} style={{ fontFamily: "var(--font-heading)" }}>
+              <span className={cn("font-semibold truncate max-w-[100px]", textSize)} style={{ fontFamily: "var(--font-sans)" }}>
                 {member.name}
               </span>
               
@@ -167,7 +167,7 @@ export function StaffSelector({
             {/* Indicador de selección */}
             {isSelected && (
               <Check className={cn(
-                "text-[var(--accent-aqua)] flex-shrink-0",
+                "text-[var(--bf-primary)] flex-shrink-0",
                 density === "ultra-compact" ? "h-3 w-3" : "h-3.5 w-3.5"
               )} />
             )}

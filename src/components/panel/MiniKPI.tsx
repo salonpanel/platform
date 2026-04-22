@@ -22,9 +22,9 @@ export function MiniKPI({
   onClick,
 }: MiniKPIProps) {
   const trendBadgeStyles = {
-    up: "bg-emerald-500/10 text-emerald-300",
-    down: "bg-red-500/10 text-red-300",
-    neutral: "bg-white/5 text-[var(--text-secondary)]",
+    up:      "bg-[rgba(30,161,159,0.12)] text-[var(--bf-teal-200)]",
+    down:    "bg-[rgba(224,96,114,0.10)] text-[#F2A0AC]",
+    neutral: "bg-[var(--bf-bg-elev)] text-[var(--bf-ink-400)]",
   };
 
   const trendSymbols = {
@@ -36,14 +36,15 @@ export function MiniKPI({
   const content = (
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
       <div className="flex-1">
-        <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)] font-satoshi mb-2">
+        <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--bf-ink-400)] mb-2" style={{ fontFamily: "var(--font-mono)" }}>
           {title}
         </p>
         <motion.p
           initial={{ scale: 0.9 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
-          className="text-2xl sm:text-3xl font-semibold text-[var(--text-primary)] font-satoshi tracking-tight mb-1"
+          className="text-2xl sm:text-3xl font-semibold text-[var(--bf-ink-50)] tracking-tight mb-1"
+          style={{ fontFamily: "var(--font-sans)", letterSpacing: "-0.025em" }}
         >
           {value}
         </motion.p>
@@ -60,7 +61,7 @@ export function MiniKPI({
         )}
       </div>
       {icon && (
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 flex-shrink-0">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(79,161,216,0.12)] border border-[rgba(79,161,216,0.25)] flex-shrink-0">
           {typeof icon === "string" ? (
             <span className="text-lg">{icon}</span>
           ) : (
@@ -82,17 +83,17 @@ export function MiniKPI({
       whileHover={onClick ? { y: -1 } : {}}
       whileTap={onClick ? { scale: 0.98 } : {}}
       className={cn(
-        "w-full text-left relative overflow-hidden rounded-2xl border border-white/5",
-        "bg-[rgba(15,23,42,0.85)] backdrop-blur-xl",
-        "shadow-[0_18px_45px_rgba(0,0,0,0.45)]",
+        "w-full text-left relative overflow-hidden rounded-[var(--r-xl)] border border-[var(--bf-border)]",
+        "bg-[var(--bf-surface)]",
+        "shadow-[var(--bf-shadow-card)]",
         "px-4 py-3 sm:px-5 sm:py-4",
         "transition-transform transition-shadow duration-150 ease-out",
-        "hover:-translate-y-[1px] hover:shadow-[0_22px_55px_rgba(0,0,0,0.6)]",
+        "hover:-translate-y-[1px] hover:border-[var(--bf-border-2)]",
         onClick && "cursor-pointer group"
       )}
     >
       {onClick && (
-        <motion.div className="absolute inset-0 gradient-aurora-1 opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-[rgba(79,161,216,0.03)] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
       )}
       <div className="relative z-10">{content}</div>
     </Component>

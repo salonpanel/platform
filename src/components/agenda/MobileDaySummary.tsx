@@ -32,13 +32,13 @@ export function MobileDaySummary({ bookings, timezone, onBookingClick }: MobileD
       {/* Toggle header */}
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-medium text-[var(--text-secondary)] active:bg-white/5 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-medium text-[var(--bf-ink-300)] active:bg-white/5 transition-colors"
         aria-expanded={expanded}
       >
-        <span className="font-semibold text-[var(--text-primary)]">
+        <span className="font-semibold text-[var(--bf-ink-50)]">
           {sorted.length} {sorted.length === 1 ? "cita" : "citas"} hoy
         </span>
-        <span className="flex items-center gap-1.5 text-[var(--text-tertiary)]">
+        <span className="flex items-center gap-1.5 text-[var(--bf-ink-400)]">
           {expanded ? "Ocultar" : "Ver lista"}
           {expanded ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
         </span>

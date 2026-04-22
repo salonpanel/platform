@@ -21,8 +21,8 @@ interface BlockingOverlayProps {
 
 const blockingColors = {
   block: "bg-white/[0.03] border-l-[3px] border-white/20 text-gray-400 backdrop-blur-[2px]",
-  absence: "bg-red-500/[0.05] border-l-[3px] border-red-500/40 text-red-400 backdrop-blur-[2px]",
-  vacation: "bg-blue-500/[0.05] border-l-[3px] border-blue-500/40 text-blue-400 backdrop-blur-[2px]",
+  absence: "bg-red-500/[0.05] border-l-[3px] border-red-500/40 text-[var(--bf-danger)] backdrop-blur-[2px]",
+  vacation: "bg-blue-500/[0.05] border-l-[3px] border-blue-500/40 text-[var(--bf-primary)] backdrop-blur-[2px]",
 };
 
 export function BlockingOverlay({ blockings, timezone, dayStartHour = 8 }: BlockingOverlayProps) {

@@ -84,7 +84,7 @@ export function SettingsPortal({
 
                 {/* Input row */}
                 <div>
-                    <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2 uppercase tracking-wider">
+                    <label className="block text-xs font-medium text-[var(--bf-ink-300)] mb-2 uppercase tracking-wider">
                         Subdominio
                     </label>
                     <div className="flex items-center gap-0 rounded-xl overflow-hidden border border-white/10 bg-white/5 focus-within:border-[var(--bf-primary)]/60 transition-colors">
@@ -116,7 +116,7 @@ export function SettingsPortal({
                 {status !== "idle" && status !== "empty" && (
                     <div className={`flex items-center gap-2 text-sm ${
                         status === "available" ? "text-[var(--bf-success)]" :
-                        status === "taken" || status === "invalid" ? "text-red-400" :
+                        status === "taken" || status === "invalid" ? "text-[var(--bf-danger)]" :
                         "text-white/50"
                     }`}>
                         {status === "checking" && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -130,7 +130,7 @@ export function SettingsPortal({
                 {publicUrl && (
                     <div className="flex items-center gap-3 p-3 rounded-lg bg-white/3 border border-white/8">
                         <div className="flex-1 min-w-0">
-                            <p className="text-xs text-[var(--text-secondary)] mb-0.5">URL pública de reservas</p>
+                            <p className="text-xs text-[var(--bf-ink-300)] mb-0.5">URL pública de reservas</p>
                             <p className="text-sm text-[var(--bf-primary)] font-mono truncate">{publicUrl}</p>
                         </div>
                         {value === subdomain && subdomain && (

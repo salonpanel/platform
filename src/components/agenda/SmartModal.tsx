@@ -95,19 +95,19 @@ export function SmartModal({
     switch (context?.type) {
       case "booking":
         return {
-          accent: "var(--accent-blue)",
+          accent: "var(--bf-primary)",
           bg: "bg-[var(--accent-blue-glass)]",
           border: "border-[var(--accent-blue-border)]",
         };
       case "customer":
         return {
-          accent: "var(--accent-aqua)",
+          accent: "var(--bf-primary)",
           bg: "bg-[var(--accent-aqua-glass)]",
           border: "border-[var(--accent-aqua-border)]",
         };
       case "service":
         return {
-          accent: "var(--accent-purple)",
+          accent: "var(--bf-primary)",
           bg: "bg-[var(--accent-purple-glass)]",
           border: "border-[var(--accent-purple-border)]",
         };
@@ -131,9 +131,9 @@ export function SmartModal({
         };
       default:
         return {
-          accent: "var(--accent-blue)",
+          accent: "var(--bf-primary)",
           bg: "bg-[var(--glass-bg-default)]",
-          border: "border-[var(--glass-border)]",
+          border: "border-[var(--bf-border)]",
         };
     }
   };
@@ -166,7 +166,7 @@ export function SmartModal({
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
           className={cn(
-            "relative w-full rounded-[var(--radius-xl)] shadow-2xl overflow-hidden",
+            "relative w-full rounded-[var(--r-xl)] shadow-2xl overflow-hidden",
             sizeClasses[size],
             theme.bg,
             theme.border
@@ -178,14 +178,14 @@ export function SmartModal({
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-[var(--glass-border-subtle)]">
             <div className="flex-1">
-              <h2 className="text-xl font-semibold text-[var(--text-primary)] font-[var(--font-heading)]">
+              <h2 className="text-xl font-semibold text-[var(--bf-ink-50)] font-[var(--font-sans)]">
                 {title}
               </h2>
 
               {/* Step indicator for guided mode */}
               {variant === "guided" && steps.length > 0 && (
                 <div className="flex items-center gap-4 mt-2">
-                  <span className="text-sm text-[var(--text-secondary)]">
+                  <span className="text-sm text-[var(--bf-ink-300)]">
                     Paso {localStep + 1} de {steps.length}
                   </span>
                   <div className="flex gap-1">
@@ -196,7 +196,7 @@ export function SmartModal({
                           "w-2 h-2 rounded-full transition-colors",
                           index <= localStep
                             ? theme.accent.replace("var(--", "").replace(")", "")
-                            : "bg-[var(--glass-border)]"
+                            : "bg-[var(--bf-border)]"
                         )}
                         initial={false}
                         animate={{
@@ -211,7 +211,7 @@ export function SmartModal({
 
             <button
               onClick={onClose}
-              className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)] transition-colors"
+              className="p-2 rounded-lg text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-bg-elev)] transition-colors"
               aria-label="Cerrar modal"
             >
               <X className="h-5 w-5" />
@@ -220,16 +220,16 @@ export function SmartModal({
 
           {/* Progress bar */}
           {showProgress && steps.length > 0 && (
-            <div className="px-6 py-2 bg-[var(--glass-bg-subtle)]">
-              <div className="w-full bg-[var(--glass-bg)] rounded-full h-1 overflow-hidden">
+            <div className="px-6 py-2 bg-[var(--bf-bg-elev)]">
+              <div className="w-full bg-[var(--bf-bg-elev)] rounded-full h-1 overflow-hidden">
                 <motion.div
-                  className="h-full bg-gradient-to-r from-[var(--accent-blue)] to-[var(--accent-aqua)] rounded-full"
+                  className="h-full bg-gradient-to-r from-[var(--bf-primary)] to-[var(--bf-primary)] rounded-full"
                   initial={{ width: 0 }}
                   animate={{ width: `${progressPercentage}%` }}
                   transition={{ duration: 0.5, ease: "easeOut" }}
                 />
               </div>
-              <div className="flex justify-between text-xs text-[var(--text-tertiary)] mt-1">
+              <div className="flex justify-between text-xs text-[var(--bf-ink-400)] mt-1">
                 <span>{Math.round(progressPercentage)}% completado</span>
                 <span>{steps.length - localStep - 1} pasos restantes</span>
               </div>
@@ -249,12 +249,12 @@ export function SmartModal({
                 {variant === "guided" && steps.length > 0 ? (
                   <div className="space-y-4">
                     {/* Step info */}
-                    <div className="p-4 rounded-lg bg-[var(--glass-bg-subtle)] border border-[var(--glass-border)]">
-                      <h3 className="font-semibold text-[var(--text-primary)] mb-1">
+                    <div className="p-4 rounded-lg bg-[var(--bf-bg-elev)] border border-[var(--bf-border)]">
+                      <h3 className="font-semibold text-[var(--bf-ink-50)] mb-1">
                         {steps[localStep]?.title}
                       </h3>
                       {steps[localStep]?.description && (
-                        <p className="text-sm text-[var(--text-secondary)]">
+                        <p className="text-sm text-[var(--bf-ink-300)]">
                           {steps[localStep].description}
                         </p>
                       )}
@@ -317,7 +317,7 @@ export function SmartModal({
               {variant === "guided" && localStep === steps.length - 1 && (
                 <GlassButton
                   onClick={onClose}
-                  className="bg-gradient-to-r from-[var(--accent-blue)] to-[var(--accent-aqua)] text-white border-0"
+                  className="bg-gradient-to-r from-[var(--bf-primary)] to-[var(--bf-primary)] text-white border-0"
                 >
                   <Check className="h-4 w-4 mr-2" />
                   Completar

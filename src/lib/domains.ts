@@ -249,7 +249,7 @@ export function getAppContextFromHost(host: string): AppContext {
 export async function resolveTenantByHost(host: string): Promise<{ slug: string; id: string } | null> {
   const subdomain = parseSubdomain(host);
 
-  // En desarrollo, no resolvemos por host (se usa /r/[orgId] directamente)
+  // En desarrollo, no resolvemos por host (se usa /t/[tenantId] directamente)
   if (!subdomain || host.includes("localhost") || host.includes("127.0.0.1")) {
     return null;
   }

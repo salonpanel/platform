@@ -68,19 +68,19 @@ export const ListView = React.memo(function ListView({
         })}
         className="flex items-center justify-center h-full p-6"
       >
-        <div className="bg-[var(--glass-bg-default)] border border-[var(--glass-border)] backdrop-blur-md rounded-[var(--radius-xl)] p-6 text-center shadow-[var(--shadow-premium)]">
+        <div className="bg-[var(--glass-bg-default)] border border-[var(--bf-border)] backdrop-blur-md rounded-[var(--r-xl)] p-6 text-center shadow-[var(--bf-shadow-card)]">
           {isEmptySearch ? (
             <>
               <div className="text-4xl mb-4">🔍</div>
               <h3 className={cn(
                 "text-lg font-semibold mb-2",
-                "text-[var(--text-primary)] font-[var(--font-heading)]"
+                "text-[var(--bf-ink-50)] font-[var(--font-sans)]"
               )}>
                 No hay coincidencias
               </h3>
               <p className={cn(
                 "text-sm",
-                "text-[var(--text-secondary)] font-[var(--font-body)]"
+                "text-[var(--bf-ink-300)] font-[var(--font-sans)]"
               )}>
                 No se encontraron reservas que coincidan con "{searchTerm}"
               </p>
@@ -90,13 +90,13 @@ export const ListView = React.memo(function ListView({
               <div className="text-4xl mb-4">📅</div>
               <h3 className={cn(
                 "text-lg font-semibold mb-2",
-                "text-[var(--text-primary)] font-[var(--font-heading)]"
+                "text-[var(--bf-ink-50)] font-[var(--font-sans)]"
               )}>
                 No hay reservas
               </h3>
               <p className={cn(
                 "text-sm",
-                "text-[var(--text-secondary)] font-[var(--font-body)]"
+                "text-[var(--bf-ink-300)] font-[var(--font-sans)]"
               )}>
                 No hay reservas para el rango seleccionado.
               </p>
@@ -111,50 +111,50 @@ export const ListView = React.memo(function ListView({
     <div className="w-full h-full flex flex-col overflow-hidden bg-[#0B0C10] relative p-4" role="region" aria-label="Lista de reservas">
       {/* Radial Gradient Overlay for Neo-Glass effect */}
       <div 
-        className="absolute top-0 left-0 w-[500px] h-[500px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none z-0"
+        className="absolute top-0 left-0 w-[500px] h-[500px] bg-[rgba(79,161,216,0.10)] blur-[100px] rounded-full pointer-events-none z-0"
         style={{ transform: 'translate(-20%, -20%)' }}
       />
       
       <div className="relative z-10 flex-1 overflow-y-auto scrollbar-hide">
         {/* Vista Desktop: Tabla */}
         <div className="hidden md:block overflow-x-auto">
-          <div className="bg-[var(--glass-bg-default)] border border-[var(--glass-border)] backdrop-blur-md rounded-[var(--radius-xl)] overflow-hidden shadow-[var(--shadow-premium)]">
+          <div className="bg-[var(--glass-bg-default)] border border-[var(--bf-border)] backdrop-blur-md rounded-[var(--r-xl)] overflow-hidden shadow-[var(--bf-shadow-card)]">
             <table className="w-full" role="table" aria-label="Tabla de reservas">
               <thead className="border-b border-[var(--glass-border-subtle)]" role="rowgroup">
                 <tr role="row">
                   <th className={cn(
                     "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider",
-                    "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                    "text-[var(--bf-ink-400)] font-[var(--font-sans)]"
                   )} scope="col" role="columnheader">
                     Hora
                   </th>
                   <th className={cn(
                     "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider",
-                    "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                    "text-[var(--bf-ink-400)] font-[var(--font-sans)]"
                   )} scope="col" role="columnheader">
                     Cliente
                   </th>
                   <th className={cn(
                     "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider",
-                    "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                    "text-[var(--bf-ink-400)] font-[var(--font-sans)]"
                   )} scope="col" role="columnheader">
                     Servicio
                   </th>
                   <th className={cn(
                     "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider",
-                    "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                    "text-[var(--bf-ink-400)] font-[var(--font-sans)]"
                   )} scope="col" role="columnheader">
                     Barbero
                   </th>
                   <th className={cn(
                     "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider",
-                    "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                    "text-[var(--bf-ink-400)] font-[var(--font-sans)]"
                   )} scope="col" role="columnheader">
                     Estado
                   </th>
                   <th className={cn(
                     "px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider",
-                    "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                    "text-[var(--bf-ink-400)] font-[var(--font-sans)]"
                   )} scope="col" role="columnheader">
                     Precio
                   </th>
@@ -169,11 +169,11 @@ export const ListView = React.memo(function ListView({
                     <React.Fragment key={dateKey}>
                       {/* Separador de fecha cuando hay múltiples días */}
                       {showDateSeparator && (
-                        <tr className="bg-[var(--glass-bg-subtle)] sticky top-0 z-10">
+                        <tr className="bg-[var(--bf-bg-elev)] sticky top-0 z-10">
                           <td colSpan={6} className="px-6 py-3 border-b border-[var(--glass-border-hover)]">
                             <div className={cn(
                               "text-xs font-semibold uppercase tracking-wider",
-                              "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                              "text-[var(--bf-ink-400)] font-[var(--font-sans)]"
                             )}>
                               {format(dateObj, "EEEE, d 'de' MMMM", { locale: es })}
                             </div>
@@ -202,8 +202,8 @@ export const ListView = React.memo(function ListView({
                             }}
                             tabIndex={0}
                             className={cn(
-                              "hover:bg-[var(--glass-bg-subtle)] focus:bg-[var(--glass-bg-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]/50 focus:ring-offset-2 focus:ring-offset-[#0B0C10] transition-colors duration-200 cursor-pointer",
-                              "text-[var(--text-primary)]"
+                              "hover:bg-[var(--bf-bg-elev)] focus:bg-[var(--bf-bg-elev)] focus:outline-none focus:ring-2 focus:ring-[var(--bf-primary)]/50 focus:ring-offset-2 focus:ring-offset-[#0B0C10] transition-colors duration-200 cursor-pointer",
+                              "text-[var(--bf-ink-50)]"
                             )}
                             role="row"
                             aria-label={`Reserva de ${booking.customer?.name || "cliente"} a las ${startTime} - ${endTime}`}
@@ -211,7 +211,7 @@ export const ListView = React.memo(function ListView({
                             <td className="px-6 py-4" role="cell">
                               <div className={cn(
                                 "text-sm font-semibold font-[var(--font-mono)]",
-                                "text-[var(--text-primary)]"
+                                "text-[var(--bf-ink-50)]"
                               )}>
                                 {startTime} - {endTime}
                               </div>
@@ -219,14 +219,14 @@ export const ListView = React.memo(function ListView({
                             <td className="px-6 py-4" role="cell">
                               <div className={cn(
                                 "text-sm font-semibold",
-                                "text-[var(--text-primary)] font-[var(--font-heading)]"
+                                "text-[var(--bf-ink-50)] font-[var(--font-sans)]"
                               )}>
                                 {booking.customer?.name || "Sin cliente"}
                               </div>
                               {booking.customer?.phone && (
                                 <div className={cn(
                                   "text-xs mt-1",
-                                  "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                                  "text-[var(--bf-ink-400)] font-[var(--font-sans)]"
                                 )}>
                                   {booking.customer.phone}
                                 </div>
@@ -235,14 +235,14 @@ export const ListView = React.memo(function ListView({
                             <td className="px-6 py-4" role="cell">
                               <div className={cn(
                                 "text-sm font-semibold",
-                                "text-[var(--text-primary)] font-[var(--font-heading)]"
+                                "text-[var(--bf-ink-50)] font-[var(--font-sans)]"
                               )}>
                                 {booking.service?.name || "Sin servicio"}
                               </div>
                               {booking.service && (
                                 <div className={cn(
                                   "text-xs mt-1",
-                                  "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                                  "text-[var(--bf-ink-400)] font-[var(--font-sans)]"
                                 )}>
                                   {booking.service.duration_min} min
                                 </div>
@@ -251,7 +251,7 @@ export const ListView = React.memo(function ListView({
                             <td className="px-6 py-4" role="cell">
                               <div className={cn(
                                 "text-sm font-semibold",
-                                "text-[var(--text-primary)] font-[var(--font-heading)]"
+                                "text-[var(--bf-ink-50)] font-[var(--font-sans)]"
                               )}>
                                 {booking.staff?.name || "Sin asignar"}
                               </div>
@@ -271,7 +271,7 @@ export const ListView = React.memo(function ListView({
                             <td className="px-6 py-4" role="cell">
                               <div className={cn(
                                 "text-sm font-semibold",
-                                "text-[var(--text-primary)] font-[var(--font-heading)]"
+                                "text-[var(--bf-ink-50)] font-[var(--font-sans)]"
                               )}>
                                 {booking.service
                                   ? `${(booking.service.price_cents / 100).toFixed(2)} €`
@@ -302,7 +302,7 @@ export const ListView = React.memo(function ListView({
                   <div className="sticky top-0 z-10 py-2 bg-[#0B0C10] border-b border-[var(--glass-border-subtle)] mb-2">
                     <div className={cn(
                       "text-xs font-semibold uppercase tracking-wider",
-                      "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                      "text-[var(--bf-ink-400)] font-[var(--font-sans)]"
                     )}>
                       {format(dateObj, "EEEE, d 'de' MMMM", { locale: es })}
                     </div>

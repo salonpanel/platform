@@ -74,7 +74,7 @@ export function BottomNavBar({ className }: BottomNavBarProps) {
           className={cn(
             "fixed bottom-0 left-0 right-0 z-50 md:hidden",
             "border-t border-[rgba(255,255,255,0.08)]",
-            "bg-[var(--bg-primary)]/98 backdrop-blur-xl nav-inset-bottom",
+            "bg-[var(--bf-bg)]/98 backdrop-blur-xl nav-inset-bottom",
             className
           )}
           style={{
@@ -93,8 +93,8 @@ export function BottomNavBar({ className }: BottomNavBarProps) {
                   className={cn(
                     "flex flex-col items-center justify-center gap-0.5 flex-1 h-full py-1.5 px-2 rounded-xl transition-all duration-200 relative",
                     active
-                      ? "text-[var(--accent-aqua)]"
-                      : "text-[var(--text-secondary)] active:text-[var(--text-primary)]"
+                      ? "text-[var(--bf-primary)]"
+                      : "text-[var(--bf-ink-300)] active:text-[var(--bf-ink-50)]"
                   )}
                 >
                   <motion.div
@@ -109,7 +109,7 @@ export function BottomNavBar({ className }: BottomNavBarProps) {
                   </motion.div>
                   <span
                     className={cn(
-                      "text-[10px] font-satoshi relative z-10 leading-tight",
+                      "text-[10px]  relative z-10 leading-tight",
                       active ? "font-semibold" : "font-medium"
                     )}
                   >

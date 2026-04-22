@@ -74,9 +74,10 @@ export function shouldIndexRoute(path: string, context: AppContext): boolean {
     return false;
   }
 
-  // Portal público de tenant: indexable
-  if (context === "tenantPublic" && path.startsWith("/r/")) {
-    return true;
+  // Portal público de tenant: indexable (URLs limpias: /, /servicios, /reservar, /mis-citas...)
+  // Nota: internamente el router usa /t/[tenantId], pero esa ruta no debe indexarse.
+  if (context === "tenantPublic") {
+    return !path.startsWith("/t/");
   }
 
   // Marketing: indexable (cuando esté implementado)

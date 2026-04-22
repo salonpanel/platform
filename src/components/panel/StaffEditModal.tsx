@@ -387,7 +387,7 @@ export function StaffEditModal({
       }
     >
       {saveError && (
-        <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200 flex items-center gap-2">
+        <div className="mb-4 rounded-xl border border-[rgba(224,96,114,0.20)] bg-[rgba(224,96,114,0.10)] p-3 text-sm text-[#F2A0AC] flex items-center gap-2">
           <XCircle className="h-4 w-4" />
           {saveError}
         </div>
@@ -402,7 +402,7 @@ export function StaffEditModal({
               "flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-medium rounded-lg transition-all",
               activeTab === "info"
                 ? "bg-[var(--color-accent)] text-white shadow-lg shadow-[var(--color-accent)]/20"
-                : "text-[var(--text-secondary)] hover:text-white hover:bg-white/5"
+                : "text-[var(--bf-ink-300)] hover:text-white hover:bg-white/5"
             )}
           >
             <User className="h-4 w-4" />
@@ -414,7 +414,7 @@ export function StaffEditModal({
               "flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-medium rounded-lg transition-all",
               activeTab === "schedule"
                 ? "bg-[var(--color-accent)] text-white shadow-lg shadow-[var(--color-accent)]/20"
-                : "text-[var(--text-secondary)] hover:text-white hover:bg-white/5"
+                : "text-[var(--bf-ink-300)] hover:text-white hover:bg-white/5"
             )}
           >
             <Clock className="h-4 w-4" />
@@ -427,7 +427,7 @@ export function StaffEditModal({
                 "flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-medium rounded-lg transition-all",
                 activeTab === "permissions"
                   ? "bg-[var(--color-accent)] text-white shadow-lg shadow-[var(--color-accent)]/20"
-                  : "text-[var(--text-secondary)] hover:text-white hover:bg-white/5"
+                  : "text-[var(--bf-ink-300)] hover:text-white hover:bg-white/5"
               )}
             >
               <Shield className="h-4 w-4" />
@@ -456,7 +456,7 @@ export function StaffEditModal({
                     Cuenta de usuario (Obligatorio)
                   </h3>
                 </div>
-                <p className="text-xs text-[var(--text-secondary)] mb-4">
+                <p className="text-xs text-[var(--bf-ink-300)] mb-4">
                   Todos los miembros del equipo deben tener una cuenta para acceder al panel
                 </p>
 
@@ -471,7 +471,7 @@ export function StaffEditModal({
                 />
 
                 <div className="space-y-2">
-                  <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] ml-0.5">
+                  <label className="block text-xs sm:text-sm font-medium text-[var(--bf-ink-300)] ml-0.5">
                     Rol del usuario
                   </label>
                   <select
@@ -483,7 +483,7 @@ export function StaffEditModal({
                     <option value="manager" className="bg-gray-900 text-white">Manager - Puede gestionar todo excepto configuración</option>
                     <option value="owner" className="bg-gray-900 text-white">Owner - Acceso completo</option>
                   </select>
-                  <p className="text-[10px] sm:text-xs ml-0.5 text-[var(--text-secondary)]">
+                  <p className="text-[10px] sm:text-xs ml-0.5 text-[var(--bf-ink-300)]">
                     {form.userRole === "staff" && "Podrá ver y gestionar su propia agenda de citas"}
                     {form.userRole === "manager" && "Podrá gestionar staff, servicios y ver todas las citas"}
                     {form.userRole === "owner" && "Tendrá acceso completo a todas las funcionalidades"}
@@ -539,9 +539,9 @@ export function StaffEditModal({
                     />
                   ))}
                 </div>
-                <span className="text-xs text-[var(--text-secondary)] font-mono">{form.color}</span>
+                <span className="text-xs text-[var(--bf-ink-300)] font-mono">{form.color}</span>
               </div>
-              <p className="text-xs text-[var(--text-secondary)]">
+              <p className="text-xs text-[var(--bf-ink-300)]">
                 Color que identifica a este miembro en la vista de agenda.
               </p>
             </div>
@@ -557,9 +557,9 @@ export function StaffEditModal({
                 rows={2}
                 maxLength={200}
                 placeholder="Especialista en cortes clásicos y degradados…"
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-[var(--text-secondary)]/50 focus:border-[var(--accent-blue)]/40 focus:outline-none resize-none transition-colors"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-[var(--bf-ink-300)]/50 focus:border-[var(--bf-primary)]/40 focus:outline-none resize-none transition-colors"
               />
-              <p className="text-xs text-[var(--text-secondary)]">
+              <p className="text-xs text-[var(--bf-ink-300)]">
                 Visible en el portal de reservas al elegir miembro. Máx. 200 caracteres.
               </p>
             </div>
@@ -570,7 +570,7 @@ export function StaffEditModal({
                   <label className="text-sm font-medium text-white block">
                     Ofrece servicios
                   </label>
-                  <p className="text-xs text-[var(--text-secondary)] mt-1">
+                  <p className="text-xs text-[var(--bf-ink-300)] mt-1">
                     Indica si este miembro aparece como reservable en la agenda
                   </p>
                 </div>
@@ -591,7 +591,7 @@ export function StaffEditModal({
                 Servicios que ofrece
               </label>
               {availableServices.length === 0 ? (
-                <p className="text-sm text-[var(--text-secondary)]">
+                <p className="text-sm text-[var(--bf-ink-300)]">
                   No hay servicios configurados. Ve a la sección Servicios para crearlos.
                 </p>
               ) : (
@@ -621,14 +621,14 @@ export function StaffEditModal({
                         }}
                         className="sr-only"
                       />
-                      <span className="text-sm text-[var(--text-primary)] group-hover:text-white transition-colors">
+                      <span className="text-sm text-[var(--bf-ink-50)] group-hover:text-white transition-colors">
                         {service.name}
                       </span>
                     </label>
                   ))}
                 </div>
               )}
-              <p className="text-xs text-[var(--text-secondary)] mt-2">
+              <p className="text-xs text-[var(--bf-ink-300)] mt-2">
                 Selecciona los servicios que este miembro del equipo puede realizar
               </p>
             </div>
@@ -650,7 +650,7 @@ export function StaffEditModal({
         {activeTab === "schedule" && (
           <div className="space-y-3 mt-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {loadingSchedules ? (
-              <div className="text-center py-8 text-[var(--text-secondary)]">
+              <div className="text-center py-8 text-[var(--bf-ink-300)]">
                 Cargando horarios...
               </div>
             ) : (
@@ -680,7 +680,7 @@ export function StaffEditModal({
                       </label>
                       <span className={cn(
                         "text-sm font-medium transition-colors w-20 flex-shrink-0",
-                        schedule.isActive ? "text-white" : "text-[var(--text-secondary)]"
+                        schedule.isActive ? "text-white" : "text-[var(--bf-ink-300)]"
                       )}>
                         {schedule.name}
                       </span>
@@ -697,7 +697,7 @@ export function StaffEditModal({
                         {/* Turno 1 */}
                         <div className="flex items-center gap-2">
                           {schedule.hasBreak && (
-                            <span className="text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wide w-12 flex-shrink-0">
+                            <span className="text-[10px] font-medium text-[var(--bf-ink-300)] uppercase tracking-wide w-12 flex-shrink-0">
                               Turno 1
                             </span>
                           )}
@@ -709,7 +709,7 @@ export function StaffEditModal({
                             }
                             className="flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-sm text-white transition-all duration-200 focus:border-emerald-500/50 focus:bg-white/[0.05] focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
                           />
-                          <span className="text-[var(--text-secondary)] text-xs">–</span>
+                          <span className="text-[var(--bf-ink-300)] text-xs">–</span>
                           <input
                             type="time"
                             value={schedule.endTime}
@@ -734,7 +734,7 @@ export function StaffEditModal({
                         {/* Turno 2 (descanso intermedio) */}
                         {schedule.hasBreak && (
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wide w-12 flex-shrink-0">
+                            <span className="text-[10px] font-medium text-[var(--bf-ink-300)] uppercase tracking-wide w-12 flex-shrink-0">
                               Turno 2
                             </span>
                             <input
@@ -745,7 +745,7 @@ export function StaffEditModal({
                               }
                               className="flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-sm text-white transition-all duration-200 focus:border-emerald-500/50 focus:bg-white/[0.05] focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
                             />
-                            <span className="text-[var(--text-secondary)] text-xs">–</span>
+                            <span className="text-[var(--bf-ink-300)] text-xs">–</span>
                             <input
                               type="time"
                               value={schedule.breakEnd}
@@ -758,7 +758,7 @@ export function StaffEditModal({
                               type="button"
                               onClick={() => handleScheduleChange(schedule.day, "hasBreak", false)}
                               title="Eliminar descanso"
-                              className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors flex-shrink-0"
+                              className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs text-[var(--bf-danger)] border border-[rgba(224,96,114,0.20)] hover:bg-[rgba(224,96,114,0.10)] transition-colors flex-shrink-0"
                             >
                               <Minus className="h-3 w-3" />
                               <span className="hidden sm:inline">Quitar</span>
@@ -779,14 +779,14 @@ export function StaffEditModal({
         {activeTab === "permissions" && staff?.user_id && (
           <div className="space-y-4 mt-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {loadingPermissions ? (
-              <div className="text-center py-8 text-[var(--text-secondary)]">
+              <div className="text-center py-8 text-[var(--bf-ink-300)]">
                 Cargando permisos...
               </div>
             ) : (
               <div className="space-y-6">
                 {/* Descripción */}
                 <div className="p-4 rounded-xl border border-[var(--color-accent)]/20 bg-[var(--color-accent)]/10">
-                  <p className="text-sm text-[var(--text-secondary)]">
+                  <p className="text-sm text-[var(--bf-ink-300)]">
                     Configura qué secciones del panel puede ver y acceder este usuario. Si desactivas una sección, no aparecerá en el menú y tampoco podrá acceder mediante URL directa.
                   </p>
                 </div>
@@ -812,7 +812,7 @@ export function StaffEditModal({
                           <h4 className="text-sm font-semibold text-white">
                             {item.label}
                           </h4>
-                          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                          <p className="text-xs text-[var(--bf-ink-300)] mt-0.5">
                             {item.desc}
                           </p>
                         </div>

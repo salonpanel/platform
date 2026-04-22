@@ -105,7 +105,7 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
             readOnly
             onClick={() => !disabled && setIsOpen(!isOpen)}
             className="cursor-pointer"
-            icon={<Clock className="h-4 w-4 text-[var(--text-secondary)]" />}
+            icon={<Clock className="h-4 w-4 text-[var(--bf-ink-300)]" />}
           />
         </div>
 
@@ -116,7 +116,7 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.96 }}
               transition={{ duration: 0.15, ease: [0.2, 0, 0, 1] }}
-              className="absolute z-50 mt-2 w-full rounded-[var(--radius-xl)] glass-strong border-[var(--glass-border-strong)] shadow-[var(--shadow-modal)] p-4"
+              className="absolute z-50 mt-2 w-full rounded-[var(--r-xl)] glass-strong border-[var(--glass-border-strong)] shadow-[var(--shadow-modal)] p-4"
             >
               <div className="flex items-center justify-center gap-4">
                 {/* Hours */}
@@ -124,15 +124,15 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
                   <button
                     onClick={incrementHour}
                     disabled={disabled}
-                    className="p-2 rounded-[var(--radius-sm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)] transition-all mb-2"
+                    className="p-2 rounded-[var(--r-sm)] text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-bg-elev)] transition-all mb-2"
                     style={{ transitionDuration: "var(--duration-base)" }}
                   >
                     <ChevronUp className="h-4 w-4" />
                   </button>
-                  <div className="glass rounded-[var(--radius-md)] px-4 py-3 min-w-[60px] text-center">
+                  <div className="glass rounded-[var(--r-md)] px-4 py-3 min-w-[60px] text-center">
                     <span
-                      className="text-2xl font-semibold text-[var(--text-primary)]"
-                      style={{ fontFamily: "var(--font-kpi)" }}
+                      className="text-2xl font-semibold text-[var(--bf-ink-50)]"
+                      style={{ fontFamily: "var(--font-sans)" }}
                     >
                       {String(hours).padStart(2, "0")}
                     </span>
@@ -140,7 +140,7 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
                   <button
                     onClick={decrementHour}
                     disabled={disabled}
-                    className="p-2 rounded-[var(--radius-sm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)] transition-all mt-2"
+                    className="p-2 rounded-[var(--r-sm)] text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-bg-elev)] transition-all mt-2"
                     style={{ transitionDuration: "var(--duration-base)" }}
                   >
                     <ChevronDown className="h-4 w-4" />
@@ -148,8 +148,8 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
                 </div>
 
                 <span
-                  className="text-xl font-semibold text-[var(--text-primary)]"
-                  style={{ fontFamily: "var(--font-body)" }}
+                  className="text-xl font-semibold text-[var(--bf-ink-50)]"
+                  style={{ fontFamily: "var(--font-sans)" }}
                 >
                   :
                 </span>
@@ -159,15 +159,15 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
                   <button
                     onClick={incrementMinute}
                     disabled={disabled}
-                    className="p-2 rounded-[var(--radius-sm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)] transition-all mb-2"
+                    className="p-2 rounded-[var(--r-sm)] text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-bg-elev)] transition-all mb-2"
                     style={{ transitionDuration: "var(--duration-base)" }}
                   >
                     <ChevronUp className="h-4 w-4" />
                   </button>
-                  <div className="glass rounded-[var(--radius-md)] px-4 py-3 min-w-[60px] text-center">
+                  <div className="glass rounded-[var(--r-md)] px-4 py-3 min-w-[60px] text-center">
                     <span
-                      className="text-2xl font-semibold text-[var(--text-primary)]"
-                      style={{ fontFamily: "var(--font-kpi)" }}
+                      className="text-2xl font-semibold text-[var(--bf-ink-50)]"
+                      style={{ fontFamily: "var(--font-sans)" }}
                     >
                       {String(minutes).padStart(2, "0")}
                     </span>
@@ -175,7 +175,7 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
                   <button
                     onClick={decrementMinute}
                     disabled={disabled}
-                    className="p-2 rounded-[var(--radius-sm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)] transition-all mt-2"
+                    className="p-2 rounded-[var(--r-sm)] text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-bg-elev)] transition-all mt-2"
                     style={{ transitionDuration: "var(--duration-base)" }}
                   >
                     <ChevronDown className="h-4 w-4" />
@@ -194,9 +194,9 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
                         handleTimeChange(h, m);
                         setIsOpen(false);
                       }}
-                      className="px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-[var(--radius-pill)] glass hover:bg-[var(--accent-aqua-glass)] transition-all"
+                      className="px-3 py-1.5 text-xs text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)] rounded-[var(--r-full)] glass hover:bg-[var(--accent-aqua-glass)] transition-all"
                       style={{
-                        fontFamily: "var(--font-body)",
+                        fontFamily: "var(--font-sans)",
                         transitionDuration: "var(--duration-base)",
                       }}
                     >
@@ -210,9 +210,9 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
               <div className="mt-4 flex justify-end">
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="px-3 py-1.5 text-xs text-[var(--text-primary)] rounded-[var(--radius-sm)] bg-[var(--glass-bg-subtle)] hover:bg-[var(--glass-bg)] transition-all"
+                  className="px-3 py-1.5 text-xs text-[var(--bf-ink-50)] rounded-[var(--r-sm)] bg-[var(--bf-bg-elev)] hover:bg-[var(--bf-bg-elev)] transition-all"
                   style={{
-                    fontFamily: "var(--font-body)",
+                    fontFamily: "var(--font-sans)",
                     transitionDuration: "var(--duration-base)",
                   }}
                 >

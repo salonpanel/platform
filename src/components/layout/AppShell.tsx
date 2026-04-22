@@ -175,8 +175,8 @@ export function AppShell({
               "w-full flex items-center gap-3 rounded-[var(--r-md)] px-4 py-2.5 text-sm",
               "text-[var(--bf-danger)] hover:bg-[rgba(224,96,114,0.10)] hover:text-[#F2A0AC] transition-all duration-200"
             )}
-            style={{ fontFamily: "var(--font-sans)" }}
             style={{
+              fontFamily: "var(--font-sans)",
               borderRadius: "var(--radius-md)",
             }}
           >

@@ -134,7 +134,15 @@ function AjustesContent() {
             contact_email: t.contact_email || "",
             contact_phone: t.contact_phone || "",
             address: t.address || "",
-            portal_url: t.portal_url || `/r/${t.slug || ""}`,
+            portal_url:
+              t.portal_url ||
+              (() => {
+                const sub = (t as any).public_subdomain || t.slug || "";
+                const isProd = process.env.NODE_ENV === "production";
+                return isProd
+                  ? `https://www.${sub}.bookfast.es`
+                  : `http://www.${sub}.bookfast.es.localtest.me:3000`;
+              })(),
             public_subdomain: (t as any).public_subdomain || "",
           });
 

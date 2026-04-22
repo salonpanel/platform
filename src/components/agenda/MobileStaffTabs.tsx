@@ -28,7 +28,7 @@ export function MobileStaffTabs({
   const showAllTab = staffList.length > 1;
 
   return (
-    <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide px-3 py-2 bg-[var(--bg-primary)]/80 backdrop-blur-sm border-b border-[var(--glass-border-subtle)]">
+    <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide px-3 py-2 bg-[var(--bf-bg)]/80 backdrop-blur-sm border-b border-[var(--glass-border-subtle)]">
       {showAllTab && (
         <StaffTab
           label="Todos"
@@ -70,12 +70,12 @@ function StaffTab({
       className={cn(
         "relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap",
         "transition-all duration-200 flex-shrink-0",
-        "focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]/40",
+        "focus:outline-none focus:ring-2 focus:ring-[var(--bf-primary)]/40",
         // Minimum tap target
         "min-h-[36px]",
         isSelected
-          ? "bg-[var(--accent-blue)]/15 text-[var(--accent-blue)] border border-[var(--accent-blue)]/30"
-          : "bg-white/5 text-[var(--text-secondary)] border border-transparent hover:bg-white/8 hover:text-[var(--text-primary)]"
+          ? "bg-[var(--bf-primary)]/15 text-[var(--bf-primary)] border border-[var(--bf-primary)]/30"
+          : "bg-white/5 text-[var(--bf-ink-300)] border border-transparent hover:bg-white/8 hover:text-[var(--bf-ink-50)]"
       )}
       aria-pressed={isSelected}
     >
@@ -95,8 +95,8 @@ function StaffTab({
           className={cn(
             "inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold",
             isSelected
-              ? "bg-[var(--accent-blue)]/25 text-[var(--accent-blue)]"
-              : "bg-white/10 text-[var(--text-tertiary)]"
+              ? "bg-[var(--bf-primary)]/25 text-[var(--bf-primary)]"
+              : "bg-white/10 text-[var(--bf-ink-400)]"
           )}
         >
           {count}
@@ -107,7 +107,7 @@ function StaffTab({
       {isSelected && (
         <motion.div
           layoutId="staff-tab-indicator"
-          className="absolute -bottom-0.5 left-2 right-2 h-0.5 rounded-full bg-[var(--accent-blue)]"
+          className="absolute -bottom-0.5 left-2 right-2 h-0.5 rounded-full bg-[var(--bf-primary)]"
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
         />
       )}

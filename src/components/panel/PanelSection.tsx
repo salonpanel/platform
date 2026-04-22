@@ -29,9 +29,9 @@ export function PanelSection({
   const effectiveDensity = density === "auto" ? heightAware.density : density;
 
   const variantStyles = {
-    default: "bg-[var(--bg-card)] border-[var(--glass-border)] backdrop-blur-sm",
-    glass: "glass border-[var(--glass-border)]",
-    aurora: "bg-[var(--gradient-primary)] border-transparent",
+    default: "bg-[var(--bf-surface)] border-[var(--bf-border)]",
+    glass:   "bg-[var(--bf-bg-elev)]/80 backdrop-blur-sm border-[var(--bf-border-2)]",
+    aurora:  "bg-[var(--bf-primary)] border-transparent",
   };
 
   // Padding según densidad
@@ -58,16 +58,16 @@ export function PanelSection({
   return (
     <div
       className={cn(
-        "flex flex-col rounded-[var(--radius-xl)] border transition-all",
+        "flex flex-col rounded-[var(--r-xl)] border transition-all",
         variantStyles[variant],
         paddingStyles[padding],
         scrollable ? "overflow-auto" : "overflow-hidden",
         className
       )}
       style={{
-        boxShadow: variant === "aurora" 
-          ? "var(--glow-aqua), inset 0px 1px 0px rgba(255,255,255,0.15)" 
-          : "var(--shadow-card)",
+        boxShadow: variant === "aurora"
+          ? "var(--bf-shadow-glow), inset 0 1px 0 rgba(255,255,255,0.12)"
+          : "var(--bf-shadow-card)",
         transitionDuration: "var(--duration-base)",
       }}
     >
@@ -78,8 +78,8 @@ export function PanelSection({
             effectiveDensity === "ultra-compact" ? "text-sm mb-2" : effectiveDensity === "compact" ? "text-base mb-2" : "text-lg mb-3"
           )}
           style={{
-            fontFamily: "var(--font-heading)",
-            color: variant === "aurora" ? "rgba(255,255,255,0.9)" : "var(--text-primary)",
+            fontFamily: "var(--font-sans)",
+            color: variant === "aurora" ? "var(--bf-ink)" : "var(--bf-ink-50)",
           }}
         >
           {title}

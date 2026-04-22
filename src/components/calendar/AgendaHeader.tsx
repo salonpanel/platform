@@ -158,7 +158,7 @@ export function AgendaHeader({
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 variant="ghost"
                 size="icon"
-                className="-ml-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                className="-ml-2 text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)]"
                 aria-label="Menu"
               >
                 {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -169,10 +169,10 @@ export function AgendaHeader({
                 className="flex flex-col text-left active:opacity-70 transition-opacity"
                 aria-label="Volver a hoy"
               >
-                <span className="text-sm font-bold text-[var(--text-primary)] font-[var(--font-heading)] leading-none">
+                <span className="text-sm font-bold text-[var(--bf-ink-50)] font-[var(--font-sans)] leading-none">
                   {format(date, "d MMM")}
                 </span>
-                <span className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider font-semibold">
+                <span className="text-[10px] text-[var(--bf-ink-400)] uppercase tracking-wider font-semibold">
                   {format(date, "EEEE")}
                 </span>
               </button>
@@ -184,7 +184,7 @@ export function AgendaHeader({
                 onClick={onSearchClick}
                 variant="ghost"
                 size="icon"
-                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                className="text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)]"
                 aria-label="Buscar"
               >
                 <Search className="h-5 w-5" />
@@ -201,7 +201,7 @@ export function AgendaHeader({
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.25 }}
-                className="overflow-hidden border-t border-[var(--glass-border-subtle)] mt-3 pt-3"
+                className="overflow-hidden border-t border-[var(--bf-border)] mt-3 pt-3"
               >
                 {/* View Selector */}
                 <div className="flex gap-2 mb-4 overflow-x-auto pb-1 no-scrollbar">
@@ -215,8 +215,8 @@ export function AgendaHeader({
                       className={cn(
                         "px-3 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-colors",
                         viewMode === mode.value
-                          ? "bg-[var(--accent-blue)]/10 text-[var(--accent-blue)] border border-[var(--accent-blue)]/20"
-                          : "bg-[var(--glass-bg-subtle)] text-[var(--text-secondary)] border border-transparent"
+                          ? "bg-[rgba(79,161,216,0.10)] text-[var(--bf-primary)] border border-[rgba(79,161,216,0.25)]"
+                          : "bg-[var(--glass-bg-subtle)] text-[var(--bf-ink-300)] border border-transparent"
                       )}
                     >
                       {mode.label}
@@ -286,7 +286,7 @@ export function AgendaHeader({
                 onClick={handlePrevious}
                 variant="ghost"
                 size="icon"
-                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                className="text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)]"
                 aria-label="Fecha anterior"
               >
                 <ChevronLeft className="h-5 w-5" />
@@ -297,7 +297,7 @@ export function AgendaHeader({
                 variant="secondary"
                 size="sm"
                 className={cn(
-                  "font-[var(--font-heading)] transition-opacity duration-150",
+                  "font-[var(--font-sans)] transition-opacity duration-150",
                   isToday && "opacity-40 cursor-default pointer-events-none"
                 )}
                 aria-current={isToday ? "date" : undefined}
@@ -310,7 +310,7 @@ export function AgendaHeader({
                 onClick={handleNext}
                 variant="ghost"
                 size="icon"
-                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                className="text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)]"
                 aria-label="Fecha siguiente"
               >
                 <ChevronRight className="h-5 w-5" />
@@ -321,7 +321,7 @@ export function AgendaHeader({
                 onClick={onCalendarClick}
                 variant="ghost"
                 size="icon"
-                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                className="text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)]"
                 aria-label="Seleccionar fecha"
               >
                 <CalendarIcon className="h-5 w-5" />
@@ -331,8 +331,8 @@ export function AgendaHeader({
               <motion.div
                 className={cn(
                   "ml-0 sm:ml-3 px-4 py-2.5 rounded-xl backdrop-blur-md min-w-0 flex-1 sm:flex-initial",
-                  "bg-gradient-to-r from-[var(--accent-blue)]/10 to-[var(--accent-aqua)]/10",
-                  "border border-[var(--accent-blue)]/25 shadow-[var(--shadow-premium)]"
+                  "bg-gradient-to-r from-[rgba(79,161,216,0.08)] to-[rgba(79,161,216,0.06)]",
+                  "border border-[rgba(79,161,216,0.25)] shadow-[var(--bf-shadow-card)]"
                 )}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -340,14 +340,14 @@ export function AgendaHeader({
               >
                 <div className={cn(
                   "text-sm font-semibold truncate tracking-tight text-center sm:text-left",
-                  "text-[var(--text-primary)] font-[var(--font-heading)]"
+                  "text-[var(--bf-ink-50)] font-[var(--font-sans)]"
                 )}>
                   {getDateLabel()}
                 </div>
                 {timeRange && viewMode === "day" && (
                   <div className={cn(
                     "text-xs font-mono mt-0.5 opacity-80 text-center sm:text-left",
-                    "text-[var(--text-secondary)] font-[var(--font-body)]"
+                    "text-[var(--bf-ink-300)] font-[var(--font-sans)]"
                   )}>
                     {timeRange}
                   </div>
@@ -360,7 +360,7 @@ export function AgendaHeader({
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               variant="ghost"
               size="icon"
-              className="sm:hidden text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              className="sm:hidden text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)]"
               aria-label="Menu"
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -373,7 +373,7 @@ export function AgendaHeader({
                   onClick={onFiltersClick}
                   variant="ghost"
                   size="icon"
-                  className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  className="text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)]"
                   aria-label="Filtros"
                 >
                   <Filter className="h-5 w-5" />
@@ -383,7 +383,7 @@ export function AgendaHeader({
                 onClick={onSearchClick}
                 variant="ghost"
                 size="icon"
-                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                className="text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)]"
                 aria-label="Buscar"
               >
                 <Search className="h-5 w-5" />
@@ -392,20 +392,20 @@ export function AgendaHeader({
                 onClick={onNotificationsClick}
                 variant="ghost"
                 size="icon"
-                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] relative"
+                className="text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)] relative"
                 aria-label="Notificaciones"
               >
                 <Bell className="h-5 w-5" />
                 <span className={cn(
                   "absolute top-1.5 right-1.5 w-2 h-2 rounded-full border-2",
-                  "bg-[var(--status-cancelled)] border-[var(--bg-primary)]"
+                  "bg-[var(--bf-danger)] border-[var(--bf-bg)]"
                 )} />
               </GlassButton>
               <GlassButton
                 onClick={() => router.push("/panel/ajustes")}
                 variant="ghost"
                 size="icon"
-                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                className="text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)]"
                 aria-label="Ajustes"
               >
                 <Settings className="h-5 w-5" />
@@ -423,28 +423,28 @@ export function AgendaHeader({
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="sm:hidden overflow-hidden"
               >
-                <div className="flex items-center justify-center gap-3 py-2 border-t border-[var(--glass-border-subtle)]">
+                <div className="flex items-center justify-center gap-3 py-2 border-t border-[var(--bf-border)]">
                   {/* Actions in drawer */}
                   {showFiltersButton && (
                     <GlassButton
                       onClick={onFiltersClick}
                       variant="ghost"
                       size="icon"
-                      className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                      className="text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)]"
                       aria-label="Filtros"
                     >
                       <Filter className="h-5 w-5" />
                     </GlassButton>
                   )}
-                  <GlassButton onClick={onSearchClick} variant="ghost" size="icon" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"><Search className="h-5 w-5" /></GlassButton>
-                  <GlassButton onClick={onNotificationsClick} variant="ghost" size="icon" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] relative">
+                  <GlassButton onClick={onSearchClick} variant="ghost" size="icon" className="text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)]"><Search className="h-5 w-5" /></GlassButton>
+                  <GlassButton onClick={onNotificationsClick} variant="ghost" size="icon" className="text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)] relative">
                     <Bell className="h-5 w-5" />
                     <span className={cn(
                       "absolute top-1.5 right-1.5 w-2 h-2 rounded-full border-2",
-                      "bg-[var(--status-cancelled)] border-[var(--bg-primary)]"
+                      "bg-[var(--bf-danger)] border-[var(--bf-bg)]"
                     )} />
                   </GlassButton>
-                  <GlassButton onClick={() => router.push("/panel/ajustes")} variant="ghost" size="icon" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"><Settings className="h-5 w-5" /></GlassButton>
+                  <GlassButton onClick={() => router.push("/panel/ajustes")} variant="ghost" size="icon" className="text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)]"><Settings className="h-5 w-5" /></GlassButton>
                 </div>
               </motion.div>
             )}
@@ -457,13 +457,13 @@ export function AgendaHeader({
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
                 <span className={cn(
                   "text-xs font-semibold uppercase tracking-wider",
-                  "text-[var(--text-tertiary)] font-[var(--font-heading)]"
+                  "text-[var(--bf-ink-400)] font-[var(--font-sans)]"
                 )}>
                   Vista
                 </span>
                 <div className={cn(
                   "flex items-center gap-1 rounded-2xl p-1 flex-1 sm:flex-initial",
-                  "bg-[var(--glass-bg-default)] border border-[var(--glass-border)]"
+                  "bg-[var(--bf-bg-elev)] border border-[var(--bf-border)]"
                 )}>
                   {viewModes.map((mode) => (
                     <motion.button
@@ -473,18 +473,18 @@ export function AgendaHeader({
                       whileTap={{ scale: 0.98 }}
                       className={cn(
                         "relative flex-1 sm:flex-initial px-3 py-2 text-xs font-semibold rounded-xl transition-all duration-200",
-                        "font-[var(--font-heading)]",
+                        "font-[var(--font-sans)]",
                         viewMode === mode.value
-                          ? "text-[var(--text-primary)]"
-                          : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                          ? "text-[var(--bf-ink-50)]"
+                          : "text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)]"
                       )}
                     >
                       {viewMode === mode.value && (
                         <motion.span
                           layoutId="viewModeHighlight"
                           className={cn(
-                            "absolute inset-0 rounded-xl bg-gradient-to-r from-[var(--accent-blue)] to-[var(--accent-aqua)]",
-                            "shadow-[var(--shadow-premium)]"
+                            "absolute inset-0 rounded-xl bg-gradient-to-r from-[var(--bf-success)] to-[var(--bf-primary)]",
+                            "shadow-[var(--bf-shadow-card)]"
                           )}
                           transition={{ type: "spring", stiffness: 350, damping: 30 }}
                         />
@@ -501,14 +501,14 @@ export function AgendaHeader({
                   onClick={() => setStatsExpanded(!statsExpanded)}
                   className={cn(
                     "sm:hidden flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-200",
-                    "bg-[var(--glass-bg-default)] border border-[var(--glass-border)]",
-                    "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
+                    "bg-[var(--bf-bg-elev)] border border-[var(--bf-border)]",
+                    "text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)]",
                     "active:scale-95"
                   )}
                   aria-expanded={statsExpanded}
                   aria-controls="stats-section"
                 >
-                  <span className="text-xs font-semibold font-[var(--font-heading)]">
+                  <span className="text-xs font-semibold font-[var(--font-sans)]">
                     Estadísticas
                   </span>
                   <motion.div
@@ -542,36 +542,36 @@ export function AgendaHeader({
                       <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                         {/* Quick Stats */}
                         {quickStats && (
-                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 text-xs font-[var(--font-body)]">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 text-xs font-[var(--font-sans)]">
                             {quickStats.rangeLabel && (
                               <div className={cn(
                                 "flex items-center gap-2 px-3 py-1.5 rounded-xl",
-                                "bg-[var(--glass-bg-default)] border border-[var(--glass-border)]"
+                                "bg-[var(--bf-bg-elev)] border border-[var(--bf-border)]"
                               )}>
-                                <span className="text-[var(--text-tertiary)]">Rango:</span>
-                                <span className="text-[var(--text-primary)] font-semibold">{quickStats.rangeLabel}</span>
+                                <span className="text-[var(--bf-ink-400)]">Rango:</span>
+                                <span className="text-[var(--bf-ink-50)] font-semibold">{quickStats.rangeLabel}</span>
                               </div>
                             )}
                             <div className={cn(
                               "flex items-center gap-2 px-3 py-1.5 rounded-xl",
-                              "bg-[var(--glass-bg-default)] border border-[var(--glass-border)]"
+                              "bg-[var(--bf-bg-elev)] border border-[var(--bf-border)]"
                             )}>
-                              <span className="text-[var(--text-tertiary)]">Citas:</span>
-                              <span className="text-[var(--text-primary)] font-semibold">{quickStats.totalBookings}</span>
+                              <span className="text-[var(--bf-ink-400)]">Citas:</span>
+                              <span className="text-[var(--bf-ink-50)] font-semibold">{quickStats.totalBookings}</span>
                             </div>
                             <div className={cn(
                               "flex items-center gap-2 px-3 py-1.5 rounded-xl",
-                              "bg-[var(--glass-bg-default)] border border-[var(--glass-border)]"
+                              "bg-[var(--bf-bg-elev)] border border-[var(--bf-border)]"
                             )}>
-                              <span className="text-[var(--text-tertiary)]">Tiempo:</span>
-                              <span className="text-[var(--text-primary)] font-semibold">{quickStats.totalHours}h</span>
+                              <span className="text-[var(--bf-ink-400)]">Tiempo:</span>
+                              <span className="text-[var(--bf-ink-50)] font-semibold">{quickStats.totalHours}h</span>
                             </div>
                             <div className={cn(
                               "flex items-center gap-2 px-3 py-1.5 rounded-xl",
-                              "bg-[var(--glass-bg-default)] border border-[var(--glass-border)]"
+                              "bg-[var(--bf-bg-elev)] border border-[var(--bf-border)]"
                             )}>
-                              <span className="text-[var(--text-tertiary)]">Total:</span>
-                              <span className="text-[var(--text-primary)] font-semibold">{(quickStats.totalAmount / 100).toFixed(2)} €</span>
+                              <span className="text-[var(--bf-ink-400)]">Total:</span>
+                              <span className="text-[var(--bf-ink-50)] font-semibold">{(quickStats.totalAmount / 100).toFixed(2)} €</span>
                             </div>
                           </div>
                         )}
@@ -583,11 +583,11 @@ export function AgendaHeader({
                               // Color según % de utilización
                               const getUtilizationColor = (util: number) => {
                                 if (util < 40) {
-                                  return "bg-[var(--accent-blue)]/10 border-[var(--accent-blue)]/25 text-[var(--accent-blue)] hover:bg-[var(--accent-blue)]/15";
+                                  return "bg-[rgba(79,161,216,0.10)] border-[rgba(79,161,216,0.25)] text-[var(--bf-primary)] hover:bg-[rgba(79,161,216,0.18)]";
                                 } else if (util < 80) {
-                                  return "bg-[var(--accent-aqua)]/10 border-[var(--accent-aqua)]/25 text-[var(--accent-aqua)] hover:bg-[var(--accent-aqua)]/15";
+                                  return "bg-[rgba(79,161,216,0.10)] border-[rgba(79,161,216,0.25)] text-[var(--bf-primary)] hover:bg-[rgba(79,161,216,0.18)]";
                                 } else {
-                                  return "bg-[var(--status-pending)]/10 border-[var(--status-pending)]/25 text-[var(--status-pending)] hover:bg-[var(--status-pending)]/15";
+                                  return "bg-[var(--bf-warn)]/10 border-[var(--bf-warn)]/25 text-[var(--bf-warn)] hover:bg-[var(--bf-warn)]/15";
                                 }
                               };
 
@@ -608,7 +608,7 @@ export function AgendaHeader({
                                   onClick={() => onStaffFilterChange(staff.staffId)}
                                   className={cn(
                                     "flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer",
-                                    "font-[var(--font-heading)]",
+                                    "font-[var(--font-sans)]",
                                     getUtilizationColor(staff.utilization)
                                   )}
                                   title={`Filtrar por ${staff.staffName} (${staff.utilization}% utilizado)`}
@@ -632,36 +632,36 @@ export function AgendaHeader({
                       <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                         {/* Quick Stats */}
                         {quickStats && (
-                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 text-xs font-[var(--font-body)]">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 text-xs font-[var(--font-sans)]">
                             {quickStats.rangeLabel && (
                               <div className={cn(
                                 "flex items-center gap-2 px-3 py-1.5 rounded-xl",
-                                "bg-[var(--glass-bg-default)] border border-[var(--glass-border)]"
+                                "bg-[var(--bf-bg-elev)] border border-[var(--bf-border)]"
                               )}>
-                                <span className="text-[var(--text-tertiary)]">Rango:</span>
-                                <span className="text-[var(--text-primary)] font-semibold">{quickStats.rangeLabel}</span>
+                                <span className="text-[var(--bf-ink-400)]">Rango:</span>
+                                <span className="text-[var(--bf-ink-50)] font-semibold">{quickStats.rangeLabel}</span>
                               </div>
                             )}
                             <div className={cn(
                               "flex items-center gap-2 px-3 py-1.5 rounded-xl",
-                              "bg-[var(--glass-bg-default)] border border-[var(--glass-border)]"
+                              "bg-[var(--bf-bg-elev)] border border-[var(--bf-border)]"
                             )}>
-                              <span className="text-[var(--text-tertiary)]">Citas:</span>
-                              <span className="text-[var(--text-primary)] font-semibold">{quickStats.totalBookings}</span>
+                              <span className="text-[var(--bf-ink-400)]">Citas:</span>
+                              <span className="text-[var(--bf-ink-50)] font-semibold">{quickStats.totalBookings}</span>
                             </div>
                             <div className={cn(
                               "flex items-center gap-2 px-3 py-1.5 rounded-xl",
-                              "bg-[var(--glass-bg-default)] border border-[var(--glass-border)]"
+                              "bg-[var(--bf-bg-elev)] border border-[var(--bf-border)]"
                             )}>
-                              <span className="text-[var(--text-tertiary)]">Tiempo:</span>
-                              <span className="text-[var(--text-primary)] font-semibold">{quickStats.totalHours}h</span>
+                              <span className="text-[var(--bf-ink-400)]">Tiempo:</span>
+                              <span className="text-[var(--bf-ink-50)] font-semibold">{quickStats.totalHours}h</span>
                             </div>
                             <div className={cn(
                               "flex items-center gap-2 px-3 py-1.5 rounded-xl",
-                              "bg-[var(--glass-bg-default)] border border-[var(--glass-border)]"
+                              "bg-[var(--bf-bg-elev)] border border-[var(--bf-border)]"
                             )}>
-                              <span className="text-[var(--text-tertiary)]">Total:</span>
-                              <span className="text-[var(--text-primary)] font-semibold">{(quickStats.totalAmount / 100).toFixed(2)} €</span>
+                              <span className="text-[var(--bf-ink-400)]">Total:</span>
+                              <span className="text-[var(--bf-ink-50)] font-semibold">{(quickStats.totalAmount / 100).toFixed(2)} €</span>
                             </div>
                           </div>
                         )}
@@ -673,11 +673,11 @@ export function AgendaHeader({
                               // Color según % de utilización
                               const getUtilizationColor = (util: number) => {
                                 if (util < 40) {
-                                  return "bg-[var(--accent-blue)]/10 border-[var(--accent-blue)]/25 text-[var(--accent-blue)] hover:bg-[var(--accent-blue)]/15";
+                                  return "bg-[rgba(79,161,216,0.10)] border-[rgba(79,161,216,0.25)] text-[var(--bf-primary)] hover:bg-[rgba(79,161,216,0.18)]";
                                 } else if (util < 80) {
-                                  return "bg-[var(--accent-aqua)]/10 border-[var(--accent-aqua)]/25 text-[var(--accent-aqua)] hover:bg-[var(--accent-aqua)]/15";
+                                  return "bg-[rgba(79,161,216,0.10)] border-[rgba(79,161,216,0.25)] text-[var(--bf-primary)] hover:bg-[rgba(79,161,216,0.18)]";
                                 } else {
-                                  return "bg-[var(--status-pending)]/10 border-[var(--status-pending)]/25 text-[var(--status-pending)] hover:bg-[var(--status-pending)]/15";
+                                  return "bg-[var(--bf-warn)]/10 border-[var(--bf-warn)]/25 text-[var(--bf-warn)] hover:bg-[var(--bf-warn)]/15";
                                 }
                               };
 
@@ -698,7 +698,7 @@ export function AgendaHeader({
                                   onClick={() => onStaffFilterChange(staff.staffId)}
                                   className={cn(
                                     "flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer",
-                                    "font-[var(--font-heading)]",
+                                    "font-[var(--font-sans)]",
                                     getUtilizationColor(staff.utilization)
                                   )}
                                   title={`Filtrar por ${staff.staffName} (${staff.utilization}% utilizado)`}

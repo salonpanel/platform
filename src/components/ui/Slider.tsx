@@ -144,8 +144,8 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
       <div ref={ref} className={cn("w-full", className)}>
         {label && (
           <label
-            className="mb-2 block text-sm font-semibold text-[var(--text-primary)]"
-            style={{ fontFamily: "var(--font-heading)" }}
+            className="mb-2 block text-sm font-semibold text-[var(--bf-ink-50)]"
+            style={{ fontFamily: "var(--font-sans)" }}
           >
             {label}
           </label>
@@ -154,22 +154,22 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
           <div
             ref={sliderRef}
             className={cn(
-              "relative h-2 w-full rounded-[var(--radius-pill)] glass cursor-pointer",
+              "relative h-2 w-full rounded-[var(--r-full)] glass cursor-pointer",
               disabled && "opacity-50 cursor-not-allowed"
             )}
             style={{
               background: `linear-gradient(to right, 
                 var(--accent-aqua-glass) 0%, 
                 var(--accent-aqua-glass) ${getPercentage(startValue)}%, 
-                var(--glass-bg) ${getPercentage(startValue)}%, 
-                var(--glass-bg) ${endValue ? getPercentage(endValue) : 100}%, 
-                var(--glass-bg) 100%)`,
+                var(--bf-bg-elev) ${getPercentage(startValue)}%, 
+                var(--bf-bg-elev) ${endValue ? getPercentage(endValue) : 100}%, 
+                var(--bf-bg-elev) 100%)`,
             }}
           >
             {/* Track fill */}
             {variant === "range" && endValue && (
               <div
-                className="absolute h-full rounded-[var(--radius-pill)] bg-[var(--accent-aqua-glass)]"
+                className="absolute h-full rounded-[var(--r-full)] bg-[var(--accent-aqua-glass)]"
                 style={{
                   left: `${getPercentage(startValue)}%`,
                   width: `${getPercentage(endValue) - getPercentage(startValue)}%`,
@@ -180,7 +180,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
             {/* Single thumb */}
             {variant === "single" && (
               <motion.div
-                className="absolute top-1/2 h-5 w-5 -translate-y-1/2 cursor-grab active:cursor-grabbing rounded-[var(--radius-pill)] bg-[var(--gradient-primary)] border-2 border-[var(--accent-aqua-border)] shadow-[var(--glow-border-aqua)]"
+                className="absolute top-1/2 h-5 w-5 -translate-y-1/2 cursor-grab active:cursor-grabbing rounded-[var(--r-full)] bg-[var(--gradient-primary)] border-2 border-[var(--accent-aqua-border)] shadow-[var(--glow-border-aqua)]"
                 style={{
                   left: `calc(${getPercentage(startValue)}% - 10px)`,
                 }}
@@ -196,7 +196,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
             {variant === "range" && endValue && (
               <>
                 <motion.div
-                  className="absolute top-1/2 h-5 w-5 -translate-y-1/2 cursor-grab active:cursor-grabbing rounded-[var(--radius-pill)] bg-[var(--gradient-primary)] border-2 border-[var(--accent-aqua-border)] shadow-[var(--glow-border-aqua)]"
+                  className="absolute top-1/2 h-5 w-5 -translate-y-1/2 cursor-grab active:cursor-grabbing rounded-[var(--r-full)] bg-[var(--gradient-primary)] border-2 border-[var(--accent-aqua-border)] shadow-[var(--glow-border-aqua)]"
                   style={{
                     left: `calc(${getPercentage(startValue)}% - 10px)`,
                   }}
@@ -207,7 +207,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
                   transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
                 />
                 <motion.div
-                  className="absolute top-1/2 h-5 w-5 -translate-y-1/2 cursor-grab active:cursor-grabbing rounded-[var(--radius-pill)] bg-[var(--gradient-primary)] border-2 border-[var(--accent-aqua-border)] shadow-[var(--glow-border-aqua)]"
+                  className="absolute top-1/2 h-5 w-5 -translate-y-1/2 cursor-grab active:cursor-grabbing rounded-[var(--r-full)] bg-[var(--gradient-primary)] border-2 border-[var(--accent-aqua-border)] shadow-[var(--glow-border-aqua)]"
                   style={{
                     left: `calc(${getPercentage(endValue)}% - 10px)`,
                   }}
@@ -223,15 +223,15 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(
 
           {/* Value display */}
           {showValue && (
-            <div className="mt-3 flex items-center justify-between text-xs text-[var(--text-secondary)]">
-              <span style={{ fontFamily: "var(--font-body)" }}>
+            <div className="mt-3 flex items-center justify-between text-xs text-[var(--bf-ink-300)]">
+              <span style={{ fontFamily: "var(--font-sans)" }}>
                 {variant === "range" && Array.isArray(localValue)
                   ? `${localValue[0]} - ${localValue[1]}`
                   : localValue}
               </span>
               <div className="flex gap-2">
-                <span style={{ fontFamily: "var(--font-body)" }}>{min}</span>
-                <span style={{ fontFamily: "var(--font-body)" }}>{max}</span>
+                <span style={{ fontFamily: "var(--font-sans)" }}>{min}</span>
+                <span style={{ fontFamily: "var(--font-sans)" }}>{max}</span>
               </div>
             </div>
           )}

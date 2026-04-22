@@ -61,22 +61,21 @@ export function BookingCard({
 
   // Status color mapping with consistent tokens
   const getStatusColors = () => {
-    // Use new booking_state as primary visual language
     switch (presentation.bookingState) {
       case "completed":
-        return { bg: "bg-emerald-400/12", border: "border-emerald-300/40", text: "text-emerald-50", accent: "bg-emerald-300" };
+        return { bg: "bg-[rgba(30,161,159,0.14)]", border: "border-[rgba(30,161,159,0.30)]", text: "text-[var(--bf-teal-100)]", accent: "bg-[var(--bf-success)]" };
       case "in_progress":
-        return { bg: "bg-violet-400/12", border: "border-violet-300/40", text: "text-violet-50", accent: "bg-violet-300" };
+        return { bg: "bg-[rgba(79,161,216,0.14)]", border: "border-[rgba(79,161,216,0.30)]", text: "text-[var(--bf-cyan-100)]", accent: "bg-[var(--bf-primary)]" };
       case "confirmed":
-        return { bg: "bg-sky-400/12", border: "border-sky-300/40", text: "text-sky-50", accent: "bg-sky-300" };
+        return { bg: "bg-[rgba(79,161,216,0.10)]", border: "border-[rgba(79,161,216,0.25)]", text: "text-[var(--bf-cyan-50)]", accent: "bg-[var(--bf-primary)]" };
       case "pending":
-        return { bg: "bg-amber-400/12", border: "border-amber-300/40", text: "text-amber-50", accent: "bg-amber-300" };
+        return { bg: "bg-[rgba(232,176,74,0.12)]", border: "border-[rgba(232,176,74,0.30)]", text: "text-[#F2C87A]", accent: "bg-[var(--bf-warn)]" };
       case "cancelled":
-        return { bg: "bg-slate-400/10", border: "border-white/10", text: "text-slate-200", accent: "bg-slate-400" };
+        return { bg: "bg-[rgba(38,47,61,0.60)]", border: "border-[var(--bf-border)]", text: "text-[var(--bf-ink-200)]", accent: "bg-[var(--bf-ink-400)]" };
       case "no_show":
-        return { bg: "bg-rose-400/12", border: "border-rose-300/40", text: "text-rose-50", accent: "bg-rose-300" };
+        return { bg: "bg-[rgba(224,96,114,0.12)]", border: "border-[rgba(224,96,114,0.30)]", text: "text-[#F2A0AC]", accent: "bg-[var(--bf-danger)]" };
       default:
-        return { bg: "bg-slate-500/10", border: "border-white/10", text: "text-slate-200", accent: "bg-slate-400" };
+        return { bg: "bg-[rgba(38,47,61,0.40)]", border: "border-[var(--bf-border)]", text: "text-[var(--bf-ink-200)]", accent: "bg-[var(--bf-ink-400)]" };
     }
   };
 
@@ -88,7 +87,7 @@ export function BookingCard({
     "bg-[#1a1d24]/90 text-white",
     "border border-white/10 shadow-lg backdrop-blur-md",
     "rounded-2xl",
-    "focus:outline-none focus:ring-2 focus:ring-[#4FA1D8]/50 focus:ring-offset-0",
+    "focus:outline-none focus:ring-2 focus:ring-[rgba(79,161,216,0.4)] focus:ring-offset-0",
     "hover:shadow-xl hover:-translate-y-0.5",
     canDrag && "cursor-grab active:cursor-grabbing",
     isDragging && "opacity-60 shadow-2xl scale-[1.02] z-50",

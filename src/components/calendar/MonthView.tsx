@@ -107,28 +107,28 @@ export const MonthView = React.memo(function MonthView({
     <div className="w-full h-full flex flex-col overflow-hidden bg-[#0B0C10] relative p-4" role="region" aria-label="Vista mensual de reservas">
       {/* Radial Gradient Overlay for Neo-Glass effect */}
       <div 
-        className="absolute top-0 left-0 w-[500px] h-[500px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none z-0"
+        className="absolute top-0 left-0 w-[500px] h-[500px] bg-[rgba(79,161,216,0.10)] blur-[100px] rounded-full pointer-events-none z-0"
         style={{ transform: 'translate(-20%, -20%)' }}
       />
       
       <div className="relative z-10 flex flex-col h-full space-y-4">
         {/* Month navigation - Unified */}
-        <div className="bg-[var(--glass-bg-default)] border border-[var(--glass-border)] backdrop-blur-md rounded-[var(--radius-xl)] p-4 shadow-[var(--shadow-premium)]">
+        <div className="bg-[var(--glass-bg-default)] border border-[var(--bf-border)] backdrop-blur-md rounded-[var(--r-xl)] p-4 shadow-[var(--bf-shadow-card)]">
           <div className="flex items-center justify-between">
             <motion.button
               whileHover={{ opacity: 0.8 }}
               whileTap={{ opacity: 0.9 }}
               onClick={() => navigateMonth("prev")}
               className={cn(
-                "p-2 rounded-[var(--radius-lg)] transition-all duration-200",
-                "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]"
+                "p-2 rounded-[var(--r-lg)] transition-all duration-200",
+                "text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-bg-elev)]"
               )}
             >
               <ChevronLeft className="h-5 w-5" />
             </motion.button>
             <h3 className={cn(
               "text-lg font-semibold tracking-tight",
-              "text-[var(--text-primary)] font-[var(--font-heading)]"
+              "text-[var(--bf-ink-50)] font-[var(--font-sans)]"
             )}>
               {new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric" }).format(currentDate)}
             </h3>
@@ -137,8 +137,8 @@ export const MonthView = React.memo(function MonthView({
               whileTap={{ opacity: 0.9 }}
               onClick={() => navigateMonth("next")}
               className={cn(
-                "p-2 rounded-[var(--radius-lg)] transition-all duration-200",
-                "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]"
+                "p-2 rounded-[var(--r-lg)] transition-all duration-200",
+                "text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-bg-elev)]"
               )}
             >
               <ChevronRight className="h-5 w-5" />
@@ -154,7 +154,7 @@ export const MonthView = React.memo(function MonthView({
               key={day}
               className={cn(
                 "text-center text-xs font-semibold uppercase tracking-wider py-2",
-                "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                "text-[var(--bf-ink-400)] font-[var(--font-sans)]"
               )}
               role="columnheader"
               aria-label={day}
@@ -181,13 +181,13 @@ export const MonthView = React.memo(function MonthView({
                 className={cn(
                   "rounded-xl min-h-[80px] sm:min-h-[100px] cursor-pointer transition-all duration-200",
                   "bg-[var(--glass-bg-default)] backdrop-blur-md",
-                  "border border-[var(--glass-border)]",
-                  "shadow-[var(--shadow-premium)] hover:shadow-[var(--shadow-premium-hover)]",
+                  "border border-[var(--bf-border)]",
+                  "shadow-[var(--bf-shadow-card)] hover:shadow-[var(--shadow-premium-hover)]",
                   !isCurrentMonth && "opacity-30",
                   isSelected
-                    ? "ring-2 ring-[var(--accent-blue)]/50 bg-[var(--accent-blue)]/10"
-                    : "hover:border-[var(--glass-border-hover)] hover:bg-[var(--glass-bg-subtle)]",
-                  isTodayDate && !isSelected && "ring-1 ring-[var(--accent-aqua)]/30 bg-[var(--accent-aqua)]/5"
+                    ? "ring-2 ring-[var(--bf-primary)]/50 bg-[var(--bf-primary)]/10"
+                    : "hover:border-[var(--glass-border-hover)] hover:bg-[var(--bf-bg-elev)]",
+                  isTodayDate && !isSelected && "ring-1 ring-[var(--bf-primary)]/30 bg-[var(--bf-primary)]/5"
                 )}
                 role="gridcell"
                 aria-label={day ? `${format(day, "d 'de' MMMM")}${dayBookings.length > 0 ? `, ${dayBookings.length} reserva${dayBookings.length > 1 ? 's' : ''}` : ''}` : 'Día no disponible'}
@@ -204,17 +204,17 @@ export const MonthView = React.memo(function MonthView({
                     className={cn(
                       "text-sm sm:text-base font-semibold",
                       isTodayDate
-                        ? "text-[var(--accent-aqua)]"
+                        ? "text-[var(--bf-primary)]"
                         : isSelected
-                        ? "text-[var(--accent-blue)]"
-                        : "text-[var(--text-primary)]",
-                      "font-[var(--font-heading)]"
+                        ? "text-[var(--bf-primary)]"
+                        : "text-[var(--bf-ink-50)]",
+                      "font-[var(--font-sans)]"
                     )}
                   >
                     {day ? format(day, "d") : ""}
                   </div>
                   {isTodayDate && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent-aqua)]" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--bf-primary)]" />
                   )}
                 </div>
                 <div className="px-2 pb-2 space-y-1">
@@ -251,9 +251,9 @@ export const MonthView = React.memo(function MonthView({
                       }}
                       className={cn(
                         "w-full text-xs text-center py-1 px-2 rounded-lg cursor-pointer transition-all duration-200",
-                        "text-[var(--accent-aqua)] hover:text-white font-medium",
-                        "bg-[var(--glass-bg-subtle)] hover:bg-[var(--accent-aqua)]/10",
-                        "border border-[var(--glass-border-subtle)] hover:border-[var(--accent-aqua)]/30",
+                        "text-[var(--bf-primary)] hover:text-white font-medium",
+                        "bg-[var(--bf-bg-elev)] hover:bg-[var(--bf-primary)]/10",
+                        "border border-[var(--glass-border-subtle)] hover:border-[var(--bf-primary)]/30",
                         "backdrop-blur-sm"
                       )}
                       title={`Ver los ${dayBookings.length} citas de este día`}

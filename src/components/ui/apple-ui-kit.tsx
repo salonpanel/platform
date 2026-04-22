@@ -49,7 +49,7 @@ export const UiButton: React.FC<ButtonProps> = ({
     ghost:
       "bg-transparent text-[var(--text-secondary)] hover:bg-[rgba(255,255,255,0.06)] active:bg-[rgba(255,255,255,0.1)]",
     danger:
-      "bg-[rgba(239,68,68,0.1)] text-red-400 border border-red-500/30 hover:bg-[rgba(239,68,68,0.16)] active:scale-[0.97]",
+      "bg-[rgba(239,68,68,0.1)] text-[var(--bf-danger)] border border-[rgba(224,96,114,0.30)] hover:bg-[rgba(239,68,68,0.16)] active:scale-[0.97]",
   };
 
   const sizeClasses: Record<ButtonSize, string> = {
@@ -161,13 +161,13 @@ export const UiBadge: React.FC<BadgeProps> = ({
       ? "bg-white/6 text-[var(--text-secondary)]"
       : "bg-white/16 text-[var(--text-primary)]",
     success: soft
-      ? "bg-emerald-500/10 text-emerald-300"
-      : "bg-emerald-500 text-emerald-50",
+      ? "bg-[rgba(30,161,159,0.10)] text-[var(--bf-teal-200)]"
+      : "bg-[var(--bf-success)] text-[var(--bf-ink)]",
     warning: soft
-      ? "bg-amber-500/12 text-amber-300"
-      : "bg-amber-500 text-amber-50",
+      ? "bg-[rgba(232,176,74,0.12)] text-[#F2C87A]"
+      : "bg-[var(--bf-warn)] text-[var(--bf-ink)]",
     danger: soft
-      ? "bg-red-500/13 text-red-300"
+      ? "bg-red-500/13 text-[#F2A0AC]"
       : "bg-red-500 text-red-50",
     info: soft
       ? "bg-sky-500/12 text-sky-300"
@@ -225,7 +225,7 @@ export const UiInput = React.forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {error && (
-          <p className="text-[11px] text-red-400 leading-tight">
+          <p className="text-[11px] text-[var(--bf-danger)] leading-tight">
             {error}
           </p>
         )}
@@ -260,7 +260,7 @@ export const UiField: React.FC<FieldProps> = ({
           <div className="flex items-center gap-1">
             {label && <span>{label}</span>}
             {required && (
-              <span className="text-red-400">*</span>
+              <span className="text-[var(--bf-danger)]">*</span>
             )}
           </div>
           {labelRight && <div>{labelRight}</div>}
@@ -273,7 +273,7 @@ export const UiField: React.FC<FieldProps> = ({
         </p>
       )}
       {error && (
-        <p className="text-[11px] text-red-400 leading-tight">
+        <p className="text-[11px] text-[var(--bf-danger)] leading-tight">
           {error}
         </p>
       )}
@@ -485,10 +485,10 @@ export const UiToast: React.FC<ToastProps> = ({
   }, [duration, onClose]);
 
   const toneStyles: Record<ToastTone, string> = {
-    success: "bg-emerald-500/10 border-emerald-500/20 text-emerald-300",
-    warning: "bg-amber-500/10 border-amber-500/20 text-amber-300",
-    danger: "bg-red-500/10 border-red-500/20 text-red-300",
-    info: "bg-blue-500/10 border-blue-500/20 text-blue-300",
+    success: "bg-[rgba(30,161,159,0.10)] border-[rgba(30,161,159,0.20)] text-[var(--bf-teal-200)]",
+    warning: "bg-[rgba(232,176,74,0.10)] border-[rgba(232,176,74,0.20)] text-[#F2C87A]",
+    danger: "bg-[rgba(224,96,114,0.10)] border-[rgba(224,96,114,0.20)] text-[#F2A0AC]",
+    info: "bg-[rgba(79,161,216,0.10)] border-[rgba(79,161,216,0.20)] text-[var(--bf-cyan-200)]",
   };
 
   const defaultIcons: Record<ToastTone, React.ReactNode> = {

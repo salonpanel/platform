@@ -44,9 +44,9 @@ interface WalletFiltersProps {
 }
 
 const statusOptions = [
-  { value: 'succeeded', label: 'Completado', icon: CheckCircle2, color: 'text-emerald-400' },
-  { value: 'pending', label: 'Pendiente', icon: Clock, color: 'text-amber-400' },
-  { value: 'failed', label: 'Fallido', icon: AlertCircle, color: 'text-red-400' },
+  { value: 'succeeded', label: 'Completado', icon: CheckCircle2, color: 'text-[var(--bf-success)]' },
+  { value: 'pending', label: 'Pendiente', icon: Clock, color: 'text-[var(--bf-warn)]' },
+  { value: 'failed', label: 'Fallido', icon: AlertCircle, color: 'text-[var(--bf-danger)]' },
 ];
 
 const typeOptions = [
@@ -115,20 +115,20 @@ export function WalletFiltersComponent({
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "bg-slate-800/30 border border-slate-700/50 rounded-[var(--radius-lg)] backdrop-blur-sm overflow-hidden",
+        "bg-slate-800/30 border border-[var(--bf-border)] rounded-[var(--r-lg)] backdrop-blur-sm overflow-hidden",
         className
       )}
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-700/30">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-blue-500/20 border border-blue-500/30">
-            <Filter className="h-4 w-4 text-blue-400" />
+          <div className="p-2 rounded-lg bg-[rgba(79,161,216,0.20)] border border-[rgba(79,161,216,0.30)]">
+            <Filter className="h-4 w-4 text-[var(--bf-primary)]" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-white">Filtros</h3>
             {hasActiveFilters() && (
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[var(--bf-ink-400)]">
                 {[
                   filters.search && "Búsqueda",
                   (filters.dateRange.from || filters.dateRange.to) && "Fecha",
@@ -182,7 +182,7 @@ export function WalletFiltersComponent({
             <div className="p-4 space-y-4">
               {/* Search */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[var(--bf-ink-400)]" />
                 <input
                   type="text"
                   placeholder="Buscar por descripción..."
@@ -195,7 +195,7 @@ export function WalletFiltersComponent({
               {/* Date Range */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                  <label className="block text-xs font-medium text-[var(--bf-ink-300)] mb-1">
                     Desde
                   </label>
                   <input
@@ -211,7 +211,7 @@ export function WalletFiltersComponent({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                  <label className="block text-xs font-medium text-[var(--bf-ink-300)] mb-1">
                     Hasta
                   </label>
                   <input
@@ -231,7 +231,7 @@ export function WalletFiltersComponent({
               {/* Amount Range */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                  <label className="block text-xs font-medium text-[var(--bf-ink-300)] mb-1">
                     Monto mínimo (€)
                   </label>
                   <input
@@ -248,7 +248,7 @@ export function WalletFiltersComponent({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                  <label className="block text-xs font-medium text-[var(--bf-ink-300)] mb-1">
                     Monto máximo (€)
                   </label>
                   <input
@@ -268,7 +268,7 @@ export function WalletFiltersComponent({
 
               {/* Status Filters */}
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-2">
+                <label className="block text-xs font-medium text-[var(--bf-ink-300)] mb-2">
                   Estado
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -287,8 +287,8 @@ export function WalletFiltersComponent({
                         className={cn(
                           "flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-all",
                           isSelected
-                            ? "bg-blue-500/20 border-blue-500/50 text-blue-300"
-                            : "bg-slate-900/50 border-slate-600 text-slate-300 hover:border-slate-500"
+                            ? "bg-[rgba(79,161,216,0.20)] border-blue-500/50 text-[var(--bf-cyan-200)]"
+                            : "bg-slate-900/50 border-slate-600 text-[var(--bf-ink-300)] hover:border-slate-500"
                         )}
                       >
                         <Icon className="h-3 w-3" />
@@ -301,7 +301,7 @@ export function WalletFiltersComponent({
 
               {/* Type Filters */}
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-2">
+                <label className="block text-xs font-medium text-[var(--bf-ink-300)] mb-2">
                   Tipo
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -320,7 +320,7 @@ export function WalletFiltersComponent({
                           "px-3 py-2 rounded-lg border text-xs font-medium transition-all",
                           isSelected
                             ? "bg-purple-500/20 border-purple-500/50 text-purple-300"
-                            : "bg-slate-900/50 border-slate-600 text-slate-300 hover:border-slate-500"
+                            : "bg-slate-900/50 border-slate-600 text-[var(--bf-ink-300)] hover:border-slate-500"
                         )}
                       >
                         {option.label}
@@ -333,7 +333,7 @@ export function WalletFiltersComponent({
               {/* Sort Options */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                  <label className="block text-xs font-medium text-[var(--bf-ink-300)] mb-1">
                     Ordenar por
                   </label>
                   <select
@@ -347,7 +347,7 @@ export function WalletFiltersComponent({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                  <label className="block text-xs font-medium text-[var(--bf-ink-300)] mb-1">
                     Orden
                   </label>
                   <select

@@ -203,7 +203,7 @@ export const WeekView = React.memo(function WeekView({
       <div className="w-full h-full flex flex-col overflow-hidden bg-[#0B0C10] relative" role="region" aria-label="Vista semanal móvil">
         {/* Radial Gradient Overlay */}
         <div
-          className="absolute top-0 left-0 w-[500px] h-[500px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none z-0"
+          className="absolute top-0 left-0 w-[500px] h-[500px] bg-[rgba(79,161,216,0.10)] blur-[100px] rounded-full pointer-events-none z-0"
           style={{ transform: 'translate(-20%, -20%)' }}
         />
 
@@ -237,13 +237,13 @@ export const WeekView = React.memo(function WeekView({
                 >
                   <span
                     className="text-[10px] font-semibold uppercase tracking-wider"
-                    style={{ color: isSelected ? '#4FA1D8' : isToday ? '#4FA1D8' : 'var(--text-tertiary)' }}
+                    style={{ color: isSelected ? '#4FA1D8' : isToday ? '#4FA1D8' : 'var(--bf-ink-400)' }}
                   >
                     {new Intl.DateTimeFormat("es-ES", { weekday: "short" }).format(day).slice(0, 2)}
                   </span>
                   <span
                     className="text-base font-bold leading-none"
-                    style={{ color: isSelected ? '#4FA1D8' : isToday ? '#4FA1D8' : 'var(--text-primary)' }}
+                    style={{ color: isSelected ? '#4FA1D8' : isToday ? '#4FA1D8' : 'var(--bf-ink-50)' }}
                   >
                     {format(day, "d")}
                   </span>
@@ -252,7 +252,7 @@ export const WeekView = React.memo(function WeekView({
                       className="text-[9px] font-semibold leading-none mt-0.5 px-1 rounded-full"
                       style={{
                         backgroundColor: isSelected ? 'rgba(79,161,216,0.3)' : 'rgba(255,255,255,0.1)',
-                        color: isSelected ? '#4FA1D8' : 'var(--text-secondary)',
+                        color: isSelected ? '#4FA1D8' : 'var(--bf-ink-300)',
                       }}
                     >
                       {count}
@@ -317,17 +317,17 @@ export const WeekView = React.memo(function WeekView({
     <div className="w-full h-full flex flex-col overflow-hidden bg-[#0B0C10] relative p-4" role="region" aria-label="Vista semanal de reservas">
       {/* Radial Gradient Overlay for Neo-Glass effect */}
       <div 
-        className="absolute top-0 left-0 w-[500px] h-[500px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none z-0"
+        className="absolute top-0 left-0 w-[500px] h-[500px] bg-[rgba(79,161,216,0.10)] blur-[100px] rounded-full pointer-events-none z-0"
         style={{ transform: 'translate(-20%, -20%)' }}
       />
       
       <div className="relative z-10 flex flex-col h-full overflow-hidden">
         {/* Header with days of the week - Unified */}
-        <div className="bg-[var(--glass-bg-default)] border border-[var(--glass-border)] backdrop-blur-md rounded-[var(--radius-xl)] p-4 mb-4 shadow-[var(--shadow-premium)]">
+        <div className="bg-[var(--glass-bg-default)] border border-[var(--bf-border)] backdrop-blur-md rounded-[var(--r-xl)] p-4 mb-4 shadow-[var(--bf-shadow-card)]">
           <div className="grid grid-cols-8 gap-2">
             <div className={cn(
               "text-sm font-semibold border-r border-[var(--glass-border-subtle)] pr-2",
-              "text-[var(--text-primary)] font-[var(--font-heading)]"
+              "text-[var(--bf-ink-50)] font-[var(--font-sans)]"
             )}>
               Hora
             </div>
@@ -340,31 +340,31 @@ export const WeekView = React.memo(function WeekView({
                   className={cn(
                     "text-center transition-all duration-200 relative px-2 rounded-lg",
                     isSelected
-                      ? "bg-[var(--accent-blue)]/20 ring-1 ring-[var(--accent-blue)]/50"
+                      ? "bg-[var(--bf-primary)]/20 ring-1 ring-[var(--bf-primary)]/50"
                       : isTodayDate
-                      ? "bg-[var(--accent-aqua)]/15 ring-1 ring-[var(--accent-aqua)]/30"
-                      : "hover:bg-[var(--glass-bg-subtle)] border-r border-[var(--glass-border-subtle)]"
+                      ? "bg-[var(--bf-primary)]/15 ring-1 ring-[var(--bf-primary)]/30"
+                      : "hover:bg-[var(--bf-bg-elev)] border-r border-[var(--glass-border-subtle)]"
                   )}
                 >
                   <div className={cn(
                     "text-xs font-semibold uppercase tracking-wider mb-1",
-                    "text-[var(--text-tertiary)] font-[var(--font-body)]"
+                    "text-[var(--bf-ink-400)] font-[var(--font-sans)]"
                   )}>
                     {new Intl.DateTimeFormat("es-ES", { weekday: "short" }).format(day)}
                   </div>
                   <div className={cn(
                     "text-lg font-semibold",
                     isSelected
-                      ? "text-[var(--accent-blue)]"
+                      ? "text-[var(--bf-primary)]"
                       : isTodayDate
-                      ? "text-[var(--accent-aqua)]"
-                      : "text-[var(--text-primary)]",
-                    "font-[var(--font-heading)]"
+                      ? "text-[var(--bf-primary)]"
+                      : "text-[var(--bf-ink-50)]",
+                    "font-[var(--font-sans)]"
                   )}>
                     {format(day, "d")}
                   </div>
                   {isTodayDate && !isSelected && (
-                    <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[var(--accent-aqua)]" />
+                    <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[var(--bf-primary)]" />
                   )}
                 </div>
               );
@@ -383,7 +383,7 @@ export const WeekView = React.memo(function WeekView({
                     key={hour}
                     className={cn(
                       "text-xs font-semibold border-b border-[var(--glass-border-subtle)] min-h-[60px] p-2",
-                      "text-[var(--text-tertiary)] font-[var(--font-mono)] bg-[var(--glass-bg-subtle)]"
+                      "text-[var(--bf-ink-400)] font-[var(--font-mono)] bg-[var(--bf-bg-elev)]"
                     )}
                     role="cell"
                     aria-label={`${hour}:00`}
@@ -407,7 +407,7 @@ export const WeekView = React.memo(function WeekView({
                     {hours.map((hour) => (
                       <div
                         key={hour}
-                        className="border-b border-[var(--glass-border-subtle)] min-h-[60px] hover:bg-[var(--glass-bg-subtle)] transition-colors cursor-pointer"
+                        className="border-b border-[var(--glass-border-subtle)] min-h-[60px] hover:bg-[var(--bf-bg-elev)] transition-colors cursor-pointer"
                         onClick={(e) => handleSlotClick(e, day, hour)}
                       />
                     ))}

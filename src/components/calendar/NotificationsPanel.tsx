@@ -27,10 +27,10 @@ const notificationIcons = {
 };
 
 const notificationColors = {
-  success: "text-emerald-400",
-  error: "text-red-400",
+  success: "text-[var(--bf-success)]",
+  error: "text-[var(--bf-danger)]",
   warning: "text-yellow-400",
-  info: "text-blue-400",
+  info: "text-[var(--bf-primary)]",
 };
 
 // Mock data para desarrollo

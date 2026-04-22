@@ -64,17 +64,17 @@ function SelectRow({ label, description, icon, value, options, field, onChange, 
   return (
     <div className="flex items-center justify-between gap-4 rounded-xl bg-white/5 px-4 py-3.5 hover:bg-white/8 transition-colors">
       <div className="flex items-start gap-3 flex-1 min-w-0">
-        <div className="text-[var(--accent-blue)] mt-0.5 shrink-0">{icon}</div>
+        <div className="text-[var(--bf-primary)] mt-0.5 shrink-0">{icon}</div>
         <div className="min-w-0">
           <p className="text-sm font-medium text-white">{label}</p>
-          <p className="text-xs text-[var(--text-secondary)] mt-0.5 leading-relaxed">{description}</p>
+          <p className="text-xs text-[var(--bf-ink-300)] mt-0.5 leading-relaxed">{description}</p>
         </div>
       </div>
       <select
         value={value}
         onChange={(e) => onChange(field, Number(e.target.value))}
         disabled={disabled}
-        className="h-9 w-44 shrink-0 rounded-lg bg-white/10 border border-white/15 text-sm text-white px-2 focus:outline-none focus:border-[var(--accent-blue)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="h-9 w-44 shrink-0 rounded-lg bg-white/10 border border-white/15 text-sm text-white px-2 focus:outline-none focus:border-[var(--bf-primary)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value} className="bg-[#1a1a2e]">

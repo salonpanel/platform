@@ -536,8 +536,8 @@ export function SidebarNav({
                         ? "text-[var(--bf-danger)] hover:text-[#F2A0AC] hover:bg-[rgba(224,96,114,0.10)]"
                         : "text-[var(--bf-ink-400)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-surface)]"
                     )}
-                    style={{ fontFamily: "var(--font-sans)" }}
                     style={{
+                      fontFamily: "var(--font-sans)",
                       borderRadius: "var(--radius-md)",
                       minHeight: "44px",
                     }}
@@ -705,8 +705,8 @@ export function SidebarNav({
                 isExpanded ? "gap-3 px-3 py-2.5" : "justify-center px-3 py-2.5",
                 "text-[var(--bf-danger)] hover:text-[#F2A0AC] hover:bg-[rgba(224,96,114,0.10)]"
               )}
-              style={{ fontFamily: "var(--font-sans)" }}
               style={{
+                fontFamily: "var(--font-sans)",
                 borderRadius: "var(--radius-md)",
                 minHeight: "44px",
               }}

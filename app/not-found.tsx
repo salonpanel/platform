@@ -5,6 +5,8 @@ import Link from "next/link";
 import { getAppContextFromHost } from "@/lib/domains";
 import { URLS } from "@/lib/urls";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Página 404 - BookFast Platform
  * 

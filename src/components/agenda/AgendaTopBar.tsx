@@ -645,7 +645,7 @@ export function AgendaTopBar({
                     <div className="border-t border-white/5 pt-2">
                       <button
                         onClick={handleClearFilters}
-                        className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                        className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-white/40 hover:text-[var(--bf-danger)] hover:bg-[rgba(224,96,114,0.10)] transition-all"
                       >
                         <X className="h-3 w-3" />
                         Limpiar filtros

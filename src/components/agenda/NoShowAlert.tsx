@@ -54,13 +54,13 @@ export function NoShowAlert({ bookings, tenantTimezone, className }: NoShowAlert
               }}
             >
               <AlertCircle size={13} style={{ color: "#E06072", flexShrink: 0 }} />
-              <span style={{ color: "var(--text-secondary)" }}>
+              <span style={{ color: "var(--bf-ink-300)" }}>
                 <span className="font-semibold" style={{ color: "#E06072" }}>
                   {booking.customer?.name || "Cliente"}
                 </span>{" "}
                 · {minutesLate} min de retraso
                 {booking.staff && (
-                  <span className="text-[var(--text-tertiary)]"> — {booking.staff.name}</span>
+                  <span className="text-[var(--bf-ink-400)]"> — {booking.staff.name}</span>
                 )}
               </span>
             </div>

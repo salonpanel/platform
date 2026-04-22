@@ -46,14 +46,14 @@ export function SettingsContact({
                 />
 
                 <div className="space-y-1">
-                    <label className="block text-sm font-medium text-[var(--text-secondary)]">
+                    <label className="block text-sm font-medium text-[var(--bf-ink-300)]">
                         Dirección
                     </label>
                     <textarea
                         value={address}
                         onChange={(e) => onChange("address", e.target.value)}
                         rows={3}
-                        className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-white placeholder:text-[var(--text-secondary)]/60 focus:border-[var(--accent-blue)]/50 focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]/20 transition-all resize-none"
+                        className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-white placeholder:text-[var(--bf-ink-300)]/60 focus:border-[var(--bf-primary)]/50 focus:outline-none focus:ring-2 focus:ring-[var(--bf-primary)]/20 transition-all resize-none"
                         placeholder="Calle, Número, Ciudad, Código Postal"
                         disabled={isLoading}
                     />

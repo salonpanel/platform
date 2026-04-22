@@ -28,9 +28,9 @@ export function MobileHamburgerButton({ onMenuClick, className }: MobileHamburge
         "glass border border-[rgba(255,255,255,0.1)]",
         "backdrop-blur-xl",
         "flex items-center justify-center",
-        "text-[var(--text-primary)]",
-        "shadow-[0px_8px_32px_rgba(0,0,0,0.4),0px_0px_16px_var(--accent-aqua)/20]",
-        "hover:shadow-[0px_12px_40px_rgba(0,0,0,0.5),0px_0px_24px_var(--accent-aqua)/30]",
+        "text-[var(--bf-ink-50)]",
+        "shadow-[0px_8px_32px_rgba(0,0,0,0.4),0px_0px_16px_var(--bf-primary)/20]",
+        "hover:shadow-[0px_12px_40px_rgba(0,0,0,0.5),0px_0px_24px_var(--bf-primary)/30]",
         "transition-all duration-300",
         className
       )}

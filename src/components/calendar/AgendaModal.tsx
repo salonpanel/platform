@@ -238,8 +238,8 @@ export function AgendaModal({
             onClick={header.onBack || onClose}
             className={cn(
               "p-2 rounded-xl transition-all duration-200",
-              "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
-              "hover:bg-[var(--glass-bg-subtle)] active:scale-95"
+              "text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)]",
+              "hover:bg-[var(--bf-bg-elev)] active:scale-95"
             )}
             aria-label="Volver"
           >
@@ -249,14 +249,14 @@ export function AgendaModal({
         <div className="min-w-0 flex-1">
           <h2 className={cn(
             "text-lg font-semibold truncate",
-            "text-[var(--text-primary)] font-[var(--font-heading)]"
+            "text-[var(--bf-ink-50)] font-[var(--font-sans)]"
           )}>
             {header?.title || title}
           </h2>
           {header?.subtitle && (
             <p className={cn(
               "text-sm mt-1 truncate",
-              "text-[var(--text-secondary)] font-[var(--font-body)]"
+              "text-[var(--bf-ink-300)] font-[var(--font-sans)]"
             )}>
               {header.subtitle}
             </p>
@@ -272,8 +272,8 @@ export function AgendaModal({
         }}
         className={cn(
           "p-2 rounded-xl transition-all duration-200",
-          "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
-          "hover:bg-[var(--glass-bg-subtle)] active:scale-95",
+          "text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)]",
+          "hover:bg-[var(--bf-bg-elev)] active:scale-95",
           preventClose && "opacity-50 cursor-not-allowed"
         )}
         aria-label="Cerrar"
@@ -353,8 +353,8 @@ export function AgendaModal({
                   transition: { type: "spring", stiffness: 300, damping: 30 }
                 })}
                 className={cn(
-                  "relative flex flex-col bg-[var(--bg-primary)] border",
-                  "border-[var(--glass-border)] shadow-[var(--shadow-premium)]",
+                  "relative flex flex-col bg-[var(--bf-bg)] border",
+                  "border-[var(--bf-border)] shadow-[var(--bf-shadow-card)]",
                   "backdrop-blur-md",
                   // Mobile drawer: deja márgenes laterales y aire arriba/abajo (no fullscreen)
                   drawerPosition === "bottom" &&

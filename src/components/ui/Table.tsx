@@ -62,7 +62,7 @@ interface TableHeadProps {
 
 export function TableHead({ children, className }: TableHeadProps) {
   return (
-    <th className={cn("px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider font-satoshi", className)}>
+    <th className={cn("px-6 py-4 text-left text-xs font-bold text-[var(--bf-ink-300)] uppercase tracking-wider ", className)}>
       {children}
     </th>
   );
@@ -75,7 +75,7 @@ interface TableCellProps {
 
 export function TableCell({ children, className }: TableCellProps) {
   return (
-    <td className={cn("px-6 py-4 text-sm font-semibold text-[var(--text-primary)] font-satoshi", className)}>
+    <td className={cn("px-6 py-4 text-sm font-semibold text-[var(--bf-ink-50)] ", className)}>
       {children}
     </td>
   );

@@ -10,11 +10,11 @@ export function ImpersonationBanner({
   onEndImpersonation,
 }: ImpersonationBannerProps) {
   return (
-    <div className="glass bg-amber-500/10 border-b border-amber-500/20 px-4 md:px-6 py-3 backdrop-blur-sm">
+    <div className="bg-[rgba(232,176,74,0.10)] border-b border-[rgba(232,176,74,0.25)] px-4 md:px-6 py-3">
       <div className="flex items-center justify-between gap-4 max-w-7xl mx-auto">
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-amber-400">⚠️</span>
-          <span className="text-amber-300 font-satoshi">
+          <span className="text-[var(--bf-warn)]">⚠️</span>
+          <span className="text-[#F2C87A]" style={{ fontFamily: "var(--font-sans)" }}>
             Estás viendo la cuenta de{" "}
             <span className="font-semibold">{tenantName}</span> como
             administrador.
@@ -22,7 +22,8 @@ export function ImpersonationBanner({
         </div>
         <button
           onClick={onEndImpersonation}
-          className="text-xs font-medium text-amber-300 hover:text-amber-200 hover:glass-subtle px-3 py-1.5 rounded-[var(--radius-md)] transition-smooth whitespace-nowrap font-satoshi"
+          className="text-xs font-medium text-[#F2C87A] hover:text-[var(--bf-warn)] hover:bg-[rgba(232,176,74,0.15)] px-3 py-1.5 rounded-[var(--r-md)] transition-all whitespace-nowrap"
+          style={{ fontFamily: "var(--font-sans)" }}
         >
           Salir de impersonación
         </button>

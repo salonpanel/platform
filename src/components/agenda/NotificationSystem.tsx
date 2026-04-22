@@ -174,16 +174,16 @@ function NotificationToast({ notification, onDismiss, index }: NotificationToast
           icon: Zap,
           bg: "bg-gradient-to-r from-[var(--accent-purple-glass)] to-[var(--accent-pink-glass)]",
           border: "border-[var(--accent-purple-border)]",
-          text: "text-[var(--accent-purple)]",
-          iconColor: "text-[var(--accent-purple)]",
+          text: "text-[var(--bf-primary)]",
+          iconColor: "text-[var(--bf-primary)]",
         };
       default: // info
         return {
           icon: Info,
           bg: "bg-[var(--accent-blue-glass)]",
           border: "border-[var(--accent-blue-border)]",
-          text: "text-[var(--accent-blue)]",
-          iconColor: "text-[var(--accent-blue)]",
+          text: "text-[var(--bf-primary)]",
+          iconColor: "text-[var(--bf-primary)]",
         };
     }
   };
@@ -203,7 +203,7 @@ function NotificationToast({ notification, onDismiss, index }: NotificationToast
         delay: index * 0.1
       }}
       className={cn(
-        "pointer-events-auto w-80 max-w-sm rounded-[var(--radius-lg)] border backdrop-blur-md shadow-lg",
+        "pointer-events-auto w-80 max-w-sm rounded-[var(--r-lg)] border backdrop-blur-md shadow-lg",
         config.bg,
         config.border
       )}
@@ -218,7 +218,7 @@ function NotificationToast({ notification, onDismiss, index }: NotificationToast
           {/* Icon */}
           <div className={cn(
             "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
-            notification.type === "achievement" ? "bg-[var(--accent-purple)]/20" : "bg-current/10"
+            notification.type === "achievement" ? "bg-[var(--bf-primary)]/20" : "bg-current/10"
           )}>
             <Icon className={cn("h-4 w-4", config.iconColor)} />
           </div>
@@ -226,14 +226,14 @@ function NotificationToast({ notification, onDismiss, index }: NotificationToast
           {/* Content */}
           <div className="flex-1 min-w-0">
             <h4 className={cn(
-              "text-sm font-semibold font-[var(--font-heading)]",
+              "text-sm font-semibold font-[var(--font-sans)]",
               config.text
             )}>
               {notification.title}
             </h4>
 
             {notification.message && (
-              <p className="text-sm text-[var(--text-secondary)] mt-1 leading-relaxed">
+              <p className="text-sm text-[var(--bf-ink-300)] mt-1 leading-relaxed">
                 {notification.message}
               </p>
             )}
@@ -242,7 +242,7 @@ function NotificationToast({ notification, onDismiss, index }: NotificationToast
             {notification.context && (
               <div className="flex items-center gap-2 mt-2">
                 {notification.context.category && (
-                  <span className="text-xs bg-[var(--glass-bg)] px-2 py-0.5 rounded-full text-[var(--text-tertiary)]">
+                  <span className="text-xs bg-[var(--bf-bg-elev)] px-2 py-0.5 rounded-full text-[var(--bf-ink-400)]">
                     {notification.context.category}
                   </span>
                 )}
@@ -253,7 +253,7 @@ function NotificationToast({ notification, onDismiss, index }: NotificationToast
                       ? "bg-[var(--status-error)]/10 text-[var(--status-error)]"
                       : notification.context.priority === "medium"
                         ? "bg-[var(--status-warning)]/10 text-[var(--status-warning)]"
-                        : "bg-[var(--text-tertiary)]/10 text-[var(--text-tertiary)]"
+                        : "bg-[var(--bf-ink-400)]/10 text-[var(--bf-ink-400)]"
                   )}>
                     {notification.context.priority}
                   </span>
@@ -265,7 +265,7 @@ function NotificationToast({ notification, onDismiss, index }: NotificationToast
           {/* Close button */}
           <button
             onClick={onDismiss}
-            className="flex-shrink-0 p-1 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)] transition-colors"
+            className="flex-shrink-0 p-1 rounded-md text-[var(--bf-ink-400)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-bg-elev)] transition-colors"
             aria-label="Cerrar notificación"
           >
             <X className="h-4 w-4" />
@@ -288,7 +288,7 @@ function NotificationToast({ notification, onDismiss, index }: NotificationToast
 
         {/* Achievement special effects */}
         {notification.type === "achievement" && (
-          <div className="absolute inset-0 rounded-[var(--radius-lg)] overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 rounded-[var(--r-lg)] overflow-hidden pointer-events-none">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
           </div>
         )}

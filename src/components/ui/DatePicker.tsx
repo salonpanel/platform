@@ -94,8 +94,8 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
             readOnly
             onClick={() => !disabled && setIsOpen(!isOpen)}
             className="cursor-pointer"
-            icon={
-              <Calendar className="h-4 w-4 text-[var(--text-secondary)]" />
+              icon={
+              <Calendar className="h-4 w-4 text-[var(--bf-ink-400)]" />
             }
           />
         </div>
@@ -107,26 +107,26 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.96 }}
               transition={{ duration: 0.15, ease: [0.2, 0, 0, 1] }}
-              className="absolute z-50 mt-2 w-full rounded-[var(--radius-xl)] glass-strong border-[var(--glass-border-strong)] shadow-[var(--shadow-modal)] p-4"
+              className="absolute z-50 mt-2 w-full rounded-[var(--r-xl)] bg-[var(--bf-surface)] border border-[var(--bf-border)] shadow-[var(--bf-shadow-card)] p-4"
             >
               {/* Header */}
               <div className="mb-4 flex items-center justify-between">
                 <button
                   onClick={handlePrevMonth}
-                  className="p-2 rounded-[var(--radius-sm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)] transition-all"
+                  className="p-2 rounded-[var(--r-sm)] text-[var(--bf-ink-400)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-bg-elev)] transition-all"
                   style={{ transitionDuration: "var(--duration-base)" }}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <h3
-                  className="text-sm font-semibold text-[var(--text-primary)]"
-                  style={{ fontFamily: "var(--font-heading)" }}
+                  className="text-sm font-semibold text-[var(--bf-ink-50)]"
+                  style={{ fontFamily: "var(--font-sans)" }}
                 >
                   {format(currentMonth, "MMMM yyyy", { locale: es })}
                 </h3>
                 <button
                   onClick={handleNextMonth}
-                  className="p-2 rounded-[var(--radius-sm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)] transition-all"
+                  className="p-2 rounded-[var(--r-sm)] text-[var(--bf-ink-400)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-bg-elev)] transition-all"
                   style={{ transitionDuration: "var(--duration-base)" }}
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -138,8 +138,8 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
                 {weekDays.map((day) => (
                   <div
                     key={day}
-                    className="p-2 text-center text-xs font-semibold text-[var(--text-tertiary)]"
-                    style={{ fontFamily: "var(--font-body)" }}
+                    className="p-2 text-center text-xs font-semibold text-[var(--bf-ink-400)]"
+                    style={{ fontFamily: "var(--font-mono)" }}
                   >
                     {day}
                   </div>
@@ -160,19 +160,19 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
                       onClick={() => !disabled && handleDateSelect(day)}
                       disabled={disabled || !isCurrentMonth}
                       className={cn(
-                        "relative p-2 text-sm rounded-[var(--radius-sm)] transition-all",
+                        "relative p-2 text-sm rounded-[var(--r-sm)] transition-all",
                         !isCurrentMonth && "opacity-30",
                         disabled && "opacity-30 cursor-not-allowed",
                         isSelected &&
-                          "bg-[var(--gradient-primary)] text-white shadow-[var(--glow-border-aqua)]",
+                          "bg-[var(--bf-primary)] text-[var(--bf-ink)] shadow-[var(--bf-shadow-glow)]",
                         !isSelected &&
                           isCurrentMonth &&
                           !disabled &&
-                          "text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)]",
-                        isTodayDate && !isSelected && "ring-1 ring-[var(--accent-aqua-border)]"
+                          "text-[var(--bf-ink-100)] hover:bg-[var(--bf-bg-elev)]",
+                        isTodayDate && !isSelected && "ring-1 ring-[rgba(79,161,216,0.4)]"
                       )}
                       style={{
-                        fontFamily: "var(--font-body)",
+                        fontFamily: "var(--font-sans)",
                         transitionDuration: "var(--duration-base)",
                       }}
                     >
@@ -183,16 +183,16 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
               </div>
 
               {/* Actions */}
-              <div className="mt-4 flex items-center justify-end gap-2 border-t border-[var(--glass-border-subtle)] pt-4">
+              <div className="mt-4 flex items-center justify-end gap-2 border-t border-[var(--bf-border)] pt-4">
                 {value && (
                   <button
                     onClick={() => {
                       onChange(null);
                       setIsOpen(false);
                     }}
-                    className="px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-[var(--radius-sm)] hover:bg-[var(--glass-bg-subtle)] transition-all"
+                    className="px-3 py-1.5 text-xs text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)] rounded-[var(--r-sm)] hover:bg-[var(--bf-bg-elev)] transition-all"
                     style={{
-                      fontFamily: "var(--font-body)",
+                      fontFamily: "var(--font-sans)",
                       transitionDuration: "var(--duration-base)",
                     }}
                   >
@@ -201,9 +201,9 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
                 )}
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="px-3 py-1.5 text-xs text-[var(--text-primary)] rounded-[var(--radius-sm)] bg-[var(--glass-bg-subtle)] hover:bg-[var(--glass-bg)] transition-all"
+                  className="px-3 py-1.5 text-xs text-[var(--bf-ink-50)] rounded-[var(--r-sm)] bg-[var(--bf-bg-elev)] hover:bg-[var(--bf-surface-2)] transition-all"
                   style={{
-                    fontFamily: "var(--font-body)",
+                    fontFamily: "var(--font-sans)",
                     transitionDuration: "var(--duration-base)",
                   }}
                 >

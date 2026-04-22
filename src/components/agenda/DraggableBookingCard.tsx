@@ -113,7 +113,7 @@ export function DraggableBookingCard({
     idle: {
       scale: 1,
       opacity: 1,
-      boxShadow: "var(--shadow-premium)",
+      boxShadow: "var(--bf-shadow-card)",
     },
     dragging: {
       scale: 1.05,
@@ -180,7 +180,7 @@ export function DraggableBookingCard({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-[var(--status-cancelled)]/10 rounded-[var(--radius-lg)] border-2 border-[var(--status-cancelled)]/50 pointer-events-none z-10"
+            className="absolute inset-0 bg-[var(--status-cancelled)]/10 rounded-[var(--r-lg)] border-2 border-[var(--status-cancelled)]/50 pointer-events-none z-10"
           >
             <div className="absolute top-1 right-1 w-2 h-2 bg-[var(--status-cancelled)] rounded-full animate-pulse" />
           </motion.div>
@@ -215,7 +215,7 @@ export function DraggableBookingCard({
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            className="absolute -top-2 -right-2 w-6 h-6 bg-[var(--accent-blue)] rounded-full flex items-center justify-center shadow-lg"
+            className="absolute -top-2 -right-2 w-6 h-6 bg-[var(--bf-primary)] rounded-full flex items-center justify-center shadow-lg"
           >
             <motion.div
               animate={{ rotate: [0, 360] }}
@@ -235,8 +235,8 @@ export function DraggableBookingCard({
           onMouseDown={() => setIsResizing(true)}
           onMouseUp={() => setIsResizing(false)}
         >
-          <div className="w-full h-full bg-[var(--accent-aqua)]/20 rounded-full border border-[var(--accent-aqua)]/40 flex items-center justify-center">
-            <div className="w-2 h-2 border-r border-b border-[var(--accent-aqua)] rotate-45" />
+          <div className="w-full h-full bg-[var(--bf-primary)]/20 rounded-full border border-[var(--bf-primary)]/40 flex items-center justify-center">
+            <div className="w-2 h-2 border-r border-b border-[var(--bf-primary)] rotate-45" />
           </div>
         </motion.div>
       )}
@@ -248,12 +248,12 @@ export function DraggableBookingCard({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute -top-12 left-1/2 -translate-x-1/2 bg-[var(--bg-primary)] border border-[var(--glass-border)] rounded-[var(--radius-lg)] px-3 py-2 shadow-lg whitespace-nowrap z-50"
+            className="absolute -top-12 left-1/2 -translate-x-1/2 bg-[var(--bf-bg)] border border-[var(--bf-border)] rounded-[var(--r-lg)] px-3 py-2 shadow-lg whitespace-nowrap z-50"
           >
-            <div className="text-xs text-[var(--text-primary)] font-medium">
+            <div className="text-xs text-[var(--bf-ink-50)] font-medium">
               {conflictDetected ? "⚠️ Conflicto detectado" : "Suelta para confirmar"}
             </div>
-            <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-[var(--bg-primary)]" />
+            <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-[var(--bf-bg)]" />
           </motion.div>
         )}
       </AnimatePresence>

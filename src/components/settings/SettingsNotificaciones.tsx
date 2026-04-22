@@ -39,21 +39,21 @@ function ToggleRow({ label, description, icon, field, value, onChange, disabled,
       onClick={() => !disabled && onChange(field, !value)}
     >
       <div className="flex items-start gap-3 flex-1 min-w-0">
-        <div className={`mt-0.5 shrink-0 transition-colors ${value ? "text-[var(--accent-blue)]" : "text-[var(--text-secondary)]"}`}>
+        <div className={`mt-0.5 shrink-0 transition-colors ${value ? "text-[var(--bf-primary)]" : "text-[var(--bf-ink-300)]"}`}>
           {icon}
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <p className={`text-sm font-medium transition-colors ${value ? "text-white" : "text-[var(--text-secondary)]"}`}>
+            <p className={`text-sm font-medium transition-colors ${value ? "text-white" : "text-[var(--bf-ink-300)]"}`}>
               {label}
             </p>
             {badge && (
-              <span className="text-[10px] font-semibold uppercase tracking-wider bg-[var(--accent-blue)]/20 text-[var(--accent-blue)] px-1.5 py-0.5 rounded-full">
+              <span className="text-[10px] font-semibold uppercase tracking-wider bg-[var(--bf-primary)]/20 text-[var(--bf-primary)] px-1.5 py-0.5 rounded-full">
                 {badge}
               </span>
             )}
           </div>
-          <p className="text-xs text-[var(--text-secondary)] mt-0.5 leading-relaxed">{description}</p>
+          <p className="text-xs text-[var(--bf-ink-300)] mt-0.5 leading-relaxed">{description}</p>
         </div>
       </div>
 
@@ -63,7 +63,7 @@ function ToggleRow({ label, description, icon, field, value, onChange, disabled,
         disabled={disabled}
         onClick={(e) => { e.stopPropagation(); onChange(field, !value); }}
         className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none disabled:cursor-not-allowed ${
-          value ? "bg-[var(--accent-blue)]" : "bg-white/20"
+          value ? "bg-[var(--bf-primary)]" : "bg-white/20"
         }`}
       >
         <span
@@ -89,7 +89,7 @@ export function SettingsNotificaciones({
     >
       {/* Client notifications */}
       <div className="space-y-1 mb-4">
-        <p className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold px-1 mb-2">
+        <p className="text-[11px] uppercase tracking-wider text-[var(--bf-ink-300)] font-semibold px-1 mb-2">
           Para clientes
         </p>
 
@@ -138,7 +138,7 @@ export function SettingsNotificaciones({
 
       {/* Owner notifications */}
       <div className="space-y-1 pt-3 border-t border-white/10">
-        <p className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold px-1 mb-2">
+        <p className="text-[11px] uppercase tracking-wider text-[var(--bf-ink-300)] font-semibold px-1 mb-2">
           Para el negocio
         </p>
 

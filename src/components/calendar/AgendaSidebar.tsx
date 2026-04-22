@@ -59,9 +59,9 @@ function FilterChip({
     purple: "bg-[#4FA1D8]/10 border-[#4FA1D8]/30 text-[#4FA1D8]",
     blue: "bg-[#4FA1D8]/10 border-[#4FA1D8]/30 text-[#4FA1D8]",
     pink: "bg-[#E06072]/10 border-[#E06072]/30 text-[#E06072]",
-    amber: "bg-amber-500/10 border-amber-500/30 text-amber-400",
-    red: "bg-red-500/10 border-red-500/30 text-red-400",
-    green: "bg-emerald-500/10 border-emerald-500/30 text-emerald-400",
+    amber: "bg-[rgba(232,176,74,0.10)] border-[rgba(232,176,74,0.30)] text-[var(--bf-warn)]",
+    red: "bg-[rgba(224,96,114,0.10)] border-[rgba(224,96,114,0.30)] text-[var(--bf-danger)]",
+    green: "bg-[rgba(30,161,159,0.10)] border-[rgba(30,161,159,0.30)] text-[var(--bf-success)]",
     gray: "bg-white/5 border-white/10 text-white/60",
   };
 
@@ -427,7 +427,7 @@ function SidebarContentComponent({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onClearFilters}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white/[0.04] border border-white/8 text-white/60 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 transition-all duration-200 text-sm font-medium"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white/[0.04] border border-white/8 text-white/60 hover:bg-[rgba(224,96,114,0.10)] hover:border-[rgba(224,96,114,0.30)] hover:text-[var(--bf-danger)] transition-all duration-200 text-sm font-medium"
             >
               <RotateCcw className="h-4 w-4" />
               Limpiar todos los filtros

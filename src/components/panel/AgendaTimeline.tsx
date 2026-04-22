@@ -39,10 +39,10 @@ interface AgendaTimelineProps {
 // Colores según estado (Glass UI adaptation)
 const statusColors = {
   hold: "bg-yellow-500/10 border-yellow-500/30 hover:bg-yellow-500/20",
-  pending: "bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20",
-  paid: "bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500/20",
-  completed: "bg-slate-500/10 border-slate-500/30 hover:bg-slate-500/20",
-  cancelled: "bg-red-500/10 border-red-500/30 hover:bg-red-500/20",
+  pending: "bg-[rgba(79,161,216,0.10)] border-[rgba(79,161,216,0.30)] hover:bg-[rgba(79,161,216,0.20)]",
+  paid: "bg-[rgba(30,161,159,0.10)] border-[rgba(30,161,159,0.30)] hover:bg-[rgba(30,161,159,0.20)]",
+  completed: "bg-[var(--bf-bg-elev)] border-slate-500/30 hover:bg-slate-500/20",
+  cancelled: "bg-[rgba(224,96,114,0.10)] border-[rgba(224,96,114,0.30)] hover:bg-[rgba(224,96,114,0.20)]",
   no_show: "bg-gray-500/10 border-gray-500/30 hover:bg-gray-500/20",
   confirmed: "bg-teal-500/10 border-teal-500/30 hover:bg-teal-500/20",
 };

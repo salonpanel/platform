@@ -90,7 +90,7 @@ export function CustomersGrid({
             className="space-y-4"
         >
             {/* Desktop Header Row */}
-            <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold tracking-wider text-[var(--text-secondary)] uppercase">
+            <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-semibold tracking-wider text-[var(--bf-ink-300)] uppercase">
                 <div className="col-span-1 flex items-center">
                     <input
                         type="checkbox"
@@ -130,23 +130,23 @@ export function CustomersGrid({
 
                                 <div className="col-span-3">
                                     <div className="font-bold text-white text-sm truncate">{customer.name}</div>
-                                    <div className="text-xs text-[var(--text-secondary)] truncate flex items-center gap-1">
+                                    <div className="text-xs text-[var(--bf-ink-300)] truncate flex items-center gap-1">
                                         <span className="bg-white/10 px-1.5 py-0.5 rounded text-[10px]">{customer.visitCount} citas</span>
                                         {customer.totalSpent !== undefined && customer.totalSpent > 0 && (
-                                            <span className="text-emerald-400">{(customer.totalSpent / 100).toFixed(0)}€</span>
+                                            <span className="text-[var(--bf-success)]">{(customer.totalSpent / 100).toFixed(0)}€</span>
                                         )}
                                     </div>
                                 </div>
 
-                                <div className="col-span-2 flex flex-col justify-center text-xs text-[var(--text-secondary)] truncate">
+                                <div className="col-span-2 flex flex-col justify-center text-xs text-[var(--bf-ink-300)] truncate">
                                     {customer.email && (
-                                        <a href={`mailto:${customer.email}`} className="flex items-center gap-1.5 truncate hover:text-[var(--accent-blue)] transition-colors" title={customer.email} onClick={e => e.stopPropagation()}>
+                                        <a href={`mailto:${customer.email}`} className="flex items-center gap-1.5 truncate hover:text-[var(--bf-primary)] transition-colors" title={customer.email} onClick={e => e.stopPropagation()}>
                                             <Mail className="w-3 h-3 opacity-70 flex-shrink-0" />
                                             <span className="truncate">{customer.email}</span>
                                         </a>
                                     )}
                                     {customer.phone && (
-                                        <a href={`tel:${customer.phone}`} className="flex items-center gap-1.5 truncate mt-0.5 hover:text-[var(--accent-blue)] transition-colors" title={customer.phone} onClick={e => e.stopPropagation()}>
+                                        <a href={`tel:${customer.phone}`} className="flex items-center gap-1.5 truncate mt-0.5 hover:text-[var(--bf-primary)] transition-colors" title={customer.phone} onClick={e => e.stopPropagation()}>
                                             <Phone className="w-3 h-3 opacity-70 flex-shrink-0" />
                                             <span>{customer.phone}</span>
                                         </a>
@@ -167,7 +167,7 @@ export function CustomersGrid({
                                     </GlassBadge>
                                 </div>
 
-                                <div className="col-span-2 text-xs text-[var(--text-secondary)]">
+                                <div className="col-span-2 text-xs text-[var(--bf-ink-300)]">
                                     {safeDate(customer.lastVisit) ? (
                                         <div className="flex flex-col">
                                             <span className="text-white">{format(safeDate(customer.lastVisit) as Date, "d MMM yyyy", { locale: es })}</span>
@@ -185,7 +185,7 @@ export function CustomersGrid({
                                     <GlassButton variant="ghost" size="sm" onClick={() => onEdit(customer)} className="h-8 w-8 p-0">
                                         <Edit2 className="w-3.5 h-3.5" />
                                     </GlassButton>
-                                    <GlassButton variant="ghost" size="sm" onClick={() => onDelete(customer.id)} className="h-8 w-8 p-0 text-red-400 hover:text-red-300">
+                                    <GlassButton variant="ghost" size="sm" onClick={() => onDelete(customer.id)} className="h-8 w-8 p-0 text-[var(--bf-danger)] hover:text-[#F2A0AC]">
                                         <Trash2 className="w-3.5 h-3.5" />
                                     </GlassButton>
                                 </div>
@@ -203,7 +203,7 @@ export function CustomersGrid({
                                         />
                                         <div>
                                             <div className="font-bold text-white mb-0.5">{customer.name}</div>
-                                            <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                                            <div className="flex items-center gap-2 text-xs text-[var(--bf-ink-300)]">
                                                 <GlassBadge
                                                     variant={
                                                         customer.segment === "vip" ? "warning" :
@@ -221,15 +221,15 @@ export function CustomersGrid({
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-2 text-xs text-[var(--text-secondary)] bg-white/[0.02] p-2 rounded-lg">
+                                <div className="grid grid-cols-2 gap-2 text-xs text-[var(--bf-ink-300)] bg-white/[0.02] p-2 rounded-lg">
                                     {customer.email && (
-                                        <a href={`mailto:${customer.email}`} className="flex items-center gap-1.5 truncate hover:text-[var(--accent-blue)] transition-colors" onClick={e => e.stopPropagation()}>
+                                        <a href={`mailto:${customer.email}`} className="flex items-center gap-1.5 truncate hover:text-[var(--bf-primary)] transition-colors" onClick={e => e.stopPropagation()}>
                                             <Mail className="w-3 h-3 opacity-70 flex-shrink-0" />
                                             <span className="truncate">{customer.email}</span>
                                         </a>
                                     )}
                                     {customer.phone && (
-                                        <a href={`tel:${customer.phone}`} className="flex items-center gap-1.5 truncate hover:text-[var(--accent-blue)] transition-colors" onClick={e => e.stopPropagation()}>
+                                        <a href={`tel:${customer.phone}`} className="flex items-center gap-1.5 truncate hover:text-[var(--bf-primary)] transition-colors" onClick={e => e.stopPropagation()}>
                                             <Phone className="w-3 h-3 opacity-70 flex-shrink-0" />
                                             <span>{customer.phone}</span>
                                         </a>

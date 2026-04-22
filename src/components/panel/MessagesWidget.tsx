@@ -109,14 +109,14 @@ export function MessagesWidget({ tenantId }: MessagesWidgetProps) {
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5">
-                <MessageSquare className="h-4 w-4 text-[var(--text-primary)]" />
+                <MessageSquare className="h-4 w-4 text-[var(--bf-ink-50)]" />
               </div>
               {unreadCount > 0 && (
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 500, damping: 15 }}
-                  className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-4.5 px-1 rounded-full bg-gradient-to-r from-[#E06072] to-[#FF6F91] text-white text-[10px] font-semibold font-satoshi shadow-lg border-2 border-[var(--bg-primary)]"
+                  className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-4.5 px-1 rounded-full bg-gradient-to-r from-[#E06072] to-[#FF6F91] text-white text-[10px] font-semibold  shadow-lg border-2 border-[var(--bf-bg)]"
                 >
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </motion.div>
@@ -124,10 +124,10 @@ export function MessagesWidget({ tenantId }: MessagesWidgetProps) {
             </div>
 
             <div>
-              <h3 className="text-sm font-medium text-[var(--text-primary)] font-satoshi mb-0.5">
+              <h3 className="text-sm font-medium text-[var(--bf-ink-50)]  mb-0.5">
                 Chats
               </h3>
-              <p className="text-xs text-[var(--text-secondary)]">
+              <p className="text-xs text-[var(--bf-ink-300)]">
                 {unreadCount === 0
                   ? "No hay mensajes nuevos"
                   : unreadCount === 1
@@ -138,7 +138,7 @@ export function MessagesWidget({ tenantId }: MessagesWidgetProps) {
           </div>
 
           <Bell className={cn(
-            "h-4 w-4 text-[var(--text-secondary)] transition-colors",
+            "h-4 w-4 text-[var(--bf-ink-300)] transition-colors",
             unreadCount > 0 && "text-[#4FA1D8]"
           )} />
         </div>

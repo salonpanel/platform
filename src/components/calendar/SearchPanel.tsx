@@ -76,7 +76,7 @@ export function SearchPanel({
                     onClick={() => onSearchChange("")}
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                    className="h-6 w-6 text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)]"
                   >
                     <X className="h-3 w-3" />
                   </GlassButton>
@@ -93,7 +93,7 @@ export function SearchPanel({
           </div>
           {searchTerm && (
             <div className="mt-3 flex items-center justify-between">
-              <div className="text-xs text-[var(--text-secondary)] font-['Plus_Jakarta_Sans']">
+              <div className="text-xs text-[var(--bf-ink-300)] font-['Plus_Jakarta_Sans']">
                 Buscando: <span className="text-white font-semibold">{searchTerm}</span>
               </div>
               {resultCount !== undefined && totalCount !== undefined && (

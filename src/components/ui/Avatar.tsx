@@ -43,7 +43,7 @@ export function Avatar({
       transition={{ duration: 0.2 }}
       className={cn(
         "relative inline-flex items-center justify-center rounded-full",
-        "gradient-aurora-1 text-white font-satoshi font-bold",
+        "gradient-aurora-1 text-white  font-bold",
         "overflow-hidden border-2 border-[rgba(255,255,255,0.2)]",
         "shadow-[0px_4px_16px_rgba(79,161,216,0.3)]",
         sizeClasses[size],

@@ -54,7 +54,7 @@ export function AppointmentCard({
   const baseClasses = cn(
     "relative backdrop-blur-md border-l-[3px] rounded-[10px] cursor-pointer",
     "transition-all duration-200 group",
-    "focus:outline-none focus:ring-2 focus:ring-[var(--accent-blue)]/50 focus:ring-offset-2 focus:ring-offset-[var(--bg-primary)]",
+    "focus:outline-none focus:ring-2 focus:ring-[rgba(79,161,216,0.4)] focus:ring-offset-2 focus:ring-offset-[var(--bf-bg)]",
     // Phase 3: Mobile-first responsive improvements
     "min-h-[44px]", // Ensure 44px minimum tap target (padding handled per variant)
     variant === "timeline" ? "w-full h-full" : "w-full",
@@ -100,17 +100,17 @@ export function AppointmentCard({
         <div className="h-full flex flex-col justify-center px-2.5 py-1 gap-0.5 min-w-0 overflow-hidden">
           {/* Row 1: time + customer name */}
           <div className="flex items-center gap-1.5 min-w-0">
-            <span className="text-[11px] font-mono font-medium flex-shrink-0 text-[var(--text-secondary)]">
+            <span className="text-[11px] font-mono font-medium flex-shrink-0 text-[var(--bf-primary)]">
               {startTime}
             </span>
-            <span className="text-xs font-semibold truncate flex-1 min-w-0 text-[var(--text-primary)]">
+            <span className="text-xs font-semibold truncate flex-1 min-w-0 text-[var(--bf-ink-50)]">
               {booking.customer?.name || "Sin cliente"}
             </span>
           </div>
 
           {/* Row 2: service name (always shown, hidden by overflow when too small) */}
           {booking.service?.name && (
-            <span className="text-[10px] text-[var(--text-tertiary)] truncate leading-none">
+            <span className="text-[10px] text-[var(--bf-ink-400)] truncate leading-none">
               {booking.service.name}
             </span>
           )}
@@ -180,7 +180,7 @@ export function AppointmentCard({
           <div className="flex items-start justify-between">
             <div className={cn(
               "text-sm font-semibold font-mono",
-              "text-[var(--text-primary)]"
+              "text-[var(--bf-primary)]"
             )}>
               {startTime} - {endTime}
             </div>
@@ -192,7 +192,7 @@ export function AppointmentCard({
                 />
                 <span className={cn(
                   "text-xs font-medium",
-                  "text-[var(--text-secondary)] font-[var(--font-body)]"
+                  "text-[var(--bf-ink-300)]"
                 )}>
                   {statusConfig.label}
                 </span>
@@ -203,7 +203,7 @@ export function AppointmentCard({
           {/* Customer name */}
           <div className={cn(
             "text-base font-semibold",
-            "text-[var(--text-primary)] font-[var(--font-heading)]"
+            "text-[var(--bf-ink-50)]"
           )}>
             {booking.customer?.name || "Sin cliente"}
           </div>
@@ -211,7 +211,7 @@ export function AppointmentCard({
           {/* Service details */}
           <div className={cn(
             "text-sm",
-            "text-[var(--text-secondary)] font-[var(--font-body)]"
+            "text-[var(--bf-ink-300)]"
           )}>
             {booking.service?.name || "Sin servicio"}
             {booking.service && ` • ${booking.service.duration_min} min`}
@@ -221,8 +221,8 @@ export function AppointmentCard({
           {/* Price (if requested) */}
           {showPrice && booking.service && (
             <div className={cn(
-              "text-sm font-semibold pt-2 border-t border-[var(--glass-border-subtle)]",
-              "text-[var(--text-primary)] font-[var(--font-heading)]"
+              "text-sm font-semibold pt-2 border-t border-[var(--bf-border)]",
+              "text-[var(--bf-ink-50)]"
             )}>
               {(booking.service.price_cents / 100).toFixed(2)} €
             </div>
@@ -272,7 +272,7 @@ export function AppointmentCard({
           {/* Time */}
           <span className={cn(
             "text-xs font-semibold font-mono flex-shrink-0",
-            "text-[var(--text-secondary)]"
+            "text-[var(--bf-primary)]"
           )}>
             {startTime}
           </span>
@@ -280,7 +280,7 @@ export function AppointmentCard({
           {/* Customer initials */}
           <span className={cn(
             "text-xs font-medium truncate",
-            "text-[var(--text-primary)] font-[var(--font-body)]"
+            "text-[var(--bf-ink-50)]"
           )}>
             {getCustomerInitials(booking.customer?.name)}
           </span>

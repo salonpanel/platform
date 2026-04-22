@@ -45,7 +45,7 @@ export function SettingsBranding({
                 </div>
 
                 <div className="space-y-1">
-                    <label className="block text-sm font-medium text-[var(--text-secondary)]">
+                    <label className="block text-sm font-medium text-[var(--bf-ink-300)]">
                         Color Primario
                     </label>
                     <div className="flex gap-3 items-center">

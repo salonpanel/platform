@@ -73,10 +73,10 @@ export function SettingsHorarios({ businessHours, onChange, onSave, isLoading }:
       <div className="space-y-1">
         {/* Header row */}
         <div className="hidden sm:grid grid-cols-[minmax(140px,1fr)_minmax(110px,140px)_minmax(110px,140px)_72px] gap-3 px-4 pb-1">
-          <span className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold">Día</span>
-          <span className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold">Apertura</span>
-          <span className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold">Cierre</span>
-          <span className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold text-right">Cerrado</span>
+          <span className="text-[11px] uppercase tracking-wider text-[var(--bf-ink-300)] font-semibold">Día</span>
+          <span className="text-[11px] uppercase tracking-wider text-[var(--bf-ink-300)] font-semibold">Apertura</span>
+          <span className="text-[11px] uppercase tracking-wider text-[var(--bf-ink-300)] font-semibold">Cierre</span>
+          <span className="text-[11px] uppercase tracking-wider text-[var(--bf-ink-300)] font-semibold text-right">Cerrado</span>
         </div>
 
         {/* Day rows */}
@@ -94,11 +94,11 @@ export function SettingsHorarios({ businessHours, onChange, onSave, isLoading }:
             >
               {/* Mobile: day + toggle on top, selects below. Desktop: single grid row */}
               <div className="flex items-center justify-between gap-3 sm:hidden">
-                <span className={`text-sm font-medium ${isClosed ? "text-[var(--text-secondary)]" : "text-white"}`}>
+                <span className={`text-sm font-medium ${isClosed ? "text-[var(--bf-ink-300)]" : "text-white"}`}>
                   {DAY_LABELS[day]}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-[var(--text-secondary)]">Cerrado</span>
+                  <span className="text-xs text-[var(--bf-ink-300)]">Cerrado</span>
                   <button
                     type="button"
                     onClick={() => updateDay(day, "is_closed", !isClosed)}
@@ -118,12 +118,12 @@ export function SettingsHorarios({ businessHours, onChange, onSave, isLoading }:
 
               <div className="mt-3 grid grid-cols-2 gap-3 sm:hidden">
                 <div className="space-y-1">
-                  <p className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold">Apertura</p>
+                  <p className="text-[11px] uppercase tracking-wider text-[var(--bf-ink-300)] font-semibold">Apertura</p>
                   <select
                     value={schedule.open}
                     onChange={(e) => updateDay(day, "open", e.target.value)}
                     disabled={isClosed || isLoading}
-                    className="h-9 w-full rounded-lg bg-white/8 border border-white/10 text-sm text-white px-2 focus:outline-none focus:border-[var(--accent-blue)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="h-9 w-full rounded-lg bg-white/8 border border-white/10 text-sm text-white px-2 focus:outline-none focus:border-[var(--bf-primary)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
                     {TIME_OPTIONS.map((t) => (
                       <option key={t} value={t} className="bg-[#1a1a2e]">{t}</option>
@@ -131,12 +131,12 @@ export function SettingsHorarios({ businessHours, onChange, onSave, isLoading }:
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold">Cierre</p>
+                  <p className="text-[11px] uppercase tracking-wider text-[var(--bf-ink-300)] font-semibold">Cierre</p>
                   <select
                     value={schedule.close}
                     onChange={(e) => updateDay(day, "close", e.target.value)}
                     disabled={isClosed || isLoading}
-                    className="h-9 w-full rounded-lg bg-white/8 border border-white/10 text-sm text-white px-2 focus:outline-none focus:border-[var(--accent-blue)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="h-9 w-full rounded-lg bg-white/8 border border-white/10 text-sm text-white px-2 focus:outline-none focus:border-[var(--bf-primary)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
                     {TIME_OPTIONS.map((t) => (
                       <option key={t} value={t} className="bg-[#1a1a2e]">{t}</option>
@@ -147,7 +147,7 @@ export function SettingsHorarios({ businessHours, onChange, onSave, isLoading }:
 
               <div className="hidden sm:grid grid-cols-[minmax(140px,1fr)_minmax(110px,140px)_minmax(110px,140px)_72px] gap-3 items-center">
                 {/* Day label */}
-                <span className={`text-sm font-medium ${isClosed ? "text-[var(--text-secondary)]" : "text-white"}`}>
+                <span className={`text-sm font-medium ${isClosed ? "text-[var(--bf-ink-300)]" : "text-white"}`}>
                   {DAY_LABELS[day]}
                 </span>
 
@@ -156,7 +156,7 @@ export function SettingsHorarios({ businessHours, onChange, onSave, isLoading }:
                   value={schedule.open}
                   onChange={(e) => updateDay(day, "open", e.target.value)}
                   disabled={isClosed || isLoading}
-                  className="h-9 w-full rounded-lg bg-white/8 border border-white/10 text-sm text-white px-2 focus:outline-none focus:border-[var(--accent-blue)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="h-9 w-full rounded-lg bg-white/8 border border-white/10 text-sm text-white px-2 focus:outline-none focus:border-[var(--bf-primary)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   {TIME_OPTIONS.map((t) => (
                     <option key={t} value={t} className="bg-[#1a1a2e]">{t}</option>
@@ -168,7 +168,7 @@ export function SettingsHorarios({ businessHours, onChange, onSave, isLoading }:
                   value={schedule.close}
                   onChange={(e) => updateDay(day, "close", e.target.value)}
                   disabled={isClosed || isLoading}
-                  className="h-9 w-full rounded-lg bg-white/8 border border-white/10 text-sm text-white px-2 focus:outline-none focus:border-[var(--accent-blue)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="h-9 w-full rounded-lg bg-white/8 border border-white/10 text-sm text-white px-2 focus:outline-none focus:border-[var(--bf-primary)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   {TIME_OPTIONS.map((t) => (
                     <option key={t} value={t} className="bg-[#1a1a2e]">{t}</option>
@@ -204,7 +204,7 @@ export function SettingsHorarios({ businessHours, onChange, onSave, isLoading }:
           type="button"
           onClick={copyToAllWeekdays}
           disabled={isLoading}
-          className="text-xs text-[var(--accent-blue)] hover:text-white transition-colors disabled:opacity-40"
+          className="text-xs text-[var(--bf-primary)] hover:text-white transition-colors disabled:opacity-40"
         >
           Copiar Lunes a todos los días laborables
         </button>

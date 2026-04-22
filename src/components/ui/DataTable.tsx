@@ -105,7 +105,7 @@ export function DataTable<T extends Record<string, any>>({
     <div className={cn("w-full", className)}>
       {/* Desktop Table */}
       <div className="hidden md:block overflow-x-auto scrollbar-hide">
-        <div className="glass rounded-[var(--radius-lg)] border-[var(--glass-border)] overflow-hidden">
+        <div className="glass rounded-[var(--r-lg)] border-[var(--bf-border)] overflow-hidden">
           <table className="w-full">
             <thead className="border-b border-[var(--glass-border-subtle)] glass-subtle">
               <tr>
@@ -113,12 +113,12 @@ export function DataTable<T extends Record<string, any>>({
                   <th
                     key={column.key}
                     className={cn(
-                      "px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider",
-                      column.sortable && "cursor-pointer hover:text-[var(--text-primary)] transition-colors",
+                      "px-4 py-3 text-left text-xs font-semibold text-[var(--bf-ink-300)] uppercase tracking-wider",
+                      column.sortable && "cursor-pointer hover:text-[var(--bf-ink-50)] transition-colors",
                       column.className
                     )}
                     style={{
-                      fontFamily: "var(--font-heading)",
+                      fontFamily: "var(--font-sans)",
                       transitionDuration: "var(--duration-base)",
                     }}
                     onClick={() => column.sortable && handleSort(column.key)}
@@ -126,7 +126,7 @@ export function DataTable<T extends Record<string, any>>({
                     <div className="flex items-center gap-2">
                       <span>{column.header}</span>
                       {column.sortable && (
-                        <span className="text-[var(--text-tertiary)]">
+                        <span className="text-[var(--bf-ink-400)]">
                           {getSortIcon(column.key)}
                         </span>
                       )}
@@ -140,8 +140,8 @@ export function DataTable<T extends Record<string, any>>({
                 <tr>
                   <td
                     colSpan={columns.length}
-                    className="px-4 py-12 text-center text-sm text-[var(--text-secondary)]"
-                    style={{ fontFamily: "var(--font-body)" }}
+                    className="px-4 py-12 text-center text-sm text-[var(--bf-ink-300)]"
+                    style={{ fontFamily: "var(--font-sans)" }}
                   >
                     {emptyMessage}
                   </td>
@@ -155,7 +155,7 @@ export function DataTable<T extends Record<string, any>>({
                     transition={{ delay: index * 0.02, duration: 0.15 }}
                     className={cn(
                       "border-b border-[var(--glass-border-subtle)] transition-colors",
-                      onRowClick && "cursor-pointer hover:bg-[var(--glass-bg-subtle)]"
+                      onRowClick && "cursor-pointer hover:bg-[var(--bf-bg-elev)]"
                     )}
                     onClick={() => onRowClick?.(row)}
                     style={{ transitionDuration: "var(--duration-base)" }}
@@ -163,8 +163,8 @@ export function DataTable<T extends Record<string, any>>({
                     {columns.map((column) => (
                       <td
                         key={column.key}
-                        className={cn("px-4 py-3 text-sm text-[var(--text-primary)]", column.className)}
-                        style={{ fontFamily: "var(--font-body)" }}
+                        className={cn("px-4 py-3 text-sm text-[var(--bf-ink-50)]", column.className)}
+                        style={{ fontFamily: "var(--font-sans)" }}
                       >
                         {column.accessor ? column.accessor(row) : row[column.key]}
                       </td>
@@ -181,8 +181,8 @@ export function DataTable<T extends Record<string, any>>({
       <div className="md:hidden space-y-3">
         {paginatedData.length === 0 ? (
           <div
-            className="p-8 text-center text-sm text-[var(--text-secondary)]"
-            style={{ fontFamily: "var(--font-body)" }}
+            className="p-8 text-center text-sm text-[var(--bf-ink-300)]"
+            style={{ fontFamily: "var(--font-sans)" }}
           >
             {emptyMessage}
           </div>
@@ -198,20 +198,20 @@ export function DataTable<T extends Record<string, any>>({
                 mobileCard(row)
               ) : (
                 <div
-                  className="glass rounded-[var(--radius-lg)] border-[var(--glass-border)] p-4"
+                  className="glass rounded-[var(--r-lg)] border-[var(--bf-border)] p-4"
                   onClick={() => onRowClick?.(row)}
                 >
                   {columns.map((column) => (
                     <div key={column.key} className="mb-2 last:mb-0">
                       <div
-                        className="text-xs text-[var(--text-tertiary)] mb-1"
-                        style={{ fontFamily: "var(--font-body)" }}
+                        className="text-xs text-[var(--bf-ink-400)] mb-1"
+                        style={{ fontFamily: "var(--font-sans)" }}
                       >
                         {column.header}
                       </div>
                       <div
-                        className="text-sm text-[var(--text-primary)]"
-                        style={{ fontFamily: "var(--font-body)" }}
+                        className="text-sm text-[var(--bf-ink-50)]"
+                        style={{ fontFamily: "var(--font-sans)" }}
                       >
                         {column.accessor ? column.accessor(row) : row[column.key]}
                       </div>
@@ -228,8 +228,8 @@ export function DataTable<T extends Record<string, any>>({
       {showPagination && totalPages > 1 && (
         <div className="mt-4 flex items-center justify-between">
           <div
-            className="text-sm text-[var(--text-secondary)]"
-            style={{ fontFamily: "var(--font-body)" }}
+            className="text-sm text-[var(--bf-ink-300)]"
+            style={{ fontFamily: "var(--font-sans)" }}
           >
             Mostrando {((currentPage - 1) * pageSize) + 1} - {Math.min(currentPage * pageSize, sortedData.length)} de {sortedData.length}
           </div>
@@ -243,8 +243,8 @@ export function DataTable<T extends Record<string, any>>({
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span
-              className="text-sm text-[var(--text-primary)] px-3"
-              style={{ fontFamily: "var(--font-body)" }}
+              className="text-sm text-[var(--bf-ink-50)] px-3"
+              style={{ fontFamily: "var(--font-sans)" }}
             >
               {currentPage} / {totalPages}
             </span>

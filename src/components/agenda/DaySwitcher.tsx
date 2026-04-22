@@ -60,9 +60,9 @@ export function DaySwitcher({
         whileTap={{ scale: 0.9 }}
         onClick={goToPreviousDay}
         className={cn(
-          "flex items-center justify-center rounded-[var(--radius-lg)] border backdrop-blur-sm transition-all duration-200",
-          "bg-[var(--glass-bg-subtle)] border-[var(--glass-border)] text-[var(--text-secondary)]",
-          "hover:text-[var(--text-primary)] hover:bg-[var(--accent-aqua-glass)] hover:border-[var(--accent-aqua-border)] hover:shadow-lg hover:shadow-[var(--accent-aqua)]/20",
+          "flex items-center justify-center rounded-[var(--r-lg)] border transition-all duration-200",
+          "bg-[var(--bf-bg-elev)] border-[var(--bf-border)] text-[var(--bf-ink-400)]",
+          "hover:text-[var(--bf-primary)] hover:bg-[rgba(79,161,216,0.10)] hover:border-[rgba(79,161,216,0.30)]",
           buttonSize
         )}
         aria-label="Día anterior"
@@ -76,19 +76,14 @@ export function DaySwitcher({
         whileTap={{ scale: 0.98 }}
         onClick={goToToday}
         className={cn(
-          "flex items-center gap-3 px-4 py-2.5 rounded-[var(--radius-lg)] border backdrop-blur-sm transition-all duration-200",
+          "flex items-center gap-3 px-4 py-2.5 rounded-[var(--r-lg)] border transition-all duration-200",
           isCurrentDay
-            ? "bg-gradient-to-r from-[var(--accent-aqua)]/20 to-[var(--accent-blue)]/20 border-[var(--accent-aqua)]/50 text-[var(--accent-aqua)] shadow-lg shadow-[var(--accent-aqua)]/20"
-            : "bg-[var(--glass-bg-subtle)] border-[var(--glass-border)] text-[var(--text-primary)] hover:bg-[var(--glass-bg)] hover:shadow-lg",
+            ? "bg-[rgba(79,161,216,0.10)] border-[rgba(79,161,216,0.35)] text-[var(--bf-primary)]"
+            : "bg-[var(--bf-bg-elev)] border-[var(--bf-border)] text-[var(--bf-ink-50)] hover:bg-[var(--bf-surface)]",
           density === "ultra-compact" ? "px-3 py-2" : "px-4 py-2.5"
         )}
-        style={{
-          background: isCurrentDay 
-            ? "linear-gradient(135deg, rgba(79, 161, 216, 0.1) 0%, rgba(79, 161, 216, 0.1) 100%)"
-            : undefined
-        }}
       >
-        <Calendar className={cn(iconSize, isCurrentDay ? "text-[var(--accent-aqua)]" : "text-[var(--text-secondary)]")} />
+        <Calendar className={cn(iconSize, isCurrentDay ? "text-[var(--bf-primary)]" : "text-[var(--bf-ink-400)]")} />
         <div className="text-left">
           <div
             className={cn(
@@ -96,8 +91,8 @@ export function DaySwitcher({
               textSize
             )}
             style={{
-              fontFamily: "var(--font-heading)",
-              color: isCurrentDay ? "var(--accent-aqua)" : "var(--text-primary)"
+              fontFamily: "var(--font-sans)",
+              color: isCurrentDay ? "var(--bf-primary)" : "var(--bf-ink-50)"
             }}
           >
             {formattedDate}
@@ -106,7 +101,7 @@ export function DaySwitcher({
             <div className={cn(
               "text-xs font-medium opacity-80",
               "flex items-center gap-1"
-            )} style={{ color: "var(--accent-aqua)" }}>
+            )} style={{ color: "var(--bf-primary)" }}>
               <CalendarDays className={cn("h-3 w-3", density === "ultra-compact" ? "h-2.5 w-2.5" : "h-3 w-3")} />
               Hoy
             </div>
@@ -120,9 +115,9 @@ export function DaySwitcher({
         whileTap={{ scale: 0.9 }}
         onClick={goToNextDay}
         className={cn(
-          "flex items-center justify-center rounded-[var(--radius-lg)] border backdrop-blur-sm transition-all duration-200",
-          "bg-[var(--glass-bg-subtle)] border-[var(--glass-border)] text-[var(--text-secondary)]",
-          "hover:text-[var(--text-primary)] hover:bg-[var(--accent-aqua-glass)] hover:border-[var(--accent-aqua-border)] hover:shadow-lg hover:shadow-[var(--accent-aqua)]/20",
+          "flex items-center justify-center rounded-[var(--r-lg)] border transition-all duration-200",
+          "bg-[var(--bf-bg-elev)] border-[var(--bf-border)] text-[var(--bf-ink-400)]",
+          "hover:text-[var(--bf-primary)] hover:bg-[rgba(79,161,216,0.10)] hover:border-[rgba(79,161,216,0.30)]",
           buttonSize
         )}
         aria-label="Día siguiente"
@@ -137,9 +132,9 @@ export function DaySwitcher({
           whileTap={{ scale: 0.95 }}
           onClick={goToToday}
           className={cn(
-            "flex items-center gap-2 px-3 py-2 rounded-[var(--radius-lg)] border backdrop-blur-sm transition-all duration-200",
-            "bg-[var(--accent-blue)]/10 border-[var(--accent-blue)]/25 text-[var(--accent-blue)]",
-            "hover:bg-[var(--accent-blue)]/20 hover:border-[var(--accent-blue)]/40 hover:shadow-lg hover:shadow-[var(--accent-blue)]/20",
+            "flex items-center gap-2 px-3 py-2 rounded-[var(--r-lg)] border transition-all duration-200",
+            "bg-[var(--bf-primary)] border-transparent text-[var(--bf-ink)]",
+            "hover:bg-[var(--bf-cyan-300)]",
             density === "ultra-compact" ? "px-2 py-1.5" : "px-3 py-2"
           )}
         >
@@ -149,7 +144,7 @@ export function DaySwitcher({
           <span className={cn(
             "font-semibold text-sm",
             density === "ultra-compact" ? "text-xs" : "text-sm"
-          )} style={{ fontFamily: "var(--font-heading)" }}>
+          )} style={{ fontFamily: "var(--font-sans)" }}>
             Hoy
           </span>
         </motion.button>

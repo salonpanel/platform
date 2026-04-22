@@ -222,8 +222,8 @@ export function BookingSlidePanel({
             style={{
               background: `linear-gradient(135deg, rgba(30, 31, 35, 0.95) 0%, rgba(15, 16, 18, 0.98) 100%)`,
               backdropFilter: 'blur(20px)',
-              borderLeft: isMobile ? 'none' : `1px solid var(--glass-border)`,
-              borderTop: isMobile ? `1px solid var(--glass-border)` : 'none',
+              borderLeft: isMobile ? 'none' : `1px solid var(--bf-border)`,
+              borderTop: isMobile ? `1px solid var(--bf-border)` : 'none',
               boxShadow: `var(--shadow-premium)`,
             }}
           >
@@ -232,7 +232,7 @@ export function BookingSlidePanel({
               <div className="flex-1 pr-4">
                 <h3
                   className="text-lg font-semibold"
-                  style={{ color: 'var(--text-primary)' }}
+                  style={{ color: 'var(--bf-ink-50)' }}
                 >
                   {booking.customer?.name || 'Sin cliente'}
                 </h3>
@@ -267,7 +267,7 @@ export function BookingSlidePanel({
                   aria-label="Close panel"
                   className="ml-2 inline-flex items-center justify-center rounded-lg p-2 transition-colors"
                   style={{
-                    color: 'var(--text-secondary)',
+                    color: 'var(--bf-ink-300)',
                     backgroundColor: 'rgba(255, 255, 255, 0.05)',
                   }}
                   onMouseEnter={(e) => {
@@ -296,21 +296,21 @@ export function BookingSlidePanel({
                   }}
                 >
                   <div className="mt-1 flex-shrink-0">
-                    <CalendarIcon size={20} style={{ color: 'var(--accent-blue)' }} />
+                    <CalendarIcon size={20} style={{ color: 'var(--bf-primary)' }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p style={{ color: 'var(--text-tertiary)' }} className="text-xs uppercase tracking-wider mb-1">
+                    <p style={{ color: 'var(--bf-ink-400)' }} className="text-xs uppercase tracking-wider mb-1">
                       Fecha y hora
                     </p>
                     <p
                       className="text-sm font-medium capitalize"
-                      style={{ color: 'var(--text-primary)' }}
+                      style={{ color: 'var(--bf-ink-50)' }}
                     >
                       {formattedDate}
                     </p>
                     <p
                       className="text-sm mt-1"
-                      style={{ color: 'var(--text-secondary)' }}
+                      style={{ color: 'var(--bf-ink-300)' }}
                     >
                       {formattedStartTime} – {formattedEndTime}
                     </p>
@@ -321,25 +321,25 @@ export function BookingSlidePanel({
                 {booking.service && (
                   <div className="flex items-start gap-4">
                     <div className="mt-1 flex-shrink-0">
-                      <Scissors size={20} style={{ color: 'var(--accent-aqua)' }} />
+                      <Scissors size={20} style={{ color: 'var(--bf-primary)' }} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p style={{ color: 'var(--text-tertiary)' }} className="text-xs uppercase tracking-wider mb-1">
+                      <p style={{ color: 'var(--bf-ink-400)' }} className="text-xs uppercase tracking-wider mb-1">
                         Servicio
                       </p>
                       <p
                         className="text-sm font-medium"
-                        style={{ color: 'var(--text-primary)' }}
+                        style={{ color: 'var(--bf-ink-50)' }}
                       >
                         {booking.service.name}
                       </p>
                       <div className="flex items-center gap-3 mt-2 text-xs">
-                        <span style={{ color: 'var(--text-secondary)' }}>
+                        <span style={{ color: 'var(--bf-ink-300)' }}>
                           {booking.service.duration_min} min
                         </span>
                         <span
                           className="font-semibold"
-                          style={{ color: 'var(--accent-blue)' }}
+                          style={{ color: 'var(--bf-primary)' }}
                         >
                           {(booking.service.price_cents / 100).toFixed(2)} €
                         </span>
@@ -352,10 +352,10 @@ export function BookingSlidePanel({
                 {booking.staff && (
                   <div className="flex items-start gap-4">
                     <div className="mt-1 flex-shrink-0">
-                      <User size={20} style={{ color: 'var(--accent-aqua)' }} />
+                      <User size={20} style={{ color: 'var(--bf-primary)' }} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p style={{ color: 'var(--text-tertiary)' }} className="text-xs uppercase tracking-wider mb-1">
+                      <p style={{ color: 'var(--bf-ink-400)' }} className="text-xs uppercase tracking-wider mb-1">
                         Personal
                       </p>
                       <div className="flex items-center gap-2">
@@ -368,7 +368,7 @@ export function BookingSlidePanel({
                         )}
                         <p
                           className="text-sm font-medium"
-                          style={{ color: 'var(--text-primary)' }}
+                          style={{ color: 'var(--bf-ink-50)' }}
                         >
                           {booking.staff.name}
                         </p>
@@ -396,15 +396,15 @@ export function BookingSlidePanel({
                         }}
                       >
                         <div className="mt-0.5 flex-shrink-0">
-                          <Phone size={16} style={{ color: 'var(--accent-blue)' }} />
+                          <Phone size={16} style={{ color: 'var(--bf-primary)' }} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p style={{ color: 'var(--text-tertiary)' }} className="text-xs uppercase tracking-wider mb-1">
+                          <p style={{ color: 'var(--bf-ink-400)' }} className="text-xs uppercase tracking-wider mb-1">
                             Teléfono
                           </p>
                           <p
                             className="text-sm font-medium"
-                            style={{ color: 'var(--accent-blue)' }}
+                            style={{ color: 'var(--bf-primary)' }}
                           >
                             {booking.customer.phone}
                           </p>
@@ -428,15 +428,15 @@ export function BookingSlidePanel({
                         }}
                       >
                         <div className="mt-0.5 flex-shrink-0">
-                          <Mail size={16} style={{ color: 'var(--accent-blue)' }} />
+                          <Mail size={16} style={{ color: 'var(--bf-primary)' }} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p style={{ color: 'var(--text-tertiary)' }} className="text-xs uppercase tracking-wider mb-1">
+                          <p style={{ color: 'var(--bf-ink-400)' }} className="text-xs uppercase tracking-wider mb-1">
                             Email
                           </p>
                           <p
                             className="text-sm font-medium truncate"
-                            style={{ color: 'var(--accent-blue)' }}
+                            style={{ color: 'var(--bf-primary)' }}
                           >
                             {booking.customer.email}
                           </p>
@@ -468,7 +468,7 @@ export function BookingSlidePanel({
                         </p>
                         <p
                           className="text-sm leading-relaxed break-words"
-                          style={{ color: 'var(--text-secondary)' }}
+                          style={{ color: 'var(--bf-ink-300)' }}
                         >
                           {booking.internal_notes}
                         </p>
@@ -488,7 +488,7 @@ export function BookingSlidePanel({
                   onClick={() => applyPaymentStatus("paid")}
                   disabled={statusLoading !== null}
                   className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: 'rgba(79,161,216,0.15)', color: 'var(--accent-blue)', border: '1px solid rgba(79,161,216,0.3)' }}
+                  style={{ backgroundColor: 'rgba(79,161,216,0.15)', color: 'var(--bf-primary)', border: '1px solid rgba(79,161,216,0.3)' }}
                 >
                   ✓ Marcar pago como pagado
                 </button>
@@ -511,7 +511,7 @@ export function BookingSlidePanel({
                   <button
                     onClick={() => booking && onEdit?.(booking)}
                     className="flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-                    style={{ color: 'var(--accent-blue)', backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid var(--glass-border-subtle)' }}
+                    style={{ color: 'var(--bf-primary)', backgroundColor: 'rgba(79,161,216,0.08)', border: '1px solid rgba(79,161,216,0.25)' }}
                     onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'; }}
                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; }}
                   >
@@ -542,7 +542,7 @@ export function BookingSlidePanel({
                     <button
                       onClick={() => setShowCancelConfirm(false)}
                       className="flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: 'var(--text-secondary)', border: '1px solid var(--glass-border-subtle)' }}
+                      style={{ backgroundColor: 'var(--bf-bg-elev)', color: 'var(--bf-ink-300)', border: '1px solid var(--bf-border)' }}
                       onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; }}
                     >

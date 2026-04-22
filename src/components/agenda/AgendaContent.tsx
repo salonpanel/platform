@@ -173,10 +173,10 @@ export function AgendaContent({
     return (
       <GlassCard className="border-[var(--color-danger)]/50 bg-[var(--color-danger-glass)]">
         <div className="text-[var(--color-danger)]">
-          <h3 className="mb-2 font-semibold" style={{ fontFamily: "var(--font-heading)" }}>
+          <h3 className="mb-2 font-semibold" style={{ fontFamily: "var(--font-sans)" }}>
             Error
           </h3>
-          <p className="text-sm" style={{ fontFamily: "var(--font-body)" }}>
+          <p className="text-sm" style={{ fontFamily: "var(--font-sans)" }}>
             {error}
           </p>
         </div>

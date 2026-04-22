@@ -18,10 +18,19 @@ export async function proxy(request: NextRequest) {
     });
 
     // 2. Refresh Session (Supabase SSR)
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
+    // During build/prerender, env vars may be unavailable. In that case we skip auth
+    // checks and continue with anonymous routing to avoid hard build failures.
+    let user: Awaited<ReturnType<typeof createServerClient>> extends {
+        auth: { getUser: () => Promise<{ data: { user: infer U } }> };
+    }
+        ? U | null
+        : null = null;
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (supabaseUrl && supabaseAnonKey) {
+        const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
             cookies: {
                 getAll() {
                     return request.cookies.getAll();
@@ -42,15 +51,13 @@ export async function proxy(request: NextRequest) {
                 name: "sb-panel-auth",
                 maxAge: 31536000,
             },
-        }
-    );
+        });
 
-    // IMPORTANT: Do not run getUser() if not needed to avoid extra auth calls on public assets
-    // But for security guards we usually need it.
-    // We will call it only if we need to check auth state for specific routes.
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+        const {
+            data: { user: authUser },
+        } = await supabase.auth.getUser();
+        user = authUser;
+    }
 
     // 3. Subdomain Resolution
     const host = request.headers.get("host") || "";
@@ -67,8 +74,8 @@ export async function proxy(request: NextRequest) {
         if (path.startsWith("/admin")) {
             return NextResponse.redirect(new URL(`https://admin.bookfast.es${path}`));
         }
-        // PROTECCIÓN: Bloquear acceso a rutas de Tenant Portal
-        if (path.startsWith("/r/")) {
+        // PROTECCIÓN: Bloquear acceso a rutas internas de portal tenant
+        if (path.startsWith("/t/")) {
             return NextResponse.redirect(new URL("https://bookfast.es"));
         }
 
@@ -126,7 +133,7 @@ export async function proxy(request: NextRequest) {
     }
 
     // C. TENANT DOMAIN ({tenant}.bookfast.es) -> Portal Público
-    // Ej: barberia.bookfast.es → sirve /r/[subdomain][path]
+    // Ej: www.barberia.bookfast.es → sirve /t/[tenantSlug][path]
     if (hostType === "tenant" && subdomain) {
         // PROTECCIÓN: Bloquear panel y admin
         if (path.startsWith("/panel")) {

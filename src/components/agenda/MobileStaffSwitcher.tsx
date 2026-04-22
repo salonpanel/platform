@@ -98,7 +98,7 @@ export function MobileStaffSwitcher({
     <>
       {/* Compact switcher bar */}
       <div className="px-3 py-2">
-        <div className="flex items-center gap-1.5 rounded-2xl border border-[var(--glass-border)] bg-white/[0.04] backdrop-blur-md shadow-[var(--shadow-premium)] px-2 py-2">
+        <div className="flex items-center gap-1.5 rounded-[var(--r-xl)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] shadow-[var(--bf-shadow-card)] px-2 py-2">
         {/* Prev arrow */}
         <motion.button
           id="staff-prev-btn"
@@ -109,8 +109,8 @@ export function MobileStaffSwitcher({
             "flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl",
             "transition-all duration-200",
             canGoPrev
-              ? "text-[var(--text-primary)] active:bg-white/10"
-              : "text-[var(--text-tertiary)] opacity-40"
+              ? "text-[var(--bf-ink-50)] active:bg-[var(--bf-surface)]"
+              : "text-[var(--bf-ink-400)] opacity-40"
           )}
           aria-label="Barbero anterior"
         >
@@ -132,23 +132,23 @@ export function MobileStaffSwitcher({
               style={{ backgroundColor: currentColor }}
             />
           ) : (
-            <Users className="w-3.5 h-3.5 text-[var(--accent-aqua)] flex-shrink-0" />
+            <Users className="w-3.5 h-3.5 text-[var(--bf-primary)] flex-shrink-0" />
           )}
 
           {/* Name */}
-          <span className="text-[13px] font-semibold font-satoshi text-[var(--text-primary)] truncate leading-tight">
+          <span className="text-[13px] font-semibold text-[var(--bf-ink-50)] truncate leading-tight" style={{ fontFamily: "var(--font-sans)" }}>
             {current?.name ?? "—"}
           </span>
 
           {/* Booking count badge */}
           {currentCount > 0 && (
-            <span className="flex-shrink-0 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-bold bg-[var(--accent-aqua)]/15 text-[var(--accent-aqua)] leading-none">
+            <span className="flex-shrink-0 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-bold bg-[rgba(79,161,216,0.15)] text-[var(--bf-primary)] leading-none">
               {currentCount}
             </span>
           )}
 
           {/* Chevron down hint */}
-          <span className="text-[var(--text-tertiary)] text-xs leading-none flex-shrink-0">▾</span>
+          <span className="text-[var(--bf-ink-400)] text-xs leading-none flex-shrink-0">▾</span>
         </motion.button>
 
         {/* Next arrow */}
@@ -161,8 +161,8 @@ export function MobileStaffSwitcher({
             "flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl",
             "transition-all duration-200",
             canGoNext
-              ? "text-[var(--text-primary)] active:bg-white/10"
-              : "text-[var(--text-tertiary)] opacity-40"
+              ? "text-[var(--bf-ink-50)] active:bg-[var(--bf-surface)]"
+              : "text-[var(--bf-ink-400)] opacity-40"
           )}
           aria-label="Siguiente barbero"
         >
@@ -194,21 +194,21 @@ export function MobileStaffSwitcher({
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 320 }}
-              className="fixed bottom-0 left-0 right-0 z-[56] rounded-t-3xl bg-[var(--bg-primary)] border-t border-[var(--glass-border)] nav-inset-bottom"
+              className="fixed bottom-0 left-0 right-0 z-[56] rounded-t-3xl bg-[var(--bf-surface)] border-t border-[var(--bf-border)] nav-inset-bottom"
             >
               {/* Handle */}
               <div className="flex justify-center pt-3 pb-1">
-                <div className="w-10 h-1 rounded-full bg-[var(--text-tertiary)]/30" />
+                <div className="w-10 h-1 rounded-full bg-[var(--bf-ink-400)]/30" />
               </div>
 
               {/* Header */}
-              <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--glass-border-subtle)]">
-                <h3 className="text-base font-semibold font-satoshi text-[var(--text-primary)]">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--bf-border)]">
+                <h3 className="text-base font-semibold text-[var(--bf-ink-50)]" style={{ fontFamily: "var(--font-sans)" }}>
                   Selecciona un barbero
                 </h3>
                 <button
                   onClick={() => setSheetOpen(false)}
-                  className="p-2 -mr-1 rounded-xl text-[var(--text-secondary)] active:bg-white/8 transition-all duration-200"
+                  className="p-2 -mr-1 rounded-[var(--r-md)] text-[var(--bf-ink-400)] hover:bg-[var(--bf-bg-elev)] transition-all duration-200"
                   aria-label="Cerrar"
                 >
                   <X className="w-5 h-5" />
@@ -240,8 +240,8 @@ export function MobileStaffSwitcher({
                       className={cn(
                         "w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-200",
                         isSelected
-                          ? "bg-[var(--accent-aqua)]/10 border border-[var(--accent-aqua)]/25"
-                          : "bg-white/[0.03] border border-transparent active:bg-white/[0.07]"
+                          ? "bg-[rgba(79,161,216,0.10)] border border-[rgba(79,161,216,0.30)]"
+                          : "bg-[var(--bf-bg-elev)] border border-transparent active:bg-[var(--bf-surface)]"
                       )}
                     >
                       {/* Avatar / icon */}
@@ -256,7 +256,7 @@ export function MobileStaffSwitcher({
                               }
                             : {
                                 backgroundColor: "rgba(79,161,216,0.1)",
-                                color: "var(--accent-aqua)",
+                                color: "var(--bf-primary)",
                                 border: "1.5px solid rgba(79,161,216,0.25)",
                               }
                         }
@@ -274,15 +274,16 @@ export function MobileStaffSwitcher({
                       <div className="flex-1 text-left min-w-0">
                         <p
                           className={cn(
-                            "text-[14px] font-semibold font-satoshi truncate leading-tight",
+                            "text-[14px] font-semibold  truncate leading-tight",
                             isSelected
-                              ? "text-[var(--accent-aqua)]"
-                              : "text-[var(--text-primary)]"
+                              ? "text-[var(--bf-primary)]"
+                              : "text-[var(--bf-ink-50)]"
                           )}
+                          style={{ fontFamily: "var(--font-sans)" }}
                         >
                           {option.name}
                         </p>
-                        <p className="text-[11px] text-[var(--text-tertiary)] mt-0.5 leading-tight">
+                        <p className="text-[11px] text-[var(--bf-ink-400)] mt-0.5 leading-tight">
                           {count === 0
                             ? "Sin citas hoy"
                             : count === 1
@@ -300,7 +301,7 @@ export function MobileStaffSwitcher({
                             exit={{ scale: 0, opacity: 0 }}
                             transition={{ type: "spring", stiffness: 400, damping: 25 }}
                           >
-                            <Check className="w-4 h-4 text-[var(--accent-aqua)] flex-shrink-0" />
+                            <Check className="w-4 h-4 text-[var(--bf-primary)] flex-shrink-0" />
                           </motion.div>
                         )}
                       </AnimatePresence>

@@ -67,25 +67,25 @@ export function TransactionItem({
 
   const getTransactionTypeInfo = (type: string) => {
     const types = {
-      charge: { label: "Pago", color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/30" },
-      refund: { label: "Reembolso", color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/30" },
+      charge: { label: "Pago", color: "text-[var(--bf-success)]", bg: "bg-[rgba(30,161,159,0.10)]", border: "border-[rgba(30,161,159,0.30)]" },
+      refund: { label: "Reembolso", color: "text-[var(--bf-primary)]", bg: "bg-[rgba(79,161,216,0.10)]", border: "border-[rgba(79,161,216,0.30)]" },
       payout: { label: "Payout", color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/30" },
-      fee: { label: "Comisión", color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/30" },
-      adjustment: { label: "Ajuste", color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/30" },
+      fee: { label: "Comisión", color: "text-[var(--bf-danger)]", bg: "bg-[rgba(224,96,114,0.10)]", border: "border-[rgba(224,96,114,0.30)]" },
+      adjustment: { label: "Ajuste", color: "text-[var(--bf-warn)]", bg: "bg-[rgba(232,176,74,0.10)]", border: "border-[rgba(232,176,74,0.30)]" },
     };
-    return types[type as keyof typeof types] || { label: type, color: "text-slate-400", bg: "bg-slate-500/10", border: "border-slate-500/30" };
+    return types[type as keyof typeof types] || { label: type, color: "text-[var(--bf-ink-400)]", bg: "bg-[var(--bf-bg-elev)]", border: "border-slate-500/30" };
   };
 
   const getStatusInfo = (status: string) => {
     const statuses = {
-      succeeded: { label: "Completado", icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-500/15", border: "border-emerald-500/30" },
-      paid: { label: "Pagado", icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-500/15", border: "border-emerald-500/30" },
-      pending: { label: "Pendiente", icon: Clock, color: "text-amber-400", bg: "bg-amber-500/15", border: "border-amber-500/30" },
-      failed: { label: "Fallido", icon: AlertCircle, color: "text-red-400", bg: "bg-red-500/15", border: "border-red-500/30" },
-      in_transit: { label: "En tránsito", icon: Clock, color: "text-blue-400", bg: "bg-blue-500/15", border: "border-blue-500/30" },
-      canceled: { label: "Cancelado", icon: AlertCircle, color: "text-slate-400", bg: "bg-slate-500/15", border: "border-slate-500/30" },
+      succeeded: { label: "Completado", icon: CheckCircle2, color: "text-[var(--bf-success)]", bg: "bg-[rgba(30,161,159,0.12)]", border: "border-[rgba(30,161,159,0.30)]" },
+      paid: { label: "Pagado", icon: CheckCircle2, color: "text-[var(--bf-success)]", bg: "bg-[rgba(30,161,159,0.12)]", border: "border-[rgba(30,161,159,0.30)]" },
+      pending: { label: "Pendiente", icon: Clock, color: "text-[var(--bf-warn)]", bg: "bg-[rgba(232,176,74,0.10)]", border: "border-[rgba(232,176,74,0.30)]" },
+      failed: { label: "Fallido", icon: AlertCircle, color: "text-[var(--bf-danger)]", bg: "bg-[rgba(224,96,114,0.10)]", border: "border-[rgba(224,96,114,0.30)]" },
+      in_transit: { label: "En tránsito", icon: Clock, color: "text-[var(--bf-primary)]", bg: "bg-blue-500/15", border: "border-[rgba(79,161,216,0.30)]" },
+      canceled: { label: "Cancelado", icon: AlertCircle, color: "text-[var(--bf-ink-400)]", bg: "bg-slate-500/15", border: "border-slate-500/30" },
     };
-    return statuses[status as keyof typeof statuses] || { label: status, icon: Info, color: "text-slate-400", bg: "bg-slate-500/15", border: "border-slate-500/30" };
+    return statuses[status as keyof typeof statuses] || { label: status, icon: Info, color: "text-[var(--bf-ink-400)]", bg: "bg-slate-500/15", border: "border-slate-500/30" };
   };
 
   const typeInfo = getTransactionTypeInfo(transaction.type);
@@ -153,7 +153,7 @@ export function TransactionItem({
 
                 {/* Description and date */}
                 {transaction.description && (
-                  <p className="text-sm text-slate-400 mb-1 truncate">
+                  <p className="text-sm text-[var(--bf-ink-400)] mb-1 truncate">
                     {transaction.description}
                   </p>
                 )}
@@ -170,20 +170,20 @@ export function TransactionItem({
             <div className="text-right">
               <p className={cn(
                 "font-bold text-lg mb-1",
-                transaction.net >= 0 ? "text-emerald-400" : "text-red-400"
+                transaction.net >= 0 ? "text-[var(--bf-success)]" : "text-[var(--bf-danger)]"
               )}>
                 {formatCurrency(transaction.net, transaction.currency)}
               </p>
 
               {transaction.fee > 0 && (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-[var(--bf-ink-400)]">
                   Comisión: {formatCurrency(transaction.fee, transaction.currency)}
                 </p>
               )}
 
               {/* Transaction ID */}
               <div className="flex items-center gap-1 mt-2">
-                <code className="text-xs text-slate-500 font-mono bg-slate-800/50 px-2 py-0.5 rounded">
+                <code className="text-xs text-slate-500 font-mono bg-[var(--bf-surface)] px-2 py-0.5 rounded">
                   {transaction.id.substring(0, 8)}...
                 </code>
                 <button
@@ -194,7 +194,7 @@ export function TransactionItem({
                   className="p-1 rounded hover:bg-slate-700/50 transition-colors"
                   title="Copiar ID"
                 >
-                  <Copy className="h-3 w-3 text-slate-400" />
+                  <Copy className="h-3 w-3 text-[var(--bf-ink-400)]" />
                 </button>
               </div>
             </div>
@@ -230,28 +230,28 @@ export function TransactionItem({
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
-              className="mt-4 pt-4 border-t border-slate-700/50"
+              className="mt-4 pt-4 border-t border-[var(--bf-border)]"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
                   <h4 className="font-medium text-white mb-2">Detalles de la transacción</h4>
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-slate-400">ID:</span>
-                      <code className="text-slate-300 font-mono text-xs bg-slate-800/50 px-2 py-1 rounded">
+                      <span className="text-[var(--bf-ink-400)]">ID:</span>
+                      <code className="text-[var(--bf-ink-300)] font-mono text-xs bg-[var(--bf-surface)] px-2 py-1 rounded">
                         {transaction.id}
                       </code>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Tipo:</span>
+                      <span className="text-[var(--bf-ink-400)]">Tipo:</span>
                       <span className="text-white">{typeInfo.label}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Estado:</span>
+                      <span className="text-[var(--bf-ink-400)]">Estado:</span>
                       <span className={statusInfo.color}>{statusInfo.label}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Fecha:</span>
+                      <span className="text-[var(--bf-ink-400)]">Fecha:</span>
                       <span className="text-white">{formatDate(transaction.created)}</span>
                     </div>
                   </div>
@@ -261,20 +261,20 @@ export function TransactionItem({
                   <h4 className="font-medium text-white mb-2">Montos</h4>
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Bruto:</span>
+                      <span className="text-[var(--bf-ink-400)]">Bruto:</span>
                       <span className="text-white">{formatCurrency(transaction.amount, transaction.currency)}</span>
                     </div>
                     {transaction.fee > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-slate-400">Comisión:</span>
-                        <span className="text-red-400">-{formatCurrency(transaction.fee, transaction.currency)}</span>
+                        <span className="text-[var(--bf-ink-400)]">Comisión:</span>
+                        <span className="text-[var(--bf-danger)]">-{formatCurrency(transaction.fee, transaction.currency)}</span>
                       </div>
                     )}
-                    <div className="flex justify-between border-t border-slate-700/50 pt-2">
-                      <span className="text-slate-400 font-medium">Neto:</span>
+                    <div className="flex justify-between border-t border-[var(--bf-border)] pt-2">
+                      <span className="text-[var(--bf-ink-400)] font-medium">Neto:</span>
                       <span className={cn(
                         "font-medium",
-                        transaction.net >= 0 ? "text-emerald-400" : "text-red-400"
+                        transaction.net >= 0 ? "text-[var(--bf-success)]" : "text-[var(--bf-danger)]"
                       )}>
                         {formatCurrency(transaction.net, transaction.currency)}
                       </span>
@@ -284,7 +284,7 @@ export function TransactionItem({
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2 mt-4 pt-4 border-t border-slate-700/50">
+              <div className="flex gap-2 mt-4 pt-4 border-t border-[var(--bf-border)]">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -362,11 +362,11 @@ export function TransactionList({
   if (transactions.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="w-16 h-16 bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-4">
-          <TrendingUp className="h-8 w-8 text-slate-400" />
+        <div className="w-16 h-16 bg-[var(--bf-surface)] rounded-full flex items-center justify-center mx-auto mb-4">
+          <TrendingUp className="h-8 w-8 text-[var(--bf-ink-400)]" />
         </div>
-        <h3 className="text-lg font-medium text-slate-300 mb-2">Sin transacciones</h3>
-        <p className="text-slate-400">{emptyMessage}</p>
+        <h3 className="text-lg font-medium text-[var(--bf-ink-300)] mb-2">Sin transacciones</h3>
+        <p className="text-[var(--bf-ink-400)]">{emptyMessage}</p>
       </div>
     );
   }

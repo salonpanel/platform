@@ -14,6 +14,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "BookFast Pro - Sistema de Reservas para Barberías",
   description: "Plataforma de gestión y reservas online para barberías",

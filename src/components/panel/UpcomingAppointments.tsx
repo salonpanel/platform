@@ -96,14 +96,14 @@ export function UpcomingAppointments({
     <GlassCard className="relative p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-medium text-[var(--text-primary)] font-satoshi mb-1">
+          <h3 className="text-sm font-medium text-[var(--bf-ink-50)] mb-1" style={{ fontFamily: "var(--font-sans)" }}>
             Próximas Reservas
           </h3>
-          <p className="text-xs text-[var(--text-secondary)]">Próximas {limit} citas programadas</p>
+          <p className="text-xs text-[var(--bf-ink-400)]">Próximas {limit} citas programadas</p>
         </div>
         <Link
           href="/panel/agenda"
-          className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-medium transition-colors duration-200 flex items-center gap-1"
+          className="text-xs text-[var(--bf-ink-400)] hover:text-[var(--bf-primary)] font-medium transition-colors duration-200 flex items-center gap-1"
         >
           Ver todas
           <ArrowRight className="h-3 w-3" />
@@ -120,37 +120,35 @@ export function UpcomingAppointments({
             <Link
               href={`/panel/agenda?date=${format(parseISO(booking.starts_at), "yyyy-MM-dd")}`}
               className={cn(
-                "block p-3 rounded-xl relative overflow-hidden group transition-all duration-150",
-                "bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-white/10"
+                "block p-3 rounded-[var(--r-md)] relative overflow-hidden group transition-all duration-150",
+                "bg-[var(--bf-bg-elev)] border border-[var(--bf-border)] hover:bg-[var(--bf-surface)] hover:border-[var(--bf-border-2)]"
               )}
             >
-              <motion.div
-                className="absolute inset-0 gradient-aurora-1 opacity-0 group-hover:opacity-5 transition-opacity duration-300"
-              />
+              <div className="absolute inset-0 bg-[rgba(79,161,216,0.04)] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none rounded-[var(--r-md)]" />
               <div className="flex items-start justify-between relative z-10 gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                    <span className="text-xs font-mono font-semibold text-[var(--text-primary)] font-satoshi bg-white/5 px-2 py-0.5 rounded">
+                    <span className="text-xs font-semibold text-[var(--bf-primary)] px-2 py-0.5 rounded-[var(--r-sm)] bg-[rgba(79,161,216,0.12)] border border-[rgba(79,161,216,0.25)]" style={{ fontFamily: "var(--font-mono)" }}>
                       {timeFormatter.format(new Date(booking.starts_at))}
                     </span>
                     <GlassBadge variant={getStatusVariant(booking.status)} size="sm">
                       {statusLabels[booking.status] || booking.status}
                     </GlassBadge>
                   </div>
-                  <p className="text-sm font-medium text-[var(--text-primary)] font-satoshi mb-0.5 truncate">
+                  <p className="text-sm font-medium text-[var(--bf-ink-50)] mb-0.5 truncate" style={{ fontFamily: "var(--font-sans)" }}>
                     {booking.customer?.name || "Sin cliente"}
                   </p>
-                  <p className="text-xs text-[var(--text-secondary)] truncate">
+                  <p className="text-xs text-[var(--bf-ink-300)] truncate">
                     {booking.service?.name || "Sin servicio"}
                   </p>
                   {booking.staff && (
-                    <p className="text-[10px] text-[var(--text-secondary)] mt-1 flex items-center gap-1">
+                    <p className="text-[10px] text-[var(--bf-ink-400)] mt-1 flex items-center gap-1">
                       <User className="h-2.5 w-2.5" />
                       {booking.staff.name}
                     </p>
                   )}
                 </div>
-                <ArrowRight className="h-3.5 w-3.5 text-[var(--text-secondary)] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-200 flex-shrink-0" />
+                <ArrowRight className="h-3.5 w-3.5 text-[var(--bf-primary)] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-200 flex-shrink-0" />
               </div>
             </Link>
           </motion.div>

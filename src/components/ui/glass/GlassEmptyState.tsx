@@ -51,14 +51,14 @@ export function GlassEmptyState({
                         isCompact ? "w-12 h-12" : "w-16 h-16"
                     )}>
                         <Icon className={cn(
-                            "text-white/40",
+                            "text-[var(--bf-primary)]",
                             isCompact ? "w-6 h-6" : "w-8 h-8"
                         )} />
                     </div>
                 )}
 
                 <h3 className={cn(
-                    "font-medium text-white mb-2",
+                    "font-semibold text-[var(--bf-ink-50)] mb-2",
                     isCompact ? "text-base" : "text-lg sm:text-xl"
                 )}>
                     {title}
@@ -66,7 +66,7 @@ export function GlassEmptyState({
 
                 {description && (
                     <p className={cn(
-                        "text-[var(--text-secondary)] max-w-sm mb-6",
+                        "text-[var(--bf-ink-300)] max-w-sm mb-6",
                         isCompact ? "text-xs" : "text-sm"
                     )}>
                         {description}

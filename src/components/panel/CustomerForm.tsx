@@ -38,8 +38,8 @@ export function CustomerForm({
   return (
     <div className="space-y-4">
       {error && (
-        <GlassCard className="border-red-500/50 bg-red-500/10 p-4">
-          <p className="text-sm text-red-400">{error}</p>
+        <GlassCard className="border-red-500/50 bg-[rgba(224,96,114,0.10)] p-4">
+          <p className="text-sm text-[var(--bf-danger)]">{error}</p>
         </GlassCard>
       )}
 
@@ -95,7 +95,7 @@ export function CustomerForm({
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">
+        <label className="mb-2 block text-sm font-medium text-[var(--bf-ink-300)]">
           Notas internas
         </label>
         <textarea

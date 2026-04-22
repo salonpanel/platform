@@ -81,7 +81,7 @@ export function BookingDetailPanel({
               {booking.customer?.name || "Sin cliente"}
             </p>
           </div>
-          <span className="px-2 py-1 text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-full">
+          <span className="px-2 py-1 text-xs font-medium bg-[rgba(79,161,216,0.20)] text-[var(--bf-cyan-200)] border border-[rgba(79,161,216,0.30)] rounded-full">
             {booking.status}
           </span>
         </div>
@@ -183,12 +183,12 @@ export function BookingDetailPanel({
               <div className={cn(
                 "p-4 rounded-xl border backdrop-blur-sm",
                 "bg-gradient-to-br from-amber-500/10 to-amber-600/5",
-                "border-amber-500/30"
+                "border-[rgba(232,176,74,0.30)]"
               )}>
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-base text-amber-400">AI</span>
+                  <span className="text-base text-[var(--bf-warn)]">AI</span>
                   <h4 className={cn(
-                    "text-sm font-semibold text-amber-300",
+                    "text-sm font-semibold text-[#F2C87A]",
                     "font-[var(--font-heading)]"
                   )}>
                     Notas para IA y Staff
@@ -200,7 +200,7 @@ export function BookingDetailPanel({
                 )}>
                   {booking.customer.internal_notes}
                 </p>
-                <span className="text-xs text-amber-300/70 font-[var(--font-body)]">
+                <span className="text-xs text-[#F2C87A]/70 font-[var(--font-body)]">
                   [TIP] La IA de voz usa estas notas para personalizar las llamadas
                 </span>
               </div>

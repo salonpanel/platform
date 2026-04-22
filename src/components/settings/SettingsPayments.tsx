@@ -104,17 +104,17 @@ export function SettingsPayments({
                             )}
                         </div>
                         {status?.connected && status?.onboarding_status && (
-                            <p className="text-xs text-[var(--text-secondary)]">
+                            <p className="text-xs text-[var(--bf-ink-300)]">
                                 Onboarding: <span className="text-white/80">{status.onboarding_status}</span>
                             </p>
                         )}
                         {status?.connected && typeof status?.charges_enabled === "boolean" && typeof status?.payouts_enabled === "boolean" && (
-                            <p className="text-[10px] text-[var(--text-secondary)] opacity-70">
+                            <p className="text-[10px] text-[var(--bf-ink-300)] opacity-70">
                                 Cobros: {status.charges_enabled ? "activados" : "pendientes"} · Payouts: {status.payouts_enabled ? "activados" : "pendientes"}
                             </p>
                         )}
                         {status?.connected && status?.account_id && (
-                            <p className="text-[10px] text-[var(--text-secondary)] opacity-70">
+                            <p className="text-[10px] text-[var(--bf-ink-300)] opacity-70">
                                 Account: <span className="font-mono">{status.account_id}</span>
                             </p>
                         )}
@@ -146,14 +146,14 @@ export function SettingsPayments({
 
                 {!canManage && (
                     <GlassCard className="p-4 border-white/10 bg-white/5">
-                        <p className="text-xs text-[var(--text-secondary)]">
+                        <p className="text-xs text-[var(--bf-ink-300)]">
                             Solo <span className="text-white/80">owner</span> o <span className="text-white/80">admin</span> pueden gestionar Stripe.
                         </p>
                     </GlassCard>
                 )}
 
                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-[var(--text-secondary)]">
+                    <label className="text-sm font-medium text-[var(--bf-ink-300)]">
                         Webhook URL
                     </label>
                     <div className="flex gap-2">
@@ -166,7 +166,7 @@ export function SettingsPayments({
                             <Copy className="w-4 h-4" />
                         </GlassButton>
                     </div>
-                    <p className="text-[11px] text-[var(--text-secondary)]">
+                    <p className="text-[11px] text-[var(--bf-ink-300)]">
                         Configura este endpoint en tu dashboard de Stripe para recibir eventos.
                     </p>
                 </div>

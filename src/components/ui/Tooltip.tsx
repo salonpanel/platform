@@ -120,8 +120,8 @@ export function Tooltip({
               "text-[var(--bf-ink-100)] shadow-[var(--bf-shadow-card)]",
               className
             )}
-            style={{ fontFamily: "var(--font-sans)" }}
             style={{
+              fontFamily: "var(--font-sans)",
               top: `${position.top}px`,
               left: `${position.left}px`,
             }}
