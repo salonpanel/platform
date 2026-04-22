@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import React from "react";
 import { format, startOfWeek, addDays, parseISO, isSameDay, startOfToday } from "date-fns";
 import { AppointmentCard } from "@/components/agenda/AppointmentCard";
@@ -185,125 +185,22 @@ export const WeekView = React.memo(function WeekView({
     return { top: `${top}%`, height: `${height}%` };
   };
 
-  // Mobile view: day chips + filtered list
+  // ─── Mobile view: infinite day strip + filtered list ───────────────────────
   if (isMobile) {
-    const activeStaffId =
-      mobileSelectedStaffId === null
-        ? null
-        : (mobileSelectedStaffId && staffList.some((s) => s.id === mobileSelectedStaffId))
-          ? mobileSelectedStaffId
-          : (staffList[0]?.id ?? null);
-
-    const mobileDayBookingsAll = bookingsByDay.get(selectedMobileDay) || [];
-    const mobileDayBookings = activeStaffId
-      ? mobileDayBookingsAll.filter((b) => b.staff_id === activeStaffId)
-      : mobileDayBookingsAll;
-
     return (
-      <div className="w-full h-full flex flex-col overflow-hidden bg-[var(--bf-bg)]" role="region" aria-label="Vista semanal móvil">
-        <div className="flex flex-col h-full overflow-hidden">
-          {/* Day chips — sticky horizontal scroller */}
-          <div
-            className="flex-shrink-0 flex gap-2 px-3 py-2 overflow-x-auto scrollbar-hide bg-[var(--bf-bg-elev)]"
-            style={{ borderBottom: '1px solid var(--bf-border)' }}
-          >
-            {weekDays.map((day) => {
-              const dayKey = format(day, "yyyy-MM-dd");
-              const isSelected = dayKey === selectedMobileDay;
-              const isToday = isSameDay(day, today);
-              const count = (bookingsByDay.get(dayKey) || []).length;
-
-              return (
-                <button
-                  key={dayKey}
-                  onClick={() => setSelectedMobileDay(dayKey)}
-                  className="flex-shrink-0 flex flex-col items-center gap-0.5 rounded-xl px-3 py-1.5 min-w-[48px] transition-all duration-200 relative"
-                  style={isSelected ? {
-                    backgroundColor: 'rgba(79,161,216,0.2)',
-                    border: '1px solid rgba(79,161,216,0.5)',
-                  } : isToday ? {
-                    backgroundColor: 'rgba(79,161,216,0.1)',
-                    border: '1px solid rgba(79,161,216,0.3)',
-                  } : {
-                    backgroundColor: 'var(--bf-bg-elev)',
-                    border: '1px solid var(--bf-border)',
-                  }}
-                >
-                  <span
-                    className="text-[10px] font-semibold uppercase tracking-wider"
-                    style={{ color: isSelected ? '#4FA1D8' : isToday ? '#4FA1D8' : 'var(--bf-ink-400)' }}
-                  >
-                    {new Intl.DateTimeFormat("es-ES", { weekday: "short" }).format(day).slice(0, 2)}
-                  </span>
-                  <span
-                    className="text-base font-bold leading-none"
-                    style={{ color: isSelected ? '#4FA1D8' : isToday ? '#4FA1D8' : 'var(--bf-ink-50)' }}
-                  >
-                    {format(day, "d")}
-                  </span>
-                  {count > 0 && (
-                    <span
-                      className="text-[9px] font-semibold leading-none mt-0.5 px-1 rounded-full"
-                      style={{
-                        backgroundColor: isSelected ? 'rgba(79,161,216,0.3)' : 'rgba(255,255,255,0.1)',
-                        color: isSelected ? '#4FA1D8' : 'var(--bf-ink-300)',
-                      }}
-                    >
-                      {count}
-                    </span>
-                  )}
-                  {isToday && !isSelected && (
-                    <div className="absolute top-1 right-1 w-1 h-1 rounded-full bg-[#4FA1D8]" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Staff switcher — MUST be under day chips (mobile) */}
-          {staffList.length > 1 && onMobileStaffChange && (
-            <div className="flex-shrink-0">
-              <MobileStaffSwitcher
-                staffList={staffList}
-                selectedStaffId={activeStaffId}
-                onSelectStaff={onMobileStaffChange}
-                bookingCounts={bookingCounts}
-                includeAllOption
-              />
-            </div>
-          )}
-
-          {/* Bookings list for selected day */}
-          <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-3 py-3">
-            {mobileDayBookings.length > 0 ? (
-              <div className="space-y-2">
-                {mobileDayBookings
-                  .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
-                  .map((booking) => (
-                    <AppointmentCard
-                      key={booking.id}
-                      booking={booking}
-                      timezone={timezone}
-                      variant="list"
-                      staffColor={booking.staff_id ? staffColorById.get(booking.staff_id) : (booking.staff?.color ?? null)}
-                      onClick={() => onBookingClick(booking)}
-                      onContextMenu={(e) => onBookingContextMenu?.(e, booking)}
-                    />
-                  ))}
-              </div>
-            ) : (
-              <div className="h-full flex items-center justify-center">
-                <GlassEmptyState
-                  icon={Calendar}
-                  title="Sin citas"
-                  description={`No hay citas para ${new Intl.DateTimeFormat("es-ES", { weekday: "long", day: "numeric", month: "long" }).format(parseISO(selectedMobileDay))}`}
-                  variant="default"
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      <MobileWeekView
+        bookings={bookings}
+        staffList={staffList}
+        timezone={timezone}
+        selectedDate={selectedDate}
+        staffColorById={staffColorById}
+        bookingsByDay={bookingsByDay}
+        onBookingClick={onBookingClick}
+        onBookingContextMenu={onBookingContextMenu}
+        mobileSelectedStaffId={mobileSelectedStaffId ?? null}
+        onMobileStaffChange={onMobileStaffChange}
+        bookingCounts={bookingCounts}
+      />
     );
   }
 
@@ -433,7 +330,6 @@ export const WeekView = React.memo(function WeekView({
     </div>
   );
 }, (prevProps, nextProps) => {
-  // Custom comparison function for React.memo
   return (
     prevProps.bookings.length === nextProps.bookings.length &&
     prevProps.selectedDate === nextProps.selectedDate &&
@@ -446,4 +342,283 @@ export const WeekView = React.memo(function WeekView({
     prevProps.onBookingContextMenu === nextProps.onBookingContextMenu
   );
 });
+
+// ─── MobileWeekView — infinite horizontal day strip ─────────────────────────
+// Genera PAST_DAYS días antes de hoy y FUTURE_DAYS días después.
+// Al montar hace scroll automático para que hoy quede como primer elemento visible.
+const PAST_DAYS = 60;
+const FUTURE_DAYS = 180;
+
+interface MobileWeekViewProps {
+  bookings: Booking[];
+  staffList: Staff[];
+  timezone: string;
+  selectedDate: string;
+  staffColorById: Map<string, string>;
+  bookingsByDay: Map<string, Booking[]>;
+  onBookingClick: (booking: Booking) => void;
+  onBookingContextMenu?: (e: React.MouseEvent, booking: Booking) => void;
+  mobileSelectedStaffId: string | null;
+  onMobileStaffChange?: (staffId: string | null) => void;
+  bookingCounts?: Record<string, number>;
+}
+
+function MobileWeekView({
+  bookings,
+  staffList,
+  timezone,
+  selectedDate,
+  staffColorById,
+  bookingsByDay,
+  onBookingClick,
+  onBookingContextMenu,
+  mobileSelectedStaffId,
+  onMobileStaffChange,
+  bookingCounts,
+}: MobileWeekViewProps) {
+  const today = startOfToday();
+
+  // Genera el array infinito de días
+  const allDays = useMemo(() => {
+    return Array.from({ length: PAST_DAYS + FUTURE_DAYS + 1 }, (_, i) =>
+      addDays(today, i - PAST_DAYS)
+    );
+  }, [today]);
+
+  // Día seleccionado: default = hoy o el selectedDate si es válido
+  const [selectedMobileDay, setSelectedMobileDay] = useState<string>(() => {
+    const todayKey = format(today, "yyyy-MM-dd");
+    return selectedDate || todayKey;
+  });
+
+  // Bookings enriquecidos para el día seleccionado
+  const activeStaffId =
+    mobileSelectedStaffId === null
+      ? null
+      : staffList.some((s) => s.id === mobileSelectedStaffId)
+      ? mobileSelectedStaffId
+      : staffList[0]?.id ?? null;
+
+  const mobileDayBookingsAll = useMemo(() => {
+    const all: Booking[] = [];
+    bookings.forEach((b) => {
+      const d = new Date(b.starts_at);
+      const local = new Date(d.toLocaleString("en-US", { timeZone: timezone }));
+      if (format(local, "yyyy-MM-dd") === selectedMobileDay) all.push(b);
+    });
+    return all;
+  }, [bookings, selectedMobileDay, timezone]);
+
+  const mobileDayBookings = activeStaffId
+    ? mobileDayBookingsAll.filter((b) => b.staff_id === activeStaffId)
+    : mobileDayBookingsAll;
+
+  // Conteo por día (para el badge en las fichas)
+  const countByDay = useMemo(() => {
+    const map: Record<string, number> = {};
+    bookings.forEach((b) => {
+      const d = new Date(b.starts_at);
+      const local = new Date(d.toLocaleString("en-US", { timeZone: timezone }));
+      const k = format(local, "yyyy-MM-dd");
+      map[k] = (map[k] ?? 0) + 1;
+    });
+    return map;
+  }, [bookings, timezone]);
+
+  // Ref para el scroll del strip de días
+  const stripRef = useRef<HTMLDivElement>(null);
+  const todayBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Función para volver a hoy
+  const scrollToToday = useCallback(() => {
+    const todayKey = format(today, "yyyy-MM-dd");
+    setSelectedMobileDay(todayKey);
+    requestAnimationFrame(() => {
+      todayBtnRef.current?.scrollIntoView({ block: "nearest", inline: "start", behavior: "smooth" });
+    });
+  }, [today]);
+
+  // Al montar: scroll automático para que hoy sea el primer visible
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      if (todayBtnRef.current && stripRef.current) {
+        stripRef.current.scrollLeft = todayBtnRef.current.offsetLeft - 8; // 8px de margen izq
+      }
+    });
+  }, []);
+
+  // Mes del día seleccionado (para la cabecera)
+  const monthLabel = useMemo(() => {
+    const d = parseISO(selectedMobileDay);
+    return new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric" }).format(d);
+  }, [selectedMobileDay]);
+
+  return (
+    <div className="w-full h-full flex flex-col overflow-hidden bg-[var(--bf-bg)]" role="region" aria-label="Vista semanal móvil">
+      {/* ── Cabecera: [Hoy] | Mes centrado | vacío ── */}
+      <div
+        className="flex-shrink-0 flex items-center justify-between px-4 py-2 bg-[var(--bf-bg)]"
+        style={{ borderBottom: "1px solid var(--bf-border)" }}
+      >
+        {/* Botón Hoy */}
+        <button
+          type="button"
+          onClick={scrollToToday}
+          className="px-3 py-1.5 rounded-[var(--r-full)] text-sm font-semibold transition-all duration-200 border"
+          style={{
+            fontFamily: "var(--font-sans)",
+            backgroundColor: "var(--bf-bg-elev)",
+            borderColor: "var(--bf-border-2)",
+            color: "var(--bf-ink-300)",
+          }}
+        >
+          Hoy
+        </button>
+
+        {/* Mes centrado — ocupa el espacio del medio */}
+        <h2
+          className="flex-1 text-center font-semibold capitalize text-lg tracking-tight"
+          style={{
+            fontFamily: "var(--font-sans)",
+            color: "var(--bf-ink-50)",
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {monthLabel}
+        </h2>
+
+        {/* Placeholder derecha para centrar el título */}
+        <div className="w-[60px]" aria-hidden />
+      </div>
+
+      {/* ── Tira infinita de días ── */}
+      <div
+        ref={stripRef}
+        className="flex-shrink-0 flex gap-1.5 px-2 py-2 overflow-x-auto scrollbar-hide"
+        style={{ background: "var(--bf-bg)", borderBottom: "1px solid var(--bf-border)" }}
+      >
+        {allDays.map((day) => {
+          const dayKey = format(day, "yyyy-MM-dd");
+          const todayKey = format(today, "yyyy-MM-dd");
+          const isSelected = dayKey === selectedMobileDay;
+          const isToday = dayKey === todayKey;
+          const count = countByDay[dayKey] ?? 0;
+
+          return (
+            <button
+              key={dayKey}
+              ref={isToday ? todayBtnRef : undefined}
+              type="button"
+              onClick={() => setSelectedMobileDay(dayKey)}
+              className="flex-shrink-0 flex flex-col items-center gap-0.5 rounded-[var(--r-md)] px-2.5 py-1.5 min-w-[46px] transition-all duration-150 relative"
+              style={
+                isSelected
+                  ? { backgroundColor: "var(--bf-primary)", border: "none" }
+                  : isToday
+                  ? { backgroundColor: "rgba(79,161,216,0.10)", border: "1px solid rgba(79,161,216,0.35)" }
+                  : { backgroundColor: "transparent", border: "1px solid transparent" }
+              }
+            >
+              {/* Día de semana */}
+              <span
+                className="text-[10px] font-medium uppercase tracking-[0.08em]"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  color: isSelected ? "var(--bf-ink)" : isToday ? "var(--bf-primary)" : "var(--bf-ink-400)",
+                }}
+              >
+                {new Intl.DateTimeFormat("es-ES", { weekday: "short" }).format(day).slice(0, 2)}
+              </span>
+
+              {/* Número de día */}
+              <span
+                className="text-[17px] font-bold leading-none"
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  letterSpacing: "-0.02em",
+                  color: isSelected ? "var(--bf-ink)" : isToday ? "var(--bf-primary)" : "var(--bf-ink-50)",
+                }}
+              >
+                {format(day, "d")}
+              </span>
+
+              {/* Badge de citas */}
+              {count > 0 && (
+                <span
+                  className="text-[9px] font-bold leading-none px-1.5 py-0.5 rounded-full mt-0.5"
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    backgroundColor: isSelected ? "rgba(5,7,10,0.25)" : "rgba(79,161,216,0.15)",
+                    color: isSelected ? "var(--bf-ink)" : "var(--bf-primary)",
+                  }}
+                >
+                  {count}
+                </span>
+              )}
+
+              {/* Punto indicador de hoy (cuando no está seleccionado) */}
+              {isToday && !isSelected && (
+                <div
+                  className="absolute bottom-1 w-1 h-1 rounded-full"
+                  style={{ backgroundColor: "var(--bf-primary)" }}
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Staff switcher (bajo la tira de días) */}
+      {staffList.length > 1 && onMobileStaffChange && (
+        <div className="flex-shrink-0">
+          <MobileStaffSwitcher
+            staffList={staffList}
+            selectedStaffId={activeStaffId}
+            onSelectStaff={onMobileStaffChange}
+            bookingCounts={bookingCounts}
+            includeAllOption
+          />
+        </div>
+      )}
+
+      {/* Lista de reservas del día seleccionado */}
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-3 py-3">
+        {mobileDayBookings.length > 0 ? (
+          <div className="space-y-2">
+            {mobileDayBookings
+              .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
+              .map((booking) => (
+                <AppointmentCard
+                  key={booking.id}
+                  booking={booking}
+                  timezone={timezone}
+                  variant="list"
+                  staffColor={
+                    booking.staff_id
+                      ? staffColorById.get(booking.staff_id)
+                      : (booking.staff?.color ?? null)
+                  }
+                  onClick={() => onBookingClick(booking)}
+                  onContextMenu={(e) => onBookingContextMenu?.(e, booking)}
+                />
+              ))}
+          </div>
+        ) : (
+          <div className="h-full flex items-center justify-center">
+            <GlassEmptyState
+              icon={Calendar}
+              title="Sin citas"
+              description={`No hay citas para ${new Intl.DateTimeFormat("es-ES", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+              }).format(parseISO(selectedMobileDay))}`}
+              variant="default"
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 

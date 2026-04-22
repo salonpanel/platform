@@ -346,88 +346,38 @@ export function AgendaTopBar({
             </div>
           </div>
 
-          {/* Row 2: date navigation + view mode */}
-          <div className="flex items-center justify-between gap-2">
-            {/* Date navigation */}
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <motion.button
-                whileTap={{ scale: 0.94 }}
-                onClick={() => handleNavigate("prev")}
-                className="h-8 w-8 rounded-[var(--r-md)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] hover:bg-[var(--bf-surface)] transition-colors flex items-center justify-center"
-                aria-label="Fecha anterior"
-              >
-                <ChevronLeft className="h-3.5 w-3.5 text-[var(--bf-ink-400)]" />
-              </motion.button>
+          {/* Row 2: solo navegación de fechas (selector de vista eliminado en móvil) */}
+          <div className="flex items-center gap-1">
+            <motion.button
+              whileTap={{ scale: 0.94 }}
+              onClick={() => handleNavigate("prev")}
+              className="h-8 w-8 rounded-[var(--r-md)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] hover:bg-[var(--bf-surface)] transition-colors flex items-center justify-center"
+              aria-label="Fecha anterior"
+            >
+              <ChevronLeft className="h-3.5 w-3.5 text-[var(--bf-ink-400)]" />
+            </motion.button>
 
-              <motion.button
-                whileTap={{ scale: 0.94 }}
-                onClick={handleToday}
-          className={cn(
+            <motion.button
+              whileTap={{ scale: 0.94 }}
+              onClick={handleToday}
+              className={cn(
                 "px-2.5 h-8 rounded-[var(--r-md)] text-xs font-semibold transition-all",
                 isToday
                   ? "bg-[var(--bf-bg-elev)] text-[var(--bf-ink-300)] border border-[var(--bf-border)]"
                   : "bg-[var(--bf-primary)] text-[var(--bf-ink)] shadow-[var(--bf-shadow-glow)]"
               )}
-              >
-                Hoy
-              </motion.button>
+            >
+              Hoy
+            </motion.button>
 
-              <motion.button
-                whileTap={{ scale: 0.94 }}
-                onClick={() => handleNavigate("next")}
-                className="h-8 w-8 rounded-[var(--r-md)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] hover:bg-[var(--bf-surface)] transition-colors flex items-center justify-center"
-                aria-label="Fecha siguiente"
-              >
-                <ChevronRight className="h-3.5 w-3.5 text-[var(--bf-ink-400)]" />
-              </motion.button>
-            </div>
-
-            {/* View: dropdown */}
-            <div ref={viewMenuRef} className="relative flex-shrink-0">
-              <motion.button
-                whileTap={{ scale: 0.94 }}
-                onClick={() => setShowViewMenu((v) => !v)}
-                className="h-8 px-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center gap-1.5 text-xs font-semibold text-white/80"
-                aria-label="Cambiar vista"
-                aria-expanded={showViewMenu}
-              >
-                <span className="text-white/60">Vista</span>
-                <span className="text-white">{VIEW_MODES.find((m) => m.key === viewMode)?.short ?? "—"}</span>
-                <ChevronDown className={cn("h-3.5 w-3.5 text-white/60 transition-transform", showViewMenu && "rotate-180")} />
-              </motion.button>
-
-              <AnimatePresence>
-                {showViewMenu && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 4, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 4, scale: 0.97 }}
-                    transition={{ duration: 0.12 }}
-                    className="absolute top-full mt-2 right-0 z-[80] w-40 rounded-[var(--r-md)] bg-[var(--bf-surface)] border border-[var(--bf-border)] shadow-[var(--bf-shadow-card)] overflow-hidden"
-                  >
-                    <div className="p-1">
-                      {VIEW_MODES.map((mode) => (
-                        <button
-                          key={mode.key}
-                          onClick={() => {
-                            onViewModeChange(mode.key);
-                            setShowViewMenu(false);
-                          }}
-                          className={cn(
-                            "w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-colors",
-                            viewMode === mode.key
-                              ? "bg-white/10 text-white"
-                              : "text-white/70 hover:bg-white/5 hover:text-white"
-                          )}
-                        >
-                          {mode.label}
-                        </button>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            <motion.button
+              whileTap={{ scale: 0.94 }}
+              onClick={() => handleNavigate("next")}
+              className="h-8 w-8 rounded-[var(--r-md)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] hover:bg-[var(--bf-surface)] transition-colors flex items-center justify-center"
+              aria-label="Fecha siguiente"
+            >
+              <ChevronRight className="h-3.5 w-3.5 text-[var(--bf-ink-400)]" />
+            </motion.button>
           </div>
         </div>
 

@@ -88,33 +88,20 @@ export function AgendaContent({
   // Phase 2: Mobile-first responsive viewport detection
   const isMobile = useMediaQuery("(max-width: 768px)");
 
-  // Mobile staff selection — on mobile we ALWAYS show exactly 1 staff (never all columns)
+  // En móvil siempre usamos la vista semanal (el selector de vista está oculto en móvil).
+  const effectiveViewMode = isMobile ? "week" : viewMode;
+
+  // Mobile staff selection.
+  // null = "Todos" (válido en vista semana).
+  // El fallback a staffList[0] ocurre en mobileActiveStaffId para vistas que no admiten null.
   const [mobileSelectedStaffId, setMobileSelectedStaffId] = useState<string | null>(null);
-
-  // Auto-select first staff on mobile when loaded — avoids multi-column layout that causes horizontal overflow
-  useEffect(() => {
-    if (isMobile && staffList.length > 0 && !mobileSelectedStaffId) {
-      setMobileSelectedStaffId(staffList[0].id);
-    }
-  }, [isMobile, staffList, mobileSelectedStaffId]);
-
-  // In mobile week view, default to "Todos" (null) to show all bookings.
-  useEffect(() => {
-    if (!isMobile) return;
-    if (viewMode !== "week") return;
-    setMobileSelectedStaffId(null);
-  }, [isMobile, viewMode]);
 
   // Resolve the active staff id on mobile — always a real staff id (never null on mobile)
   const mobileActiveStaffId = useMemo(() => {
     if (!isMobile) return mobileSelectedStaffId;
-    // Week view supports "Todos" (null)
-    if (viewMode === "week") return mobileSelectedStaffId;
-    if (mobileSelectedStaffId && staffList.some((s) => s.id === mobileSelectedStaffId)) {
-      return mobileSelectedStaffId;
-    }
-    return staffList[0]?.id ?? null;
-  }, [isMobile, mobileSelectedStaffId, staffList, viewMode]);
+    // En móvil la vista efectiva es siempre "week" → Todos (null) es válido
+    return mobileSelectedStaffId;
+  }, [isMobile, mobileSelectedStaffId]);
 
   // Touch swipe for day navigation on mobile
   const { onTouchStart, onTouchEnd } = useTouchSwipe({
@@ -227,14 +214,14 @@ export function AgendaContent({
                 >
                   <AnimatePresence mode="wait">
                     <motion.div
-                      key={viewMode}
+                      key={effectiveViewMode}
                       initial={{ opacity: 0, x: 10 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -10 }}
                       transition={{ duration: 0.2, ease: "easeOut" }}
                       className="flex-1 min-h-0"
                     >
-                      {viewMode === "day" && (
+                      {effectiveViewMode === "day" && (
                         staffList.length > 0 ? (
                           <div className="h-full flex flex-col min-h-0">
                             {/* Mobile: Staff switcher — Fresha-style arrow+sheet picker, replaces horizontal tabs */}
@@ -317,7 +304,7 @@ export function AgendaContent({
                         )
                       )}
 
-                      {viewMode === "week" && (
+                      {effectiveViewMode === "week" && (
                         staffList.length > 0 ? (
                           <WeekView
                             bookings={bookings}
@@ -345,7 +332,7 @@ export function AgendaContent({
                         )
                       )}
 
-                      {viewMode === "month" && (
+                      {effectiveViewMode === "month" && (
                         <MonthView
                           bookings={bookings}
                           selectedDate={selectedDate}
@@ -360,7 +347,7 @@ export function AgendaContent({
                         />
                       )}
 
-                      {viewMode === "list" && (
+                      {effectiveViewMode === "list" && (
                         bookings.length > 0 ? (
                           <ListView
                             bookings={bookings}
