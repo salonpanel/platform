@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, Suspense } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { format, subDays, addDays } from "date-fns";
@@ -80,7 +80,6 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
     }
   }, [currentKpis]);
 
-  const tenantId = tenant?.id || null;
   const tenantTimezone = tenant?.timezone || "Europe/Madrid";
   const shouldShowTimezone = tenantTimezone && tenantTimezone !== "Europe/Madrid";
 
@@ -91,8 +90,6 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
       currency: "EUR",
       maximumFractionDigits: 2,
     }).format(valueInCents / 100);
-  const tenantName = tenant?.name || "Tu negocio";
-
   // Normalizar KPIs → use a defensive cast to support both legacy & full shapes
   const kp = currentKpis as any;
   const stats = {
