@@ -224,6 +224,18 @@ export function AgendaContainer({
     return filters;
   }, [selectedStaffId, staffList, onStaffChange]);
 
+  const mobileToolbar = useMemo(
+    () => ({
+      onSearchClick: onSearchToggle,
+      onNotificationsClick: onNotificationsToggle,
+      unreadNotifications: unreadNotifications ?? 0,
+      filters,
+      onFiltersChange: setFilters,
+      quickStats: quickStats ?? null,
+    }),
+    [onSearchToggle, onNotificationsToggle, unreadNotifications, filters, setFilters, quickStats]
+  );
+
   return (
     <NotificationProvider position="top-right" maxNotifications={3}>
       <div className="h-full flex flex-col">
@@ -306,6 +318,7 @@ export function AgendaContainer({
                 onSlotNewBooking={onSlotNewBooking}
                 onSlotBlock={onSlotBlock}
                 onSlotAbsence={onSlotAbsence}
+                mobileToolbar={mobileToolbar}
               />
             </div>
           </motion.div>

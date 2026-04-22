@@ -97,6 +97,106 @@ const COMPOSER_MULTILINE_THRESHOLD_PX = 46;
 const COMPOSER_MAX_HEIGHT_PX = 160;
 const COMPOSER_MAX_CHARS = 8000;
 
+/** Persiste el hilo en localStorage para conservarlo entre rutas, pestañas y visitas. */
+const CHAT_LOCAL_STORAGE_KEY = "bookfast-ai.chat.v1";
+
+type PersistedChatStateV1 = {
+  v: 1;
+  messages: ChatMessage[];
+  sessionId: string | null;
+};
+
+function sanitizeMessagesFromStorage(raw: unknown): ChatMessage[] {
+  if (!Array.isArray(raw)) return [];
+  const out: ChatMessage[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const m = item as Record<string, unknown>;
+    if (
+      typeof m.id !== "string" ||
+      (m.role !== "user" && m.role !== "assistant") ||
+      typeof m.content !== "string"
+    ) {
+      continue;
+    }
+    const msg: ChatMessage = {
+      id: m.id,
+      role: m.role,
+      content: m.content,
+    };
+    if (m.meta && typeof m.meta === "object") {
+      const meta = m.meta as Record<string, unknown>;
+      const toolsCalled = Array.isArray(meta.toolsCalled)
+        ? meta.toolsCalled.filter((t): t is string => typeof t === "string")
+        : undefined;
+      const durationMs =
+        typeof meta.durationMs === "number" ? meta.durationMs : undefined;
+      if (toolsCalled?.length || durationMs !== undefined) {
+        msg.meta = { toolsCalled, durationMs };
+      }
+    }
+    out.push(msg);
+  }
+  return out;
+}
+
+function loadPersistedChatState(): Pick<
+  PersistedChatStateV1,
+  "messages" | "sessionId"
+> | null {
+  if (typeof window === "undefined") return null;
+  try {
+    let raw = localStorage.getItem(CHAT_LOCAL_STORAGE_KEY);
+    if (!raw) {
+      const legacy = sessionStorage.getItem(CHAT_LOCAL_STORAGE_KEY);
+      if (legacy) {
+        localStorage.setItem(CHAT_LOCAL_STORAGE_KEY, legacy);
+        sessionStorage.removeItem(CHAT_LOCAL_STORAGE_KEY);
+        raw = legacy;
+      }
+    }
+    if (!raw) return null;
+    const data = JSON.parse(raw) as Partial<PersistedChatStateV1>;
+    if (data.v !== 1) return null;
+    const messages = sanitizeMessagesFromStorage(data.messages);
+    const sessionId =
+      data.sessionId === null
+        ? null
+        : typeof data.sessionId === "string"
+          ? data.sessionId
+          : null;
+    return { messages, sessionId };
+  } catch {
+    return null;
+  }
+}
+
+function savePersistedChatState(
+  messages: ChatMessage[],
+  sessionId: string | null,
+) {
+  if (typeof window === "undefined") return;
+  try {
+    const payload: PersistedChatStateV1 = {
+      v: 1,
+      messages,
+      sessionId,
+    };
+    localStorage.setItem(CHAT_LOCAL_STORAGE_KEY, JSON.stringify(payload));
+  } catch {
+    // quota, modo privado, etc.
+  }
+}
+
+function clearPersistedChatState() {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(CHAT_LOCAL_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 function dispatchBottomNavRecalc() {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new Event("bookfast-ai-composer-change"));
@@ -135,11 +235,25 @@ function useVisualKeyboardInset(active: boolean) {
 }
 
 export default function BookfastAiClient() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const hydratedRef = useRef<{ messages: ChatMessage[]; sessionId: string | null } | null>(
+    null,
+  );
+  if (hydratedRef.current === null) {
+    const p = loadPersistedChatState();
+    hydratedRef.current = {
+      messages: p?.messages ?? [],
+      sessionId: p?.sessionId ?? null,
+    };
+  }
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    () => hydratedRef.current!.messages,
+  );
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(
+    () => hydratedRef.current!.sessionId,
+  );
   const [composerActive, setComposerActive] = useState(false);
   const scrollAnchorRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -147,6 +261,14 @@ export default function BookfastAiClient() {
   const [composerMultiline, setComposerMultiline] = useState(false);
 
   const keyboardInset = useVisualKeyboardInset(composerActive);
+
+  useEffect(() => {
+    if (messages.length === 0 && sessionId === null) {
+      clearPersistedChatState();
+      return;
+    }
+    savePersistedChatState(messages, sessionId);
+  }, [messages, sessionId]);
 
   // Auto-scroll al final cuando se añade mensaje
   useEffect(() => {
@@ -278,6 +400,7 @@ export default function BookfastAiClient() {
   };
 
   const resetConversation = () => {
+    clearPersistedChatState();
     setMessages([]);
     setSessionId(null);
     setError(null);

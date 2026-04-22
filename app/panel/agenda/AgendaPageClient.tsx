@@ -287,6 +287,18 @@ export default function AgendaPageClient({
 
   const unreadNotifications = notifications.filter((n) => !n.read).length;
 
+  const mobileToolbar = useMemo(
+    () => ({
+      onSearchClick: () => setSearchOpen((v) => !v),
+      onNotificationsClick: () => setNotificationsOpen(true),
+      unreadNotifications,
+      filters,
+      onFiltersChange: setFilters,
+      quickStats: quickStats ?? null,
+    }),
+    [unreadNotifications, filters, quickStats]
+  );
+
   const defaultSlot: CalendarSlot = {
     staffId: visibleStaff[0]?.id || staffList[0]?.id || "",
     date: selectedDate,
@@ -402,6 +414,7 @@ export default function AgendaPageClient({
             onSlotNewBooking={handleSlotNewBooking}
             onSlotBlock={(slot) => handleSlotBlock(slot, "block")}
             onSlotAbsence={(slot) => handleSlotBlock(slot, "absence")}
+            mobileToolbar={mobileToolbar}
           />
         </div>
 

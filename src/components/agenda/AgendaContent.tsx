@@ -19,6 +19,7 @@ import { AppointmentCard } from "./AppointmentCard";
 import { GlassCard, GlassEmptyState } from "@/components/ui/glass";
 import { Users, Calendar, Filter } from "lucide-react";
 import { useRouter } from "next/navigation";
+import type { MobileAgendaToolbarProps } from "@/components/agenda/AgendaQuickActions";
 
 type ViewMode = "day" | "week" | "month" | "list";
 
@@ -52,6 +53,8 @@ interface AgendaContentProps {
   onSlotNewBooking?: (slot: { staffId: string; date: string; time: string }) => void;
   onSlotBlock?: (slot: { staffId: string; date: string; time: string }) => void;
   onSlotAbsence?: (slot: { staffId: string; date: string; time: string }) => void;
+  /** En móvil, acciones de agenda junto al mes (WeekView) */
+  mobileToolbar?: MobileAgendaToolbarProps | null;
 }
 
 /**
@@ -84,6 +87,7 @@ export function AgendaContent({
   onSlotNewBooking,
   onSlotBlock,
   onSlotAbsence,
+  mobileToolbar = null,
 }: AgendaContentProps) {
   // Phase 2: Mobile-first responsive viewport detection
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -319,6 +323,7 @@ export function AgendaContent({
                             mobileSelectedStaffId={isMobile ? mobileSelectedStaffId : null}
                             onMobileStaffChange={isMobile ? (id) => setMobileSelectedStaffId(id) : undefined}
                             bookingCounts={isMobile ? bookingCountsByStaff : undefined}
+                            mobileToolbar={isMobile ? mobileToolbar ?? undefined : undefined}
                           />
                         ) : (
                           <div className="h-full flex items-center justify-center p-8">

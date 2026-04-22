@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import React from "react";
 import { format, startOfWeek, addDays, parseISO, isSameDay, startOfToday } from "date-fns";
 import { AppointmentCard } from "@/components/agenda/AppointmentCard";
@@ -12,6 +12,8 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { GlassEmptyState } from "@/components/ui/glass";
 import { Calendar } from "lucide-react";
 import { MobileStaffSwitcher } from "@/components/agenda/MobileStaffSwitcher";
+import { AgendaQuickActions } from "@/components/agenda/AgendaQuickActions";
+import type { MobileAgendaToolbarProps } from "@/components/agenda/AgendaQuickActions";
 
 function generateDistinctHslColors(count: number): string[] {
   if (count <= 0) return [];
@@ -38,6 +40,7 @@ interface WeekViewProps {
   mobileSelectedStaffId?: string | null;
   onMobileStaffChange?: (staffId: string | null) => void;
   bookingCounts?: Record<string, number>;
+  mobileToolbar?: MobileAgendaToolbarProps;
 }
 
 export const WeekView = React.memo(function WeekView({
@@ -53,6 +56,7 @@ export const WeekView = React.memo(function WeekView({
   mobileSelectedStaffId,
   onMobileStaffChange,
   bookingCounts,
+  mobileToolbar,
 }: WeekViewProps) {
   const weekStart = startOfWeek(parseISO(selectedDate), { weekStartsOn: 1 }); // Lunes
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
@@ -200,6 +204,7 @@ export const WeekView = React.memo(function WeekView({
         mobileSelectedStaffId={mobileSelectedStaffId ?? null}
         onMobileStaffChange={onMobileStaffChange}
         bookingCounts={bookingCounts}
+        mobileToolbar={mobileToolbar}
       />
     );
   }
@@ -339,7 +344,8 @@ export const WeekView = React.memo(function WeekView({
     prevProps.onMobileStaffChange === nextProps.onMobileStaffChange &&
     prevProps.onBookingClick === nextProps.onBookingClick &&
     prevProps.onPopoverShow === nextProps.onPopoverShow &&
-    prevProps.onBookingContextMenu === nextProps.onBookingContextMenu
+    prevProps.onBookingContextMenu === nextProps.onBookingContextMenu &&
+    prevProps.mobileToolbar === nextProps.mobileToolbar
   );
 });
 
@@ -361,6 +367,7 @@ interface MobileWeekViewProps {
   mobileSelectedStaffId: string | null;
   onMobileStaffChange?: (staffId: string | null) => void;
   bookingCounts?: Record<string, number>;
+  mobileToolbar?: MobileAgendaToolbarProps;
 }
 
 function MobileWeekView({
@@ -375,6 +382,7 @@ function MobileWeekView({
   mobileSelectedStaffId,
   onMobileStaffChange,
   bookingCounts,
+  mobileToolbar,
 }: MobileWeekViewProps) {
   const today = startOfToday();
 
@@ -429,15 +437,6 @@ function MobileWeekView({
   const stripRef = useRef<HTMLDivElement>(null);
   const todayBtnRef = useRef<HTMLButtonElement>(null);
 
-  // Función para volver a hoy
-  const scrollToToday = useCallback(() => {
-    const todayKey = format(today, "yyyy-MM-dd");
-    setSelectedMobileDay(todayKey);
-    requestAnimationFrame(() => {
-      todayBtnRef.current?.scrollIntoView({ block: "nearest", inline: "start", behavior: "smooth" });
-    });
-  }, [today]);
-
   // Al montar: scroll automático para que hoy sea el primer visible
   useEffect(() => {
     requestAnimationFrame(() => {
@@ -453,42 +452,58 @@ function MobileWeekView({
     return new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric" }).format(d);
   }, [selectedMobileDay]);
 
+  const statsLine = mobileToolbar?.quickStats && mobileToolbar.quickStats.totalBookings > 0
+    ? [
+        `${mobileToolbar.quickStats.totalBookings} citas`,
+        mobileToolbar.quickStats.totalHours > 0 ? `${mobileToolbar.quickStats.totalHours}h` : null,
+        mobileToolbar.quickStats.totalAmount > 0
+          ? `${Math.round(mobileToolbar.quickStats.totalAmount / 100)}€`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : null;
+
   return (
     <div className="w-full h-full flex flex-col overflow-hidden bg-[var(--bf-bg)]" role="region" aria-label="Vista semanal móvil">
-      {/* ── Cabecera: [Hoy] | Mes centrado | vacío ── */}
+      {/* Mes + acciones (sin duplicar barra superior de la página) */}
       <div
-        className="flex-shrink-0 flex items-center justify-between px-4 py-2 bg-[var(--bf-bg)]"
+        className="flex-shrink-0 px-3 py-2 bg-[var(--bf-bg)]"
         style={{ borderBottom: "1px solid var(--bf-border)" }}
       >
-        {/* Botón Hoy */}
-        <button
-          type="button"
-          onClick={scrollToToday}
-          className="px-3 py-1.5 rounded-[var(--r-full)] text-sm font-semibold transition-all duration-200 border"
-          style={{
-            fontFamily: "var(--font-sans)",
-            backgroundColor: "var(--bf-bg-elev)",
-            borderColor: "var(--bf-border-2)",
-            color: "var(--bf-ink-300)",
-          }}
-        >
-          Hoy
-        </button>
-
-        {/* Mes centrado — ocupa el espacio del medio */}
-        <h2
-          className="flex-1 text-center font-semibold capitalize text-lg tracking-tight"
-          style={{
-            fontFamily: "var(--font-sans)",
-            color: "var(--bf-ink-50)",
-            letterSpacing: "-0.01em",
-          }}
-        >
-          {monthLabel}
-        </h2>
-
-        {/* Placeholder derecha para centrar el título */}
-        <div className="w-[60px]" aria-hidden />
+        <div className="flex flex-col items-center gap-1.5">
+          <div className="flex items-center justify-center gap-2 w-full min-w-0">
+            <h2
+              className="capitalize font-semibold text-sm tracking-tight text-center min-w-0 truncate"
+              style={{
+                fontFamily: "var(--font-sans)",
+                color: "var(--bf-ink-50)",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              {monthLabel}
+            </h2>
+            {mobileToolbar && (
+              <AgendaQuickActions
+                onSearchClick={mobileToolbar.onSearchClick}
+                onNotificationsClick={mobileToolbar.onNotificationsClick}
+                unreadNotifications={mobileToolbar.unreadNotifications}
+                filters={mobileToolbar.filters}
+                onFiltersChange={mobileToolbar.onFiltersChange}
+                filterMenuSide="right"
+                className="flex-shrink-0"
+              />
+            )}
+          </div>
+          {statsLine && (
+            <p
+              className="text-[10px] text-[var(--bf-ink-400)] font-medium text-center truncate max-w-full px-1"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              {statsLine}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* ── Tira infinita de días ── */}

@@ -83,33 +83,14 @@ export function TopBar({
         }}
       />
       
-      {/* Clean single-line header */}
-      <div className="flex items-center justify-between w-full">
-        {/* Page Title - Simple and elegant */}
+      {/* Header: perfil (izq) · título centrado · IA (dch, móvil) */}
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 w-full">
+        {/* User menu — izquierda */}
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
+          initial={{ opacity: 0, x: -12 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="flex-1 min-w-0"
-        >
-          <h1 
-            className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight"
-            style={{
-              fontFamily: "var(--font-sans)",
-              color: "var(--bf-ink-50)",
-              letterSpacing: "-0.025em",
-            }}
-          >
-            {title}
-          </h1>
-        </motion.div>
-
-        {/* User menu - Minimal and elegant */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
-          className="flex items-center gap-3 flex-shrink-0"
+          className="flex justify-start min-w-0"
         >
           <div className="relative" ref={dropdownRef}>
             <button
@@ -142,7 +123,6 @@ export function TopBar({
               />
             </button>
 
-            {/* Elegant dropdown menu */}
             <AnimatePresence>
               {dropdownOpen && (
                 <motion.div
@@ -151,7 +131,7 @@ export function TopBar({
                   exit={{ opacity: 0, y: 8, scale: 0.96 }}
                   transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                   className={cn(
-                    "absolute right-0 mt-2 w-64",
+                    "absolute left-0 mt-2 w-64",
                     "rounded-[var(--r-xl)] overflow-hidden",
                     "bg-[var(--bf-surface)] border border-[var(--bf-border)]",
                     "shadow-[var(--bf-shadow-card)]",
@@ -236,8 +216,34 @@ export function TopBar({
               )}
             </AnimatePresence>
           </div>
+        </motion.div>
 
-          {/* BookFast AI — botón circular (visible solo en móvil, a la derecha del avatar) */}
+        {/* Título de página — centrado en el ancho del header */}
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
+          className="min-w-0 max-w-[min(36rem,calc(100vw-9.5rem))] text-center justify-self-center"
+        >
+          <h1
+            className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight truncate"
+            style={{
+              fontFamily: "var(--font-sans)",
+              color: "var(--bf-ink-50)",
+              letterSpacing: "-0.025em",
+            }}
+          >
+            {title}
+          </h1>
+        </motion.div>
+
+        {/* BookFast AI — derecha (visible solo en móvil; columna vacía en desktop mantiene el título centrado) */}
+        <motion.div
+          initial={{ opacity: 0, x: 12 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+          className="flex justify-end min-w-0"
+        >
           <Link
             href="/panel/bookfast-ai"
             aria-label="Abrir BookFast AI"
