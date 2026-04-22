@@ -41,22 +41,10 @@ function ClientesPageContent() {
   // Hook optimizado: obtiene tenant + clientes en UNA llamada con caché
   const { data: pageData, isLoading, error } = useCustomersPageData();
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between">
-          <div className="h-10 w-32 bg-white/5 rounded animate-pulse" />
-          <div className="h-10 w-32 bg-white/5 rounded animate-pulse" />
-        </div>
-        <TableSkeleton rows={10} />
-      </div>
-    );
-  }
-
-  // Extraer datos del hook
-  const tenantId = pageData?.tenant?.id || null;
-  const tenantTimezone = pageData?.tenant?.timezone || "Europe/Madrid";
-  const customers = pageData?.customers || [];
+  // Datos derivados (durante isLoading pueden ser vacíos; no hacer return antes de los hooks)
+  const tenantId = pageData?.tenant?.id ?? null;
+  const tenantTimezone = pageData?.tenant?.timezone ?? "Europe/Madrid";
+  const customers = pageData?.customers ?? [];
 
   // Estados principales (mantener para funcionalidad)
   // const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -398,6 +386,18 @@ function ClientesPageContent() {
   useEffect(() => {
     setSelectionActive(selectedCustomers.length > 0);
   }, [selectedCustomers]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between">
+          <div className="h-10 w-32 bg-white/5 rounded animate-pulse" />
+          <div className="h-10 w-32 bg-white/5 rounded animate-pulse" />
+        </div>
+        <TableSkeleton rows={10} />
+      </div>
+    );
+  }
 
   if (error && !tenantId) {
     return (

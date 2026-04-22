@@ -217,7 +217,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
           >
             <button
               onClick={() => setShowMoreMenu((v) => !v)}
-              className="relative flex flex-row items-end justify-center min-w-[50px] select-none gap-0.5 pb-0"
+              className="relative flex items-end justify-center min-w-[50px] select-none pb-0"
               aria-label="Más opciones"
               aria-expanded={showMoreMenu}
             >
@@ -242,16 +242,6 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
                   />
                 )}
               </div>
-              <span
-                className={cn(
-                  "text-[10px] leading-none font-satoshi transition-all duration-200",
-                  isMoreActive || showMoreMenu
-                    ? "font-semibold text-[var(--accent-aqua)]"
-                    : "font-medium text-[var(--text-tertiary)]"
-                )}
-              >
-                Más
-              </span>
             </button>
           </motion.div>
         </div>

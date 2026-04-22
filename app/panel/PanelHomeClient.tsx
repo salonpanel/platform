@@ -434,29 +434,29 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             className="flex flex-col min-[520px]:flex-row min-[520px]:items-center min-[520px]:justify-between gap-3 min-[520px]:gap-4 mb-4 sm:mb-5"
           >
             <div className="min-w-0">
-              <h1 className="text-[clamp(1.25rem,4.5vw,1.625rem)] font-semibold text-white tracking-tight leading-tight mb-1">
+              <h1 className="text-[clamp(1.25rem,3.6vw+0.4rem,1.875rem)] font-semibold text-white tracking-tight leading-tight mb-1">
                 Hola, {userName} 👋
               </h1>
-              <p className="text-[11px] min-[400px]:text-xs text-[var(--text-secondary)]">
+              <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-snug">
                 {todayLabel} {shouldShowTimezone && `· ${tenantTimezone}`}
               </p>
             </div>
 
             {/* Estado del día + Selector de periodo (wrap + táctil en viewports estrechos) */}
             <div className="flex flex-wrap items-center gap-2 min-[400px]:gap-2.5 shrink-0">
-              <div className={cn("inline-flex items-center min-h-9 px-2.5 py-1 rounded-full text-[10px] min-[400px]:text-[11px] font-medium", dayStatus.color)}>
+              <div className={cn("inline-flex items-center min-h-9 px-2.5 py-1 rounded-full text-xs font-medium", dayStatus.color)}>
                 {dayStatus.label}
               </div>
 
               {/* Selector de periodo */}
-              <div className="inline-flex items-center min-h-11 rounded-full bg-[var(--bg-card)]/60 backdrop-blur-xl p-0.5 text-[11px] sm:text-xs border border-white/10">
+              <div className="inline-flex items-center min-h-11 rounded-full bg-[var(--bg-card)]/60 backdrop-blur-xl p-0.5 text-xs sm:text-sm border border-white/10">
                 {periodOptions.map((option) => (
                   <button
                     key={option.id}
                     type="button"
                     onClick={() => setPeriod(option.id as "today" | "week" | "month")}
                     className={cn(
-                      "min-h-10 min-w-[2.75rem] px-3 sm:px-3.5 py-2 rounded-full transition-all duration-150 lg:min-h-0 lg:min-w-0 lg:py-1",
+                      "min-h-10 min-w-[2.75rem] px-3 sm:px-3.5 py-2 rounded-full text-xs sm:text-sm transition-all duration-150 lg:min-h-0 lg:min-w-0 lg:py-1",
                       period === option.id
                         ? "bg-white text-slate-900 font-semibold shadow-sm"
                         : "text-[var(--text-secondary)] hover:text-white active:bg-white/10"
@@ -487,15 +487,15 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                   <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
                 </div>
                 <span className={cn(
-                  "text-[11px] sm:text-[12px] ml-auto",
+                  "text-xs sm:text-sm ml-auto tabular-nums",
                   bookingsKPI.trend === 'up' ? "text-emerald-400" :
                     bookingsKPI.trend === 'down' ? "text-red-400" : "text-[var(--text-secondary)]"
                 )}>
                   {bookingsKPI.trend === 'up' ? '↑' : bookingsKPI.trend === 'down' ? '↓' : '~'}
                 </span>
               </div>
-              <div className="text-[clamp(1.25rem,4vw,1.625rem)] font-bold text-white leading-tight mb-0.5">{bookingsKPI.value}</div>
-              <div className="text-[11px] min-[400px]:text-xs text-[var(--text-secondary)] uppercase tracking-wider">
+              <div className="text-[clamp(1.3rem,3.2vw+0.5rem,1.75rem)] font-bold text-white leading-tight mb-0.5 tabular-nums">{bookingsKPI.value}</div>
+              <div className="text-xs sm:text-sm text-[var(--text-secondary)] uppercase tracking-wide">
                 {period === 'today' ? 'Reservas hoy' : period === 'week' ? 'Reservas 7d' : 'Reservas 30d'}
               </div>
             </motion.div>
@@ -511,15 +511,15 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                   <Euro className="h-3.5 w-3.5 text-emerald-400" />
                 </div>
                 <span className={cn(
-                  "text-[11px] sm:text-[12px] ml-auto",
+                  "text-xs sm:text-sm ml-auto tabular-nums",
                   revenueKPI.trend === 'up' ? "text-emerald-400" :
                     revenueKPI.trend === 'down' ? "text-red-400" : "text-[var(--text-secondary)]"
                 )}>
                   {revenueKPI.trend === 'up' ? '↑' : revenueKPI.trend === 'down' ? '↓' : '~'}
                 </span>
               </div>
-              <div className="text-[clamp(1.25rem,4vw,1.625rem)] font-bold text-white leading-tight mb-0.5">{revenueKPI.value}</div>
-              <div className="text-[11px] min-[400px]:text-xs text-[var(--text-secondary)] uppercase tracking-wider">
+              <div className="text-[clamp(1.3rem,3.2vw+0.5rem,1.75rem)] font-bold text-white leading-tight mb-0.5 tabular-nums">{revenueKPI.value}</div>
+              <div className="text-xs sm:text-sm text-[var(--text-secondary)] uppercase tracking-wide">
                 {period === 'today' ? 'Ingresos hoy' : period === 'week' ? 'Ingresos 7d' : 'Ingresos 30d'}
               </div>
             </motion.div>
@@ -534,14 +534,14 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                 <div className="p-1.5 rounded-lg bg-blue-500/15">
                   <BarChart3 className="h-3.5 w-3.5 text-blue-400" />
                 </div>
-                <span className="text-[11px] sm:text-[12px] ml-auto text-[var(--text-secondary)]">
+                <span className="text-xs sm:text-sm ml-auto text-[var(--text-secondary)] tabular-nums">
                   {staffMembers.length} prof.
                 </span>
               </div>
-              <div className="text-[clamp(1.25rem,4vw,1.625rem)] font-bold text-white leading-tight mb-0.5">
+              <div className="text-[clamp(1.3rem,3.2vw+0.5rem,1.75rem)] font-bold text-white leading-tight mb-0.5 tabular-nums">
                 {currentOccupancy}%
               </div>
-              <div className="text-[11px] min-[400px]:text-xs text-[var(--text-secondary)] uppercase tracking-wider">{getOccupancyLabel(period)}</div>
+              <div className="text-xs sm:text-sm text-[var(--text-secondary)] uppercase tracking-wide">{getOccupancyLabel(period)}</div>
             </motion.div>
 
             {/* KPI: Ticket medio - Siempre 7 días (referencia estable) */}
@@ -555,41 +555,10 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                   <Sparkles className="h-3.5 w-3.5 text-purple-400" />
                 </div>
               </div>
-              <div className="text-[clamp(1.25rem,4vw,1.625rem)] font-bold text-white leading-tight mb-0.5">{formatCurrency(currentAvgTicket)}</div>
-              <div className="text-[11px] min-[400px]:text-xs text-[var(--text-secondary)] uppercase tracking-wider">{getTicketLabel(period)}</div>
+              <div className="text-[clamp(1.3rem,3.2vw+0.5rem,1.75rem)] font-bold text-white leading-tight mb-0.5 tabular-nums">{formatCurrency(currentAvgTicket)}</div>
+              <div className="text-xs sm:text-sm text-[var(--text-secondary)] uppercase tracking-wide">{getTicketLabel(period)}</div>
             </motion.div>
           </motion.div>
-
-          {/* Atajos si sidebar/Acciones no están: solo por breakpoint (ancho útil), no por dispositivo */}
-          <div className="lg:hidden mb-4 sm:mb-5 flex flex-col flex-wrap gap-2 min-[440px]:flex-row min-[440px]:items-stretch">
-            <motion.button
-              whileTap={{ scale: 0.99 }}
-              type="button"
-              onClick={() => openCreate()}
-              className="flex min-h-12 w-full min-[440px]:flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600/90 to-emerald-500/90 px-4 py-3 text-sm font-semibold text-white shadow-sm active:opacity-95"
-            >
-              <Plus className="h-4 w-4 shrink-0" />
-              Nueva cita
-            </motion.button>
-            <div className="grid grid-cols-2 gap-2 min-[440px]:contents min-[440px]:gap-2">
-              <button
-                type="button"
-                onClick={() => router.push("/panel/agenda")}
-                className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2.5 text-xs font-medium text-white active:bg-white/10 min-[440px]:min-w-[7.5rem]"
-              >
-                <Calendar className="h-4 w-4 text-emerald-400/90" />
-                Agenda
-              </button>
-              <button
-                type="button"
-                onClick={() => router.push("/panel/clientes")}
-                className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2.5 text-xs font-medium text-white active:bg-white/10 min-[440px]:min-w-[7.5rem]"
-              >
-                <User className="h-4 w-4 text-blue-400/90" />
-                Clientes
-              </button>
-            </div>
-          </div>
 
           {/* ═══════════════════════════════════════════════════════════════
               GRID PRINCIPAL - Responsive: stack en móvil, 12 cols en desktop
@@ -612,19 +581,20 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             >
               <div className="glass rounded-xl border border-white/10 hover:border-white/15 transition-all overflow-hidden">
                 {/* Header compacto */}
-                <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
-                  <div className="flex items-center gap-2.5">
-                    <h2 className="text-[14px] sm:text-[15px] font-semibold text-white">Próximas reservas</h2>
-                    <div className="flex items-center rounded-full bg-white/10 p-0.5 text-[9px] sm:text-[10px]">
+                <div className="flex items-center justify-between gap-2 px-3 sm:px-4 py-2.5 border-b border-white/10">
+                  <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-2.5">
+                    <h2 className="text-base sm:text-lg font-semibold text-white tracking-tight">Próximas reservas</h2>
+                    <div className="flex items-center rounded-full bg-white/10 p-0.5 text-xs">
                       {[
                         { id: "today", label: "Hoy" },
                         { id: "tomorrow", label: "Mañana" },
                       ].map((tab) => (
                         <button
                           key={tab.id}
+                          type="button"
                           onClick={() => setBookingsTab(tab.id as "today" | "tomorrow" | "week")}
                           className={cn(
-                            "px-1.5 sm:px-2 py-0.5 rounded-full transition-all duration-150",
+                            "px-2 py-1 rounded-full transition-all duration-150",
                             bookingsTab === tab.id ? "bg-white text-slate-900 font-medium" : "text-[var(--text-secondary)] hover:text-white"
                           )}
                         >
@@ -634,47 +604,48 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                     </div>
                   </div>
                   <button
+                    type="button"
                     onClick={() => router.push("/panel/agenda")}
-                    className="text-[10px] sm:text-[11px] text-emerald-400 hover:text-white transition-colors font-medium"
+                    className="shrink-0 text-xs sm:text-sm text-emerald-400 hover:text-white transition-colors font-medium"
                   >
                     Ver agenda →
                   </button>
                 </div>
 
                 {/* Lista de reservas - padding reducido */}
-                <div className="px-2.5 py-2">
+                <div className="px-2.5 sm:px-3 py-2">
                   {upcomingBookings.length === 0 ? (
                     <div className="text-center py-4">
                       <Calendar className="h-6 w-6 text-[var(--text-secondary)] mx-auto mb-1" />
-                      <p className="text-[11px] text-[var(--text-secondary)]">Sin reservas próximas</p>
+                      <p className="text-sm text-[var(--text-secondary)]">Sin reservas próximas</p>
                     </div>
                   ) : (
                     <div className="space-y-1">
                       {upcomingBookings.slice(0, 4).map((booking) => (
                         <div
                           key={booking.id}
-                          className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 hover:border-white/10 transition-all cursor-pointer"
+                          className="flex items-center justify-between px-2 py-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 hover:border-white/10 transition-all cursor-pointer"
                           onClick={() => openDetail(booking.id)}
                         >
-                          <div className="flex items-center gap-2">
-                            <div className="text-[11px] sm:text-[12px] font-bold text-white w-9 font-mono">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="text-sm font-semibold text-white w-10 shrink-0 font-mono tabular-nums">
                               {format(new Date(booking.starts_at), "HH:mm")}
                             </div>
                             <div className="min-w-0">
-                              <div className="text-[11px] sm:text-[12px] font-medium text-white truncate">
+                              <div className="text-sm font-medium text-white truncate">
                                 {booking.customer?.name || "Cliente"}
                               </div>
-                              <div className="text-[9px] sm:text-[10px] text-[var(--text-secondary)] truncate">
+                              <div className="text-xs text-[var(--text-secondary)] truncate">
                                 {booking.service?.name || "Servicio"}
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="hidden sm:block text-[9px] text-[var(--text-secondary)]">
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="hidden sm:block text-xs text-[var(--text-secondary)] max-w-[5rem] truncate">
                               {booking.staff?.name || "—"}
                             </span>
                             <div className={cn(
-                              "px-1 py-0.5 rounded text-[8px] sm:text-[9px] font-semibold",
+                              "px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-semibold",
                               booking.status === 'paid' ? "bg-emerald-500/20 text-emerald-400" :
                                 booking.status === 'confirmed' ? "bg-blue-500/20 text-blue-400" :
                                   "bg-amber-500/20 text-amber-400"
@@ -701,8 +672,8 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             >
               <div className="glass rounded-xl border border-white/10 hover:border-white/15 transition-all overflow-hidden h-full flex flex-col">
                 <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-2 border-b border-white/10">
-                  <h2 className="text-sm min-[400px]:text-[15px] font-semibold text-white">Staff hoy</h2>
-                  <span className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">{staffMembers.length} activo{staffMembers.length !== 1 ? 's' : ''}</span>
+                  <h2 className="text-base sm:text-lg font-semibold text-white tracking-tight">Staff hoy</h2>
+                  <span className="text-xs sm:text-sm text-[var(--text-secondary)] tabular-nums">{staffMembers.length} activo{staffMembers.length !== 1 ? 's' : ''}</span>
                 </div>
                 <div className="px-2.5 sm:px-3 py-2 flex-1">
                   {staffMembers.length > 0 ? (
@@ -715,18 +686,18 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                           <div key={staff.id} className="flex items-center justify-between py-2.5 sm:py-2 lg:py-2 first:pt-0 last:pb-0 min-h-[3rem] sm:min-h-0">
                             <div className="flex items-center gap-2">
                               {staff.avatar_url ? (
-                                <img src={staff.avatar_url} alt={staff.name} className="w-6 h-6 rounded-full object-cover" />
+                                <img src={staff.avatar_url} alt={staff.name} className="w-7 h-7 sm:w-6 sm:h-6 rounded-full object-cover" />
                               ) : (
-                                <div className={cn("w-6 h-6 rounded-full bg-gradient-to-br flex items-center justify-center text-[9px] font-bold text-white", colors[i % colors.length])}>
+                                <div className={cn("w-7 h-7 sm:w-6 sm:h-6 rounded-full bg-gradient-to-br flex items-center justify-center text-[10px] sm:text-xs font-bold text-white", colors[i % colors.length])}>
                                   {initial}
                                 </div>
                               )}
                               <div className="min-w-0">
-                                <div className="text-[12px] sm:text-[13px] text-white font-medium truncate">{staff.name}</div>
-                                <div className="text-[9px] text-[var(--text-secondary)]">{staff.bookingsToday} cita{staff.bookingsToday !== 1 ? 's' : ''}</div>
+                                <div className="text-sm sm:text-base text-white font-medium truncate">{staff.name}</div>
+                                <div className="text-xs text-[var(--text-secondary)]">{staff.bookingsToday} cita{staff.bookingsToday !== 1 ? 's' : ''}</div>
                               </div>
                             </div>
-                            <div className={cn("text-[12px] sm:text-[13px] font-semibold", occ >= 70 ? "text-emerald-400" : occ >= 40 ? "text-blue-400" : "text-[var(--text-secondary)]")}>
+                            <div className={cn("text-sm sm:text-base font-semibold tabular-nums", occ >= 70 ? "text-emerald-400" : occ >= 40 ? "text-blue-400" : "text-[var(--text-secondary)]")}>
                               {occ}%
                             </div>
                           </div>
@@ -736,10 +707,11 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                   ) : (
                     <div className="text-center py-5">
                       <User className="h-6 w-6 text-[var(--text-secondary)] mx-auto mb-1" />
-                      <p className="text-[11px] text-[var(--text-secondary)] mb-2">Sin staff activo</p>
+                      <p className="text-sm text-[var(--text-secondary)] mb-2">Sin staff activo</p>
                       <button
+                        type="button"
                         onClick={() => router.push("/panel/staff")}
-                        className="text-[9px] text-emerald-400 hover:text-white transition-colors font-medium"
+                        className="text-xs sm:text-sm text-emerald-400 hover:text-white transition-colors font-medium"
                       >
                         Añadir staff →
                       </button>
@@ -765,13 +737,13 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
             >
               <div className="glass rounded-xl border border-white/10 hover:border-white/15 transition-all overflow-hidden">
                 <div className="flex items-center justify-between gap-2 px-3 sm:px-4 py-2.5 sm:py-2 border-b border-white/10">
-                  <h2 className="text-sm min-[400px]:text-[15px] font-semibold text-white">Performance</h2>
+                  <h2 className="text-base sm:text-lg font-semibold text-white tracking-tight">Performance</h2>
                   <div className="flex shrink-0 gap-1">
                     <button
                       type="button"
                       onClick={() => setPerformancePeriod("7d")}
                       className={cn(
-                        "min-h-9 min-w-[2.5rem] px-2 py-1.5 text-[10px] sm:text-[11px] rounded-lg transition-colors lg:min-h-0",
+                        "min-h-9 min-w-[2.5rem] px-2 py-1.5 text-xs sm:text-sm rounded-lg transition-colors lg:min-h-0",
                         performancePeriod === "7d" ? "bg-white/10 text-white font-medium" : "bg-white/5 text-[var(--text-secondary)] hover:bg-white/10 active:bg-white/15"
                       )}
                     >7d</button>
@@ -779,7 +751,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                       type="button"
                       onClick={() => setPerformancePeriod("30d")}
                       className={cn(
-                        "min-h-9 min-w-[2.5rem] px-2 py-1.5 text-[10px] sm:text-[11px] rounded-lg transition-colors lg:min-h-0",
+                        "min-h-9 min-w-[2.5rem] px-2 py-1.5 text-xs sm:text-sm rounded-lg transition-colors lg:min-h-0",
                         performancePeriod === "30d" ? "bg-white/10 text-white font-medium" : "bg-white/5 text-[var(--text-secondary)] hover:bg-white/10 active:bg-white/15"
                       )}
                     >30d</button>
@@ -787,18 +759,18 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                 </div>
                 <div className="px-3 sm:px-4 py-2.5 sm:py-3">
                   {/* Header del gráfico con divisor */}
-                  <div className="flex items-center justify-between pb-1.5 border-b border-white/[0.06] mb-2">
-                    <div>
-                      <h3 className="text-[11px] sm:text-[12px] font-medium text-white">Reservas diarias</h3>
-                      <p className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">
+                  <div className="flex items-center justify-between gap-2 pb-2 border-b border-white/[0.06] mb-2">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-medium text-white">Reservas diarias</h3>
+                      <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                         {performancePeriod === "7d" ? "Últimos 7 días" : "Últimos 30 días"}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <div className="text-[14px] sm:text-[16px] font-bold text-white">
+                    <div className="text-right shrink-0">
+                      <div className="text-lg sm:text-xl font-bold text-white tabular-nums">
                         {performancePeriod === "7d" ? totalBookingsInRange : stats.totalBookingsLast30Days}
                       </div>
-                      <div className="text-[8px] text-[var(--text-secondary)]">total</div>
+                      <div className="text-xs text-[var(--text-secondary)]">total</div>
                     </div>
                   </div>
 
@@ -817,44 +789,44 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
                                 className="w-full rounded-t bg-gradient-to-t from-emerald-500 to-blue-500"
                                 style={{ minHeight: count > 0 ? "4px" : "0" }}
                               />
-                              <span className="text-[7px] sm:text-[8px] text-[var(--text-secondary)] mt-0.5">
+                              <span className="text-[10px] sm:text-xs text-[var(--text-secondary)] mt-0.5 tabular-nums leading-none">
                                 {performancePeriod === "7d"
                                   ? format(subDays(new Date(), 6 - index), "dd")
                                   : chartCalculations.chartLabels?.[index] || ""}
                               </span>
-                              <span className="text-[9px] sm:text-[10px] font-semibold text-white">{count}</span>
+                              <span className="text-xs font-semibold text-white tabular-nums">{count}</span>
                             </div>
                           );
                         })}
                       </div>
                     ) : (
-                      <div className="h-9 flex items-center justify-center text-[11px] text-[var(--text-secondary)]">Sin datos</div>
+                      <div className="h-9 flex items-center justify-center text-sm text-[var(--text-secondary)]">Sin datos</div>
                     )}
                   </div>
 
                   {/* Métricas compactas centradas - cambian según periodo */}
-                  <div className="flex justify-center gap-3 sm:gap-4 pt-1.5 border-t border-white/[0.06]">
-                    <div className="text-center">
-                      <div className="text-[11px] sm:text-[12px] font-bold text-emerald-400">
+                  <div className="flex justify-center gap-4 sm:gap-6 pt-2 border-t border-white/[0.06]">
+                    <div className="text-center min-w-0">
+                      <div className="text-sm font-bold text-emerald-400 tabular-nums">
                         {formatCurrency(performancePeriod === "7d" ? stats.revenueLast7Days : stats.revenueLast30Days)}
                       </div>
-                      <div className="text-[8px] sm:text-[9px] text-[var(--text-secondary)]">
+                      <div className="text-xs text-[var(--text-secondary)] mt-0.5">
                         {performancePeriod === "7d" ? "Ingresos 7d" : "Ingresos 30d"}
                       </div>
                     </div>
-                    <div className="text-center">
-                      <div className="text-[11px] sm:text-[12px] font-bold text-blue-400">
+                    <div className="text-center min-w-0">
+                      <div className="text-sm font-bold text-blue-400 tabular-nums">
                         {performancePeriod === "7d"
                           ? avgBookingsInRange.toFixed(1)
                           : (stats.totalBookingsLast30Days / 30).toFixed(1)}
                       </div>
-                      <div className="text-[8px] sm:text-[9px] text-[var(--text-secondary)]">
+                      <div className="text-xs text-[var(--text-secondary)] mt-0.5">
                         {performancePeriod === "7d" ? "Media/día 7d" : "Media/día 30d"}
                       </div>
                     </div>
-                    <div className="text-center">
-                      <div className="text-[11px] sm:text-[12px] font-bold text-purple-400">{formatCurrency(ticketCalculations.avgTicket7d)}</div>
-                      <div className="text-[8px] sm:text-[9px] text-[var(--text-secondary)]">Ticket 7d</div>
+                    <div className="text-center min-w-0">
+                      <div className="text-sm font-bold text-purple-400 tabular-nums">{formatCurrency(ticketCalculations.avgTicket7d)}</div>
+                      <div className="text-xs text-[var(--text-secondary)] mt-0.5">Ticket 7d</div>
                     </div>
                   </div>
                 </div>
@@ -871,56 +843,58 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
               whileHover={{ boxShadow: "0 12px 40px rgba(0,0,0,0.2)" }}
             >
               <div className="glass rounded-xl border border-white/10 hover:border-white/15 transition-all overflow-hidden h-full">
-                <div className="px-3 py-2 border-b border-white/10">
-                  <h2 className="text-[14px] sm:text-[15px] font-semibold text-white">Acciones</h2>
+                <div className="px-3 sm:px-4 py-2.5 border-b border-white/10">
+                  <h2 className="text-base sm:text-lg font-semibold text-white tracking-tight">Acciones</h2>
                 </div>
-                <div className="px-2.5 py-2">
-                  {/* Botón principal CTA - saturación reducida, altura reducida */}
+                <div className="px-3 py-3">
                   <motion.button
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
+                    type="button"
                     onClick={() => openCreate()}
-                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-gradient-to-r from-purple-600/90 to-emerald-500/90 text-white font-semibold transition-all duration-200 mb-2"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-gradient-to-r from-purple-600/90 to-emerald-500/90 text-sm font-semibold text-white transition-all duration-200 mb-2"
                   >
-                    <Plus className="h-3.5 w-3.5" />
-                    <span className="text-[12px] sm:text-[13px]">Nueva cita</span>
+                    <Plus className="h-4 w-4 shrink-0" />
+                    Nueva cita
                   </motion.button>
 
-                  {/* Botones secundarios - mismo height */}
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     <button
+                      type="button"
                       onClick={() => router.push("/panel/clientes")}
-                      className="w-full flex items-center gap-2 py-1.5 px-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-white hover:bg-white/[0.08] transition-all"
+                      className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-white hover:bg-white/[0.08] transition-all"
                     >
-                      <User className="h-3 w-3 text-[var(--text-secondary)]" />
-                      <span className="text-[11px] sm:text-[12px]">Clientes</span>
+                      <User className="h-4 w-4 shrink-0 text-[var(--text-secondary)]" />
+                      Clientes
                     </button>
                     <button
+                      type="button"
                       onClick={() => router.push("/panel/agenda")}
-                      className="w-full flex items-center gap-2 py-1.5 px-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-white hover:bg-white/[0.08] transition-all"
+                      className="w-full flex items-center gap-2 py-2 px-3 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-white hover:bg-white/[0.08] transition-all"
                     >
-                      <Calendar className="h-3 w-3 text-[var(--text-secondary)]" />
-                      <span className="text-[11px] sm:text-[12px]">Agenda</span>
+                      <Calendar className="h-4 w-4 shrink-0 text-[var(--text-secondary)]" />
+                      Agenda
                     </button>
                   </div>
 
-                  {/* Separador + Acciones rápidas */}
-                  <div className="mt-2 pt-1.5 border-t border-white/[0.08]">
-                    <p className="text-[8px] text-[var(--text-secondary)]/80 uppercase tracking-wider mb-1">Acceso rápido</p>
-                    <div className="grid grid-cols-2 gap-1">
+                  <div className="mt-3 pt-3 border-t border-white/[0.08]">
+                    <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide mb-2">Acceso rápido</p>
+                    <div className="grid grid-cols-2 gap-2">
                       <button
+                        type="button"
                         onClick={() => router.push("/panel/clientes")}
-                        className="flex items-center justify-center gap-1 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-all"
+                        className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06] text-xs text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-white transition-all"
                       >
-                        <Plus className="h-2.5 w-2.5 text-[var(--text-secondary)]" />
-                        <span className="text-[8px] text-[var(--text-secondary)]">Cliente</span>
+                        <Plus className="h-3.5 w-3.5 shrink-0" />
+                        Cliente
                       </button>
                       <button
+                        type="button"
                         onClick={() => router.push("/panel/servicios")}
-                        className="flex items-center justify-center gap-1 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-all"
+                        className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06] text-xs text-[var(--text-secondary)] hover:bg-white/[0.06] hover:text-white transition-all"
                       >
-                        <Scissors className="h-2.5 w-2.5 text-[var(--text-secondary)]" />
-                        <span className="text-[8px] text-[var(--text-secondary)]">Servicio</span>
+                        <Scissors className="h-3.5 w-3.5 shrink-0" />
+                        Servicio
                       </button>
                     </div>
                   </div>
