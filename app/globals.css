@@ -829,3 +829,15 @@ select option {
 .pb-nav-safe {
   padding-bottom: var(--bottom-nav-offset);
 }
+
+/* BookFast AI — al enfocar el compositor: ocultar tab bar móvil (solo hace falta subir el input) */
+@media (max-width: 767px) {
+  html[data-bookfast-ai-composer="1"] nav.panel-mobile-bottom-nav {
+    transform: translate3d(0, 100%, 0);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      transform 0.22s ease,
+      opacity 0.18s ease;
+  }
+}

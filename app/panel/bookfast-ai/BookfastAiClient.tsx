@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
@@ -83,14 +89,55 @@ function genId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+function dispatchBottomNavRecalc() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event("bookfast-ai-composer-change"));
+}
+
+/** Hueco visual bajo el teclado (iOS/Android) para mantener el compositor visible. */
+function useVisualKeyboardInset(active: boolean) {
+  const [inset, setInset] = useState(0);
+
+  useEffect(() => {
+    if (!active) {
+      setInset(0);
+      return;
+    }
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const update = () => {
+      const bottomGap = Math.max(
+        0,
+        window.innerHeight - vv.height - Math.max(0, vv.offsetTop),
+      );
+      setInset(bottomGap);
+    };
+
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    update();
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, [active]);
+
+  return inset;
+}
+
 export default function BookfastAiClient() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [composerActive, setComposerActive] = useState(false);
   const scrollAnchorRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const keyboardInset = useVisualKeyboardInset(composerActive);
 
   // Auto-scroll al final cuando se añade mensaje
   useEffect(() => {
@@ -104,6 +151,38 @@ export default function BookfastAiClient() {
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
   }, [input]);
+
+  // Móvil: al escribir ocultamos la tab bar y liberamos el hueco; al salir recalculamos.
+  useEffect(() => {
+    if (composerActive) {
+      document.documentElement.setAttribute("data-bookfast-ai-composer", "1");
+      document.documentElement.style.setProperty("--bottom-nav-offset", "0px");
+    } else {
+      document.documentElement.removeAttribute("data-bookfast-ai-composer");
+      document.documentElement.style.removeProperty("--bottom-nav-offset");
+    }
+    dispatchBottomNavRecalc();
+    return () => {
+      document.documentElement.removeAttribute("data-bookfast-ai-composer");
+      document.documentElement.style.removeProperty("--bottom-nav-offset");
+      dispatchBottomNavRecalc();
+    };
+  }, [composerActive]);
+
+  const handleComposerFocus = useCallback(() => {
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+      blurTimeoutRef.current = null;
+    }
+    setComposerActive(true);
+  }, []);
+
+  const handleComposerBlur = useCallback(() => {
+    blurTimeoutRef.current = setTimeout(() => {
+      setComposerActive(false);
+      blurTimeoutRef.current = null;
+    }, 180);
+  }, []);
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -190,6 +269,11 @@ export default function BookfastAiClient() {
 
   const isEmpty = messages.length === 0;
 
+  const composerPadBottom =
+    keyboardInset > 0
+      ? Math.max(10, keyboardInset)
+      : undefined;
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 px-4 pb-0 pt-2 md:pt-3">
       {/* Título en TopBar/sidebar: solo acción secundaria si hay mensajes */}
@@ -210,8 +294,15 @@ export default function BookfastAiClient() {
         </div>
       )}
 
-      {/* Área de mensajes: único scroll (interfaz tipo chat) */}
-      <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl bg-white/[0.02] ring-1 ring-white/10">
+      {/* Área de mensajes: sin scroll en vacío (móvil); solo el hilo con mensajes hace scroll */}
+      <div
+        className={cn(
+          "min-h-0 flex-1 rounded-2xl bg-white/[0.02] ring-1 ring-white/10",
+          isEmpty
+            ? "flex min-h-0 flex-col overflow-hidden"
+            : "overflow-y-auto",
+        )}
+      >
         {isEmpty ? (
           <EmptyState onPick={sendMessage} />
         ) : (
@@ -251,13 +342,19 @@ export default function BookfastAiClient() {
         )}
       </AnimatePresence>
 
-      {/* Barra de entrada fija abajo (estilo WhatsApp): no participa en el scroll del hilo */}
+      {/* Barra de entrada fija abajo: con teclado sube y no compite con la tab bar */}
       <form
         onSubmit={handleSubmit}
+        style={
+          composerPadBottom !== undefined
+            ? { paddingBottom: composerPadBottom }
+            : undefined
+        }
         className={cn(
-          "shrink-0 pb-2 md:pb-3 flex items-end gap-2 rounded-2xl p-2",
+          "shrink-0 flex items-end gap-2 rounded-2xl p-2",
           "bg-white/[0.04] ring-1 ring-white/10",
           "focus-within:ring-white/20 focus-within:bg-white/[0.06] transition",
+          composerPadBottom === undefined && "pb-[max(0.625rem,env(safe-area-inset-bottom))] md:pb-3",
         )}
       >
         <textarea
@@ -265,6 +362,8 @@ export default function BookfastAiClient() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
+          onFocus={handleComposerFocus}
+          onBlur={handleComposerBlur}
           placeholder="Pregúntale a BookFast AI lo que necesites…"
           rows={1}
           disabled={loading}
@@ -277,6 +376,7 @@ export default function BookfastAiClient() {
         <button
           type="submit"
           disabled={!input.trim() || loading}
+          onMouseDown={(e) => e.preventDefault()}
           className={cn(
             "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl",
             "bg-gradient-to-br from-violet-500 to-sky-500 text-white",
@@ -299,29 +399,66 @@ export default function BookfastAiClient() {
 
 // ── Subcomponentes ───────────────────────────────────────────────────────────
 
+/** `**negrita**` estilo Markdown: sin mostrar asteriscos. */
+function renderAssistantMarkdown(text: string): ReactNode {
+  const re = /\*\*([^*]+)\*\*/g;
+  const nodes: ReactNode[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let k = 0;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) {
+      nodes.push(text.slice(last, m.index));
+    }
+    nodes.push(
+      <strong key={`md-${k++}`} className="font-semibold text-white">
+        {m[1]}
+      </strong>,
+    );
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) {
+    nodes.push(text.slice(last));
+  }
+  if (nodes.length === 0) {
+    return text;
+  }
+  return <>{nodes}</>;
+}
+
 function EmptyState({ onPick }: { onPick: (text: string) => void }) {
   return (
-    <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
+    <div
+      className={cn(
+        "flex min-h-0 flex-1 flex-col justify-center px-3 py-3 text-center md:px-6 md:py-10",
+        "max-md:justify-start max-md:pt-4",
+      )}
+    >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         className={cn(
-          "mb-5 flex h-14 w-14 items-center justify-center rounded-2xl",
+          "mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl md:mb-5 md:h-14 md:w-14",
           "bg-gradient-to-br from-violet-500 to-sky-500",
           "shadow-[0_10px_40px_rgba(123,92,255,0.45)] ring-1 ring-white/20",
         )}
       >
-        <Sparkles className="h-7 w-7 text-white" />
+        <Sparkles className="h-6 w-6 text-white md:h-7 md:w-7" />
       </motion.div>
-      <h2 className="mb-2 text-xl font-semibold text-white/95 font-satoshi">
+      <h2 className="mb-1 font-satoshi text-base font-semibold text-white/95 md:mb-2 md:text-xl">
         ¿En qué puedo ayudarte?
       </h2>
-      <p className="mb-8 max-w-md text-sm text-white/55 leading-relaxed">
-        Pregúntame por tu agenda, clientes, ingresos, pagos pendientes, o lo que
-        necesites. Puedo consultarlo en vivo y responderte al momento.
+      <p className="mx-auto mb-4 max-w-md text-xs leading-snug text-white/55 md:mb-8 md:text-sm md:leading-relaxed">
+        <span className="md:hidden">
+          Agenda, clientes, ingresos y más — en vivo.
+        </span>
+        <span className="hidden md:inline">
+          Pregúntame por tu agenda, clientes, ingresos, pagos pendientes, o lo
+          que necesites. Puedo consultarlo en vivo y responderte al momento.
+        </span>
       </p>
-      <div className="grid w-full max-w-xl grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid w-full max-w-xl grid-cols-2 gap-2 md:grid-cols-2 md:gap-3">
         {QUICK_PROMPTS.map((q) => {
           const Icon = q.icon;
           return (
@@ -330,24 +467,24 @@ function EmptyState({ onPick }: { onPick: (text: string) => void }) {
               type="button"
               onClick={() => onPick(q.prompt)}
               className={cn(
-                "group flex items-start gap-3 rounded-xl p-4 text-left",
+                "group flex min-h-0 flex-col items-center gap-1.5 rounded-xl p-2.5 text-center md:flex-row md:items-start md:gap-3 md:p-4 md:text-left",
                 "bg-white/[0.03] ring-1 ring-white/10",
                 "hover:bg-white/[0.06] hover:ring-white/20 transition",
               )}
             >
               <div
                 className={cn(
-                  "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg",
+                  "flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg md:h-8 md:w-8",
                   "bg-gradient-to-br from-violet-500/80 to-sky-500/70 ring-1 ring-white/15",
                 )}
               >
-                <Icon className="h-4 w-4 text-white" />
+                <Icon className="h-3.5 w-3.5 text-white md:h-4 md:w-4" />
               </div>
-              <div className="flex-1">
-                <div className="text-sm font-medium text-white/90">
+              <div className="min-w-0 flex-1">
+                <div className="text-[11px] font-medium leading-tight text-white/90 md:text-sm">
                   {q.label}
                 </div>
-                <div className="mt-0.5 text-xs text-white/50 leading-snug">
+                <div className="mt-0.5 hidden text-xs leading-snug text-white/50 md:block">
                   {q.prompt}
                 </div>
               </div>
@@ -376,7 +513,9 @@ function MessageBubble({ message }: { message: ChatMessage }) {
             : "bg-white/[0.05] text-white/90 ring-1 ring-white/10",
         )}
       >
-        <div className="whitespace-pre-wrap break-words">{message.content}</div>
+        <div className="whitespace-pre-wrap break-words">
+          {isUser ? message.content : renderAssistantMarkdown(message.content)}
+        </div>
         {!isUser &&
           message.meta?.toolsCalled &&
           message.meta.toolsCalled.length > 0 && (

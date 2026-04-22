@@ -60,6 +60,14 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
     if (!el) return;
 
     const updateHeight = () => {
+      // BookFast AI: al escribir se oculta la barra; no reservar hueco bajo el contenido
+      if (
+        typeof document !== "undefined" &&
+        document.documentElement.hasAttribute("data-bookfast-ai-composer")
+      ) {
+        document.documentElement.style.setProperty("--bottom-nav-offset", "0px");
+        return;
+      }
       const h = el.getBoundingClientRect().height;
       document.documentElement.style.setProperty(
         "--bottom-nav-offset",
@@ -74,8 +82,12 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
     const ro = new ResizeObserver(updateHeight);
     ro.observe(el);
 
+    const onComposerChange = () => updateHeight();
+    window.addEventListener("bookfast-ai-composer-change", onComposerChange);
+
     return () => {
       ro.disconnect();
+      window.removeEventListener("bookfast-ai-composer-change", onComposerChange);
       document.documentElement.style.removeProperty("--bottom-nav-offset");
     };
   }, []);
@@ -159,7 +171,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
       <nav
         ref={navRef}
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 md:hidden pb-0",
+          "panel-mobile-bottom-nav fixed bottom-0 left-0 right-0 z-50 md:hidden pb-0",
           "shadow-[0_-1px_0_rgba(255,255,255,0.06)]"
         )}
         style={{

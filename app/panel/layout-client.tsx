@@ -410,10 +410,10 @@ function PanelLayoutContent({
         {/* Page Content - pb-nav-safe reserva var(--bottom-nav-offset) (tab + safe area, refinado en cliente) */}
         <main
           className={cn(
-            "flex-1 bg-[var(--bg-primary)] pb-nav-safe md:pb-0",
+            "flex-1 bg-[var(--bg-primary)]",
             isBookfastAiRoute
-              ? "flex min-h-0 flex-col overflow-hidden"
-              : "overflow-y-auto",
+              ? "bookfast-ai-main flex min-h-0 flex-col overflow-hidden pb-[calc(var(--bottom-nav-offset,56px)+0.75rem)] md:pb-0"
+              : "overflow-y-auto pb-nav-safe md:pb-0",
           )}
         >
           <TenantProvider tenant={tenant} isLoading={loading}>

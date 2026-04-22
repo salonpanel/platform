@@ -55,6 +55,8 @@ export const viewport: Viewport = {
   // "cover" extends the viewport behind the notch / Dynamic Island / home indicator.
   // env(safe-area-inset-*) values are then non-zero and our layout respects them.
   viewportFit: "cover",
+  // Android Chrome: el viewport se redimensiona con el teclado (mejor para chats).
+  interactiveWidget: "resizes-content",
   // Match the app's dark background so the browser tab bar / status bar blends in
   themeColor: "#06141B",
 };
