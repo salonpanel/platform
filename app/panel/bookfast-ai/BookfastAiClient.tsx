@@ -399,9 +399,12 @@ export default function BookfastAiClient() {
 
 // ── Subcomponentes ───────────────────────────────────────────────────────────
 
-/** `**negrita**` estilo Markdown: sin mostrar asteriscos. */
+/**
+ * Mini-Markdown en mensajes del asistente: `**negrita**`, `*cursiva*`
+ * (los `**` van antes en el patrón para no confundirlos con un solo `*`).
+ */
 function renderAssistantMarkdown(text: string): ReactNode {
-  const re = /\*\*([^*]+)\*\*/g;
+  const re = /\*\*([^*]+)\*\*|\*([^*]+)\*/g;
   const nodes: ReactNode[] = [];
   let last = 0;
   let m: RegExpExecArray | null;
@@ -410,11 +413,19 @@ function renderAssistantMarkdown(text: string): ReactNode {
     if (m.index > last) {
       nodes.push(text.slice(last, m.index));
     }
-    nodes.push(
-      <strong key={`md-${k++}`} className="font-semibold text-white">
-        {m[1]}
-      </strong>,
-    );
+    if (m[1] !== undefined) {
+      nodes.push(
+        <strong key={`md-b-${k++}`} className="font-semibold text-white">
+          {m[1]}
+        </strong>,
+      );
+    } else if (m[2] !== undefined) {
+      nodes.push(
+        <em key={`md-i-${k++}`} className="italic text-white/95">
+          {m[2]}
+        </em>,
+      );
+    }
     last = m.index + m[0].length;
   }
   if (last < text.length) {
