@@ -17,7 +17,7 @@ export async function fetchAvailabilityAction(
     .from("staff")
     .select("id")
     .eq("tenant_id", tenantId)
-    .eq("is_active", true);
+    .eq("active", true);
 
   if (!staffMembers || staffMembers.length === 0) return [];
 

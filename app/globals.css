@@ -654,3 +654,42 @@ select option {
     transition: transform 0.22s ease, opacity 0.18s ease;
   }
 }
+
+/* ============================================================================
+   BookFast — animación de carga del isotipo (halo)
+   ============================================================================ */
+@keyframes bf-mark-loader-glow-kf {
+  0%, 100% {
+    filter: drop-shadow(0 0 6px rgba(79, 161, 216, 0.3))
+      drop-shadow(0 0 18px rgba(79, 161, 216, 0.12));
+  }
+  50% {
+    filter: drop-shadow(0 0 14px rgba(79, 161, 216, 0.55))
+      drop-shadow(0 0 32px rgba(111, 184, 228, 0.28));
+  }
+}
+
+@keyframes bf-mark-loader-glow-kf-subtle {
+  0%, 100% {
+    filter: drop-shadow(0 0 3px rgba(79, 161, 216, 0.18));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(79, 161, 216, 0.32));
+  }
+}
+
+.bf-mark-loader-glow {
+  animation: bf-mark-loader-glow-kf 2.15s ease-in-out infinite;
+}
+
+.bf-mark-loader-glow--subtle {
+  animation: bf-mark-loader-glow-kf-subtle 3.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bf-mark-loader-glow,
+  .bf-mark-loader-glow--subtle {
+    animation: none;
+    filter: drop-shadow(0 0 8px rgba(79, 161, 216, 0.22));
+  }
+}

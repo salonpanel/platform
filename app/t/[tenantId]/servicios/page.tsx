@@ -25,55 +25,21 @@ export default async function ServicesPage({
   const formatPrice = (cents: number) =>
     new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(cents / 100);
 
-  const brand = (tenant as any).primary_color || (tenant as any).settings?.brand_color || "#4FA1D8";
+  const brand = tenant.primary_color || "#4FA1D8";
 
   return (
-    <div
-      style={{
-        maxWidth: "440px",
-        margin: "0 auto",
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        paddingBottom: "80px",
-      }}
-    >
-      <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "12px",
-          padding: "16px 20px",
-          borderBottom: "1px solid #1d2430",
-          background: "#0f131b",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-        }}
-      >
-        <Link
-          href="/"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "36px",
-            height: "36px",
-            borderRadius: "10px",
-            background: "#ffffff08",
-            border: "1px solid #1d2430",
-            color: "#8898aa",
-            textDecoration: "none",
-            fontSize: "18px",
-            lineHeight: 1,
-          }}
-        >
-          ←
-        </Link>
-        <h1 style={{ fontSize: "17px", fontWeight: 700, color: "#f2f5fa", margin: 0 }}>
-          Servicios
-        </h1>
-      </header>
+    <div className="flex min-h-0 flex-col">
+      <div className="border-b border-[#1d2430] px-4 pb-3 pt-2">
+        <p className="text-xs text-slate-500">
+          <Link href="/" className="text-slate-500 hover:text-slate-300">
+            Inicio
+          </Link>
+          <span className="mx-1.5 text-slate-600">/</span>
+          <span className="text-slate-400">Servicios</span>
+        </p>
+        <h1 className="mt-2 text-xl font-bold text-white">Servicios y precios</h1>
+        <p className="mt-0.5 text-sm text-slate-500">Elige uno y reserva tu franja</p>
+      </div>
 
       <div style={{ padding: "20px", flex: 1 }}>
         {services.length === 0 ? (

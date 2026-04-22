@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, AlertCircle, Loader2, Mail, ArrowLeft } from "lucide-react";
+import { BookFastLoadingMark } from "@/components/brand/BookFastLoadingMark";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { useWebAuthn } from "@/hooks/useWebAuthn";
 
@@ -454,8 +455,8 @@ function VerifyCodeContent() {
 export default function VerifyCodePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-white" />
+      <div className="min-h-screen flex items-center justify-center bg-[#05070A]">
+        <BookFastLoadingMark size={88} />
       </div>
     }>
       <VerifyCodeContent />

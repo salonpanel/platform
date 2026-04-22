@@ -25,11 +25,12 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      { url: "/bookfast-mark.svg", type: "image/svg+xml" },
+      { url: "/bookfast-logo.png", type: "image/png", sizes: "192x192" },
       { url: "/favicon.ico", sizes: "any" },
-      { url: "/icon.png", type: "image/png", sizes: "512x512" },
     ],
-    shortcut: "/favicon.ico",
-    apple: "/icon.png",
+    shortcut: "/bookfast-mark.svg",
+    apple: "/bookfast-logo.png",
   },
   // Configuración PWA para modo app standalone
   manifest: "/manifest.json",
@@ -60,7 +61,7 @@ export const viewport: Viewport = {
   // Android Chrome: el viewport se redimensiona con el teclado (mejor para chats).
   interactiveWidget: "resizes-content",
   // Match the app's dark background so the browser tab bar / status bar blends in
-  themeColor: "#06141B",
+  themeColor: "#05070A",
 };
 
 export default function RootLayout({
@@ -72,11 +73,11 @@ export default function RootLayout({
     <html lang="es">
       <head>
         {/* ── Icons (explicit for broad browser compatibility) ── */}
+        <link rel="icon" href="/bookfast-mark.svg" type="image/svg+xml" />
+        <link rel="icon" href="/bookfast-logo.png" type="image/png" sizes="192x192" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" href="/icon.png" type="image/png" sizes="512x512" />
-        {/* apple-touch-icon: used by iOS when user adds app to Home Screen */}
-        <link rel="apple-touch-icon" href="/icon.png" />
-        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/bookfast-logo.png" />
+        <link rel="shortcut icon" href="/bookfast-mark.svg" />
 
         {/* ── PWA: manifest (Next.js also adds this, kept for subdomains) ── */}
         <link rel="manifest" href="/manifest.json" />
@@ -95,7 +96,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="BookFast Pro" />
         {/* theme-color: browser tab bar / Android status bar colour */}
-        <meta name="theme-color" content="#06141B" />
+        <meta name="theme-color" content="#05070A" />
 
         {/* ── IMPORTANT: NO duplicate <meta name="viewport"> here ──
             The Next.js `viewport` export above generates it with viewport-fit=cover.
@@ -109,7 +110,7 @@ export default function RootLayout({
           html {
             height: 100%;
             overflow: hidden;
-            background-color: #06141B;
+            background-color: #05070A;
           }
           body {
             position: fixed;
@@ -119,7 +120,7 @@ export default function RootLayout({
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background-color: #06141B;
+            background-color: #05070A;
           }
         `}</style>
       </head>

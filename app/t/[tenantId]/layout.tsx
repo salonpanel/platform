@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getPublicTenant } from "@/lib/tenant/public-api";
 import type { Metadata } from "next";
+import { TenantPublicShell } from "../components/TenantPublicShell";
 
 export const dynamic = "force-dynamic";
 
@@ -12,9 +13,12 @@ export async function generateMetadata({
   const { tenantId } = await params;
   const tenant = await getPublicTenant(tenantId);
   if (!tenant) return { title: "BookFast" };
+  const desc =
+    [tenant.address, "Reservas online"].filter(Boolean).join(" · ") ||
+    `Cita y servicios de ${tenant.name}.`;
   return {
-    title: `${tenant.name} — Reserva Online`,
-    description: `Reserva tu cita en ${tenant.name} de forma rápida y sencilla.`,
+    title: `${tenant.name} — Peluquería y barbería | Reservas online`,
+    description: desc,
     robots: { index: true, follow: true },
   };
 }
@@ -111,7 +115,13 @@ export default async function TenantPublicLayout({
         "--tenant-brand": brandColor,
       } as React.CSSProperties}
     >
-      {children}
+      <TenantPublicShell
+        businessName={tenant.name}
+        logoUrl={tenant.logo_url}
+        brandColor={brandColor}
+      >
+        <div className="pb-24">{children}</div>
+      </TenantPublicShell>
     </div>
   );
 }

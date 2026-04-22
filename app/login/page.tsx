@@ -4,6 +4,7 @@ import { useState, Suspense, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, AlertCircle, Loader2, Sparkles } from "lucide-react";
+import { BookFastLoadingMark } from "@/components/brand/BookFastLoadingMark";
 import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { useProgressivePreload } from "@/hooks/useProgressivePreload";
 import { useWebAuthn } from "@/hooks/useWebAuthn";
@@ -131,8 +132,8 @@ function LoginContent() {
   // Show subtle spinner while checking session
   if (checkingSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-white/30" />
+      <div className="min-h-screen flex items-center justify-center bg-[#05070A]">
+        <BookFastLoadingMark size={88} />
       </div>
     );
   }
@@ -345,8 +346,8 @@ function LoginContent() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-white" />
+      <div className="min-h-screen flex items-center justify-center bg-[#05070A]">
+        <BookFastLoadingMark size={88} />
       </div>
     }>
       <LoginContent />
