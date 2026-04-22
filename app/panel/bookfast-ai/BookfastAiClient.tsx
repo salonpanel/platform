@@ -191,30 +191,10 @@ export default function BookfastAiClient() {
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex h-[calc(100vh-theme(spacing.20))] flex-col px-4 md:px-8">
-      {/* Header compacto */}
-      <div className="flex items-center justify-between pb-4 pt-2 md:pt-4">
-        <div className="flex items-center gap-3">
-          <div
-            className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-xl",
-              "bg-gradient-to-br from-violet-500 to-sky-500",
-              "shadow-[0_8px_24px_rgba(123,92,255,0.35)] ring-1 ring-white/20",
-            )}
-          >
-            <Sparkles className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold text-white/95 font-satoshi">
-              BookFast AI
-            </h1>
-            <p className="text-xs text-white/50">
-              Tu asistente inteligente
-              {sessionId ? " · conversación activa" : ""}
-            </p>
-          </div>
-        </div>
-        {messages.length > 0 && (
+    <div className="flex min-h-0 flex-1 flex-col gap-2 px-4 pb-0 pt-2 md:pt-3">
+      {/* Título en TopBar/sidebar: solo acción secundaria si hay mensajes */}
+      {messages.length > 0 && (
+        <div className="flex shrink-0 items-center justify-end">
           <button
             type="button"
             onClick={resetConversation}
@@ -227,11 +207,11 @@ export default function BookfastAiClient() {
             <RefreshCw className="h-3.5 w-3.5" />
             Nueva conversación
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Chat scroll area */}
-      <div className="flex-1 overflow-y-auto rounded-2xl bg-white/[0.02] ring-1 ring-white/10">
+      {/* Área de mensajes: único scroll (interfaz tipo chat) */}
+      <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl bg-white/[0.02] ring-1 ring-white/10">
         {isEmpty ? (
           <EmptyState onPick={sendMessage} />
         ) : (
@@ -255,7 +235,7 @@ export default function BookfastAiClient() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             className={cn(
-              "mt-3 flex items-start gap-2 rounded-xl px-3 py-2",
+              "shrink-0 flex items-start gap-2 rounded-xl px-3 py-2",
               "bg-red-500/10 ring-1 ring-red-500/30 text-red-200 text-sm",
             )}
           >
@@ -271,11 +251,11 @@ export default function BookfastAiClient() {
         )}
       </AnimatePresence>
 
-      {/* Input */}
+      {/* Barra de entrada fija abajo (estilo WhatsApp): no participa en el scroll del hilo */}
       <form
         onSubmit={handleSubmit}
         className={cn(
-          "mt-3 mb-4 flex items-end gap-2 rounded-2xl p-2",
+          "shrink-0 pb-2 md:pb-3 flex items-end gap-2 rounded-2xl p-2",
           "bg-white/[0.04] ring-1 ring-white/10",
           "focus-within:ring-white/20 focus-within:bg-white/[0.06] transition",
         )}

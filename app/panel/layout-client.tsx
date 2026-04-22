@@ -18,6 +18,7 @@ import { usePrefetchRoutes, useSmartPrefetchData } from "@/hooks/usePrefetch";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
 import { useCacheWarmer } from "@/hooks/useCacheWarmer";
 import { TenantProvider } from "@/contexts/TenantContext";
+import { cn } from "@/lib/utils";
 
 type TenantInfo = {
   id: string;
@@ -368,6 +369,8 @@ function PanelLayoutContent({
     description: "Tu asistente inteligente",
   };
 
+  const isBookfastAiRoute = pathname?.startsWith("/panel/bookfast-ai") ?? false;
+
   return (
     <div className="flex h-[100dvh] bg-[var(--bg-primary)]">
       {/* Sidebar - Hidden on mobile */}
@@ -405,9 +408,22 @@ function PanelLayoutContent({
         />
 
         {/* Page Content - pb-nav-safe reserva var(--bottom-nav-offset) (tab + safe area, refinado en cliente) */}
-        <main className="flex-1 overflow-y-auto bg-[var(--bg-primary)] pb-nav-safe md:pb-0">
+        <main
+          className={cn(
+            "flex-1 bg-[var(--bg-primary)] pb-nav-safe md:pb-0",
+            isBookfastAiRoute
+              ? "flex min-h-0 flex-col overflow-hidden"
+              : "overflow-y-auto",
+          )}
+        >
           <TenantProvider tenant={tenant} isLoading={loading}>
-            <PageContainer sidebarCollapsed={sidebarCollapsed}>{children}</PageContainer>
+            <PageContainer
+              sidebarCollapsed={sidebarCollapsed}
+              padding={isBookfastAiRoute ? "none" : "md"}
+              className={isBookfastAiRoute ? "min-h-0 flex-1 flex flex-col" : undefined}
+            >
+              {children}
+            </PageContainer>
           </TenantProvider>
         </main>
       </div>
