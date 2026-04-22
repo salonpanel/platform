@@ -405,18 +405,17 @@ export function SidebarNav({
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         className={cn(
-          "fixed md:static inset-y-0 left-0 z-[56] glass flex flex-col transition-all duration-300 ease-out",
-          "bg-[var(--bg-primary)] backdrop-blur-xl border-r border-[rgba(255,255,255,0.1)] sidebar-no-shadow",
+          "fixed md:static inset-y-0 left-0 z-[56] flex flex-col transition-all duration-300 ease-out",
+          "bg-[var(--bf-bg-elev)] border-r border-[var(--bf-border)] sidebar-no-shadow",
           "md:translate-x-0 h-screen md:h-full",
           isOpen ? "translate-x-0" : "-translate-x-full",
-          "shadow-[0px_0px_40px_rgba(0,0,0,0.3)]"
         )}
         style={{
-          borderRadius: "0 var(--radius-xl) var(--radius-xl) 0",
+          borderRadius: "0 var(--r-xl) var(--r-xl) 0",
         }}
       >
         {/* Logo/Name y botón toggle */}
-        <div className="flex h-16 items-center justify-between border-b border-[rgba(255,255,255,0.1)] px-5 glass-subtle relative">
+        <div className="flex h-16 items-center justify-between border-b border-[var(--bf-border)] px-5 relative">
           <AnimatePresence mode="wait">
             {isExpanded ? (
               <motion.h1
@@ -425,7 +424,8 @@ export function SidebarNav({
                 animate={{ opacity: 1, width: "auto" }}
                 exit={{ opacity: 0, width: 0 }}
                 transition={{ duration: 0.2 }}
-                className="text-base font-semibold text-[var(--text-primary)] truncate font-satoshi tracking-tight whitespace-nowrap"
+                className="text-base font-semibold text-[var(--bf-ink-50)] truncate tracking-tight whitespace-nowrap"
+              style={{ fontFamily: "var(--font-sans)" }}
               >
                 {tenantName}
               </motion.h1>
@@ -436,7 +436,7 @@ export function SidebarNav({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.2 }}
-                className="h-8 w-8 rounded-full gradient-aurora-1 flex items-center justify-center text-xs font-semibold text-white flex-shrink-0"
+                className="h-8 w-8 rounded-full bg-[var(--bf-primary)] flex items-center justify-center text-xs font-semibold text-[var(--bf-ink)] flex-shrink-0"
               >
                 {tenantName.charAt(0).toUpperCase()}
               </motion.div>
@@ -447,7 +447,7 @@ export function SidebarNav({
           {/* Botón cerrar (solo visible en mobile) */}
           <button
             onClick={onClose}
-            className="md:hidden text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-1.5 rounded-[var(--radius-sm)] hover:bg-[rgba(255,255,255,0.08)] transition-all duration-200"
+            className="md:hidden text-[var(--bf-ink-400)] hover:text-[var(--bf-ink-50)] p-1.5 rounded-[var(--r-sm)] hover:bg-[var(--bf-bg-elev)] transition-all duration-200"
             aria-label="Cerrar menú"
           >
             <X className="h-4 w-4" />
@@ -528,30 +528,30 @@ export function SidebarNav({
                       }
                     }}
                     className={cn(
-                      "flex items-center rounded-[var(--radius-md)] text-sm font-medium font-satoshi transition-all duration-300 relative group overflow-hidden",
-                      // Consistent padding for both states, only gap changes
+                      "flex items-center rounded-[var(--r-md)] text-sm font-medium transition-all duration-300 relative group overflow-hidden",
                       isExpanded ? "gap-3 px-3 py-2.5" : "justify-center px-3 py-2.5",
                       active
-                        ? "gradient-aurora-1 text-white shadow-[0px_4px_16px_rgba(123,92,255,0.4)] ring-1 ring-white/20"
+                        ? "bg-[rgba(79,161,216,0.12)] text-[var(--bf-primary)] border border-[rgba(79,161,216,0.3)]"
                         : item.href === "/logout"
-                        ? "text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:shadow-[0px_2px_12px_rgba(239,68,68,0.1)]"
-                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.08)] hover:shadow-[0px_2px_12px_rgba(255,255,255,0.1)]"
+                        ? "text-[var(--bf-danger)] hover:text-[#F2A0AC] hover:bg-[rgba(224,96,114,0.10)]"
+                        : "text-[var(--bf-ink-400)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-surface)]"
                     )}
+                    style={{ fontFamily: "var(--font-sans)" }}
                     style={{
                       borderRadius: "var(--radius-md)",
                       minHeight: "44px",
                     }}
                     title={!isExpanded ? item.label : undefined}
                   >
-                    {/* Ripple effect background */}
+                    {/* Hover highlight */}
                     {isItemHovered && !active && (
                       <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-[var(--accent-aqua)]/10 to-[var(--accent-purple)]/10 rounded-[var(--radius-md)]"
+                        className="absolute inset-0 bg-[rgba(79,161,216,0.07)] rounded-[var(--r-md)]"
                         layoutId="ripple"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ duration: 0.2 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
                       />
                     )}
 
@@ -568,25 +568,10 @@ export function SidebarNav({
                       }}
                       className={cn(
                         "flex-shrink-0 relative z-10 flex items-center justify-center",
-                        active ? "text-white drop-shadow-sm" : "text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]"
+                        active ? "text-[var(--bf-primary)]" : "text-[var(--bf-ink-400)] group-hover:text-[var(--bf-ink-100)]"
                       )}
                     >
                       {icon}
-                      {/* Icon glow effect */}
-                      {active && (
-                        <motion.div
-                          className="absolute inset-0 bg-white/30 rounded-full blur-sm"
-                          animate={{
-                            opacity: 0.5,
-                            scale: 1.1
-                          }}
-                          transition={{
-                            duration: 2,
-                            repeat: Infinity,
-                            ease: "easeInOut"
-                          }}
-                        />
-                      )}
                     </motion.span>
                     <AnimatePresence mode="wait">
                       {isExpanded && (
@@ -607,11 +592,11 @@ export function SidebarNav({
                         </motion.span>
                       )}
                     </AnimatePresence>
-                    {/* Active indicator - only show when expanded */}
+                    {/* Active indicator */}
                     {active && isExpanded && (
                       <motion.div
                         layoutId="activeIndicator"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white shadow-[0px_0px_12px_rgba(255,255,255,0.8)] ring-2 ring-white/30"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[var(--bf-primary)] shadow-[0_0_8px_rgba(79,161,216,0.6)]"
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{
                           scale: 1,
@@ -655,13 +640,12 @@ export function SidebarNav({
                   }
                 }}
                 className={cn(
-                  "group relative flex items-center rounded-[var(--radius-md)] overflow-hidden",
+                  "group relative flex items-center rounded-[var(--r-md)] overflow-hidden",
                   "transition-all duration-300",
                   isExpanded ? "gap-3 px-3 py-3" : "justify-center px-3 py-3",
-                  // Estilo destacado: aurora gradient + glow + ring
                   isActive(featuredItem.href)
-                    ? "bg-gradient-to-r from-violet-500 via-fuchsia-500 to-sky-500 text-white shadow-[0_8px_28px_rgba(168,85,247,0.45)] ring-1 ring-white/30"
-                    : "bg-gradient-to-r from-violet-500/15 via-fuchsia-500/15 to-sky-500/15 text-white/85 ring-1 ring-white/12 hover:from-violet-500/25 hover:via-fuchsia-500/25 hover:to-sky-500/25 hover:ring-white/20 hover:shadow-[0_6px_20px_rgba(123,92,255,0.3)]"
+                    ? "bg-[var(--bf-primary)] text-[var(--bf-ink)] shadow-[var(--bf-shadow-glow)]"
+                    : "bg-[rgba(79,161,216,0.10)] text-[var(--bf-ink-100)] border border-[rgba(79,161,216,0.25)] hover:bg-[rgba(79,161,216,0.18)] hover:border-[rgba(79,161,216,0.4)]"
                 )}
                 style={{
                   borderRadius: "var(--radius-md)",
@@ -669,26 +653,11 @@ export function SidebarNav({
                 }}
                 title={!isExpanded ? featuredItem.label : undefined}
               >
-                {/* Halo animado (solo cuando expandido) */}
-                {isExpanded && (
-                  <motion.div
-                    className="pointer-events-none absolute -inset-1 rounded-[var(--radius-md)] opacity-40 blur-xl"
-                    style={{
-                      background:
-                        "radial-gradient(circle at 30% 50%, rgba(168,85,247,0.6) 0%, transparent 60%)",
-                    }}
-                    animate={{ opacity: [0.3, 0.55, 0.3] }}
-                    transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
-                  />
-                )}
-
-                <motion.span
-                  animate={{ rotate: [0, 12, -8, 0], scale: [1, 1.1, 1] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                  className="relative z-10 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-sky-500 shadow-[0_4px_14px_rgba(123,92,255,0.5)] ring-1 ring-white/25"
+                <span
+                  className="relative z-10 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[var(--r-md)] bg-[var(--bf-primary)] shadow-[var(--bf-shadow-glow)]"
                 >
-                  <Sparkles className="h-4 w-4 text-white" />
-                </motion.span>
+                  <Sparkles className="h-4 w-4 text-[var(--bf-ink)]" />
+                </span>
 
                 <AnimatePresence mode="wait">
                   {isExpanded && (
@@ -700,14 +669,20 @@ export function SidebarNav({
                       transition={{ duration: 0.25 }}
                       className="relative z-10 flex flex-col min-w-0"
                     >
-                      <span className="text-sm font-semibold font-satoshi tracking-tight truncate">
-                        {featuredItem.label}
-                      </span>
-                      {featuredItem.description && (
-                        <span className="text-[11px] text-white/55 truncate font-inter">
-                          {featuredItem.description}
-                        </span>
-                      )}
+                          <span
+                            className="text-sm font-semibold tracking-tight truncate"
+                            style={{ fontFamily: "var(--font-sans)" }}
+                          >
+                            {featuredItem.label}
+                          </span>
+                          {featuredItem.description && (
+                            <span
+                              className="text-[11px] text-[var(--bf-ink-400)] truncate"
+                              style={{ fontFamily: "var(--font-sans)" }}
+                            >
+                              {featuredItem.description}
+                            </span>
+                          )}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -726,17 +701,18 @@ export function SidebarNav({
               href={logoutItem.href}
               prefetch={false}
               className={cn(
-                "flex items-center rounded-[var(--radius-md)] text-sm font-medium font-satoshi transition-all duration-300 relative group overflow-hidden",
+                "flex items-center rounded-[var(--r-md)] text-sm font-medium transition-all duration-300 relative group overflow-hidden",
                 isExpanded ? "gap-3 px-3 py-2.5" : "justify-center px-3 py-2.5",
-                "text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:shadow-[0px_2px_12px_rgba(239,68,68,0.1)]"
+                "text-[var(--bf-danger)] hover:text-[#F2A0AC] hover:bg-[rgba(224,96,114,0.10)]"
               )}
+              style={{ fontFamily: "var(--font-sans)" }}
               style={{
                 borderRadius: "var(--radius-md)",
                 minHeight: "44px",
               }}
               title={!isExpanded ? logoutItem.label : undefined}
             >
-              <span className="flex-shrink-0 relative z-10 flex items-center justify-center text-red-400 group-hover:text-red-300">
+              <span className="flex-shrink-0 relative z-10 flex items-center justify-center text-[var(--bf-danger)] group-hover:text-[#F2A0AC]">
                 <LogOut className="h-5 w-5" />
               </span>
               <AnimatePresence mode="wait">

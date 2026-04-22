@@ -106,9 +106,9 @@ export function DropdownMenu({
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             className={cn(
-              "absolute z-50 min-w-[200px] rounded-xl p-1",
-              "glass bg-[#15171A] border border-[rgba(255,255,255,0.1)]",
-              "shadow-[0px_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-md",
+              "absolute z-50 min-w-[200px] rounded-[var(--r-md)] p-1",
+              "bg-[var(--bf-surface)] border border-[var(--bf-border)]",
+              "shadow-[var(--bf-shadow-card)] backdrop-blur-sm",
               className
             )}
           >
@@ -134,14 +134,15 @@ export function DropdownMenuItem({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "w-full text-left px-4 py-2.5 rounded-lg text-sm font-semibold font-satoshi",
+        "w-full text-left px-4 py-2.5 rounded-[var(--r-md)] text-sm font-medium",
         "transition-all duration-200",
         variant === "danger"
-          ? "text-red-400 hover:bg-[rgba(239,68,68,0.15)]"
-          : "text-[var(--text-primary)] hover:bg-[rgba(79,161,216,0.15)]",
+          ? "text-[var(--bf-danger)] hover:bg-[rgba(224,96,114,0.12)]"
+          : "text-[var(--bf-ink-100)] hover:text-[var(--bf-ink-50)] hover:bg-[rgba(79,161,216,0.12)]",
         disabled && "opacity-50 cursor-not-allowed",
         className
       )}
+      style={{ fontFamily: "var(--font-sans)" }}
     >
       {children}
     </motion.button>

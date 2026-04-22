@@ -49,13 +49,13 @@ const VIEW_MODES: { key: ViewMode; label: string; short: string }[] = [
 ];
 
 const STATUS_COLORS: Record<BookingStatus, string> = {
-  pending:   "text-amber-400",
-  confirmed: "text-sky-400",
-  paid:      "text-emerald-400",
-  completed: "text-[#4FA1D8]",
-  cancelled: "text-red-400",
-  no_show:   "text-white/40",
-  hold:      "text-[#4FA1D8]",
+  pending:   "text-[var(--bf-warn)]",
+  confirmed: "text-[var(--bf-primary)]",
+  paid:      "text-[var(--bf-success)]",
+  completed: "text-[var(--bf-primary)]",
+  cancelled: "text-[var(--bf-danger)]",
+  no_show:   "text-[var(--bf-ink-400)]",
+  hold:      "text-[var(--bf-primary)]",
 };
 
 export function AgendaTopBar({
@@ -204,32 +204,32 @@ export function AgendaTopBar({
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 4, scale: 0.97 }}
                       transition={{ duration: 0.12 }}
-                      className="absolute top-full mt-2 left-0 z-[80] rounded-xl bg-[#1A1B1F] border border-white/10 shadow-2xl p-3"
-                    >
-                      <input
-                        type="date"
-                        value={selectedDate}
-                        onChange={(e) => {
-                          onDateChange(e.target.value);
-                          setShowDatePicker(false);
-                        }}
-                        className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-[#4FA1D8]/50 focus:outline-none focus:ring-2 focus:ring-[#4FA1D8]/20"
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                    className="absolute top-full mt-2 left-0 z-[80] rounded-[var(--r-md)] bg-[var(--bf-surface)] border border-[var(--bf-border)] shadow-[var(--bf-shadow-card)] p-3"
+                  >
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => {
+                        onDateChange(e.target.value);
+                        setShowDatePicker(false);
+                      }}
+                      className="rounded-[var(--r-md)] border border-[var(--bf-border-2)] bg-[var(--bf-bg-elev)] px-3 py-2 text-sm text-[var(--bf-ink-50)] focus:border-[var(--bf-primary)] focus:outline-none focus:ring-2 focus:ring-[rgba(79,161,216,0.2)]"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
+          </div>
 
-            {/* Quick actions */}
+          {/* Quick actions */}
             <div className="flex items-center gap-1 flex-shrink-0">
               <motion.button
                 whileTap={{ scale: 0.94 }}
                 onClick={onSearchClick}
-                className="h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
+                className="h-8 w-8 rounded-[var(--r-md)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] hover:bg-[var(--bf-surface)] transition-colors flex items-center justify-center"
                 aria-label="Buscar"
               >
-                <Search className="h-3.5 w-3.5 text-white/70" />
+                <Search className="h-3.5 w-3.5 text-[var(--bf-ink-400)]" />
               </motion.button>
 
               <motion.button
@@ -238,7 +238,7 @@ export function AgendaTopBar({
                 className="relative h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
                 aria-label="Notificaciones"
               >
-                <Bell className="h-3.5 w-3.5 text-white/70" />
+                <Bell className="h-3.5 w-3.5 text-[var(--bf-ink-400)]" />
                 {unreadNotifications > 0 && (
                   <motion.span
                     initial={{ scale: 0.5, opacity: 0 }}
@@ -278,12 +278,12 @@ export function AgendaTopBar({
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 4, scale: 0.97 }}
                       transition={{ duration: 0.12 }}
-                      className="absolute top-full mt-2 right-0 z-[80] w-52 rounded-xl bg-[#1A1B1F] border border-white/10 shadow-2xl overflow-hidden"
+                      className="absolute top-full mt-2 right-0 z-[80] w-52 rounded-[var(--r-md)] bg-[var(--bf-surface)] border border-[var(--bf-border)] shadow-[var(--bf-shadow-card)] overflow-hidden"
                     >
                       <div className="p-3 space-y-3">
                         {/* Status filters */}
                         <div>
-                          <p className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-1.5 px-1">Estado</p>
+                          <p className="text-[10px] font-semibold text-[var(--bf-ink-400)] uppercase tracking-wider mb-1.5 px-1" style={{ fontFamily: "var(--font-mono)" }}>Estado</p>
                           <div className="space-y-0.5">
                             {(["pending","confirmed","paid","completed","cancelled","no_show"] as BookingStatus[]).map((status) => (
                               <button
@@ -328,10 +328,10 @@ export function AgendaTopBar({
 
                         {/* Clear button */}
                         {activeFiltersCount > 0 && (
-                          <div className="border-t border-white/5 pt-2">
+                          <div className="border-t border-[var(--bf-border)] pt-2">
                             <button
                               onClick={handleClearFilters}
-                              className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                              className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-[var(--r-sm)] text-xs text-[var(--bf-ink-400)] hover:text-[var(--bf-danger)] hover:bg-[rgba(224,96,114,0.10)] transition-all"
                             >
                               <X className="h-3 w-3" />
                               Limpiar filtros
@@ -353,21 +353,21 @@ export function AgendaTopBar({
               <motion.button
                 whileTap={{ scale: 0.94 }}
                 onClick={() => handleNavigate("prev")}
-                className="h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
+                className="h-8 w-8 rounded-[var(--r-md)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] hover:bg-[var(--bf-surface)] transition-colors flex items-center justify-center"
                 aria-label="Fecha anterior"
               >
-                <ChevronLeft className="h-3.5 w-3.5 text-white/70" />
+                <ChevronLeft className="h-3.5 w-3.5 text-[var(--bf-ink-400)]" />
               </motion.button>
 
               <motion.button
                 whileTap={{ scale: 0.94 }}
                 onClick={handleToday}
-                className={cn(
-                  "px-2.5 h-8 rounded-xl text-xs font-semibold transition-all",
-                  isToday
-                    ? "bg-white/10 text-white border border-white/20"
-                    : "bg-gradient-to-r from-[#4FA1D8] to-[#4FA1D8] text-[#0E0F11] shadow-[0_6px_20px_rgba(79,161,216,0.3)]"
-                )}
+          className={cn(
+                "px-2.5 h-8 rounded-[var(--r-md)] text-xs font-semibold transition-all",
+                isToday
+                  ? "bg-[var(--bf-bg-elev)] text-[var(--bf-ink-300)] border border-[var(--bf-border)]"
+                  : "bg-[var(--bf-primary)] text-[var(--bf-ink)] shadow-[var(--bf-shadow-glow)]"
+              )}
               >
                 Hoy
               </motion.button>
@@ -375,10 +375,10 @@ export function AgendaTopBar({
               <motion.button
                 whileTap={{ scale: 0.94 }}
                 onClick={() => handleNavigate("next")}
-                className="h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
+                className="h-8 w-8 rounded-[var(--r-md)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] hover:bg-[var(--bf-surface)] transition-colors flex items-center justify-center"
                 aria-label="Fecha siguiente"
               >
-                <ChevronRight className="h-3.5 w-3.5 text-white/70" />
+                <ChevronRight className="h-3.5 w-3.5 text-[var(--bf-ink-400)]" />
               </motion.button>
             </div>
 
@@ -403,7 +403,7 @@ export function AgendaTopBar({
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 4, scale: 0.97 }}
                     transition={{ duration: 0.12 }}
-                    className="absolute top-full mt-2 right-0 z-[80] w-40 rounded-xl bg-[#1A1B1F] border border-white/10 shadow-2xl overflow-hidden"
+                    className="absolute top-full mt-2 right-0 z-[80] w-40 rounded-[var(--r-md)] bg-[var(--bf-surface)] border border-[var(--bf-border)] shadow-[var(--bf-shadow-card)] overflow-hidden"
                   >
                     <div className="p-1">
                       {VIEW_MODES.map((mode) => (
@@ -486,20 +486,20 @@ export function AgendaTopBar({
             <motion.button
               whileTap={{ scale: 0.94 }}
               onClick={() => handleNavigate("prev")}
-              className="h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
+              className="h-8 w-8 rounded-[var(--r-md)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] hover:bg-[var(--bf-surface)] transition-colors flex items-center justify-center"
               aria-label="Fecha anterior"
             >
-              <ChevronLeft className="h-3.5 w-3.5 text-white/70" />
+              <ChevronLeft className="h-3.5 w-3.5 text-[var(--bf-ink-400)]" />
             </motion.button>
 
             <motion.button
               whileTap={{ scale: 0.94 }}
               onClick={handleToday}
               className={cn(
-                "px-2.5 h-8 rounded-xl text-xs font-semibold transition-all",
+                "px-2.5 h-8 rounded-[var(--r-md)] text-xs font-semibold transition-all",
                 isToday
-                  ? "bg-white/10 text-white border border-white/20"
-                  : "bg-gradient-to-r from-[#4FA1D8] to-[#4FA1D8] text-[#0E0F11] shadow-[0_6px_20px_rgba(79,161,216,0.3)]"
+                  ? "bg-[var(--bf-bg-elev)] text-[var(--bf-ink-300)] border border-[var(--bf-border)]"
+                  : "bg-[var(--bf-primary)] text-[var(--bf-ink)] shadow-[var(--bf-shadow-glow)]"
               )}
             >
               Hoy
@@ -508,10 +508,10 @@ export function AgendaTopBar({
             <motion.button
               whileTap={{ scale: 0.94 }}
               onClick={() => handleNavigate("next")}
-              className="h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
+              className="h-8 w-8 rounded-[var(--r-md)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] hover:bg-[var(--bf-surface)] transition-colors flex items-center justify-center"
               aria-label="Fecha siguiente"
             >
-              <ChevronRight className="h-3.5 w-3.5 text-white/70" />
+              <ChevronRight className="h-3.5 w-3.5 text-[var(--bf-ink-400)]" />
             </motion.button>
           </div>
 
@@ -520,10 +520,10 @@ export function AgendaTopBar({
             <motion.button
               whileTap={{ scale: 0.94 }}
               onClick={onSearchClick}
-              className="h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
+              className="h-8 w-8 rounded-[var(--r-md)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] hover:bg-[var(--bf-surface)] transition-colors flex items-center justify-center"
               aria-label="Buscar"
             >
-              <Search className="h-3.5 w-3.5 text-white/70" />
+              <Search className="h-3.5 w-3.5 text-[var(--bf-ink-400)]" />
             </motion.button>
 
             <motion.button
@@ -532,7 +532,7 @@ export function AgendaTopBar({
               className="relative h-8 w-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center"
               aria-label="Notificaciones"
             >
-              <Bell className="h-3.5 w-3.5 text-white/70" />
+              <Bell className="h-3.5 w-3.5 text-[var(--bf-ink-400)]" />
               {unreadNotifications > 0 && (
                 <motion.span
                   initial={{ scale: 0.5, opacity: 0 }}
@@ -546,7 +546,7 @@ export function AgendaTopBar({
           </div>
 
           {/* View mode segmented control */}
-          <div className="flex items-center rounded-xl border border-white/10 bg-white/5 p-0.5 gap-0.5 flex-shrink-0">
+          <div className="flex items-center rounded-[var(--r-full)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] p-0.5 gap-0.5 flex-shrink-0">
             {VIEW_MODES.map((mode) => (
               <motion.button
                 key={mode.key}
@@ -555,8 +555,8 @@ export function AgendaTopBar({
                 className={cn(
                   "px-2.5 py-1 rounded-[10px] text-xs font-medium transition-all duration-150",
                   viewMode === mode.key
-                    ? "bg-white text-[#0E0F11] shadow-sm"
-                    : "text-white/50 hover:text-white/80"
+                    ? "bg-[var(--bf-ink-50)] text-[var(--bf-ink)]"
+                    : "text-[var(--bf-ink-400)] hover:text-[var(--bf-ink-100)]"
                 )}
               >
                 {mode.short}
@@ -592,7 +592,7 @@ export function AgendaTopBar({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 4, scale: 0.97 }}
                 transition={{ duration: 0.12 }}
-                className="absolute top-full mt-2 right-0 z-[80] w-52 rounded-xl bg-[#1A1B1F] border border-white/10 shadow-2xl overflow-hidden"
+                className="absolute top-full mt-2 right-0 z-[80] w-52 rounded-[var(--r-md)] bg-[var(--bf-surface)] border border-[var(--bf-border)] shadow-[var(--bf-shadow-card)] overflow-hidden"
               >
                 <div className="p-3 space-y-3">
                   {/* Status filters */}

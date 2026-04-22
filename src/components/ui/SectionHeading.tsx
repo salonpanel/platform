@@ -23,12 +23,12 @@ export function SectionHeading({ title, description, children, className, densit
       <div className="flex-1 min-w-0">
         <h2
           className={cn(
-            "font-semibold font-satoshi",
+            "font-semibold",
             titleSize
           )}
           style={{
-            fontFamily: "var(--font-heading)",
-            color: "var(--text-primary)",
+            fontFamily: "var(--font-sans)",
+            color: "var(--bf-ink-50)",
           }}
         >
           {title}
@@ -40,8 +40,8 @@ export function SectionHeading({ title, description, children, className, densit
               descriptionSize
             )}
             style={{
-              fontFamily: "var(--font-body)",
-              color: "var(--text-secondary)",
+              fontFamily: "var(--font-sans)",
+              color: "var(--bf-ink-300)",
             }}
           >
             {description}

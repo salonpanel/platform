@@ -28,32 +28,32 @@ export function Alert({
 
   const styles = {
     success: {
-      bg: "bg-emerald-500/10",
-      border: "border-emerald-500/30",
-      text: "text-emerald-300",
-      titleText: "text-emerald-200",
-      icon: "text-emerald-400",
+      bg: "bg-[rgba(30,161,159,0.10)]",
+      border: "border-[rgba(30,161,159,0.30)]",
+      text: "text-[var(--bf-teal-200)]",
+      titleText: "text-[var(--bf-teal-100)]",
+      icon: "text-[var(--bf-success)]",
     },
     error: {
-      bg: "bg-red-500/10",
-      border: "border-red-500/30",
-      text: "text-red-300",
-      titleText: "text-red-200",
-      icon: "text-red-400",
+      bg: "bg-[rgba(224,96,114,0.10)]",
+      border: "border-[rgba(224,96,114,0.30)]",
+      text: "text-[#F2A0AC]",
+      titleText: "text-[var(--bf-ink-100)]",
+      icon: "text-[var(--bf-danger)]",
     },
     warning: {
-      bg: "bg-amber-500/10",
-      border: "border-amber-500/30",
-      text: "text-amber-300",
-      titleText: "text-amber-200",
-      icon: "text-amber-400",
+      bg: "bg-[rgba(232,176,74,0.10)]",
+      border: "border-[rgba(232,176,74,0.30)]",
+      text: "text-[#F2C87A]",
+      titleText: "text-[var(--bf-ink-100)]",
+      icon: "text-[var(--bf-warn)]",
     },
     info: {
-      bg: "bg-blue-500/10",
-      border: "border-blue-500/30",
-      text: "text-blue-300",
-      titleText: "text-blue-200",
-      icon: "text-blue-400",
+      bg: "bg-[rgba(79,161,216,0.10)]",
+      border: "border-[rgba(79,161,216,0.30)]",
+      text: "text-[var(--bf-cyan-200)]",
+      titleText: "text-[var(--bf-cyan-100)]",
+      icon: "text-[var(--bf-primary)]",
     },
   };
 
@@ -67,22 +67,18 @@ export function Alert({
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.2 }}
       className={cn(
-        "relative rounded-[var(--radius-lg)] px-4 py-3 border backdrop-blur-sm",
+        "relative rounded-[var(--r-lg)] px-4 py-3 border",
         style.bg,
         style.border,
         className
       )}
-      style={{
-        borderRadius: "var(--radius-lg)",
-        backdropFilter: "blur(8px)",
-        WebkitBackdropFilter: "blur(8px)",
-      }}
+      style={{ borderRadius: "var(--r-lg)" }}
     >
       <div className="flex items-start gap-3">
         <Icon className={cn("h-5 w-5 flex-shrink-0 mt-0.5", style.icon)} />
         <div className="flex-1 min-w-0">
           {title && (
-            <h4 className={cn("text-sm font-semibold mb-1 font-satoshi", style.titleText)}>
+            <h4 className={cn("text-sm font-semibold mb-1", style.titleText)} style={{ fontFamily: "var(--font-sans)" }}>
               {title}
             </h4>
           )}
@@ -94,7 +90,7 @@ export function Alert({
           <button
             onClick={onClose}
             className={cn(
-              "flex-shrink-0 p-1 rounded-[var(--radius-sm)] hover:bg-[rgba(255,255,255,0.1)] transition-colors duration-200",
+              "flex-shrink-0 p-1 rounded-[var(--r-sm)] hover:bg-[rgba(255,255,255,0.08)] transition-colors duration-200",
               style.text,
               "hover:text-white"
             )}

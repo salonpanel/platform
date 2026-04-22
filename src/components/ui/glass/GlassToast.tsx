@@ -35,19 +35,19 @@ export const GlassToast: React.FC<GlassToastProps> = ({
     }, [duration, onClose]);
 
     const toneStyles: Record<GlassToastTone, string> = {
-        success: "bg-emerald-500/10 border-emerald-500/20 text-emerald-100",
-        warning: "bg-amber-500/10 border-amber-500/20 text-amber-100",
-        danger: "bg-red-500/10 border-red-500/20 text-red-100",
-        info: "bg-blue-500/10 border-blue-500/20 text-blue-100",
-        neutral: "bg-white/10 border-white/10 text-white",
+        success: "bg-[rgba(30,161,159,0.12)] border-[rgba(30,161,159,0.35)] text-[var(--bf-teal-100)]",
+        warning: "bg-[rgba(232,176,74,0.10)] border-[rgba(232,176,74,0.30)] text-[#F2C87A]",
+        danger:  "bg-[rgba(224,96,114,0.12)] border-[rgba(224,96,114,0.35)] text-[#F2A0AC]",
+        info:    "bg-[rgba(79,161,216,0.12)] border-[rgba(79,161,216,0.35)] text-[var(--bf-cyan-100)]",
+        neutral: "bg-[var(--bf-surface)] border-[var(--bf-border)] text-[var(--bf-ink-50)]",
     };
 
     const defaultIcons: Record<GlassToastTone, React.ReactNode> = {
-        success: <CheckCircle className="w-5 h-5 text-emerald-400" />,
-        warning: <AlertTriangle className="w-5 h-5 text-amber-400" />,
-        danger: <AlertCircle className="w-5 h-5 text-red-400" />,
-        info: <Info className="w-5 h-5 text-blue-400" />,
-        neutral: <Info className="w-5 h-5 text-white/70" />,
+        success: <CheckCircle className="w-5 h-5 text-[var(--bf-success)]" />,
+        warning: <AlertTriangle className="w-5 h-5 text-[var(--bf-warn)]" />,
+        danger:  <AlertCircle className="w-5 h-5 text-[var(--bf-danger)]" />,
+        info:    <Info className="w-5 h-5 text-[var(--bf-primary)]" />,
+        neutral: <Info className="w-5 h-5 text-[var(--bf-ink-300)]" />,
     };
 
     return (
@@ -59,7 +59,8 @@ export const GlassToast: React.FC<GlassToastProps> = ({
                     exit={{ opacity: 0, y: -20, scale: 0.95 }}
                     transition={{ duration: 0.2, ease: "easeOut" }}
                     className={cn(
-                        "fixed top-4 right-4 z-[100] max-w-sm w-full rounded-2xl border backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.6)] p-4 flex items-start gap-3",
+                        "fixed top-4 right-4 z-[100] max-w-sm w-full rounded-[var(--r-xl)] border shadow-[var(--bf-shadow-card)] p-4 flex items-start gap-3",
+                        "bg-[var(--bf-surface)]",
                         toneStyles[tone]
                     )}
                 >
@@ -67,7 +68,7 @@ export const GlassToast: React.FC<GlassToastProps> = ({
                         {icon || defaultIcons[tone]}
                     </div>
                     <div className="flex-1 min-w-0 pt-0.5">
-                        <p className="text-sm font-medium leading-5">{message}</p>
+                        <p className="text-sm font-medium leading-5" style={{ fontFamily: "var(--font-sans)" }}>{message}</p>
                     </div>
                     {onClose && (
                         <button
@@ -75,7 +76,7 @@ export const GlassToast: React.FC<GlassToastProps> = ({
                                 setIsVisible(false);
                                 setTimeout(onClose, 300);
                             }}
-                            className="flex-shrink-0 p-1 rounded-lg hover:bg-white/10 transition-colors text-white/50 hover:text-white"
+                            className="flex-shrink-0 p-1 rounded-[var(--r-sm)] hover:bg-[rgba(255,255,255,0.06)] transition-colors text-[var(--bf-ink-400)] hover:text-[var(--bf-ink-50)]"
                             aria-label="Cerrar notificación"
                         >
                             <X size={14} />

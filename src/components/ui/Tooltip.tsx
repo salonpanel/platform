@@ -115,12 +115,12 @@ export function Tooltip({
             exit={{ opacity: 0, scale: 0.9, y: 5 }}
             transition={{ duration: 0.15, ease: "easeOut" as const }}
             className={cn(
-              "fixed z-[100] px-3 py-1.5 rounded-lg text-xs font-semibold font-satoshi",
-              "glass bg-[#15171A] border border-[rgba(255,255,255,0.1)]",
-              "text-[var(--text-primary)] shadow-[0px_4px_16px_rgba(0,0,0,0.3)]",
-              "backdrop-blur-md",
+              "fixed z-[100] px-3 py-1.5 rounded-[var(--r-md)] text-xs font-medium",
+              "bg-[var(--bf-surface-2)] border border-[var(--bf-border-2)]",
+              "text-[var(--bf-ink-100)] shadow-[var(--bf-shadow-card)]",
               className
             )}
+            style={{ fontFamily: "var(--font-sans)" }}
             style={{
               top: `${position.top}px`,
               left: `${position.left}px`,

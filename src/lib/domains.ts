@@ -67,7 +67,8 @@ export function parseSubdomain(host: string): string | null {
 
   // Si tiene al menos 3 partes (subdominio.bookfast.es)
   if (parts.length >= 3) {
-    const subdomain = parts[0];
+    // Soportar www.<tenant>.bookfast.es (tenant en el segundo label)
+    const subdomain = parts[0] === "www" && parts.length >= 4 ? parts[1] : parts[0];
     // Verificar que el dominio base sea bookfast.es
     const domainBase = parts.slice(-2).join(".");
     if (domainBase === "bookfast.es") {

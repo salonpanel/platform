@@ -59,8 +59,8 @@ const PageHeaderComponent = ({
 
   const variantClasses = {
     default: "",
-    elevated: "bg-white/[0.02] backdrop-blur-sm border border-white/[0.06] rounded-2xl px-6 py-5 shadow-[0_8px_32px_rgba(0,0,0,0.12)]",
-    glass: "bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-2xl px-6 py-5",
+    elevated: "bg-[var(--bf-surface)] border border-[var(--bf-border)] rounded-[var(--r-xl)] px-6 py-5 shadow-[var(--bf-shadow-card)]",
+    glass: "bg-[var(--bf-bg-elev)]/80 backdrop-blur-xl border border-[var(--bf-border-2)] rounded-[var(--r-xl)] px-6 py-5",
     minimal: "bg-transparent border-none shadow-none"
   };
 
@@ -143,7 +143,7 @@ const PageHeaderComponent = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.1, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                className="flex items-center gap-2 text-xs text-white/50"
+                className="flex items-center gap-2 text-xs text-[var(--bf-ink-400)]"
                 aria-label="Navegación de migas de pan"
               >
                 {breadcrumbs.map((crumb, index) => (
@@ -152,12 +152,12 @@ const PageHeaderComponent = ({
                     {crumb.href ? (
                       <a
                         href={crumb.href}
-                        className="hover:text-white/80 transition-colors duration-200 font-medium"
+                        className="hover:text-[var(--bf-ink-200)] transition-colors duration-200 font-medium"
                       >
                         {crumb.label}
                       </a>
                     ) : (
-                      <span className="text-white/90 font-semibold">
+                      <span className="text-[var(--bf-ink-100)] font-semibold">
                         {crumb.label}
                       </span>
                     )}
@@ -166,17 +166,16 @@ const PageHeaderComponent = ({
               </motion.nav>
             )}
 
-            {/* Title with elegant gradient */}
+            {/* Title */}
             <h1
               className={cn(
-                "font-bold tracking-tight font-satoshi",
+                "font-bold tracking-tight",
                 config.titleSize
               )}
               style={{
-                background: "linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.7) 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text"
+                fontFamily: "var(--font-sans)",
+                color: "var(--bf-ink-50)",
+                letterSpacing: "-0.02em",
               }}
               role="heading"
               aria-level={1}
@@ -193,9 +192,10 @@ const PageHeaderComponent = ({
                 className={cn(
                   "font-medium",
                   config.subtitleSize,
-                  "text-white/60 font-inter"
+                  "text-[var(--bf-ink-300)]"
                 )}
                 aria-label={`Subtítulo: ${subtitle}`}
+                style={{ fontFamily: "var(--font-sans)" }}
               >
                 {subtitle}
               </motion.p>
@@ -210,9 +210,10 @@ const PageHeaderComponent = ({
                 className={cn(
                   "max-w-2xl",
                   config.descriptionSize,
-                  "text-white/50 font-inter leading-relaxed"
+                  "text-[var(--bf-ink-300)] leading-relaxed"
                 )}
                 aria-label={`Descripción: ${description}`}
+                style={{ fontFamily: "var(--font-sans)" }}
               >
                 {description}
               </motion.p>

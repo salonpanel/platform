@@ -54,8 +54,8 @@ export function ConfirmDialog({
       }
     >
       <p
-        className="text-sm text-[var(--text-secondary)]"
-        style={{ fontFamily: "var(--font-body)" }}
+        className="text-sm text-[var(--bf-ink-300)]"
+        style={{ fontFamily: "var(--font-sans)" }}
       >
         {message}
       </p>

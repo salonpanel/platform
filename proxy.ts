@@ -4,12 +4,13 @@ import { getHostType, parseSubdomain } from "@/lib/domains";
 
 export async function proxy(request: NextRequest) {
     // 0. STRICT ISOLATION PHASE
-    // Absolute bypass for root and login.
-    // REMOVED /panel from bypass to restore protection.
+    // Absolute bypass for login (avoid auth loops).
+    // NOTE: we do NOT bypass "/" globally because tenant subdomains
+    // must rewrite "/" -> "/r/{subdomain}" for the public portal.
     const url = request.nextUrl;
     const path = url.pathname;
 
-    if (path === "/" || path.startsWith("/login")) {
+    if (path.startsWith("/login")) {
         return NextResponse.next();
     }
 
@@ -140,9 +141,8 @@ export async function proxy(request: NextRequest) {
             return NextResponse.redirect(new URL("https://admin.bookfast.es"));
         }
 
-        // Pasar sin reescribir rutas internas (/r/...), API, assets
+        // Pasar sin reescribir API, assets
         if (
-            path.startsWith("/r/") ||
             path.startsWith("/api/") ||
             path.startsWith("/_next/") ||
             path.startsWith("/static/")
@@ -150,12 +150,10 @@ export async function proxy(request: NextRequest) {
             return response;
         }
 
-        // REWRITE: Cualquier ruta pública → /r/[subdomain][path]
-        // Ej: /               → /r/barberia
-        //     /servicios       → /r/barberia/servicios
-        //     /reservar        → /r/barberia/reservar
-        //     /mis-citas       → /r/barberia/mis-citas
-        const internalPath = path === "/" ? `/r/${subdomain}` : `/r/${subdomain}${path}`;
+        // REWRITE (nuevo portal): Cualquier ruta pública → /t/[tenantId][path]
+        // Mantiene URLs externas limpias:
+        //   www.barberia.bookfast.es/servicios -> /t/barberia/servicios
+        const internalPath = path === "/" ? `/t/${subdomain}` : `/t/${subdomain}${path}`;
         return NextResponse.rewrite(new URL(internalPath, request.url));
     }
 

@@ -75,21 +75,17 @@ export function MiniBookingCard({
       whileTap={onClick ? { scale: 0.98 } : undefined}
       onClick={onClick}
       className={cn(
-        "group relative rounded-[var(--radius-lg)] border backdrop-blur-sm transition-all duration-200",
-        "hover:shadow-lg hover:shadow-[var(--accent-aqua)]/10",
+        "group relative rounded-[var(--r-lg)] border transition-all duration-200",
+        "hover:border-[var(--bf-border-2)]",
         paddingClass,
         getStatusBorder(),
         onClick && "cursor-pointer",
         className
       )}
-      style={{
-        background: "linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)",
-        borderWidth: "1px",
-      }}
     >
       {/* Indicador de estado sutil */}
       <div className={cn(
-        "absolute top-0 left-0 w-1 h-full rounded-l-[var(--radius-lg)]",
+        "absolute top-0 left-0 w-1 h-full rounded-l-[var(--r-lg)]",
         booking.status === "paid" && "bg-[var(--status-paid)]",
         booking.status === "pending" && "bg-[var(--status-pending)]",
         booking.status === "completed" && "bg-[var(--status-completed)]",
@@ -102,15 +98,15 @@ export function MiniBookingCard({
         <div className="flex-1 min-w-0">
           {/* Nombre del cliente */}
           <div className="flex items-center gap-2 mb-1">
-            <User className={cn(iconSize, "text-[var(--text-secondary)] flex-shrink-0")} />
+            <User className={cn(iconSize, "text-[var(--bf-ink-400)] flex-shrink-0")} />
             <div
               className={cn(
                 "font-semibold truncate",
                 nameSize
               )}
               style={{
-                fontFamily: "var(--font-heading)",
-                color: "var(--text-primary)",
+                fontFamily: "var(--font-sans)",
+                color: "var(--bf-ink-50)",
               }}
             >
               {booking.customer?.name || "Sin cliente"}
@@ -120,24 +116,21 @@ export function MiniBookingCard({
           {/* Servicio */}
           {booking.service && (
             <div className="flex items-center gap-2 mb-2">
-              <Scissors className={cn(iconSize, "text-[var(--text-tertiary)] flex-shrink-0")} />
+              <Scissors className={cn(iconSize, "text-[var(--bf-ink-400)] flex-shrink-0")} />
               <div
                 className={cn(
                   "truncate font-medium",
                   textSize
                 )}
                 style={{
-                  fontFamily: "var(--font-body)",
-                  color: "var(--text-secondary)",
+                  fontFamily: "var(--font-sans)",
+                  color: "var(--bf-ink-300)",
                 }}
               >
                 {booking.service.name}
               </div>
               {duration > 0 && (
-                <span className={cn(
-                  "px-1.5 py-0.5 rounded-md font-mono text-xs",
-                  "bg-[var(--glass-bg)] border border-[var(--glass-border-subtle)]"
-                )}>
+                <span className="px-1.5 py-0.5 rounded-[var(--r-sm)] font-mono text-xs bg-[var(--bf-bg-elev)] border border-[var(--bf-border)]">
                   {duration}min
                 </span>
               )}
@@ -147,7 +140,7 @@ export function MiniBookingCard({
           {/* Hora y precio */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
-              <Clock className={cn(iconSize, "text-[var(--text-tertiary)] flex-shrink-0")} />
+              <Clock className={cn(iconSize, "text-[var(--bf-ink-400)] flex-shrink-0")} />
               <div
                 className={cn(
                   "font-mono font-medium",
@@ -155,7 +148,7 @@ export function MiniBookingCard({
                 )}
                 style={{
                   fontFamily: "var(--font-mono)",
-                  color: "var(--text-tertiary)",
+                  color: "var(--bf-primary)",
                 }}
               >
                 {startTime} - {endTime}
@@ -163,11 +156,7 @@ export function MiniBookingCard({
             </div>
 
             {price && (
-              <div className={cn(
-                "px-2 py-0.5 rounded-md font-semibold text-xs",
-                "bg-gradient-to-r from-[var(--accent-blue)]/10 to-[var(--accent-aqua)]/10",
-                "border border-[var(--accent-aqua)]/20 text-[var(--accent-aqua)]"
-              )}>
+              <div className="px-2 py-0.5 rounded-[var(--r-sm)] font-semibold text-xs bg-[rgba(79,161,216,0.12)] border border-[rgba(79,161,216,0.35)] text-[var(--bf-cyan-200)]">
                 {price}€
               </div>
             )}
@@ -176,8 +165,8 @@ export function MiniBookingCard({
           {/* Staff */}
           {booking.staff && density !== "ultra-compact" && (
             <div className="flex items-center gap-1.5 mt-1.5">
-              <div className="w-4 h-4 rounded-full bg-[var(--accent-purple)]/20 border border-[var(--accent-purple)]/30 flex items-center justify-center">
-                <span className="text-[8px] font-bold" style={{ color: "var(--accent-purple)" }}>
+              <div className="w-4 h-4 rounded-full bg-[rgba(79,161,216,0.15)] border border-[rgba(79,161,216,0.3)] flex items-center justify-center">
+                <span className="text-[8px] font-bold text-[var(--bf-primary)]">
                   {booking.staff.name.charAt(0).toUpperCase()}
                 </span>
               </div>
@@ -187,8 +176,8 @@ export function MiniBookingCard({
                   textSize
                 )}
                 style={{
-                  fontFamily: "var(--font-body)",
-                  color: "var(--text-tertiary)",
+                  fontFamily: "var(--font-sans)",
+                  color: "var(--bf-ink-400)",
                 }}
               >
                 {booking.staff.name}
@@ -228,20 +217,20 @@ export function MiniBookingCard({
               }}
               className={cn(
                 "p-1.5 rounded-md border transition-all duration-200",
-                "bg-[var(--glass-bg-subtle)] border-[var(--glass-border)]",
-                "hover:bg-[var(--accent-aqua-glass)] hover:border-[var(--accent-aqua-border)]",
+                "bg-[var(--bf-bg-elev)] border-[var(--bf-border)]",
+                "hover:bg-[rgba(79,161,216,0.12)] hover:border-[rgba(79,161,216,0.35)]",
                 "opacity-0 group-hover:opacity-100"
               )}
             >
-              <div className="w-3 h-3 rounded-full bg-[var(--accent-aqua)]" />
+              <div className="w-3 h-3 rounded-full bg-[var(--bf-primary)]" />
             </motion.button>
           )}
         </div>
       </div>
 
       {/* Efecto de brillo sutil en hover */}
-      <div className="absolute inset-0 rounded-[var(--radius-lg)] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+      <div className="absolute inset-0 rounded-[var(--r-lg)] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+        <div className="absolute inset-0 bg-[rgba(79,161,216,0.03)]" />
       </div>
     </motion.div>
   );

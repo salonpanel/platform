@@ -102,14 +102,17 @@ export function AppShell({
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed md:static inset-y-0 left-0 z-[56] w-64 glass flex flex-col transition-transform duration-300 ease-in-out shadow-glass",
-          "bg-[var(--color-bg-primary)] backdrop-blur-xl border-r border-[var(--glass-border)]",
+          "fixed md:static inset-y-0 left-0 z-[56] w-64 flex flex-col transition-transform duration-300 ease-in-out",
+          "bg-[var(--bf-bg-elev)] border-r border-[var(--bf-border)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
       >
         {/* Logo/Name */}
-        <div className="flex h-16 items-center justify-between border-b border-[var(--glass-border)] px-6 glass-subtle">
-          <h1 className="text-lg font-semibold text-[var(--color-text-primary)] truncate font-satoshi">
+        <div className="flex h-16 items-center justify-between border-b border-[var(--bf-border)] px-6">
+          <h1
+            className="text-lg font-semibold text-[var(--bf-ink-50)] truncate"
+            style={{ fontFamily: "var(--font-sans)" }}
+          >
             {tenantName}
           </h1>
           <button
@@ -133,25 +136,25 @@ export function AppShell({
                       href={item.href}
                       onClick={() => setSidebarOpen(false)}
                       className={cn(
-                        "flex items-center gap-3 rounded-[var(--radius-md)] px-4 py-3 text-sm font-medium font-satoshi transition-smooth",
+                        "flex items-center gap-3 rounded-[var(--r-md)] px-4 py-3 text-sm font-medium transition-all duration-200",
                         "relative group",
                         active
-                          ? "gradient-primary text-white shadow-neon-glow-blue"
-                          : "text-[var(--color-text-secondary)] hover:glass-subtle hover:text-white"
+                          ? "bg-[rgba(79,161,216,0.12)] text-[var(--bf-primary)] border border-[rgba(79,161,216,0.3)]"
+                          : "text-[var(--bf-ink-400)] hover:bg-[var(--bf-surface)] hover:text-[var(--bf-ink-50)]"
                       )}
                       style={{
                         borderRadius: "var(--radius-md)",
                       }}
                     >
                       <span className={cn(
-                        "flex-shrink-0 transition-smooth",
-                        active ? "text-white" : "text-[var(--color-text-secondary)] group-hover:text-white"
+                        "flex-shrink-0 transition-all duration-200",
+                        active ? "text-[var(--bf-primary)]" : "text-[var(--bf-ink-400)] group-hover:text-[var(--bf-ink-100)]"
                       )}>
                         {item.icon}
                       </span>
                       <span>{item.label}</span>
                       {active && (
-                        <div className="absolute right-2 w-1.5 h-1.5 rounded-full bg-white/80 shadow-glow-blue" />
+                        <div className="absolute right-2 w-1.5 h-1.5 rounded-full bg-[var(--bf-primary)] shadow-[0_0_8px_rgba(79,161,216,0.6)]" />
                       )}
                     </Link>
                   </li>
@@ -162,16 +165,17 @@ export function AppShell({
         </ScrollArea>
 
         {/* Footer - Logout */}
-        <div className="border-t border-[var(--glass-border)] p-4 glass-subtle">
+        <div className="border-t border-[var(--bf-border)] p-4">
           <button
             onClick={() => {
               setSidebarOpen(false);
               onLogout?.();
             }}
             className={cn(
-              "w-full flex items-center gap-3 rounded-[var(--radius-md)] px-4 py-2.5 text-sm",
-              "text-[var(--color-text-secondary)] hover:glass-subtle hover:text-white transition-smooth font-satoshi"
+              "w-full flex items-center gap-3 rounded-[var(--r-md)] px-4 py-2.5 text-sm",
+              "text-[var(--bf-danger)] hover:bg-[rgba(224,96,114,0.10)] hover:text-[#F2A0AC] transition-all duration-200"
             )}
+            style={{ fontFamily: "var(--font-sans)" }}
             style={{
               borderRadius: "var(--radius-md)",
             }}
@@ -185,7 +189,7 @@ export function AppShell({
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Bar - Enhanced Premium Header */}
-        <header className="h-16 lg:h-18 border-b border-[var(--glass-border)] glass flex items-center justify-between px-4 lg:px-6 shadow-glass bg-[var(--color-bg-primary)] backdrop-blur-xl sticky top-0 z-30 transition-all duration-300">
+        <header className="h-16 border-b border-[var(--bf-border)] flex items-center justify-between px-4 lg:px-6 bg-[var(--bf-bg-elev)] sticky top-0 z-30 transition-all duration-300">
           <div className="flex items-center gap-4 flex-1 min-w-0">
             {/* Mobile menu button - Improved spacing */}
             <button
@@ -209,7 +213,10 @@ export function AppShell({
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.4, ease: [0.2, 0, 0, 1] }}
                   >
-                    <h2 className="text-lg lg:text-xl font-semibold text-[var(--color-text-primary)] font-satoshi truncate tracking-tight">
+                    <h2
+                    className="text-lg lg:text-xl font-semibold text-[var(--bf-ink-50)] truncate tracking-tight"
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  >
                       {pathname === "/panel" || pathname === "/panel/"
                         ? "Dashboard"
                         : pathname === "/panel/agenda"
@@ -233,7 +240,7 @@ export function AppShell({
                       className="flex items-center gap-2 text-xs lg:text-sm text-[var(--color-text-secondary)] mt-0.5"
                     >
                       <span className="font-medium truncate flex items-center gap-1">
-                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--accent-aqua)] animate-pulse" />
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--bf-primary)] animate-pulse" />
                         {tenantName}
                       </span>
                       {userRole && (

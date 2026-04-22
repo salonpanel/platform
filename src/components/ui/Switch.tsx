@@ -24,10 +24,10 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
           <div
             className={cn(
               "w-11 h-6 rounded-full transition-all duration-300 relative",
-              "bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.15)]",
+              "bg-[var(--bf-bg-elev)] border border-[var(--bf-border-2)]",
               "peer-checked:bg-gradient-to-r peer-checked:from-[#4FA1D8] peer-checked:to-[#4FA1D8] peer-checked:border-transparent",
               "peer-checked:shadow-[0px_4px_16px_rgba(79,161,216,0.4)]",
-              "peer-focus:ring-2 peer-focus:ring-[#4FA1D8]/30 peer-focus:ring-offset-2 peer-focus:ring-offset-[var(--bg-primary)]",
+              "peer-focus:ring-2 peer-focus:ring-[rgba(79,161,216,0.3)] peer-focus:ring-offset-2 peer-focus:ring-offset-[var(--bf-bg)]",
               "peer-disabled:opacity-50 peer-disabled:cursor-not-allowed",
               "cursor-pointer backdrop-blur-sm",
               className
@@ -54,13 +54,14 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
             {label && (
               <label
                 htmlFor={props.id}
-                className="block text-sm font-medium text-[var(--color-text-primary)] font-satoshi cursor-pointer"
+                className="block text-sm font-medium text-[var(--bf-ink-50)] cursor-pointer"
+                style={{ fontFamily: "var(--font-sans)" }}
               >
                 {label}
               </label>
             )}
             {description && (
-              <p className="mt-1 text-xs text-[var(--color-text-secondary)]">{description}</p>
+              <p className="mt-1 text-xs text-[var(--bf-ink-300)]" style={{ fontFamily: "var(--font-sans)" }}>{description}</p>
             )}
           </div>
         )}

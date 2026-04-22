@@ -9,12 +9,12 @@ interface GlassCardProps extends HTMLMotionProps<"div"> {
 
 export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
     ({ className, variant = "default", noPadding = false, children, ...props }, ref) => {
-        const baseStyles = "glass rounded-xl border border-white/10 overflow-hidden relative";
+        const baseStyles = "bg-[var(--bf-surface)] rounded-[var(--r-lg)] border border-[var(--bf-border)] overflow-hidden relative";
 
         const variants = {
             default: "",
-            clickable: "cursor-pointer hover:border-white/20 hover:bg-white/[0.04] transition-all duration-200 active:scale-[0.99]",
-            "hover-glow": "hover:border-emerald-500/30 hover:shadow-[0_0_20px_rgba(16,185,129,0.1)] transition-all duration-300",
+            clickable: "cursor-pointer hover:border-[var(--bf-border-2)] hover:bg-[var(--bf-surface-2)] transition-all duration-200 active:scale-[0.99]",
+            "hover-glow": "hover:border-[rgba(79,161,216,0.35)] hover:shadow-[var(--bf-shadow-glow)] transition-all duration-300",
         };
 
         return (

@@ -30,16 +30,13 @@ export function TitleBar({ title, subtitle, children, className, density = "defa
       <div className="flex-1 min-w-0">
         <h1
           className={cn(
-            "font-bold tracking-tight font-satoshi",
+            "font-bold tracking-tight",
             titleSize
           )}
           style={{
-            fontFamily: "var(--font-heading)",
-            color: "var(--text-primary)",
-            background: "linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
+            fontFamily: "var(--font-sans)",
+            color: "var(--bf-ink-50)",
+            letterSpacing: "-0.025em",
           }}
         >
           {title}
@@ -51,8 +48,8 @@ export function TitleBar({ title, subtitle, children, className, density = "defa
               subtitleSize
             )}
             style={{
-              fontFamily: "var(--font-body)",
-              color: "var(--text-secondary)",
+              fontFamily: "var(--font-sans)",
+              color: "var(--bf-ink-300)",
             }}
           >
             {subtitle}

@@ -184,8 +184,8 @@ export function Modal({
               ease: "easeOut" as const
             }}
             className={cn(
-              "relative z-[60] w-full rounded-[var(--radius-xl)] glass-strong border-[var(--glass-border-strong)]",
-              "shadow-[var(--shadow-modal)]",
+              "relative z-[60] w-full rounded-[var(--r-xl)] bg-[var(--bf-surface)] border border-[var(--bf-border)]",
+              "shadow-[var(--bf-shadow-card)]",
               sizes[size]
             )}
             onClick={(e) => e.stopPropagation()}
@@ -196,11 +196,11 @@ export function Modal({
             tabIndex={-1}
           >
             {/* Header - Premium */}
-            <div className="flex items-center justify-between border-b border-[var(--glass-border-subtle)] px-6 py-5">
+            <div className="flex items-center justify-between border-b border-[var(--bf-border)] px-6 py-5">
               <h2 
                 id={ariaLabelledBy || titleId.current}
-                className="text-xl font-semibold text-[var(--text-primary)] tracking-tight"
-                style={{ fontFamily: "var(--font-heading)" }}
+                className="text-xl font-semibold text-[var(--bf-ink-50)] tracking-tight"
+                style={{ fontFamily: "var(--font-sans)" }}
               >
                 {title}
               </h2>
@@ -208,7 +208,7 @@ export function Modal({
                 whileHover={{ scale: 1.05, rotate: 90 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleClose}
-                className="p-2 rounded-[var(--radius-sm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-subtle)] transition-all"
+                className="p-2 rounded-[var(--r-md)] text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-bg-elev)] transition-all"
                 style={{ transitionDuration: "var(--duration-base)" }}
                 aria-label="Cerrar modal"
               >
@@ -218,15 +218,15 @@ export function Modal({
 
             {/* Content - Premium */}
             <div 
-              className="px-6 py-5 text-[var(--text-primary)] max-h-[70vh] overflow-y-auto scrollbar-hide"
-              style={{ fontFamily: "var(--font-body)" }}
+              className="px-6 py-5 text-[var(--bf-ink-50)] max-h-[70vh] overflow-y-auto scrollbar-hide"
+              style={{ fontFamily: "var(--font-sans)" }}
             >
               {children}
             </div>
 
             {/* Footer - Premium */}
             {footer && (
-              <div className="flex items-center justify-end gap-3 border-t border-[var(--glass-border-subtle)] px-6 py-4">
+              <div className="flex items-center justify-end gap-3 border-t border-[var(--bf-border)] px-6 py-4">
                 {footer}
               </div>
             )}

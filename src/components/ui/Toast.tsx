@@ -22,10 +22,10 @@ const toastIcons = {
 };
 
 const toastStyles = {
-  success: "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 backdrop-blur-sm",
-  error: "bg-red-500/10 border-red-500/30 text-red-400 backdrop-blur-sm",
-  warning: "bg-amber-500/10 border-amber-500/30 text-amber-400 backdrop-blur-sm",
-  info: "bg-blue-500/10 border-blue-500/30 text-blue-400 backdrop-blur-sm",
+  success: "bg-[rgba(30,161,159,0.12)] border-[rgba(30,161,159,0.35)] text-[var(--bf-teal-200)]",
+  error:   "bg-[rgba(224,96,114,0.12)] border-[rgba(224,96,114,0.35)] text-[#F2A0AC]",
+  warning: "bg-[rgba(232,176,74,0.10)] border-[rgba(232,176,74,0.30)] text-[#F2C87A]",
+  info:    "bg-[rgba(79,161,216,0.12)] border-[rgba(79,161,216,0.35)] text-[var(--bf-cyan-200)]",
 };
 
 export function Toast({ message, type = "info", duration = 3000, onClose }: ToastProps) {
@@ -55,16 +55,16 @@ export function Toast({ message, type = "info", duration = 3000, onClose }: Toas
   const toastContent = (
     <div
       className={cn(
-        "fixed top-4 right-4 z-[100] flex items-center gap-3 rounded-[var(--radius-lg)] border px-4 py-3 shadow-glass",
-        "transition-all duration-300 ease-out glass",
+        "fixed top-4 right-4 z-[100] flex items-center gap-3 rounded-[var(--r-lg)] border px-4 py-3",
+        "bg-[var(--bf-surface)] shadow-[var(--bf-shadow-card)]",
+        "transition-all duration-300 ease-out",
         visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2",
         toastStyles[type],
         "min-w-[300px] max-w-md"
       )}
-      style={{ borderRadius: "var(--radius-lg)" }}
     >
       <Icon className="h-5 w-5 flex-shrink-0" />
-      <p className="flex-1 text-sm font-medium font-satoshi">{message}</p>
+      <p className="flex-1 text-sm font-medium" style={{ fontFamily: "var(--font-sans)" }}>{message}</p>
       {onClose && (
         <button
           onClick={() => {

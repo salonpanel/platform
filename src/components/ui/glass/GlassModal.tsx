@@ -103,10 +103,10 @@ export function GlassModal({
                             >
                                 {/* Header */}
                                 {(title || description) && (
-                                    <div className="flex items-center justify-between p-5 border-b border-white/5">
+                                    <div className="flex items-center justify-between p-5 border-b border-[var(--bf-border)]">
                                         <div>
-                                            {title && <h2 className="text-lg font-semibold text-white">{title}</h2>}
-                                            {description && <p className="text-sm text-[var(--text-secondary)] mt-0.5">{description}</p>}
+                                            {title && <h2 className="text-lg font-semibold text-[var(--bf-ink-50)]" style={{ fontFamily: "var(--font-sans)" }}>{title}</h2>}
+                                            {description && <p className="text-sm text-[var(--bf-ink-300)] mt-0.5" style={{ fontFamily: "var(--font-sans)" }}>{description}</p>}
                                         </div>
                                         <GlassButton
                                             variant="ghost"
@@ -128,7 +128,7 @@ export function GlassModal({
                                 {footer && (
                                     <div
                                         className={cn(
-                                            "px-5 border-t border-white/5 bg-white/[0.02]",
+                                            "px-5 border-t border-[var(--bf-border)]",
                                             mobileSheet ? "pt-4 pb-4 safe-area-pb" : "pt-5 pb-modal-footer"
                                         )}
                                     >

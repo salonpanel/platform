@@ -155,7 +155,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
           <div
             className={cn(
               "flex items-center justify-center w-[40px] h-[40px] rounded-xl transition-all duration-200",
-              active ? "text-[var(--accent-aqua)]" : "text-slate-400"
+              active ? "text-[var(--bf-primary)]" : "text-[var(--bf-ink-400)]"
             )}
           >
             {icon}
@@ -209,9 +209,9 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
               <div
                 className={cn(
                   "flex items-center justify-center w-11 h-11 rounded-2xl transition-all duration-200",
-                  "bg-gradient-to-br from-[var(--accent-blue)] to-[var(--accent-aqua)]",
-                  "text-[#0E0F11]",
-                  agendaActive && "ring-2 ring-[var(--accent-aqua)]/40"
+                  "bg-[var(--bf-primary)]",
+                  "text-[var(--bf-ink)]",
+                  agendaActive && "ring-2 ring-[rgba(79,161,216,0.4)]"
                 )}
               >
                 <Plus className="w-6 h-6" strokeWidth={2.5} aria-hidden />
@@ -236,7 +236,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
               <div
                 className={cn(
                   "relative flex items-center justify-center w-[40px] h-[40px] rounded-xl transition-all duration-200",
-                  isMoreActive || showMoreMenu ? "text-[var(--accent-aqua)]" : "text-slate-400"
+                  isMoreActive || showMoreMenu ? "text-[var(--bf-primary)]" : "text-[var(--bf-ink-400)]"
                 )}
               >
                 <MoreHorizontal
@@ -248,8 +248,8 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
                   <span
                     className="absolute top-2 right-2 w-[7px] h-[7px] rounded-full border-2"
                     style={{
-                      background: "var(--accent-aqua)",
-                      borderColor: "var(--bg-primary)",
+                      background: "var(--bf-primary)",
+                      borderColor: "var(--bf-bg)",
                     }}
                   />
                 )}
@@ -285,10 +285,10 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
               transition={{ type: "spring", damping: 30, stiffness: 320 }}
               className="fixed bottom-0 left-0 right-0 z-[56] md:hidden pb-0"
               style={{
-                background: "rgba(17, 33, 45, 0.98)",
-                backdropFilter: "blur(28px)",
-                WebkitBackdropFilter: "blur(28px)",
-                borderTop: "1px solid rgba(255,255,255,0.10)",
+                background: "var(--bf-surface)",
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)",
+                borderTop: "1px solid var(--bf-border)",
                 borderRadius: "22px 22px 0 0",
               }}
             >
@@ -300,7 +300,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
               </div>
 
               <div className="flex items-center justify-between px-5 pt-2 pb-3">
-                <h3 className="text-[15px] font-semibold font-satoshi text-[var(--text-primary)]">
+                <h3 className="text-[15px] font-semibold text-[var(--bf-ink-50)]" style={{ fontFamily: "var(--font-sans)" }}>
                   Más opciones
                 </h3>
                 <button
@@ -348,20 +348,20 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
                           active
                             ? {
                                 background: "rgba(79,161,216,0.10)",
-                                border: "1px solid rgba(79,161,216,0.22)",
-                                color: "var(--accent-aqua)",
+                                border: "1px solid rgba(79,161,216,0.30)",
+                                color: "var(--bf-primary)",
                               }
                             : {
-                                background: "rgba(255,255,255,0.04)",
-                                border: "1px solid rgba(255,255,255,0.06)",
-                                color: "var(--text-secondary)",
+                                background: "var(--bf-bg-elev)",
+                                border: "1px solid var(--bf-border)",
+                                color: "var(--bf-ink-400)",
                               }
                         }
                       >
                         <span>{icon}</span>
                         <span
                           className={cn(
-                            "text-[11px] font-satoshi text-center leading-tight",
+                            "text-[11px] text-center leading-tight",
                             active ? "font-semibold" : "font-medium"
                           )}
                         >

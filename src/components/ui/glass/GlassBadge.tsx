@@ -14,12 +14,12 @@ export function GlassBadge({
     size = "md"
 }: GlassBadgeProps) {
     const variants = {
-        default: "bg-white/10 text-white border-white/10",
-        success: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-        warning: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-        danger: "bg-red-500/10 text-red-400 border-red-500/20",
-        info: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-        neutral: "bg-slate-500/10 text-slate-400 border-slate-500/20",
+        default:  "bg-[var(--bf-bg-elev)] text-[var(--bf-ink-200)] border-[var(--bf-border)]",
+        success:  "bg-[rgba(30,161,159,0.12)] text-[var(--bf-teal-200)] border-[rgba(30,161,159,0.35)]",
+        warning:  "bg-[rgba(232,176,74,0.10)] text-[#F2C87A] border-[rgba(232,176,74,0.30)]",
+        danger:   "bg-[rgba(224,96,114,0.10)] text-[#F2A0AC] border-[rgba(224,96,114,0.30)]",
+        info:     "bg-[rgba(79,161,216,0.12)] text-[var(--bf-cyan-200)] border-[rgba(79,161,216,0.35)]",
+        neutral:  "bg-[var(--bf-bg-elev)] text-[var(--bf-ink-300)] border-[var(--bf-border)]",
     };
 
     const sizes = {

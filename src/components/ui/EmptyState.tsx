@@ -23,10 +23,20 @@ export function EmptyState({
         className
       )}
     >
-      {icon && <div className="mb-4 text-[var(--color-text-secondary)] opacity-60">{icon}</div>}
-      <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2 font-satoshi">{title}</h3>
+      {icon && <div className="mb-4 text-[var(--bf-ink-400)]">{icon}</div>}
+      <h3
+        className="text-lg font-semibold text-[var(--bf-ink-50)] mb-2"
+        style={{ fontFamily: "var(--font-sans)" }}
+      >
+        {title}
+      </h3>
       {description && (
-        <p className="text-sm text-[var(--color-text-secondary)] max-w-md mb-4">{description}</p>
+        <p
+          className="text-sm text-[var(--bf-ink-300)] max-w-md mb-4"
+          style={{ fontFamily: "var(--font-sans)" }}
+        >
+          {description}
+        </p>
       )}
       {action && <div>{action}</div>}
     </div>

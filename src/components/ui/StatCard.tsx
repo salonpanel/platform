@@ -37,15 +37,15 @@ export function StatCard({
   };
 
   const titleStyles = {
-    default: "text-sm mb-1",
-    compact: "text-xs mb-0.5",
-    "ultra-compact": "text-[10px] mb-0.5",
+    default: "text-[10px] mb-2 tracking-[0.08em] uppercase",
+    compact: "text-[10px] mb-1.5 tracking-[0.08em] uppercase",
+    "ultra-compact": "text-[9px] mb-1 tracking-[0.08em] uppercase",
   };
 
   const valueStyles = {
-    default: "text-2xl",
-    compact: "text-xl",
-    "ultra-compact": "text-lg",
+    default: "text-4xl",
+    compact: "text-3xl",
+    "ultra-compact": "text-2xl",
   };
   return (
     <motion.div
@@ -53,17 +53,15 @@ export function StatCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, ease: [0.2, 0, 0, 1] }}
       className={cn(
-        "rounded-[var(--radius-lg)] border transition-all",
+        "rounded-[var(--r-lg)] border transition-all",
         paddingStyles[density],
         variant === "glass"
-          ? density === "ultra-compact"
-            ? "glass border-[var(--glass-border)] backdrop-blur-sm"
-            : "glass border-[var(--glass-border)]"
-          : "bg-[var(--bg-card)] border-[var(--glass-border)] backdrop-blur-sm",
+          ? "bg-[var(--bf-bg-elev)]/80 backdrop-blur-md border-[var(--bf-border-2)]"
+          : "bg-[var(--bf-surface)] border-[var(--bf-border)]",
         className
       )}
       style={{
-        boxShadow: "var(--shadow-card)",
+        boxShadow: "var(--bf-shadow-card)",
         transitionDuration: "var(--duration-base)",
       }}
     >
@@ -72,8 +70,8 @@ export function StatCard({
           <p
             className={cn("font-semibold", titleStyles[density])}
             style={{
-              fontFamily: "var(--font-heading)",
-              color: "var(--text-secondary)",
+              fontFamily: "var(--font-mono)",
+              color: "var(--bf-ink-400)",
             }}
           >
             {title}
@@ -81,8 +79,9 @@ export function StatCard({
           <p
             className={cn("font-semibold", valueStyles[density])}
             style={{
-              fontFamily: "var(--font-kpi)",
-              color: "var(--text-primary)",
+              fontFamily: "var(--font-sans)",
+              color: "var(--bf-ink-50)",
+              letterSpacing: "-0.025em",
             }}
           >
             {value}
@@ -91,8 +90,8 @@ export function StatCard({
             <p
               className="mt-2 text-xs"
               style={{
-                fontFamily: "var(--font-body)",
-                color: "var(--text-tertiary)",
+                fontFamily: "var(--font-sans)",
+                color: "var(--bf-ink-400)",
               }}
             >
               {description}
@@ -103,9 +102,9 @@ export function StatCard({
               {action.href ? (
                 <a
                   href={action.href}
-                  className="text-sm font-medium text-[var(--accent-aqua)] hover:text-[var(--accent-aqua)]/80 transition-colors"
+                  className="text-sm font-medium text-[var(--bf-primary)] hover:text-[var(--bf-cyan-300)] transition-colors"
                   style={{
-                    fontFamily: "var(--font-body)",
+                    fontFamily: "var(--font-sans)",
                     transitionDuration: "var(--duration-base)",
                   }}
                 >
@@ -114,9 +113,9 @@ export function StatCard({
               ) : (
                 <button
                   onClick={action.onClick}
-                  className="text-sm font-medium text-[var(--accent-aqua)] hover:text-[var(--accent-aqua)]/80 transition-colors"
+                  className="text-sm font-medium text-[var(--bf-primary)] hover:text-[var(--bf-cyan-300)] transition-colors"
                   style={{
-                    fontFamily: "var(--font-body)",
+                    fontFamily: "var(--font-sans)",
                     transitionDuration: "var(--duration-base)",
                   }}
                 >
@@ -127,8 +126,8 @@ export function StatCard({
           )}
         </div>
         {Icon && (
-          <div className="rounded-[var(--radius-md)] bg-[var(--accent-aqua-glass)] border border-[var(--accent-aqua-border)] p-3">
-            <Icon className="h-5 w-5 text-[var(--accent-aqua)]" />
+          <div className="rounded-[var(--r-md)] bg-[rgba(79,161,216,0.12)] border border-[rgba(79,161,216,0.35)] p-3">
+            <Icon className="h-5 w-5 text-[var(--bf-primary)]" />
           </div>
         )}
       </div>

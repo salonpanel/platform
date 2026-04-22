@@ -74,11 +74,11 @@ export function TopBar({
       sidebarCollapsed ? "px-6 md:px-8" : "px-6 md:px-10"
     )}>
       {/* Elegant divider line */}
-      <div 
+      <div
         className="absolute bottom-0 left-6 right-6"
         style={{
           height: "1px",
-          background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 20%, rgba(255,255,255,0.08) 80%, transparent 100%)",
+          background: "linear-gradient(90deg, transparent 0%, var(--bf-border) 20%, var(--bf-border) 80%, transparent 100%)",
         }}
       />
       
@@ -92,12 +92,11 @@ export function TopBar({
           className="flex-1 min-w-0"
         >
           <h1 
-            className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight font-satoshi"
+            className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight"
             style={{
-              background: "linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.7) 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
+              fontFamily: "var(--font-sans)",
+              color: "var(--bf-ink-50)",
+              letterSpacing: "-0.025em",
             }}
           >
             {title}
@@ -115,10 +114,10 @@ export function TopBar({
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-xl",
-                "bg-white/[0.03] hover:bg-white/[0.06]",
-                "border border-white/[0.06] hover:border-white/[0.12]",
-                "transition-all duration-300",
+                "flex items-center gap-3 px-3 py-2 rounded-[var(--r-md)]",
+                "bg-[var(--bf-bg-elev)] hover:bg-[var(--bf-surface)]",
+                "border border-[var(--bf-border)] hover:border-[var(--bf-border-2)]",
+                "transition-all duration-200",
                 "group"
               )}
             >
@@ -132,13 +131,13 @@ export function TopBar({
                   "transition-all duration-300"
                 )}
               />
-              <ChevronDown 
+              <ChevronDown
                 className={cn(
-                  "h-4 w-4 text-white/40",
-                  "transition-all duration-300",
-                  "group-hover:text-white/60",
-                  dropdownOpen && "rotate-180 text-white/60"
-                )} 
+                  "h-4 w-4 text-[var(--bf-ink-400)]",
+                  "transition-all duration-200",
+                  "group-hover:text-[var(--bf-ink-200)]",
+                  dropdownOpen && "rotate-180"
+                )}
               />
             </button>
 
@@ -152,49 +151,50 @@ export function TopBar({
                   transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                   className={cn(
                     "absolute right-0 mt-2 w-64",
-                    "rounded-2xl overflow-hidden",
-                    "bg-[rgba(15,23,42,0.95)] backdrop-blur-xl",
-                    "border border-white/[0.08]",
-                    "shadow-[0_20px_60px_rgba(0,0,0,0.5)]",
+                    "rounded-[var(--r-xl)] overflow-hidden",
+                    "bg-[var(--bf-surface)] border border-[var(--bf-border)]",
+                    "shadow-[var(--bf-shadow-card)]",
                     "z-[80]"
                   )}
                 >
                   {/* User info section */}
-                  <div className="px-4 py-4 border-b border-white/[0.06]">
+                  <div className="px-4 py-4 border-b border-[var(--bf-border)]">
                     <div className="flex items-start gap-3">
                       <Avatar
                         src={userAvatar || undefined}
                         name={userName || userEmail || undefined}
                         size="md"
-                        className="ring-2 ring-white/10 flex-shrink-0"
+                        className="flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-white/95 font-satoshi truncate">
+                        <p
+                          className="text-sm font-semibold text-[var(--bf-ink-50)] truncate"
+                          style={{ fontFamily: "var(--font-sans)" }}
+                        >
                           {userName || userEmail?.split("@")[0] || "Usuario"}
                         </p>
-                        <p className="text-xs text-white/50 truncate mt-0.5 font-inter">
+                        <p
+                          className="text-xs text-[var(--bf-ink-400)] truncate mt-0.5"
+                          style={{ fontFamily: "var(--font-mono)" }}
+                        >
                           {userEmail || ""}
                         </p>
                       </div>
                     </div>
-                    
+
                     {/* Tenant info */}
-                    <div className={cn(
-                      "mt-3 pt-3 border-t border-white/[0.06]",
-                      "flex items-center gap-2"
-                    )}>
-                      <Building2 className="h-3.5 w-3.5 text-white/40 flex-shrink-0" />
-                      <span className="text-xs text-white/60 truncate font-inter">
+                    <div className="mt-3 pt-3 border-t border-[var(--bf-border)] flex items-center gap-2">
+                      <Building2 className="h-3.5 w-3.5 text-[var(--bf-ink-400)] flex-shrink-0" />
+                      <span
+                        className="text-xs text-[var(--bf-ink-300)] truncate"
+                        style={{ fontFamily: "var(--font-sans)" }}
+                      >
                         {tenantName}
                       </span>
                       {userRole && (
                         <>
-                          <span className="text-white/30">•</span>
-                          <span className={cn(
-                            "px-2 py-0.5 rounded-md text-xs font-medium",
-                            "bg-emerald-500/10 text-emerald-400",
-                            "border border-emerald-500/20"
-                          )}>
+                          <span className="text-[var(--bf-ink-400)]">•</span>
+                          <span className="px-2 py-0.5 rounded-[var(--r-sm)] text-xs font-medium bg-[rgba(30,161,159,0.12)] text-[var(--bf-teal-200)] border border-[rgba(30,161,159,0.30)]">
                             {userRole}
                           </span>
                         </>
@@ -207,11 +207,12 @@ export function TopBar({
                     <a
                       href="/panel/ajustes"
                       className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-xl",
-                        "text-sm font-medium text-white/70",
-                        "hover:text-white/95 hover:bg-white/[0.06]",
+                        "flex items-center gap-3 px-3 py-2.5 rounded-[var(--r-md)]",
+                        "text-sm font-medium text-[var(--bf-ink-300)]",
+                        "hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-bg-elev)]",
                         "transition-all duration-200"
                       )}
+                      style={{ fontFamily: "var(--font-sans)" }}
                     >
                       <Settings className="h-4 w-4" />
                       <span>Configuración</span>
@@ -219,11 +220,12 @@ export function TopBar({
                     <a
                       href="/logout"
                       className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-xl",
-                        "text-sm font-medium text-red-400/90",
-                        "hover:text-red-400 hover:bg-red-500/10",
+                        "flex items-center gap-3 px-3 py-2.5 rounded-[var(--r-md)]",
+                        "text-sm font-medium text-[var(--bf-danger)]",
+                        "hover:text-[#F2A0AC] hover:bg-[rgba(224,96,114,0.10)]",
                         "transition-all duration-200 mt-1"
                       )}
+                      style={{ fontFamily: "var(--font-sans)" }}
                     >
                       <LogOut className="h-4 w-4" />
                       <span>Cerrar sesión</span>
@@ -241,32 +243,12 @@ export function TopBar({
             className={cn(
               "md:hidden relative flex items-center justify-center",
               "h-10 w-10 rounded-full flex-shrink-0",
-              "bg-gradient-to-br from-violet-500 via-fuchsia-500 to-sky-500",
-              "ring-2 ring-white/20",
-              "shadow-[0_6px_20px_rgba(123,92,255,0.45)]",
+              "bg-[var(--bf-primary)]",
+              "shadow-[var(--bf-shadow-glow)]",
               "active:scale-95 transition-transform duration-200",
-              "overflow-hidden"
             )}
           >
-            {/* Halo animado discreto */}
-            <motion.span
-              aria-hidden
-              className="absolute inset-0 rounded-full"
-              style={{
-                background:
-                  "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.35) 0%, transparent 60%)",
-              }}
-              animate={{ opacity: [0.4, 0.75, 0.4] }}
-              transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-            />
-            <motion.span
-              aria-hidden
-              animate={{ rotate: [0, 14, -10, 0], scale: [1, 1.08, 1] }}
-              transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
-              className="relative z-10"
-            >
-              <Sparkles className="h-5 w-5 text-white drop-shadow-sm" />
-            </motion.span>
+            <Sparkles className="h-5 w-5 text-[var(--bf-ink)]" />
           </Link>
         </motion.div>
       </div>

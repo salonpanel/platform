@@ -43,10 +43,10 @@ export function Card({
   };
 
   const radiusStyles = {
-    sm: "rounded-[var(--radius-md)]",
-    md: "rounded-[var(--radius-lg)]",
-    lg: "rounded-[var(--radius-lg)]",
-    xl: "rounded-[var(--radius-xl)]",
+    sm: "rounded-[var(--r-md)]",
+    md: "rounded-[var(--r-lg)]",
+    lg: "rounded-[var(--r-lg)]",
+    xl: "rounded-[var(--r-xl)]",
   };
 
   /**
@@ -56,8 +56,8 @@ export function Card({
    * - aurora: Gradiente protagonista - Para hero sections, KPIs destacados, elementos premium
    */
   const variantStyles = {
-    default: "bg-[var(--bg-card)] border-[var(--glass-border)] backdrop-blur-sm",
-    glass: "glass border-[var(--glass-border)]",
+    default: "bg-[var(--bf-surface)] border-[var(--bf-border)]",
+    glass: "bg-[var(--bf-bg-elev)]/80 backdrop-blur-md border-[var(--bf-border-2)]",
     aurora: "bg-[var(--gradient-primary)] border-transparent",
   };
 
@@ -75,15 +75,14 @@ export function Card({
         paddingStyles[effectivePadding],
         radiusStyles[radius],
         onClick && "cursor-pointer",
-        !onClick && hover && "hover:shadow-[var(--shadow-card-hover)] hover:border-[var(--glass-border-strong)]",
+        !onClick && hover && "hover:shadow-[var(--shadow-card-hover)] hover:border-[var(--bf-border-2)]",
         className
       )}
       style={{
-        boxShadow: variant === "aurora" 
-          ? "var(--glow-aqua), inset 0px 1px 0px rgba(255,255,255,0.15)" 
-          : variant === "glass"
-          ? "var(--shadow-card)"
-          : "var(--shadow-card)",
+        boxShadow:
+          variant === "aurora"
+            ? "var(--bf-shadow-glow), inset 0 1px 0 rgba(255,255,255,0.08)"
+            : "var(--bf-shadow-card)",
         transitionDuration: "var(--duration-base)",
       }}
       onClick={onClick}
