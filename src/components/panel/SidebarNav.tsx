@@ -77,7 +77,7 @@ export function SidebarNav({
 
   // Mapeo de rutas a permisos
   const routePermissionMap: Record<string, keyof typeof permissions> = {
-    "/panel": "dashboard",
+    "/panel/dashboard": "dashboard",
     "/panel/agenda": "agenda",
     "/panel/clientes": "clientes",
     "/panel/servicios": "servicios",
@@ -113,7 +113,7 @@ export function SidebarNav({
   const getNavIcon = useCallback((href: string): React.ReactNode => {
     const iconClass = "h-5 w-5";
     switch (href) {
-      case "/panel":
+      case "/panel/dashboard":
         return <LayoutDashboard className={iconClass} />;
       case "/panel/agenda":
         return <Calendar className={iconClass} />;
@@ -139,8 +139,8 @@ export function SidebarNav({
   }, []);
 
   const isActive = useCallback((href: string) => {
-    if (href === "/panel") {
-      return pathname === "/panel" || pathname === "/panel/";
+    if (href === "/panel/dashboard") {
+      return pathname === "/panel/dashboard" || pathname?.startsWith("/panel/dashboard/");
     }
     return pathname === href || pathname?.startsWith(href + "/");
   }, [pathname]);
@@ -221,7 +221,7 @@ export function SidebarNav({
         };
 
         // For performance, only prefetch lightweight datasets per route
-        if (hoveredItem === "/panel" && tId) {
+        if (hoveredItem === "/panel/dashboard" && tId) {
           const key = `dashboard-full-tenant-${tId}`;
           await doPrefetch(key, async () => {
             const now = new Date();

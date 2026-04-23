@@ -382,7 +382,7 @@ export default function AgendaPageClient({
           onSearchClose={() => { setSearchOpen(false); setSearchTerm(""); }}
           activeFilters={[]}
           onResetFilters={() => setFilters(DEFAULT_FILTERS)}
-          // In mobile week view, staff selector should live under the day strip (inside WeekView)
+          // En vista semana el selector de staff va en la cabecera móvil de WeekView (entre acciones)
           hideStaff={viewMode === "week"}
         />
 
@@ -423,6 +423,10 @@ export default function AgendaPageClient({
           isOpen={notificationsOpen}
           onClose={() => setNotificationsOpen(false)}
           notifications={notifications}
+          onRemove={(id) =>
+            setNotifications((prev) => prev.filter((n) => n.id !== id))
+          }
+          onClearAll={() => setNotifications([])}
         />
 
         {/* Booking context menu (right-click) */}

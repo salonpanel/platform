@@ -19,7 +19,7 @@ export function usePrefetchRoutes() {
     // Rutas críticas a precargar (ordenadas por prioridad de uso)
     const criticalRoutes = [
       "/panel/agenda", // 🔥 PRIORIDAD MÁXIMA - herramienta central
-      "/panel",
+      "/panel/dashboard",
       "/panel/clientes",
       "/panel/servicios",
       "/panel/staff",

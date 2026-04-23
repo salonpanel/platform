@@ -866,7 +866,7 @@ function PanelHomeContent({ impersonateOrgId, initialData }: PanelHomeClientProp
 }
 
 export default function PanelHome(props: PanelHomeClientProps) {
-  // Nota: este componente ya está envuelto por Suspense en `app/panel/page.tsx`.
+  // Nota: este componente está envuelto por Suspense en `app/panel/dashboard/page.tsx`.
   // Evitamos Suspense anidado aquí para reducir riesgo de hydration/race issues.
   return <PanelHomeContent {...props} />;
 }

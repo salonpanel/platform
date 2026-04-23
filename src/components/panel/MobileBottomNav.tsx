@@ -33,11 +33,11 @@ interface MobileBottomNavProps {
 }
 
 /** Rutas que ocupan la barra inferior (el resto va a «Más», p. ej. Clientes). */
-const BAR_HREFS = new Set<string>(["/panel", "/panel/agenda", "/panel/chat"]);
+const BAR_HREFS = new Set<string>(["/panel/dashboard", "/panel/agenda", "/panel/chat"]);
 
 const NAV_LEFT = [
-  { href: "/panel", label: "Inicio" },
   { href: "/panel/agenda", label: "Agenda" },
+  { href: "/panel/dashboard", label: "Dashboard" },
 ] as const;
 
 const NAV_RIGHT = [{ href: "/panel/chat", label: "Chat" }] as const;
@@ -96,7 +96,8 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
     (href: string, size: number = 20): React.ReactNode => {
       const props = { width: size, height: size, strokeWidth: 1.8 };
       switch (href) {
-        case "/panel":           return <LayoutDashboard {...props} />;
+        case "/panel/dashboard":
+          return <LayoutDashboard {...props} />;
         case "/panel/agenda":    return <Calendar {...props} />;
         case "/panel/clientes":  return <Users {...props} />;
         case "/panel/servicios": return <Scissors {...props} />;
@@ -113,7 +114,9 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
 
   const isActive = useCallback(
     (href: string) => {
-      if (href === "/panel") return pathname === "/panel" || pathname === "/panel/";
+      if (href === "/panel/dashboard") {
+        return pathname === "/panel/dashboard" || pathname?.startsWith("/panel/dashboard/");
+      }
       return pathname === href || pathname?.startsWith(href + "/");
     },
     [pathname]

@@ -13,6 +13,8 @@ interface MobileStaffSwitcherProps {
   onSelectStaff: (staffId: string | null) => void;
   bookingCounts?: Record<string, number>;
   includeAllOption?: boolean;
+  /** Fila única junto a iconos (altura ~32px), p. ej. cabecera móvil de agenda */
+  density?: "default" | "toolbar";
 }
 
 /**
@@ -31,6 +33,7 @@ export function MobileStaffSwitcher({
   onSelectStaff,
   bookingCounts,
   includeAllOption = false,
+  density = "default",
 }: MobileStaffSwitcherProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -94,11 +97,25 @@ export function MobileStaffSwitcher({
   const canGoPrev = safeIndex > 0;
   const canGoNext = safeIndex < staffOptions.length - 1;
 
+  const isToolbar = density === "toolbar";
+
   return (
     <>
       {/* Compact switcher bar */}
-      <div className="px-3 py-2">
-        <div className="flex items-center gap-1.5 rounded-[var(--r-xl)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] shadow-[var(--bf-shadow-card)] px-2 py-2">
+      <div
+        className={cn(
+          "min-w-0 w-full",
+          !isToolbar && "px-3 py-2"
+        )}
+      >
+        <div
+          className={cn(
+            "flex items-center border border-[var(--bf-border)] bg-[var(--bf-bg-elev)]",
+            isToolbar
+              ? "h-8 gap-0.5 rounded-[var(--r-md)] px-0.5 py-0"
+              : "gap-1.5 rounded-[var(--r-xl)] shadow-[var(--bf-shadow-card)] px-2 py-2"
+          )}
+        >
         {/* Prev arrow */}
         <motion.button
           id="staff-prev-btn"
@@ -106,15 +123,15 @@ export function MobileStaffSwitcher({
           onClick={goToPrev}
           disabled={!canGoPrev}
           className={cn(
-            "flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl",
-            "transition-all duration-200",
+            "flex-shrink-0 flex items-center justify-center rounded-[var(--r-md)] transition-all duration-200",
+            isToolbar ? "w-7 h-7" : "w-9 h-9 rounded-xl",
             canGoPrev
               ? "text-[var(--bf-ink-50)] active:bg-[var(--bf-surface)]"
               : "text-[var(--bf-ink-400)] opacity-40"
           )}
           aria-label="Barbero anterior"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className={isToolbar ? "w-4 h-4" : "w-5 h-5"} />
         </motion.button>
 
         {/* Center — tappable staff info */}
@@ -122,33 +139,50 @@ export function MobileStaffSwitcher({
           id="staff-name-picker-btn"
           whileTap={{ scale: 0.97 }}
           onClick={() => setSheetOpen(true)}
-          className="flex-1 flex items-center justify-center gap-2.5 py-1.5 px-2 rounded-xl active:bg-white/5 hover:bg-white/[0.03] transition-all duration-150 min-w-0"
+          className={cn(
+            "flex-1 flex items-center justify-center min-w-0 rounded-[var(--r-md)] active:bg-white/5 hover:bg-white/[0.03] transition-all duration-150",
+            isToolbar ? "gap-1 py-0 px-1" : "gap-2.5 py-1.5 px-2 rounded-xl"
+          )}
           aria-label="Seleccionar barbero"
         >
           {/* Color dot or "all" icon */}
           {currentColor ? (
             <span
-              className="w-3 h-3 rounded-full flex-shrink-0 ring-2 ring-black/20"
+              className={cn(
+                "rounded-full flex-shrink-0 ring-2 ring-black/20",
+                isToolbar ? "w-2 h-2" : "w-3 h-3"
+              )}
               style={{ backgroundColor: currentColor }}
             />
           ) : (
-            <Users className="w-3.5 h-3.5 text-[var(--bf-primary)] flex-shrink-0" />
+            <Users className={cn("text-[var(--bf-primary)] flex-shrink-0", isToolbar ? "w-3 h-3" : "w-3.5 h-3.5")} />
           )}
 
           {/* Name */}
-          <span className="text-[13px] font-semibold text-[var(--bf-ink-50)] truncate leading-tight" style={{ fontFamily: "var(--font-sans)" }}>
+          <span
+            className={cn(
+              "font-semibold text-[var(--bf-ink-50)] truncate leading-tight",
+              isToolbar ? "text-[11px]" : "text-[13px]"
+            )}
+            style={{ fontFamily: "var(--font-sans)" }}
+          >
             {current?.name ?? "—"}
           </span>
 
           {/* Booking count badge */}
           {currentCount > 0 && (
-            <span className="flex-shrink-0 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-bold bg-[rgba(79,161,216,0.15)] text-[var(--bf-primary)] leading-none">
+            <span
+              className={cn(
+                "flex-shrink-0 inline-flex items-center justify-center rounded-full font-bold bg-[rgba(79,161,216,0.15)] text-[var(--bf-primary)] leading-none",
+                isToolbar ? "min-w-[16px] h-4 px-1 text-[9px]" : "min-w-[20px] h-5 px-1.5 text-[10px]"
+              )}
+            >
               {currentCount}
             </span>
           )}
 
           {/* Chevron down hint */}
-          <span className="text-[var(--bf-ink-400)] text-xs leading-none flex-shrink-0">▾</span>
+          <span className={cn("text-[var(--bf-ink-400)] leading-none flex-shrink-0", isToolbar ? "text-[10px]" : "text-xs")}>▾</span>
         </motion.button>
 
         {/* Next arrow */}
@@ -158,15 +192,15 @@ export function MobileStaffSwitcher({
           onClick={goToNext}
           disabled={!canGoNext}
           className={cn(
-            "flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl",
-            "transition-all duration-200",
+            "flex-shrink-0 flex items-center justify-center rounded-[var(--r-md)] transition-all duration-200",
+            isToolbar ? "w-7 h-7" : "w-9 h-9 rounded-xl",
             canGoNext
               ? "text-[var(--bf-ink-50)] active:bg-[var(--bf-surface)]"
               : "text-[var(--bf-ink-400)] opacity-40"
           )}
           aria-label="Siguiente barbero"
         >
-          <ChevronRight className="w-5 h-5" />
+          <ChevronRight className={isToolbar ? "w-4 h-4" : "w-5 h-5"} />
         </motion.button>
         </div>
       </div>

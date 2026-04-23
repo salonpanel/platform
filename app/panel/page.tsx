@@ -1,22 +1,23 @@
-import { Suspense } from "react";
-import DashboardDataWrapper from "./DashboardDataWrapper";
-import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
+import { redirect } from "next/navigation";
 
+/**
+ * La entrada del panel (`/panel`) lleva a la agenda: es el núcleo del producto.
+ * El dashboard sigue disponible en `/panel/dashboard`.
+ */
 export default async function PanelHomePage({
   searchParams,
 }: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const impersonateOrgId = (resolvedSearchParams?.impersonate as string) || null;
-
-  // Layer 2: Server Streaming
-  // The Shell (Client Wrapper potentially) is around this, but here we provide the content.
-  // We suspend ONLY the data loading part.
-
-  return (
-    <Suspense fallback={<DashboardSkeleton />}>
-      <DashboardDataWrapper impersonateOrgId={impersonateOrgId} />
-    </Suspense>
-  );
+  const q = new URLSearchParams();
+  if (resolvedSearchParams) {
+    for (const [key, raw] of Object.entries(resolvedSearchParams)) {
+      if (raw === undefined) continue;
+      const vals = Array.isArray(raw) ? raw : [raw];
+      for (const v of vals) q.append(key, v);
+    }
+  }
+  const suffix = q.toString() ? `?${q.toString()}` : "";
+  redirect(`/panel/agenda${suffix}`);
 }

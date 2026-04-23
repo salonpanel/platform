@@ -513,29 +513,11 @@ function MobileWeekView({
     };
   }, []);
 
-  // Mes del día seleccionado (para la cabecera)
-  const monthLabel = useMemo(() => {
-    const d = parseISO(selectedMobileDay);
-    return new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric" }).format(d);
-  }, [selectedMobileDay]);
-
-  const statsLine = mobileToolbar?.quickStats && mobileToolbar.quickStats.totalBookings > 0
-    ? [
-        `${mobileToolbar.quickStats.totalBookings} citas`,
-        mobileToolbar.quickStats.totalHours > 0 ? `${mobileToolbar.quickStats.totalHours}h` : null,
-        mobileToolbar.quickStats.totalAmount > 0
-          ? `${Math.round(mobileToolbar.quickStats.totalAmount / 100)}€`
-          : null,
-      ]
-        .filter(Boolean)
-        .join(" · ")
-    : null;
-
   return (
     <div className="w-full h-full flex flex-col overflow-hidden bg-[var(--bf-bg)]" role="region" aria-label="Vista semanal móvil">
-      {/* Columnas 1fr · auto · 1fr: mes siempre en el centro geométrico de la barra */}
-      <div className="flex-shrink-0 bg-[var(--bf-bg)] px-2 py-2 sm:px-3">
-        <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2">
+      {/* Columnas 1fr · auto · 1fr: selector de staff compacto en el centro */}
+      <div className="flex-shrink-0 bg-[var(--bf-bg)] px-2 py-1.5 sm:px-3">
+        <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-1.5">
           <div className="flex min-w-0 items-center justify-start gap-1">
             {mobileToolbar && (
               <AgendaQuickActions
@@ -573,25 +555,21 @@ function MobileWeekView({
               />
             </motion.label>
           </div>
-          <div className="min-w-0 max-w-[min(18rem,calc(100vw-8rem))] justify-self-center text-center">
-            <h2
-              className="truncate text-[8.25px] font-medium capitalize leading-tight tracking-tight"
-              style={{
-                fontFamily: "var(--font-sans)",
-                color: "var(--bf-ink-50)",
-                letterSpacing: "-0.01em",
-              }}
-            >
-              {monthLabel}
-            </h2>
-            {statsLine && (
-              <p
-                className="mt-0.5 truncate px-0.5 text-[7.5px] font-medium text-[var(--bf-ink-400)]"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                {statsLine}
-              </p>
-            )}
+          <div
+            className="min-w-0 max-w-[min(18rem,calc(100vw-8rem))] justify-self-center w-full"
+            role="group"
+            aria-label="Miembro del equipo"
+          >
+            {staffList.length > 1 && onMobileStaffChange ? (
+              <MobileStaffSwitcher
+                staffList={staffList}
+                selectedStaffId={activeStaffId}
+                onSelectStaff={onMobileStaffChange}
+                bookingCounts={bookingCounts}
+                includeAllOption
+                density="toolbar"
+              />
+            ) : null}
           </div>
           <div className="flex min-w-0 items-center justify-end">
             {mobileToolbar ? (
@@ -691,19 +669,6 @@ function MobileWeekView({
           );
         })}
       </div>
-
-      {/* Staff switcher (bajo la tira de días) */}
-      {staffList.length > 1 && onMobileStaffChange && (
-        <div className="flex-shrink-0">
-          <MobileStaffSwitcher
-            staffList={staffList}
-            selectedStaffId={activeStaffId}
-            onSelectStaff={onMobileStaffChange}
-            bookingCounts={bookingCounts}
-            includeAllOption
-          />
-        </div>
-      )}
 
       {/* Lista de reservas del día seleccionado */}
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-3 py-3">

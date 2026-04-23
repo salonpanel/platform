@@ -214,7 +214,7 @@ function PanelLayoutContent({
     });
 
     setAuthRedirectTriggered(true);
-    const currentPath = pathname || "/panel";
+    const currentPath = pathname || "/panel/agenda";
     router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
   }, [authStatus, authRedirectTriggered, pathname, router]);
 
@@ -334,8 +334,8 @@ function PanelLayoutContent({
   }
 
   const navItems = [
-    { href: "/panel", label: "Dashboard" },
     { href: "/panel/agenda", label: "Agenda" },
+    { href: "/panel/dashboard", label: "Dashboard" },
     { href: "/panel/clientes", label: "Clientes" },
     { href: "/panel/servicios", label: "Servicios" },
     { href: "/panel/staff", label: "Staff" },
@@ -346,7 +346,7 @@ function PanelLayoutContent({
   ];
 
   const getPageTitle = () => {
-    if (pathname === "/panel" || pathname === "/panel/") return "Dashboard";
+    if (pathname?.startsWith("/panel/dashboard")) return "Dashboard";
     // startsWith so sub-routes (/panel/clientes/[id], /panel/ajustes/calendario, …)
     // inherit their section name instead of falling back to the generic "Panel"
     if (pathname?.startsWith("/panel/agenda"))      return "Agenda";

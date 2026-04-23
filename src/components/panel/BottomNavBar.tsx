@@ -12,8 +12,8 @@ interface BottomNavBarProps {
 }
 
 const navItems = [
-  { href: "/panel", label: "Inicio", icon: LayoutDashboard },
   { href: "/panel/agenda", label: "Agenda", icon: Calendar },
+  { href: "/panel/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/panel/clientes", label: "Clientes", icon: Users },
   { href: "/panel/servicios", label: "Servicios", icon: Scissors },
   { href: "/panel/ajustes", label: "Ajustes", icon: Settings },
@@ -57,8 +57,8 @@ export function BottomNavBar({ className }: BottomNavBarProps) {
   }, [lastScrollY]);
 
   const isActive = (href: string) => {
-    if (href === "/panel") {
-      return pathname === "/panel" || pathname === "/panel/";
+    if (href === "/panel/dashboard") {
+      return pathname === "/panel/dashboard" || pathname?.startsWith("/panel/dashboard/");
     }
     return pathname === href || pathname?.startsWith(href + "/");
   };

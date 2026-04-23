@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Settings, LogOut, Building2 } from "lucide-react";
+import { Settings, LogOut, Building2 } from "lucide-react";
 import { BookFastMarkIcon } from "@/components/brand/BookFastMarkIcon";
 import { Avatar } from "@/components/ui/Avatar";
 import { useBookfastAiNavBadge } from "@/hooks/useBookfastAiNavBadge";
@@ -88,31 +88,27 @@ export function TopBar({
         >
           <div className="relative" ref={dropdownRef}>
             <button
+              type="button"
               onClick={() => setDropdownOpen(!dropdownOpen)}
+              aria-expanded={dropdownOpen}
+              aria-haspopup="true"
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-[var(--r-md)]",
-                "bg-[var(--bf-bg-elev)] hover:bg-[var(--bf-surface)]",
-                "border border-[var(--bf-border)] hover:border-[var(--bf-border-2)]",
-                "transition-all duration-200",
-                "group"
+                "flex items-center justify-center rounded-full p-0",
+                "border-0 bg-transparent",
+                "transition-[transform,opacity] duration-200",
+                "hover:opacity-90 active:scale-[0.97]",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bf-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-primary)]",
               )}
             >
               <Avatar
                 src={userAvatar || undefined}
                 name={userName || userEmail || undefined}
-                size="sm"
+                size="md"
                 className={cn(
-                  "ring-2 ring-white/10",
-                  "group-hover:ring-white/20",
-                  "transition-all duration-300"
-                )}
-              />
-              <ChevronDown
-                className={cn(
-                  "h-4 w-4 text-[var(--bf-ink-400)]",
-                  "transition-all duration-200",
-                  "group-hover:text-[var(--bf-ink-200)]",
-                  dropdownOpen && "rotate-180"
+                  "ring-2 ring-white/15",
+                  "hover:ring-white/25",
+                  "transition-[box-shadow] duration-300",
+                  dropdownOpen && "ring-[var(--bf-primary)]/50",
                 )}
               />
             </button>
@@ -222,11 +218,10 @@ export function TopBar({
           <h1
             className={cn(
               "truncate leading-snug",
-              /* Móvil (~mitad del text-sm anterior) */
-              "text-[11px] font-medium tracking-[-0.01em] text-[var(--bf-ink-100)]",
-              /* Desktop (~mitad de 2xl / 3xl / 4xl) */
-              "md:text-sm md:font-semibold md:tracking-[-0.02em] md:leading-tight md:text-[var(--bf-ink-50)]",
-              "lg:text-base xl:text-lg"
+              /* ~30% menor que la escala anterior (11 / 14 / 16 / 18 px → ×0.7; mín. 10px en móvil) */
+              "text-[10px] font-medium tracking-[-0.01em] text-[var(--bf-ink-100)]",
+              "md:text-[10px] md:font-semibold md:tracking-[-0.02em] md:leading-tight md:text-[var(--bf-ink-50)]",
+              "lg:text-[11px] xl:text-[13px]",
             )}
             style={{
               fontFamily: "var(--font-sans)",

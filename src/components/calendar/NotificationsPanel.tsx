@@ -1,10 +1,9 @@
 "use client";
 
-import { X, CheckCircle2, XCircle, AlertCircle, Info } from "lucide-react";
+import { X, CheckCircle2, XCircle, AlertCircle, Info, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { GlassButton } from "@/components/ui/glass/GlassButton";
 
-interface Notification {
+export interface AgendaNotificationItem {
   id: string;
   type: "success" | "error" | "warning" | "info";
   title: string;
@@ -16,7 +15,11 @@ interface Notification {
 interface NotificationsPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  notifications?: Notification[];
+  notifications?: AgendaNotificationItem[];
+  /** Quita una notificación del listado */
+  onRemove?: (id: string) => void;
+  /** Elimina todas las notificaciones */
+  onClearAll?: () => void;
 }
 
 const notificationIcons = {
@@ -29,116 +32,181 @@ const notificationIcons = {
 const notificationColors = {
   success: "text-[var(--bf-success)]",
   error: "text-[var(--bf-danger)]",
-  warning: "text-yellow-400",
+  warning: "text-[var(--bf-warn)]",
   info: "text-[var(--bf-primary)]",
 };
-
-// Mock data para desarrollo
-const mockNotifications: Notification[] = [
-  {
-    id: "1",
-    type: "success",
-    title: "Nueva reserva online",
-    message: "Juan Pérez ha realizado una reserva para mañana a las 10:00",
-    timestamp: "Hace 5 minutos",
-    read: false,
-  },
-  {
-    id: "2",
-    type: "warning",
-    title: "Cita cancelada",
-    message: "María García ha cancelado su cita del 15 de noviembre",
-    timestamp: "Hace 1 hora",
-    read: false,
-  },
-  {
-    id: "3",
-    type: "error",
-    title: "Error al procesar pago",
-    message: "No se pudo procesar el pago de la cita #1234",
-    timestamp: "Hace 2 horas",
-    read: true,
-  },
-];
 
 export function NotificationsPanel({
   isOpen,
   onClose,
-  notifications = mockNotifications,
+  notifications = [],
+  onRemove,
+  onClearAll,
 }: NotificationsPanelProps) {
   if (!isOpen) return null;
+
+  const hasItems = notifications.length > 0;
 
   return (
     <div className="fixed inset-0 z-[60]">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+      <button
+        type="button"
+        aria-label="Cerrar notificaciones"
+        className="absolute inset-0 bg-[var(--bf-ink)]/70 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Drawer - funciona en móvil y desktop */}
-      <div className="absolute right-0 top-0 bottom-0 w-80 md:w-96 bg-[#15171A] border-l border-white/5 flex flex-col shadow-[0px_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-md">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/5">
-          <h3 className="text-lg font-semibold text-white font-['Plus_Jakarta_Sans']">
-            Notificaciones
-          </h3>
-          <GlassButton
-            onClick={onClose}
-            variant="ghost"
-            size="icon"
-            className="text-[#d1d4dc] hover:text-white"
-          >
-            <X className="h-5 w-5" />
-          </GlassButton>
+      {/*
+        Móvil: hoja inferior (altura acotada) — cabecera y “Cerrar” bajo el notch / Dynamic Island.
+        Desktop: panel lateral derecho.
+      */}
+      <div
+        className={cn(
+          "absolute z-10 flex w-full flex-col bg-[var(--bf-surface)] shadow-[var(--bf-shadow-card)]",
+          /* Móvil */
+          "bottom-0 left-0 right-0 max-h-[min(88dvh,calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)-1rem))] rounded-t-[var(--r-xl)] border-t border-[var(--bf-border)]",
+          /* Desktop */
+          "md:bottom-0 md:left-auto md:right-0 md:top-0 md:h-full md:max-h-none md:w-[min(100%,24rem)] md:rounded-none md:border-l md:border-t-0",
+        )}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="notifications-panel-title"
+      >
+        {/* Indicador tipo sheet (solo móvil) */}
+        <div
+          className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-[var(--bf-border-2)] md:hidden"
+          aria-hidden
+        />
+
+        {/* Cabecera: acciones siempre alcanzables; en desktop respeta safe-area arriba */}
+        <div
+          className={cn(
+            "shrink-0 border-b border-[var(--bf-border)] px-4 pb-3 pt-2",
+            "md:pt-[max(0.75rem,env(safe-area-inset-top,0px))]",
+          )}
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2
+              id="notifications-panel-title"
+              className="text-base font-semibold text-[var(--bf-ink-50)]"
+              style={{ fontFamily: "var(--font-sans)" }}
+            >
+              Notificaciones
+            </h2>
+            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+              {hasItems && onClearAll && (
+                <button
+                  type="button"
+                  onClick={() => onClearAll()}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-[var(--r-md)] px-3 py-2 text-xs font-medium",
+                    "text-[var(--bf-ink-300)] ring-1 ring-[var(--bf-border)]",
+                    "hover:bg-[var(--bf-bg-elev)] hover:text-[var(--bf-ink-50)] transition-colors",
+                  )}
+                  style={{ fontFamily: "var(--font-sans)" }}
+                >
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                  Vaciar todas
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onClose}
+                className={cn(
+                  "inline-flex items-center justify-center gap-1.5 rounded-[var(--r-md)] px-4 py-2 text-xs font-semibold",
+                  "bg-[var(--bf-primary)] text-[var(--bf-ink)] shadow-[var(--bf-shadow-glow)]",
+                  "hover:brightness-105 active:brightness-95 transition",
+                )}
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Lista de notificaciones */}
-        <div className="flex-1 overflow-y-auto px-4 pt-4 space-y-3 scrollbar-hide pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
-          {notifications.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-[#9ca3af] font-['Plus_Jakarta_Sans']">
+        {/* Lista */}
+        <div
+          className={cn(
+            "min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3",
+            "scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[var(--bf-border-2)]",
+            "pb-[max(1rem,env(safe-area-inset-bottom,0px))]",
+          )}
+        >
+          {!hasItems ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p
+                className="text-sm text-[var(--bf-ink-400)]"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
                 No hay notificaciones
               </p>
             </div>
           ) : (
-            notifications.map((notification) => {
-              const Icon = notificationIcons[notification.type];
-              return (
-                <div
-                  key={notification.id}
-                  className={cn(
-                    "p-4 cursor-pointer bg-white/3 border border-white/5 rounded-[14px] hover:bg-white/5 transition-colors",
-                    !notification.read && "border-l-4 border-[#4FA1D8]"
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <Icon
-                      className={cn(
-                        "h-5 w-5 flex-shrink-0 mt-0.5",
-                        notificationColors[notification.type]
-                      )}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <h4 className="text-sm font-semibold text-white font-['Plus_Jakarta_Sans']">
-                          {notification.title}
-                        </h4>
-                        {!notification.read && (
-                          <div className="h-2 w-2 rounded-full bg-[#4FA1D8] flex-shrink-0 mt-1" />
+            <ul className="flex flex-col gap-2">
+              {notifications.map((notification) => {
+                const Icon = notificationIcons[notification.type];
+                return (
+                  <li
+                    key={notification.id}
+                    className={cn(
+                      "relative rounded-[var(--r-lg)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] p-3 pr-10 transition-colors",
+                      !notification.read && "border-l-[3px] border-l-[var(--bf-primary)] pl-[calc(0.75rem-3px)]",
+                    )}
+                  >
+                    {onRemove && (
+                      <button
+                        type="button"
+                        onClick={() => onRemove(notification.id)}
+                        className={cn(
+                          "absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-[var(--r-md)]",
+                          "text-[var(--bf-ink-400)] hover:bg-[var(--bf-surface)] hover:text-[var(--bf-ink-50)]",
+                          "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bf-primary)]",
                         )}
+                        aria-label={`Eliminar: ${notification.title}`}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                    <div className="flex gap-3">
+                      <Icon
+                        className={cn(
+                          "mt-0.5 h-5 w-5 shrink-0",
+                          notificationColors[notification.type],
+                        )}
+                        aria-hidden
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2 pr-1">
+                          <h3
+                            className="text-sm font-semibold text-[var(--bf-ink-50)]"
+                            style={{ fontFamily: "var(--font-sans)" }}
+                          >
+                            {notification.title}
+                          </h3>
+                          {!notification.read && (
+                            <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--bf-primary)]" aria-hidden />
+                          )}
+                        </div>
+                        <p
+                          className="mt-1 text-xs leading-relaxed text-[var(--bf-ink-300)]"
+                          style={{ fontFamily: "var(--font-sans)" }}
+                        >
+                          {notification.message}
+                        </p>
+                        <p
+                          className="mt-2 text-[11px] text-[var(--bf-ink-400)]"
+                          style={{ fontFamily: "var(--font-mono)" }}
+                        >
+                          {notification.timestamp}
+                        </p>
                       </div>
-                      <p className="text-xs text-[#d1d4dc] mt-1 font-['Plus_Jakarta_Sans']">
-                        {notification.message}
-                      </p>
-                      <p className="text-xs text-[#9ca3af] mt-2 font-['Plus_Jakarta_Sans']">
-                        {notification.timestamp}
-                      </p>
                     </div>
-                  </div>
-                </div>
-              );
-            })
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </div>
       </div>

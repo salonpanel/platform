@@ -42,7 +42,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { href: "/panel", label: "Dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
+  { href: "/panel/dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
   { href: "/panel/agenda", label: "Agenda", icon: <Calendar className="h-5 w-5" /> },
   { href: "/panel/clientes", label: "Clientes", icon: <Users className="h-5 w-5" /> },
   { href: "/panel/servicios", label: "Servicios", icon: <Scissors className="h-5 w-5" /> },
@@ -69,8 +69,8 @@ export function AppShell({
   const [searchQuery, setSearchQuery] = useState("");
 
   const isActive = (href: string) => {
-    if (href === "/panel") {
-      return pathname === "/panel" || pathname === "/panel/";
+    if (href === "/panel/dashboard") {
+      return pathname === "/panel/dashboard" || pathname?.startsWith("/panel/dashboard/");
     }
     return pathname === href || pathname?.startsWith(href + "/");
   };
@@ -217,7 +217,7 @@ export function AppShell({
                     className="text-lg lg:text-xl font-semibold text-[var(--bf-ink-50)] truncate tracking-tight"
                     style={{ fontFamily: "var(--font-sans)" }}
                   >
-                      {pathname === "/panel" || pathname === "/panel/"
+                      {pathname === "/panel/dashboard" || pathname?.startsWith("/panel/dashboard/")
                         ? "Dashboard"
                         : pathname === "/panel/agenda"
                         ? "Agenda"

@@ -53,7 +53,7 @@ interface AgendaContentProps {
   onSlotNewBooking?: (slot: { staffId: string; date: string; time: string }) => void;
   onSlotBlock?: (slot: { staffId: string; date: string; time: string }) => void;
   onSlotAbsence?: (slot: { staffId: string; date: string; time: string }) => void;
-  /** En móvil, acciones de agenda junto al mes (WeekView) */
+  /** En móvil, acciones de agenda en la barra superior de WeekView (junto al selector de staff) */
   mobileToolbar?: MobileAgendaToolbarProps | null;
 }
 
