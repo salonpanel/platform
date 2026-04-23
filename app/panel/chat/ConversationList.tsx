@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/Avatar";
-import { CheckCheck, Pin, Users } from "lucide-react";
+import { CheckCheck, Users } from "lucide-react";
 
 type ConversationType = "all" | "direct" | "group";
 
@@ -52,20 +52,37 @@ function formatTimestamp(iso: string): string {
 function GroupChatAvatar({
 	name,
 	logoUrl,
+	variant = "default",
 }: {
 	name: string;
 	logoUrl: string | null | undefined;
+	variant?: "default" | "team";
 }) {
+	const ring =
+		variant === "team"
+			? "border-2 border-[var(--bf-teal-300)]/50 shadow-[0_0_0_1px_rgba(30,161,159,0.12)]"
+			: "border-2 border-[var(--bf-success)]/40";
+
 	if (logoUrl) {
 		return (
-			<div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-2 border-[var(--bf-success)]/40 bg-[var(--bf-surface)]">
+			<div
+				className={cn(
+					"relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full bg-[var(--bf-surface)]",
+					ring
+				)}
+			>
 				<img src={logoUrl} alt={name} className="h-full w-full object-cover" />
 			</div>
 		);
 	}
 	return (
 		<div
-			className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border-2 border-[var(--bf-success)]/35 bg-[rgba(30,161,159,0.15)] text-[var(--bf-success)]"
+			className={cn(
+				"flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full text-[var(--bf-teal-200)]",
+				variant === "team"
+					? "border-2 border-[var(--bf-teal-300)]/45 bg-[rgba(30,161,159,0.18)]"
+					: "border-2 border-[var(--bf-success)]/35 bg-[rgba(30,161,159,0.15)] text-[var(--bf-success)]"
+			)}
 			aria-hidden
 		>
 			<Users className="h-6 w-6" />
@@ -83,40 +100,36 @@ export function ConversationList({
 	currentUserId,
 }: ConversationListProps) {
 	void onToggleUnread;
-	const pinned = conversations[0]?.type === "all" ? conversations[0] : null;
-	const rest = pinned ? conversations.slice(1) : conversations;
+	const teamChat = conversations[0]?.type === "all" ? conversations[0] : null;
+	const rest = teamChat ? conversations.slice(1) : conversations;
 
 	return (
 		<div className="flex h-full flex-col bg-[var(--bf-bg)]">
-			<div className="custom-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
+			<div className="custom-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-2 md:px-3.5 md:py-2.5">
 				{conversations.length === 0 ? (
-					<div className="p-8 text-center text-[var(--bf-ink-400)] text-sm">
+					<div className="p-8 text-center text-sm text-[var(--bf-ink-400)]">
 						{showUnreadOnly ? "No hay chats sin leer" : "No hay chats disponibles"}
 					</div>
 				) : (
-					<>
-						{pinned && (
-							<div className="sticky top-0 z-20 flex-shrink-0 border-b border-[var(--bf-border)] bg-[var(--bf-bg)]">
-								<div className="flex items-center gap-2 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--bf-success)]" style={{ fontFamily: "var(--font-mono)" }}>
-									<Pin className="h-3 w-3" aria-hidden />
-									<span>Chat del equipo</span>
-								</div>
+					<div className="flex flex-col gap-2">
+						{teamChat && (
+							<div className="sticky top-0 z-20 shrink-0 bg-[var(--bf-bg)] pb-0.5 pt-0.5">
 								<ConversationRow
-									conv={pinned}
-									isPinned
-									selected={selectedConversationId === pinned.id}
+									conv={teamChat}
+									variant="team"
+									selected={selectedConversationId === teamChat.id}
 									currentUserId={currentUserId}
 									tenantLogoUrl={tenantLogoUrl}
-									onSelect={() => onSelectConversation(pinned.id)}
+									onSelect={() => onSelectConversation(teamChat.id)}
 								/>
 							</div>
 						)}
-						<div className="divide-y divide-[var(--bf-border)]">
+						<div className="flex min-h-0 flex-col gap-1.5">
 							{rest.map((conv) => (
 								<ConversationRow
 									key={conv.id}
 									conv={conv}
-									isPinned={false}
+									variant="default"
 									selected={selectedConversationId === conv.id}
 									currentUserId={currentUserId}
 									tenantLogoUrl={tenantLogoUrl}
@@ -124,62 +137,101 @@ export function ConversationList({
 								/>
 							))}
 						</div>
-					</>
+					</div>
 				)}
 			</div>
 		</div>
 	);
 }
 
+function formatUnreadLabel(n: number): string {
+	if (n > 99) return "99+";
+	return String(n);
+}
+
 function ConversationRow({
 	conv,
-	isPinned,
+	variant,
 	selected,
 	currentUserId,
 	tenantLogoUrl,
 	onSelect,
 }: {
 	conv: Conversation;
-	isPinned: boolean;
+	variant: "team" | "default";
 	selected: boolean;
 	currentUserId: string | null;
 	tenantLogoUrl?: string | null;
 	onSelect: () => void;
 }) {
+	const unread = conv.unreadCount > 0;
+	const team = variant === "team";
+
 	return (
 		<button
 			type="button"
 			onClick={onSelect}
+			aria-label={
+				unread
+					? `${conv.name}, ${conv.unreadCount} sin leer`
+					: conv.name
+			}
 			className={cn(
-				"group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors",
-				"hover:bg-[var(--bf-surface)]/70",
-				selected && "bg-[var(--bf-surface)]",
-				isPinned && "border-l-[3px] border-l-[var(--bf-success)]"
+				"group flex w-full items-center gap-3 rounded-[var(--r-md)] border text-left transition-[background-color,box-shadow,border-color,transform] duration-200",
+				"px-3 py-2.5 md:px-3.5 md:py-3",
+				"focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bf-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bf-bg)]",
+				"active:scale-[0.99]",
+				team
+					? [
+							"border-[rgba(30,161,159,0.28)]",
+							"bg-[linear-gradient(135deg,rgba(30,161,159,0.12)_0%,rgba(79,161,216,0.05)_100%)]",
+							"shadow-[var(--bf-shadow-card)]",
+							"hover:border-[rgba(30,161,159,0.4)]",
+							selected && "border-[var(--bf-teal-400)]/50 shadow-[0_0_0_1px_rgba(30,161,159,0.2)]",
+						]
+					: [
+							"border-[var(--bf-border)]/90 bg-[var(--bf-bg-elev)]/65",
+							"hover:border-[var(--bf-border-2)] hover:bg-[var(--bf-surface)]/90",
+							selected && "border-[var(--bf-border-2)] bg-[var(--bf-surface)]",
+						]
 			)}
 		>
 			<div className="relative flex-shrink-0">
 				{conv.type === "all" ? (
-					<GroupChatAvatar name={conv.name || "Chat del equipo"} logoUrl={tenantLogoUrl} />
+					<GroupChatAvatar
+						name={conv.name || "Chat del equipo"}
+						logoUrl={tenantLogoUrl}
+						variant={team ? "team" : "default"}
+					/>
 				) : (
 					<Avatar size="lg" name={conv.name} className="border-none shadow-none" />
 				)}
+				{unread && (
+					<span
+						className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[var(--bf-bg-elev)] bg-[var(--bf-success)]"
+						aria-hidden
+					/>
+				)}
 			</div>
 
-			<div className="flex h-[56px] min-w-0 flex-1 flex-col justify-center border-b border-[var(--bf-border)] py-1">
-				<div className="mb-0.5 flex items-baseline justify-between">
+			<div className="flex min-h-[52px] min-w-0 flex-1 flex-col justify-center gap-0.5 py-0.5">
+				<div className="flex items-baseline justify-between gap-2">
 					<h3
 						className={cn(
-							"truncate pr-2 text-base font-medium text-[var(--bf-ink-50)]",
-							conv.unreadCount > 0 && "font-bold"
+							"min-w-0 flex-1 truncate text-[15px] leading-tight text-[var(--bf-ink-50)]",
+							"tracking-[-0.02em]",
+							unread && "font-semibold",
+							!unread && "font-medium"
 						)}
+						style={{ fontFamily: "var(--font-sans)" }}
 					>
 						{conv.name}
 					</h3>
 					{conv.lastMessageAt && (
 						<span
 							className={cn(
-								"flex-shrink-0 text-[12px]",
-								conv.unreadCount > 0 ? "font-medium text-[var(--bf-success)]" : "text-[var(--bf-ink-400)]"
+								"shrink-0 text-[11px] tabular-nums",
+								unread ? "font-medium text-[var(--bf-success)]" : "text-[var(--bf-ink-400)]"
 							)}
 							style={{ fontFamily: "var(--font-mono)" }}
 						>
@@ -188,28 +240,38 @@ function ConversationRow({
 					)}
 				</div>
 
-				<div className="flex items-center justify-between">
-					<div className="flex min-w-0 flex-1 items-center gap-1">
+				<div className="flex items-center justify-between gap-2">
+					<div className="flex min-w-0 flex-1 items-center gap-1.5">
 						{conv.lastMessageSenderId === currentUserId && (
 							<CheckCheck
 								className={cn(
-									"h-4 w-4 flex-shrink-0",
-									conv.unreadCount === 0 && conv.lastMessageAt ? "text-[var(--bf-primary)]" : "text-[var(--bf-ink-400)]/60"
+									"h-3.5 w-3.5 flex-shrink-0",
+									!unread && conv.lastMessageAt
+										? "text-[var(--bf-primary)]/90"
+										: "text-[var(--bf-ink-400)]/55"
 								)}
+								aria-hidden
 							/>
 						)}
 						<p
 							className={cn(
-								"truncate pr-2 text-sm",
-								conv.unreadCount > 0 ? "font-medium text-[var(--bf-ink-100)]" : "text-[var(--bf-ink-400)]"
+								"min-w-0 flex-1 truncate text-[13px] leading-snug",
+								unread ? "font-medium text-[var(--bf-ink-100)]" : "text-[var(--bf-ink-400)]"
 							)}
 						>
 							{conv.lastMessageBody || "Sin mensajes"}
 						</p>
 					</div>
-					{conv.unreadCount > 0 && (
-						<span className="flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-[var(--bf-success)] px-1.5 text-[12px] font-bold text-[var(--bf-ink)]">
-							{conv.unreadCount}
+					{unread && (
+						<span
+							className={cn(
+								"inline-flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-full px-1.5",
+								"bg-[var(--bf-success)] text-[11px] font-bold tabular-nums text-[var(--bf-ink)]",
+								"shadow-[0_0_0_1px_rgba(0,0,0,0.15)]"
+							)}
+							aria-label={`${conv.unreadCount} mensajes sin leer`}
+						>
+							{formatUnreadLabel(conv.unreadCount)}
 						</span>
 					)}
 				</div>

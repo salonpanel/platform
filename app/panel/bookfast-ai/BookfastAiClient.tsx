@@ -18,6 +18,7 @@ import {
   Users,
   Euro,
 } from "lucide-react";
+import { BookFastMarkIcon } from "@/components/brand/BookFastMarkIcon";
 import { cn } from "@/lib/utils";
 import {
   BOOKFAST_AI_PENDING_EVENT,
@@ -499,7 +500,7 @@ function EmptyState({ onPick }: { onPick: (text: string) => void }) {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         className={cn(
-          "mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl md:mb-5 md:h-14 md:w-14",
+          "mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full md:mb-5 md:h-14 md:w-14",
           "ring-1 ring-white/20",
         )}
         style={{
@@ -508,14 +509,11 @@ function EmptyState({ onPick }: { onPick: (text: string) => void }) {
           boxShadow: "var(--bf-shadow-glow), 0 10px 36px -12px rgba(31, 107, 158, 0.55)",
         }}
       >
-        {/* Isotipo claro (--bf-ink-50 / #F5F7FA) sobre cyan — Brand Kit variantes mono */}
-        <img
-          src="/bookfast-mark-light.svg"
-          alt=""
-          width={28}
-          height={28}
-          className="h-6 w-6 md:h-7 md:w-7"
-          decoding="async"
+        {/* Isotipo mono blanco (sin fondo en el SVG); el círculo con degradado es solo el contenedor */}
+        <BookFastMarkIcon
+          size={28}
+          className="h-6 w-6 text-[var(--bf-ink-50)] md:h-7 md:w-7"
+          aria-hidden
         />
       </motion.div>
       <h2 className="mb-1 font-satoshi text-base font-semibold text-white/95 md:mb-2 md:text-xl">

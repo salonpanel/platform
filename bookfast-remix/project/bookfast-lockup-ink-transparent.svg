@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" fill="none" preserveAspectRatio="xMidYMid meet" aria-label="BookFast">
+  <g transform="translate(18, 18)" fill="#05070A">
+    <g transform="rotate(-6 22 12)"><path d="M 3 9.4 Q 3 7.2 6 7.2 L 36.3 7.2 Q 40.7 7.2 40.7 12.1 Q 40.7 17 36.3 17 L 6 17 Q 3 17 3 14.9 Z"/></g>
+    <g transform="rotate(-4 22 24)"><path d="M 4.4 20.3 Q 4.4 18.1 7.7 18.1 L 35.2 18.1 Q 38.5 18.1 38.5 22.5 Q 38.5 27.5 33 27.5 L 7.7 27.5 Q 4.4 27.5 4.4 25.3 Z"/></g>
+    <g transform="rotate(-3 22 34)"><path d="M 11 31.4 Q 11 29.2 14.3 29.2 L 29.7 29.2 Q 33 29.2 33 33.6 Q 33 38 29.7 38 L 14.3 38 Q 11 38 11 35.8 Z"/></g>
+  </g>
+  <text x="68" y="50" font-family="Geist, system-ui, sans-serif" font-weight="800" font-size="30" letter-spacing="-1.1" fill="#05070A">BookFast</text>
+</svg>
