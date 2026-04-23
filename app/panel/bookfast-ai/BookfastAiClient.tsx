@@ -401,7 +401,8 @@ export default function BookfastAiClient() {
           composerMultiline ? "items-end" : "items-center",
           "bg-white/[0.04] ring-1 ring-white/10",
           "focus-within:ring-white/20 focus-within:bg-white/[0.06] transition",
-          composerPadBottom === undefined && "pb-[max(0.5rem,env(safe-area-inset-bottom))] md:pb-2.5",
+          composerPadBottom === undefined &&
+            "pb-2 md:pb-2.5 max-md:pb-1.5",
         )}
       >
         <textarea

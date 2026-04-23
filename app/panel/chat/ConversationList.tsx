@@ -139,7 +139,7 @@ export function ConversationList({
 
 	return (
 		<div className="flex min-h-0 flex-1 flex-col bg-[var(--bf-bg)]">
-			<div className="custom-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-3 py-2 md:px-3.5 md:py-2.5">
+			<div className="custom-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-3 py-2 md:px-3.5 md:py-2.5 max-lg:pb-[5rem] lg:pb-0">
 				{conversations.length === 0 ? (
 					<div className="p-8 text-center text-sm text-[var(--bf-ink-400)]">
 						{showUnreadOnly ? "No hay chats sin leer" : "No hay chats disponibles"}
@@ -177,7 +177,15 @@ export function ConversationList({
 				)}
 			</div>
 			{(onCreateGroup || onOpenArchivedChats) && (
-				<div className="shrink-0 border-t border-[var(--bf-border)] bg-[var(--bf-bg)] px-3 py-2.5 md:px-3.5">
+				<div
+					className={cn(
+						"shrink-0 border-t border-[var(--bf-border)] bg-[var(--bf-bg)] py-2.5",
+						"px-3 md:px-3.5 max-lg:pl-[max(0.75rem,env(safe-area-inset-left,0px))] max-lg:pr-[max(0.75rem,env(safe-area-inset-right,0px))]",
+						"max-lg:fixed max-lg:left-0 max-lg:right-0 max-lg:z-40 max-lg:shadow-[0_-8px_24px_rgba(0,0,0,0.12)]",
+						"max-lg:bottom-[var(--bottom-nav-offset,52px)]",
+						"lg:static lg:shadow-none"
+					)}
+				>
 					<div
 						className={cn(
 							"grid gap-2",

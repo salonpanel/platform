@@ -1065,7 +1065,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 								"relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--bf-bg)]",
 								"rounded-none border-0 p-0 shadow-none",
 								"md:rounded-[var(--r-xl)] md:border md:border-[var(--bf-border)] md:shadow-[var(--bf-shadow-card)]",
-								"pb-[max(0px,env(safe-area-inset-bottom,0px))] md:pb-0"
+								"pb-0"
 							)}
 						>
 							{/* Textura muy sutil — tinte desde --bf-border (sin matiz azulado ni blur) */}

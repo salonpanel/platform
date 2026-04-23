@@ -415,7 +415,7 @@ function PanelLayoutContent({
           className={cn(
             "flex-1 min-h-0 bg-[var(--bg-primary)]",
             isBookfastAiRoute
-              ? "bookfast-ai-main flex min-h-0 flex-col overflow-hidden pb-[calc(var(--bottom-nav-offset,48px)+0.75rem)] md:pb-0"
+              ? "bookfast-ai-main flex min-h-0 flex-col overflow-hidden pb-nav-safe md:pb-0"
               : isAgendaRoute || isChatRoute
                 ? "flex flex-col overflow-hidden pb-nav-safe md:pb-0"
                 : "overflow-y-auto pb-nav-safe md:pb-0",

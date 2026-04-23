@@ -2,8 +2,8 @@
 @import "tailwindcss";
 
 :root {
-  /* Fila táctil del tab bar. Debe coincidir con MobileBottomNav (h-12 = 48px + safe area aparte en el <nav>). */
-  --bottom-nav-height: 48px;
+  /* Fila táctil del tab bar. Fallback: ~pt-2 + fila de iconos (~44px) + safe-area (el cliente mide la altura real). */
+  --bottom-nav-height: 52px;
   --bottom-nav-offset: var(--bottom-nav-height);
 
   /* ============================================================================

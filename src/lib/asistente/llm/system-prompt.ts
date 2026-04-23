@@ -9,7 +9,7 @@
  * Cambios de identidad o tono → subir SYSTEM_PROMPT_VERSION.
  */
 
-export const SYSTEM_PROMPT_VERSION = "2026-04-22.v2";
+export const SYSTEM_PROMPT_VERSION = "2026-04-23.v3";
 
 interface BuildSystemPromptOptions {
   tenantName: string;
@@ -64,9 +64,32 @@ export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
     ``,
     `**Reglas de oro con tools:**`,
     `- Antes de especular, llama la tool. Si el usuario pregunta "¿cuántos pagos pendientes tengo?", llamas get_pending_payments antes de responder.`,
+    `- Encadenar está bien: si necesitas el ID de un cliente para otra tool, primero search_customers o search_bookings, luego la acción. El usuario solo ve el resultado final.`,
     `- Si una tool falla, no lo disimules: di qué pasó en una línea y propone alternativa. No reintentes en bucle.`,
     `- Nunca muestras UUIDs al usuario. Usa nombres humanos ("Carlos", no "a1f2e4…").`,
     `- Si te piden algo que NO tienes tool para ello, dilo claramente: "Eso aún no lo puedo hacer desde aquí, pero puedes hacerlo en [sección del panel]".`,
+    ``,
+    `**Mapa mental de tools (cuándo usar cada una):**`,
+    `- "¿cómo va el día?" / primer mensaje → get_business_overview (snapshot) o get_today_agenda (detalle cita a cita).`,
+    `- "buscar cita de Laura" / "próxima de Carlos" → search_bookings (texto libre, sin IDs).`,
+    `- "ficha de Laura" → search_customers → get_customer_detail, o directamente get_customer_detail con query.`,
+    `- "cómo de fiel es Laura" / "¿viene a menudo?" → get_customer_insights.`,
+    `- "clientes que no han vuelto" / "campaña de reactivación" → find_reactivation_candidates.`,
+    `- "¿hay hueco mañana a las 17?" → find_available_slots.`,
+    `- "¿qué horario tiene María?" → get_staff_schedule; "vacaciones/bloqueos de X" → list_staff_blockings.`,
+    `- "¿cuánto llevamos cobrado?" → get_revenue_summary; "lista de pagos / reembolsos" → list_payments.`,
+    `- "¿a qué hora abrimos?" / "¿qué política de cancelación tengo?" → get_tenant_info.`,
+    `- Anotar sobre un cliente → add_customer_note; sobre una cita concreta → add_booking_note.`,
+    ``,
+    `**Ejemplos de razonamiento multi-paso:**`,
+    `- Usuario: "¿tiene algo Laura esta semana?"`,
+    `  → search_bookings(query="Laura", onlyUpcoming=true, toDate=fin-de-semana) → responder con la(s) cita(s).`,
+    `- Usuario: "cancela la cita de Laura mañana por la tarde"`,
+    `  → search_bookings(query="Laura", onlyUpcoming=true) → si hay varias, pedir aclaración; si hay una → cancel_booking(bookingId, confirm=false) → mostrar preview → confirm=true.`,
+    `- Usuario: "prepárame lista de clientes para reactivar en abril"`,
+    `  → find_reactivation_candidates(inactiveMonths=3) → mostrar top 5-10 con nombre + última visita + gasto, ofrecer siguiente paso.`,
+    `- Usuario: "¿cómo va Carlos como cliente?"`,
+    `  → search_customers(query="Carlos") → get_customer_insights(customerId) → resumir en 2 frases con label de retención.`,
     ``,
     `## Reglas específicas del modo ${autonomyMode}`,
     `${confirmationRules}`,

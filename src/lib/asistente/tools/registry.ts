@@ -35,6 +35,11 @@ import { buildListBookingsRangeTool } from "./read/list-bookings-range";
 import { buildListStaffBlockingsTool } from "./read/list-staff-blockings";
 import { buildGetStaffScheduleTool } from "./read/staff-schedule";
 import { buildListPaymentsTool } from "./read/list-payments";
+import { buildSearchBookingsTool } from "./read/search-bookings";
+import { buildGetCustomerInsightsTool } from "./read/customer-insights";
+import { buildFindReactivationCandidatesTool } from "./read/reactivation-candidates";
+import { buildGetBusinessOverviewTool } from "./read/business-overview";
+import { buildGetTenantInfoTool } from "./read/tenant-info";
 
 // WRITE
 import { buildCreateServiceTool } from "./write/create-service";
@@ -51,6 +56,7 @@ import { buildAddCustomerNoteTool } from "./write/add-customer-note";
 import { buildConfirmBookingTool } from "./write/confirm-booking";
 import { buildCompleteBookingTool } from "./write/complete-booking";
 import { buildDeleteStaffBlockingTool } from "./write/delete-staff-blocking";
+import { buildAddBookingNoteTool } from "./write/add-booking-note";
 
 export interface ToolRuntimeContext {
   tenantId: string;
@@ -96,6 +102,11 @@ export function buildToolSet(
     list_staff_blockings: buildListStaffBlockingsTool(ctx, tz),
     get_staff_schedule: buildGetStaffScheduleTool(ctx),
     list_payments: buildListPaymentsTool(ctx, tz),
+    search_bookings: buildSearchBookingsTool(ctx, tz),
+    get_customer_insights: buildGetCustomerInsightsTool(ctx),
+    find_reactivation_candidates: buildFindReactivationCandidatesTool(ctx, tz),
+    get_business_overview: buildGetBusinessOverviewTool(ctx, tz),
+    get_tenant_info: buildGetTenantInfoTool(ctx),
 
     // WRITE — patrón preview (sin confirm) → confirm=true.
     create_service: buildCreateServiceTool(ctx),
@@ -112,5 +123,6 @@ export function buildToolSet(
     confirm_booking: buildConfirmBookingTool(ctx, tz),
     complete_booking: buildCompleteBookingTool(ctx, tz),
     delete_staff_blocking: buildDeleteStaffBlockingTool(ctx, tz),
+    add_booking_note: buildAddBookingNoteTool(ctx, tz),
   };
 }
