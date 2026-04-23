@@ -700,7 +700,7 @@ function MobileWeekView({
         />
         <div
           ref={listScrollRef}
-          className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain px-3 pb-3 pt-0 scrollbar-hide [touch-action:pan-y]"
+          className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain px-3 pb-3 pt-3 scrollbar-hide [touch-action:pan-y]"
           onScroll={(e) => setListScrollTop(e.currentTarget.scrollTop)}
         >
           {mobileDayBookings.length > 0 ? (

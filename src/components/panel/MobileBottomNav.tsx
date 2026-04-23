@@ -185,7 +185,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
     return (
       <motion.div
         key={href}
-        className="flex-1 flex items-end justify-center"
+        className="flex flex-1 items-center justify-center"
         whileTap={{ scale: 0.86 }}
         transition={{ type: "spring", stiffness: 500, damping: 30 }}
       >
@@ -201,11 +201,11 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
               } catch {}
             }
           }}
-          className="relative flex items-end justify-center min-w-[50px] select-none pb-0"
+          className="relative flex min-w-[50px] select-none items-center justify-center pb-0"
         >
           <div
             className={cn(
-              "flex items-center justify-center w-[40px] h-[40px] rounded-xl transition-all duration-200",
+              "flex h-[40px] w-[40px] items-center justify-center rounded-xl transition-all duration-200",
               active ? "text-[var(--bf-primary)]" : "text-[var(--bf-ink-400)]"
             )}
           >
@@ -240,12 +240,12 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
           }}
         />
 
-        <div className="flex items-end justify-around h-14 min-h-14 px-1 pb-0">
+        <div className="flex h-12 min-h-12 items-center justify-around px-1 pb-0">
           {NAV_LEFT.map(({ href }) => renderLink(href))}
 
           {/* Centro: calendario (inicio) — toque = agenda; pulsación larga = nueva cita */}
           <motion.div
-            className="flex-1 flex items-end justify-center"
+            className="flex flex-1 items-center justify-center"
             whileTap={{ scale: 0.9 }}
             transition={{ type: "spring", stiffness: 500, damping: 30 }}
           >
@@ -258,7 +258,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
               onPointerLeave={onAgendaCenterPointerUpOrCancel}
               onContextMenu={(e) => e.preventDefault()}
               className={cn(
-                "relative flex items-end justify-center min-w-[52px] select-none pb-0 [touch-action:manipulation]",
+                "relative flex min-w-[52px] select-none items-center justify-center pb-0 [touch-action:manipulation]",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-aqua)]/50 rounded-2xl"
               )}
               aria-label="Agenda, calendario. Mantén pulsado para añadir una nueva cita"
@@ -280,13 +280,13 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
 
           {/* ── "Más" (incluye Clientes y el resto) ── */}
           <motion.div
-            className="flex-1 flex items-end justify-center"
+            className="flex flex-1 items-center justify-center"
             whileTap={{ scale: 0.86 }}
             transition={{ type: "spring", stiffness: 500, damping: 30 }}
           >
             <button
               onClick={() => setShowMoreMenu((v) => !v)}
-              className="relative flex items-end justify-center min-w-[50px] select-none pb-0"
+              className="relative flex min-w-[50px] select-none items-center justify-center pb-0"
               aria-label="Más opciones"
               aria-expanded={showMoreMenu}
             >
