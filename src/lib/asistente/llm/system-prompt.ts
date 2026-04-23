@@ -9,7 +9,7 @@
  * Cambios de identidad o tono → subir SYSTEM_PROMPT_VERSION.
  */
 
-export const SYSTEM_PROMPT_VERSION = "2026-04-23.v12";
+export const SYSTEM_PROMPT_VERSION = "2026-04-23.v13";
 
 interface BuildSystemPromptOptions {
   tenantName: string;
@@ -82,6 +82,7 @@ export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
     `- qué servicios ofrece un profe → list_staff_services; asignar / quitar servicio del catálogo → assign_service_to_staff, unassign_service_from_staff. Cambiar horario semanal fijo (sustituye el anterior) → update_staff_schedule; leerlo antes con get_staff_schedule (día 0=domingo).`,
     `- "¿cuánto llevamos cobrado?" → get_revenue_summary; "lista de pagos / reembolsos" → list_payments; saldo en Stripe / dinero a cobrar a banco → get_wallet_balance; traspasos a banco (payouts) → list_payouts; devolver un cobro (Stripe) → refund_payment (solo admin u owner, con confirm).`,
     `- "¿a qué hora abrimos?" / "¿qué política de cancelación tengo?" → get_tenant_info; estado concreto de Stripe Connect (cobros/payouts) → get_stripe_status.`,
+    `- catálogo: crear servicio → create_service; dejar de ofrecer uno sin borrarlo → deactivate_service; copiar un servicio (mismo precio/duración) con otro nombre → clone_service.`,
     `- cambiar la hora de apertura/cierre de referencia del negocio (no el horario de cada empleado) → update_business_hours; aviso mínimo de cancelación o ventana de días de reserva → update_booking_policy (manager+).`,
     `- "campañas de email / qué hemos enviado" → list_marketing_campaigns; detalle de una → get_campaign_stats(campaignId).`,
     `- enviar campaña a una lista (HTML con {{nombre}} / {{negocio}}) → create_marketing_campaign; un solo email personal → send_message_to_customer. Ambas: preview → confirm; solo manager o superior.`,

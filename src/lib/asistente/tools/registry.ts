@@ -78,6 +78,8 @@ import { buildUpdateBookingPolicyTool } from "./write/update-booking-policy";
 import { buildRefundPaymentTool } from "./write/refund-payment";
 import { buildUpdateNoShowPolicyTool } from "./write/update-no-show-policy";
 import { buildUpdateAsistenteSettingsTool } from "./write/update-asistente-settings";
+import { buildDeactivateServiceTool } from "./write/deactivate-service";
+import { buildCloneServiceTool } from "./write/clone-service";
 
 export interface ToolRuntimeContext {
   tenantId: string;
@@ -166,5 +168,7 @@ export function buildToolSet(
     refund_payment: buildRefundPaymentTool(ctx),
     update_no_show_policy: buildUpdateNoShowPolicyTool(ctx),
     update_asistente_settings: buildUpdateAsistenteSettingsTool(ctx),
+    deactivate_service: buildDeactivateServiceTool(ctx),
+    clone_service: buildCloneServiceTool(ctx),
   };
 }
