@@ -21,6 +21,8 @@ import { MembersModal } from "./MembersModal";
 import { AddMembersModal } from "./AddMembersModal";
 import { CreateGroupModal } from "./CreateGroupModal";
 import type { ChatPageDataset } from "@/lib/chat-page-data";
+import { usePermissions } from "@/contexts/PermissionsContext";
+import { Modal } from "@/components/ui/Modal";
 
 type ConversationType = "all" | "direct" | "group";
 
@@ -39,6 +41,7 @@ type Conversation = {
 	createdBy: string;
 	viewerRole: "member" | "admin";
 	lastMessageSenderId?: string | null;
+	lastMessageSenderName?: string | null;
 	targetUserId?: string | null;
 	status?: "active" | "pending_direct";
 };
@@ -107,6 +110,7 @@ interface TeamChatOptimizedProps {
 
 export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 	const supabase = getSupabaseBrowser();
+	const { role: tenantRole } = usePermissions();
 
 	// Estados principales con datos iniciales
 	const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -131,6 +135,8 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 	const [showMembersModal, setShowMembersModal] = useState(false);
 	const [showAddMemberModal, setShowAddMemberModal] = useState(false);
 	const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
+	const [deleteChatModalOpen, setDeleteChatModalOpen] = useState(false);
+	const [deleteChatBusy, setDeleteChatBusy] = useState(false);
 
 	// Estados para respuestas y móvil
 	const [replyToMessage, setReplyToMessage] = useState<TeamMessage | null>(null);
@@ -227,6 +233,27 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 	const selectedConversation = useMemo(() => 
 		processedConversations.find((c) => c.id === selectedConversationId) || null
 	, [processedConversations, selectedConversationId]);
+
+	const chatActionsEnabled =
+		!!selectedConversation &&
+		selectedConversation.type !== "all" &&
+		selectedConversation.status !== "pending_direct";
+
+	const canDeleteSelectedChat = useMemo(() => {
+		if (!chatActionsEnabled || !selectedConversation || !currentUserId) return false;
+		if (selectedConversation.type === "direct") return true;
+		const elevated =
+			tenantRole === "owner" || tenantRole === "admin" || tenantRole === "manager";
+		return selectedConversation.createdBy === currentUserId || elevated;
+	}, [chatActionsEnabled, selectedConversation, currentUserId, tenantRole]);
+
+	const listMembersPreview = useMemo(() => {
+		const o: Record<string, { displayName: string }> = {};
+		for (const [id, m] of Object.entries(membersDirectory)) {
+			o[id] = { displayName: m.displayName };
+		}
+		return o;
+	}, [membersDirectory]);
 
 	// 🔥 BOOTSTRAP OPTIMIZADO: Solo resolver usuario (datos ya precargados)
 	useEffect(() => {
@@ -795,6 +822,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 					createdBy: conv.created_by,
 					viewerRole: conv.viewer_role as "member" | "admin",
 					lastMessageSenderId: conv.last_message_sender_id ?? null,
+					lastMessageSenderName: conv.last_message_sender_name ?? null,
 					targetUserId: conv.target_user_id ?? null,
 				}));
 
@@ -806,11 +834,11 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 				});
 
 				setConversations(conversations);
-
-				// Seleccionar primera conversación si no hay ninguna seleccionada
-				if (!selectedConversationId && conversations.length > 0) {
-					setSelectedConversationId(conversations[0].id);
-				}
+				setSelectedConversationId((prev) => {
+					if (prev && conversations.some((c) => c.id === prev)) return prev;
+					const groupChat = conversations.find((c) => c.type === "all");
+					return groupChat?.id ?? conversations[0]?.id ?? null;
+				});
 
 				return conversations;
 			} catch (err) {
@@ -819,7 +847,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 				return [];
 			}
 		},
-		[supabase, selectedConversationId]
+		[supabase]
 	);
 
 	const refreshConversations = useCallback(
@@ -829,6 +857,79 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 		},
 		[tenantId, currentUserId, loadConversationsOptimized]
 	);
+
+	const handleArchiveChat = useCallback(async () => {
+		if (!selectedConversation || !chatActionsEnabled) return;
+		if (
+			!window.confirm(
+				"¿Archivar este chat? Dejará de mostrarse en tu lista (solo para ti)."
+			)
+		) {
+			return;
+		}
+		const cid = selectedConversation.id;
+		const { data, error } = await supabase.rpc("user_archive_team_conversation", {
+			p_conversation_id: cid,
+		});
+		if (error) {
+			window.alert(readSupabaseClientError(error));
+			return;
+		}
+		if (!data) {
+			window.alert("No se pudo archivar el chat.");
+			return;
+		}
+		setMessagesByConversation((prev) => {
+			const next = { ...prev };
+			delete next[cid];
+			return next;
+		});
+		await refreshConversations();
+		if (isMobile) setMobileView("list");
+	}, [
+		selectedConversation,
+		chatActionsEnabled,
+		supabase,
+		refreshConversations,
+		isMobile,
+	]);
+
+	const handleConfirmDeleteChat = useCallback(async () => {
+		if (!selectedConversation || !chatActionsEnabled) return;
+		const cid = selectedConversation.id;
+		setDeleteChatBusy(true);
+		try {
+			const { data, error } = await supabase.rpc("user_delete_team_conversation", {
+				p_conversation_id: cid,
+			});
+			if (error) {
+				window.alert(readSupabaseClientError(error));
+				return;
+			}
+			if (!data) {
+				window.alert(
+					"No se pudo eliminar. En grupos solo el creador o un administrador del negocio puede borrar el chat."
+				);
+				return;
+			}
+			setDeleteChatModalOpen(false);
+			setMessagesByConversation((prev) => {
+				const next = { ...prev };
+				delete next[cid];
+				return next;
+			});
+			await refreshConversations();
+			if (isMobile) setMobileView("list");
+		} finally {
+			setDeleteChatBusy(false);
+		}
+	}, [
+		selectedConversation,
+		chatActionsEnabled,
+		supabase,
+		refreshConversations,
+		isMobile,
+	]);
 
 	const handleAddMembersToGroup = useCallback(
 		async (userIds: string[]) => {
@@ -922,6 +1023,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 						showUnreadOnly={showUnreadOnly}
 						onToggleUnread={() => setShowUnreadOnly(!showUnreadOnly)}
 						currentUserId={currentUserId}
+						membersDirectory={listMembersPreview}
 						onCreateGroup={() => setShowCreateGroupModal(true)}
 					/>
 				</div>
@@ -988,6 +1090,13 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 								}
 								onBack={() => setMobileView('list')}
 								isMobile={isMobile}
+								chatActionsEnabled={chatActionsEnabled}
+								onArchiveChat={chatActionsEnabled ? handleArchiveChat : undefined}
+								onDeleteChat={
+									chatActionsEnabled && canDeleteSelectedChat
+										? () => setDeleteChatModalOpen(true)
+										: undefined
+								}
 							/>
 							{/* flex-col + overflow: el hijo MessageList necesita un flex parent para que flex-1 limite altura y el scroll funcione */}
 							<div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -1176,6 +1285,38 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 				availableMembers={availableMembers}
 				onCreate={handleCreateGroup}
 			/>
+
+			<Modal
+				isOpen={deleteChatModalOpen}
+				onClose={() => !deleteChatBusy && setDeleteChatModalOpen(false)}
+				title="Eliminar chat"
+				size="sm"
+				footer={
+					<div className="flex w-full justify-end gap-2">
+						<button
+							type="button"
+							disabled={deleteChatBusy}
+							onClick={() => setDeleteChatModalOpen(false)}
+							className="rounded-[var(--r-md)] border border-[var(--bf-border)] bg-transparent px-4 py-2 text-sm text-[var(--bf-ink-100)] hover:bg-[var(--bf-surface)]"
+						>
+							Cancelar
+						</button>
+						<button
+							type="button"
+							disabled={deleteChatBusy}
+							onClick={() => void handleConfirmDeleteChat()}
+							className="rounded-[var(--r-md)] bg-[var(--bf-danger)] px-4 py-2 text-sm font-medium text-white hover:opacity-95 disabled:opacity-50"
+						>
+							{deleteChatBusy ? "Eliminando…" : "Eliminar"}
+						</button>
+					</div>
+				}
+			>
+				<p className="text-sm text-[var(--bf-ink-300)]" style={{ fontFamily: "var(--font-sans)" }}>
+					Se borrarán todos los mensajes y este chat desaparecerá para todos los miembros.
+					Esta acción no se puede deshacer.
+				</p>
+			</Modal>
 
 		</div>
 	);

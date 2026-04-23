@@ -419,6 +419,14 @@ function MobileWeekView({
 
   const stripRef = useRef<HTMLDivElement>(null);
   const todayBtnRef = useRef<HTMLButtonElement>(null);
+  const listScrollRef = useRef<HTMLDivElement>(null);
+  const [listScrollTop, setListScrollTop] = useState(0);
+  const listScrolled = listScrollTop > 2;
+
+  useEffect(() => {
+    setListScrollTop(0);
+    listScrollRef.current?.scrollTo({ top: 0 });
+  }, [selectedMobileDay]);
 
   useEffect(() => {
     if (!selectedDate) return;
@@ -681,15 +689,22 @@ function MobileWeekView({
         })}
       </div>
 
-      {/* Lista: única zona con scroll; degradado bajo el borde de la tira de días para que las citas no “asomen” bajo ella */}
+      {/* Lista: sin separación bajo el borde de fechas; el degradado solo al hacer scroll, para no velar nunca la 1.ª tarjeta en reposo */}
       <div className="relative z-0 flex min-h-0 min-w-0 flex-1 flex-col">
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 z-10 h-10 bg-gradient-to-b from-[var(--bf-bg)] via-[var(--bf-bg)]/90 to-transparent"
+          className={cn(
+            "pointer-events-none absolute left-0 right-0 z-10 -top-px bg-gradient-to-b from-[var(--bf-bg)] via-[var(--bf-bg)]/90 to-transparent transition-[height,opacity] duration-200 ease-out",
+            listScrolled ? "h-7 opacity-100" : "h-0 opacity-0"
+          )}
           aria-hidden
         />
-        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain px-3 py-2 scrollbar-hide [touch-action:pan-y]">
+        <div
+          ref={listScrollRef}
+          className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain px-3 pb-3 pt-0 scrollbar-hide [touch-action:pan-y]"
+          onScroll={(e) => setListScrollTop(e.currentTarget.scrollTop)}
+        >
           {mobileDayBookings.length > 0 ? (
-            <div className="space-y-2 pt-0.5">
+            <div className="space-y-2">
               {mobileDayBookings
                 .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
                 .map((booking) => (

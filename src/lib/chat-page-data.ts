@@ -22,6 +22,8 @@ export type ChatPageDataset = {
     createdBy: string;
     viewerRole: "member" | "admin";
     lastMessageSenderId?: string | null;
+    /** Nombre del autor del último mensaje (grupo / canal equipo), para preview tipo "Juan: hola" */
+    lastMessageSenderName?: string | null;
     targetUserId?: string | null;
   }>;
   membersDirectory: Record<
@@ -144,6 +146,7 @@ export async function getInitialChatPageData(
         createdBy: conv.created_by as string,
         viewerRole: conv.viewer_role as "member" | "admin",
         lastMessageSenderId: (conv.last_message_sender_id as string) ?? null,
+        lastMessageSenderName: (conv.last_message_sender_name as string) ?? null,
         targetUserId: (conv.target_user_id as string) ?? null,
       })),
       membersDirectory,

@@ -389,8 +389,8 @@ export default function AgendaPageClient({
           hideStaff={viewMode === "week"}
         />
 
-        {/* Calendar content */}
-        <div className="flex-1 min-h-0 mt-0 md:mt-1">
+        {/* Calendar content — flex column para que el hijo flex-1 tenga altura acotada y el scroll (lista de citas) funcione */}
+        <div className="mt-0 flex min-h-0 flex-1 flex-col md:mt-1">
           <AgendaContent
             viewMode={viewMode}
             onViewModeChange={setViewMode}

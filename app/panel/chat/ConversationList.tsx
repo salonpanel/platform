@@ -18,8 +18,11 @@ type Conversation = {
 	createdBy: string;
 	viewerRole: "member" | "admin";
 	lastMessageSenderId?: string | null;
+	lastMessageSenderName?: string | null;
 	targetUserId?: string | null;
 };
+
+type MemberDir = Record<string, { displayName: string }>;
 
 type ConversationListProps = {
 	conversations: Conversation[];
@@ -29,27 +32,50 @@ type ConversationListProps = {
 	showUnreadOnly: boolean;
 	onToggleUnread: () => void;
 	currentUserId: string | null;
+	/** Nombres para preview "Autor: mensaje" si falta lastMessageSenderName */
+	membersDirectory?: MemberDir;
 	/** Abre el flujo para crear un chat grupal con miembros del equipo */
 	onCreateGroup?: () => void;
 };
 
-function formatTimestamp(iso: string): string {
+/** Hora si el último mensaje tiene menos de 24 h; si no, "Hace N días". */
+function formatListConversationTime(iso: string): string {
 	const date = new Date(iso);
 	const now = new Date();
-	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-	const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+	const diffMs = now.getTime() - date.getTime();
+	const dayMs = 24 * 60 * 60 * 1000;
 
-	if (messageDate.getTime() === today.getTime()) {
+	if (diffMs < dayMs) {
 		return date.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 	}
 
-	const yesterday = new Date(today);
-	yesterday.setDate(yesterday.getDate() - 1);
-	if (messageDate.getTime() === yesterday.getTime()) {
-		return "Ayer";
+	const days = Math.max(1, Math.floor(diffMs / dayMs));
+	if (days === 1) return "Hace 1 día";
+	return `Hace ${days} días`;
+}
+
+function previewLastMessage(
+	conv: Conversation,
+	currentUserId: string | null,
+	membersDirectory?: MemberDir
+): string {
+	const raw = conv.lastMessageBody?.trim() ?? "";
+	if (!raw) return "Sin mensajes";
+
+	const isGroupish = conv.type === "group" || conv.type === "all";
+	if (!isGroupish) return raw;
+
+	const sid = conv.lastMessageSenderId ?? null;
+	if (sid && currentUserId && sid === currentUserId) {
+		return `Tú: ${raw}`;
 	}
 
-	return date.toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "2-digit" });
+	let sender =
+		conv.lastMessageSenderName?.trim() ||
+		(sid && membersDirectory?.[sid]?.displayName) ||
+		"";
+	if (!sender) sender = "Equipo";
+	return `${sender}: ${raw}`;
 }
 
 function GroupChatAvatar({
@@ -101,6 +127,7 @@ export function ConversationList({
 	showUnreadOnly,
 	onToggleUnread,
 	currentUserId,
+	membersDirectory,
 	onCreateGroup,
 }: ConversationListProps) {
 	void onToggleUnread;
@@ -109,7 +136,7 @@ export function ConversationList({
 
 	return (
 		<div className="flex h-full min-h-0 flex-col bg-[var(--bf-bg)]">
-			<div className="custom-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-2 md:px-3.5 md:py-2.5">
+			<div className="custom-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-3 py-2 md:px-3.5 md:py-2.5">
 				{conversations.length === 0 ? (
 					<div className="p-8 text-center text-sm text-[var(--bf-ink-400)]">
 						{showUnreadOnly ? "No hay chats sin leer" : "No hay chats disponibles"}
@@ -124,6 +151,7 @@ export function ConversationList({
 									selected={selectedConversationId === teamChat.id}
 									currentUserId={currentUserId}
 									tenantLogoUrl={tenantLogoUrl}
+									membersDirectory={membersDirectory}
 									onSelect={() => onSelectConversation(teamChat.id)}
 								/>
 							</div>
@@ -137,6 +165,7 @@ export function ConversationList({
 									selected={selectedConversationId === conv.id}
 									currentUserId={currentUserId}
 									tenantLogoUrl={tenantLogoUrl}
+									membersDirectory={membersDirectory}
 									onSelect={() => onSelectConversation(conv.id)}
 								/>
 							))}
@@ -164,6 +193,7 @@ function ConversationRow({
 	selected,
 	currentUserId,
 	tenantLogoUrl,
+	membersDirectory,
 	onSelect,
 }: {
 	conv: Conversation;
@@ -171,6 +201,7 @@ function ConversationRow({
 	selected: boolean;
 	currentUserId: string | null;
 	tenantLogoUrl?: string | null;
+	membersDirectory?: MemberDir;
 	onSelect: () => void;
 }) {
 	const unread = conv.unreadCount > 0;
@@ -244,7 +275,7 @@ function ConversationRow({
 							)}
 							style={{ fontFamily: "var(--font-mono)" }}
 						>
-							{formatTimestamp(conv.lastMessageAt)}
+							{formatListConversationTime(conv.lastMessageAt)}
 						</span>
 					)}
 				</div>
@@ -268,7 +299,7 @@ function ConversationRow({
 								unread ? "font-medium text-[var(--bf-ink-100)]" : "text-[var(--bf-ink-400)]"
 							)}
 						>
-							{conv.lastMessageBody || "Sin mensajes"}
+							{previewLastMessage(conv, currentUserId, membersDirectory)}
 						</p>
 					</div>
 					{unread && (

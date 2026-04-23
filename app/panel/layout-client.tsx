@@ -372,6 +372,7 @@ function PanelLayoutContent({
   const isBookfastAiRoute = pathname?.startsWith("/panel/bookfast-ai") ?? false;
   const isAgendaRoute =
     pathname === "/panel" || (pathname?.startsWith("/panel/agenda") ?? false);
+  const isChatRoute = pathname?.startsWith("/panel/chat") ?? false;
 
   return (
     <div className="flex h-[100dvh] bg-[var(--bg-primary)]">
@@ -415,7 +416,7 @@ function PanelLayoutContent({
             "flex-1 min-h-0 bg-[var(--bg-primary)]",
             isBookfastAiRoute
               ? "bookfast-ai-main flex min-h-0 flex-col overflow-hidden pb-[calc(var(--bottom-nav-offset,56px)+0.75rem)] md:pb-0"
-              : isAgendaRoute
+              : isAgendaRoute || isChatRoute
                 ? "flex flex-col overflow-hidden pb-nav-safe md:pb-0"
                 : "overflow-y-auto pb-nav-safe md:pb-0",
           )}
@@ -426,7 +427,8 @@ function PanelLayoutContent({
               padding={isBookfastAiRoute ? "none" : "md"}
               className={cn(
                 isBookfastAiRoute && "min-h-0 flex-1 flex flex-col",
-                isAgendaRoute && "min-h-0 flex-1 flex flex-col overflow-hidden",
+                (isAgendaRoute || isChatRoute) &&
+                  "min-h-0 flex-1 flex flex-col overflow-hidden",
               )}
             >
               {children}

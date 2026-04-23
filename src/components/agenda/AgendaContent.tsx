@@ -176,7 +176,11 @@ export function AgendaContent({
   }
 
   return (
-    <div className="flex-1 min-h-0" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+    <div
+      className="flex min-h-0 min-w-0 flex-1 flex-col"
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
       <AnimatePresence mode="wait">
         <motion.div
           key="agenda-content"
@@ -184,7 +188,7 @@ export function AgendaContent({
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.16, ease: "easeOut" }}
-          className="h-full flex flex-col min-h-0"
+          className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col"
         >
           {/* Contenido principal según vista */}
           <motion.div

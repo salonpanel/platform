@@ -1,7 +1,8 @@
 "use client";
 
-import { Users, UserPlus, Bell, ChevronLeft } from "lucide-react";
+import { Users, UserPlus, Bell, ChevronLeft, MoreVertical, Archive, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DropdownMenu, DropdownMenuItem } from "@/components/ui/DropdownMenu";
 
 type ConversationType = "all" | "direct" | "group";
 
@@ -27,6 +28,10 @@ type ConversationHeaderProps = {
 	onToggleMute?: () => void;
 	onBack?: () => void;
 	isMobile?: boolean;
+	/** Chats directos y grupales (no canal de equipo ni placeholder) */
+	chatActionsEnabled?: boolean;
+	onArchiveChat?: () => void;
+	onDeleteChat?: () => void;
 };
 
 function ConversationTypeBadge({ type }: { type: ConversationType }) {
@@ -51,8 +56,14 @@ export function ConversationHeader({
 	onToggleMute,
 	onBack,
 	isMobile,
+	chatActionsEnabled = false,
+	onArchiveChat,
+	onDeleteChat,
 }: ConversationHeaderProps) {
 	if (!conversation) return null;
+
+	const showOverflowMenu =
+		chatActionsEnabled && (onArchiveChat || onDeleteChat);
 
 	return (
 		<div className="relative z-20 flex shrink-0 items-center justify-between border-b border-[var(--bf-border)] bg-[var(--bf-bg)] px-4 py-3 md:px-5">
@@ -83,6 +94,46 @@ export function ConversationHeader({
 				</div>
 			</div>
 			<div className="flex items-center gap-1">
+				{showOverflowMenu && (
+					<DropdownMenu
+						align="right"
+						trigger={
+							<button
+								type="button"
+								className="p-2 rounded-[var(--r-md)] text-[var(--bf-ink-400)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-surface)] transition-all"
+								aria-label="Más opciones del chat"
+							>
+								<MoreVertical className="h-4 w-4" />
+							</button>
+						}
+					>
+						{onArchiveChat && (
+							<DropdownMenuItem
+								onClick={() => {
+									onArchiveChat();
+								}}
+							>
+								<span className="flex items-center gap-2">
+									<Archive className="h-4 w-4 opacity-80" />
+									Archivar chat
+								</span>
+							</DropdownMenuItem>
+						)}
+						{onDeleteChat && (
+							<DropdownMenuItem
+								variant="danger"
+								onClick={() => {
+									onDeleteChat();
+								}}
+							>
+								<span className="flex items-center gap-2">
+									<Trash2 className="h-4 w-4 opacity-90" />
+									Eliminar chat
+								</span>
+							</DropdownMenuItem>
+						)}
+					</DropdownMenu>
+				)}
 				{onViewMembers && (
 					<button
 						onClick={onViewMembers}

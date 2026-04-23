@@ -222,7 +222,8 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
       <nav
         ref={navRef}
         className={cn(
-          "panel-mobile-bottom-nav fixed bottom-0 left-0 right-0 z-50 md:hidden pb-0",
+          "panel-mobile-bottom-nav fixed bottom-0 left-0 right-0 z-50 md:hidden",
+          "pb-[env(safe-area-inset-bottom,0px)]",
           "shadow-[0_-1px_0_rgba(255,255,255,0.06)]"
         )}
         style={{
