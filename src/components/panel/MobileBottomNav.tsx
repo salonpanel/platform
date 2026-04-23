@@ -39,13 +39,13 @@ const BAR_HREFS = new Set<string>([
   "/panel/chat",
 ]);
 
-/** Orden: Estadísticas, Clientes, (centro Agenda), Chat, Más. */
+/** Orden: Estadísticas, Clientes, (centro Agenda), Chats, Más. */
 const NAV_LEFT = [
   { href: "/panel/dashboard", label: "Estadísticas" },
   { href: "/panel/clientes", label: "Clientes" },
 ] as const;
 
-const NAV_RIGHT = [{ href: "/panel/chat", label: "Chat" }] as const;
+const NAV_RIGHT = [{ href: "/panel/chat", label: "Chats" }] as const;
 
 const AGENDA_HREF = "/panel/agenda";
 const LONG_PRESS_MS = 450;
@@ -190,7 +190,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
           href={href}
           prefetch={true}
           onClick={(e) => {
-            // Si ya estamos en /panel/chat, reutilizar el botón "Chat" como "volver a la lista"
+            // Si ya estamos en /panel/chat, reutilizar el botón "Chats" como "volver a la lista"
             if (href === "/panel/chat" && active) {
               e.preventDefault();
               try {

@@ -693,3 +693,35 @@ select option {
     filter: drop-shadow(0 0 8px rgba(79, 161, 216, 0.22));
   }
 }
+
+/* ============================================================================
+   Skeleton / carga — brillo muy sutil (panel loading, etc.)
+   ============================================================================ */
+@keyframes bf-skeleton-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.bf-skeleton-shimmer-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.04),
+    transparent
+  );
+  animation: bf-skeleton-shimmer 1.35s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bf-skeleton-shimmer-overlay::after {
+    animation: none;
+    opacity: 0;
+  }
+}

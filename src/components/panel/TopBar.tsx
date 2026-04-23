@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { BF_EASE_OUT } from "@/lib/motion";
 import { Settings, LogOut, Building2 } from "lucide-react";
 import { BookFastMarkIcon } from "@/components/brand/BookFastMarkIcon";
 import { Avatar } from "@/components/ui/Avatar";
@@ -30,6 +31,7 @@ export function TopBar({
   onMenuClick,
   sidebarCollapsed = false,
 }: TopBarProps) {
+  const reduceMotion = useReducedMotion();
   const { showUnread: bfAiUnread, showPending: bfAiPending } =
     useBookfastAiNavBadge();
   const supabase = getSupabaseBrowser();
@@ -207,27 +209,38 @@ export function TopBar({
           </div>
         </motion.div>
 
-        {/* Título de página — centrado en el ancho del header */}
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
-          className="min-w-0 max-w-[min(36rem,calc(100vw-9.5rem))] text-center justify-self-center"
-        >
-          <h1
-            className={cn(
-              "truncate leading-snug",
-              "text-[9px] font-medium tracking-[-0.01em] text-[var(--bf-ink-100)]",
-              "md:text-[9px] md:font-semibold md:tracking-[-0.02em] md:leading-tight md:text-[var(--bf-ink-50)]",
-              "lg:text-[10px] xl:text-[11px]",
-            )}
-            style={{
-              fontFamily: "var(--font-sans)",
-            }}
-          >
-            {title}
-          </h1>
-        </motion.div>
+        {/* Título de página — centrado; cruces de ruta con micro-transición */}
+        <div className="min-w-0 max-w-[min(36rem,calc(100vw-9.5rem))] text-center justify-self-center">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={title}
+              initial={
+                reduceMotion ? { opacity: 0 } : { opacity: 0, y: -5 }
+              }
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 4 }}
+              transition={{
+                duration: reduceMotion ? 0.1 : 0.2,
+                ease: BF_EASE_OUT,
+              }}
+              className="min-w-0"
+            >
+              <h1
+                className={cn(
+                  "truncate leading-snug",
+                  "text-[9px] font-medium tracking-[-0.01em] text-[var(--bf-ink-100)]",
+                  "md:text-[9px] md:font-semibold md:tracking-[-0.02em] md:leading-tight md:text-[var(--bf-ink-50)]",
+                  "lg:text-[10px] xl:text-[11px]",
+                )}
+                style={{
+                  fontFamily: "var(--font-sans)",
+                }}
+              >
+                {title}
+              </h1>
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
         {/* BookFast AI — derecha (visible solo en móvil; columna vacía en desktop mantiene el título centrado) */}
         <motion.div

@@ -1,5 +1,10 @@
+import type { Metadata } from "next";
 import { getInitialChatPageData } from "@/lib/chat-page-data";
 import ChatPageClient from "./ChatPageClient";
+
+export const metadata: Metadata = {
+	title: "Chats",
+};
 
 export default async function ChatPage({
 	searchParams,

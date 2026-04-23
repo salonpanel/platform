@@ -341,7 +341,7 @@ function PanelLayoutContent({
     { href: "/panel/staff", label: "Staff" },
     { href: "/panel/monedero", label: "Monedero" },
     { href: "/panel/marketing", label: "Marketing" },
-    { href: "/panel/chat", label: "Chat" },
+    { href: "/panel/chat", label: "Chats" },
     { href: "/panel/ajustes", label: "Ajustes" },
   ];
 
@@ -355,7 +355,7 @@ function PanelLayoutContent({
     if (pathname?.startsWith("/panel/staff"))       return "Staff";
     if (pathname?.startsWith("/panel/monedero"))    return "Monedero";
     if (pathname?.startsWith("/panel/marketing"))   return "Marketing";
-    if (pathname?.startsWith("/panel/chat"))        return "Chat";
+    if (pathname?.startsWith("/panel/chat"))        return "Chats";
     if (pathname?.startsWith("/panel/ajustes"))     return "Ajustes";
     if (pathname?.startsWith("/panel/config"))      return "Configuración";
     if (pathname?.startsWith("/panel/bookfast-ai")) return "BookFast AI";

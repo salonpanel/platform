@@ -3,7 +3,8 @@
 import { ReactNode, useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { BF_EASE_OUT, BF_MODAL_SPRING } from "@/lib/motion";
 import { X } from "lucide-react";
 
 interface ModalProps {
@@ -31,6 +32,7 @@ export function Modal({
   preventClose = false,
   preventCloseMessage = "¿Estás seguro de que quieres cerrar sin guardar los cambios?",
 }: ModalProps) {
+  const reduceMotion = useReducedMotion();
   const [mounted, setMounted] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
@@ -153,10 +155,19 @@ export function Modal({
     xl: "max-w-4xl",
   };
 
+  const backdropTransition = reduceMotion
+    ? { duration: 0.08 }
+    : { duration: 0.18, ease: BF_EASE_OUT };
+
+  const panelTransition = reduceMotion
+    ? { duration: 0.12, ease: "easeOut" as const }
+    : BF_MODAL_SPRING;
+
   const modalContent = (
     <AnimatePresence>
       {isOpen && (
         <div
+          key="modal-root"
           className="fixed inset-0 z-[60] flex items-center justify-center p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
@@ -169,20 +180,25 @@ export function Modal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
+            transition={backdropTransition}
             className="fixed inset-0 bg-black/70 backdrop-blur-sm"
           />
 
           {/* Modal content - Premium */}
           <motion.div
             ref={modalRef}
-            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            initial={
+              reduceMotion
+                ? { opacity: 0 }
+                : { opacity: 0, scale: 0.96, y: 10 }
+            }
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 8 }}
-            transition={{ 
-              duration: 0.15,
-              ease: "easeOut" as const
-            }}
+            exit={
+              reduceMotion
+                ? { opacity: 0 }
+                : { opacity: 0, scale: 0.97, y: 6 }
+            }
+            transition={panelTransition}
             className={cn(
               "relative z-[60] w-full rounded-[var(--r-xl)] bg-[var(--bf-surface)] border border-[var(--bf-border)]",
               "shadow-[var(--bf-shadow-card)]",
@@ -235,8 +251,6 @@ export function Modal({
       )}
     </AnimatePresence>
   );
-
-  if (!mounted) return null;
 
   return createPortal(modalContent, document.body);
 }
