@@ -1004,14 +1004,14 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 	);
 
 	return (
-		<div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+		<div className="flex min-h-0 flex-1 flex-col overflow-hidden">
 			{/* Lista + hilo: sin cabecera local (perfil y acciones en TopBar; chats en la lista) */}
-			<div className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden lg:grid lg:grid-cols-3 lg:gap-0">
+			<div className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden lg:grid lg:h-full lg:min-h-0 lg:grid-cols-3 lg:grid-rows-1 lg:gap-0 lg:items-stretch">
 				{/* Lista de conversaciones */}
 				<div
 					className={cn(
-						"min-h-0 h-full border-[var(--bf-border)] transition-all duration-300 lg:col-span-1 lg:border-r",
-						isMobile && mobileView === "chat" ? "hidden" : "flex flex-col"
+						"flex min-h-0 flex-1 flex-col border-[var(--bf-border)] transition-all duration-300 lg:col-span-1 lg:h-full lg:max-h-full lg:min-h-0 lg:flex-none lg:border-r",
+						isMobile && mobileView === "chat" && "hidden"
 					)}
 				>
 					<ConversationList
@@ -1034,8 +1034,8 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 				{/* Área de mensajes */}
 				<div
 					className={cn(
-						"relative flex min-h-0 h-full flex-col transition-all duration-300 lg:col-span-2",
-						isMobile && mobileView === "list" ? "hidden" : "flex"
+						"relative flex min-h-0 flex-1 flex-col transition-all duration-300 lg:col-span-2 lg:h-full lg:max-h-full lg:min-h-0 lg:flex-none",
+						isMobile && mobileView === "list" && "hidden"
 					)}
 					onTouchStart={(e) => {
 						if (!isMobile || mobileView !== "chat") return;
@@ -1064,7 +1064,8 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 							className={cn(
 								"relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--bf-bg)]",
 								"rounded-none border-0 p-0 shadow-none",
-								"md:rounded-[var(--r-xl)] md:border md:border-[var(--bf-border)] md:shadow-[var(--bf-shadow-card)]"
+								"md:rounded-[var(--r-xl)] md:border md:border-[var(--bf-border)] md:shadow-[var(--bf-shadow-card)]",
+								"pb-[max(0px,env(safe-area-inset-bottom,0px))] md:pb-0"
 							)}
 						>
 							{/* Textura muy sutil — tinte desde --bf-border (sin matiz azulado ni blur) */}
@@ -1143,7 +1144,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 									</p>
 								</div>
 							) : (
-								<div className="relative z-10 shrink-0 border-t border-[var(--bf-border)] bg-[var(--bf-bg)]">
+								<div className="relative z-20 shrink-0 border-t border-[var(--bf-border)] bg-[var(--bf-bg)]">
 									{pendingAttachments.length > 0 && (
 										<div className="bg-transparent px-4 py-3">
 											<div className="flex items-center gap-2 overflow-x-auto">

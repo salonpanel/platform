@@ -138,7 +138,7 @@ export function ConversationList({
 	const rest = teamChat ? conversations.slice(1) : conversations;
 
 	return (
-		<div className="flex h-full min-h-0 flex-col bg-[var(--bf-bg)]">
+		<div className="flex min-h-0 flex-1 flex-col bg-[var(--bf-bg)]">
 			<div className="custom-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-3 py-2 md:px-3.5 md:py-2.5">
 				{conversations.length === 0 ? (
 					<div className="p-8 text-center text-sm text-[var(--bf-ink-400)]">
