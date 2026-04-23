@@ -9,7 +9,7 @@
  * Cambios de identidad o tono → subir SYSTEM_PROMPT_VERSION.
  */
 
-export const SYSTEM_PROMPT_VERSION = "2026-04-23.v5";
+export const SYSTEM_PROMPT_VERSION = "2026-04-23.v7";
 
 interface BuildSystemPromptOptions {
   tenantName: string;
@@ -77,6 +77,8 @@ export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
     `- "clientes que no han vuelto" / "campaña de reactivación" → find_reactivation_candidates.`,
     `- "¿hay hueco mañana a las 17?" → find_available_slots.`,
     `- "¿qué horario tiene María?" → get_staff_schedule; "vacaciones/bloqueos de X" → list_staff_blockings.`,
+    `- crear ficha de empleado → create_staff; cambiar nombre/horas/color/bio → update_staff; activar o desactivar a alguien (baja lógica) → set_staff_active (solo admin u owner).`,
+    `- qué servicios ofrece un profe → list_staff_services; asignar / quitar servicio del catálogo → assign_service_to_staff, unassign_service_from_staff. Cambiar horario semanal fijo (sustituye el anterior) → update_staff_schedule; leerlo antes con get_staff_schedule (día 0=domingo).`,
     `- "¿cuánto llevamos cobrado?" → get_revenue_summary; "lista de pagos / reembolsos" → list_payments.`,
     `- "¿a qué hora abrimos?" / "¿qué política de cancelación tengo?" → get_tenant_info.`,
     `- "campañas de email / qué hemos enviado" → list_marketing_campaigns; detalle de una → get_campaign_stats(campaignId).`,

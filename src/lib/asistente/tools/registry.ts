@@ -42,6 +42,7 @@ import { buildGetBusinessOverviewTool } from "./read/business-overview";
 import { buildGetTenantInfoTool } from "./read/tenant-info";
 import { buildListMarketingCampaignsTool } from "./read/list-marketing-campaigns";
 import { buildGetCampaignStatsTool } from "./read/get-campaign-stats";
+import { buildListStaffServicesTool } from "./read/list-staff-services";
 
 // WRITE
 import { buildCreateServiceTool } from "./write/create-service";
@@ -61,6 +62,12 @@ import { buildDeleteStaffBlockingTool } from "./write/delete-staff-blocking";
 import { buildAddBookingNoteTool } from "./write/add-booking-note";
 import { buildCreateMarketingCampaignTool } from "./write/create-marketing-campaign";
 import { buildSendMessageToCustomerTool } from "./write/send-message-to-customer";
+import { buildCreateStaffTool } from "./write/create-staff";
+import { buildUpdateStaffTool } from "./write/update-staff";
+import { buildSetStaffActiveTool } from "./write/set-staff-active";
+import { buildAssignServiceToStaffTool } from "./write/assign-service-to-staff";
+import { buildUnassignServiceFromStaffTool } from "./write/unassign-service-from-staff";
+import { buildUpdateStaffScheduleTool } from "./write/update-staff-schedule";
 
 export interface ToolRuntimeContext {
   tenantId: string;
@@ -113,6 +120,7 @@ export function buildToolSet(
     get_tenant_info: buildGetTenantInfoTool(ctx),
     list_marketing_campaigns: buildListMarketingCampaignsTool(ctx, tz),
     get_campaign_stats: buildGetCampaignStatsTool(ctx, tz),
+    list_staff_services: buildListStaffServicesTool(ctx),
 
     // WRITE — patrón preview (sin confirm) → confirm=true.
     create_service: buildCreateServiceTool(ctx),
@@ -132,5 +140,11 @@ export function buildToolSet(
     add_booking_note: buildAddBookingNoteTool(ctx, tz),
     create_marketing_campaign: buildCreateMarketingCampaignTool(ctx),
     send_message_to_customer: buildSendMessageToCustomerTool(ctx),
+    create_staff: buildCreateStaffTool(ctx),
+    update_staff: buildUpdateStaffTool(ctx),
+    set_staff_active: buildSetStaffActiveTool(ctx),
+    assign_service_to_staff: buildAssignServiceToStaffTool(ctx),
+    unassign_service_from_staff: buildUnassignServiceFromStaffTool(ctx),
+    update_staff_schedule: buildUpdateStaffScheduleTool(ctx),
   };
 }
