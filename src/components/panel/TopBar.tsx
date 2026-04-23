@@ -278,7 +278,7 @@ export function TopBar({
                 aria-hidden
               />
             )}
-            <BookFastMarkIcon size={22} className="text-[var(--bf-ink)]" aria-hidden />
+            <BookFastMarkIcon size={22} className="text-white" aria-hidden />
           </Link>
         </motion.div>
       </div>
