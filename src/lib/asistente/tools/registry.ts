@@ -40,6 +40,8 @@ import { buildGetCustomerInsightsTool } from "./read/customer-insights";
 import { buildFindReactivationCandidatesTool } from "./read/reactivation-candidates";
 import { buildGetBusinessOverviewTool } from "./read/business-overview";
 import { buildGetTenantInfoTool } from "./read/tenant-info";
+import { buildListMarketingCampaignsTool } from "./read/list-marketing-campaigns";
+import { buildGetCampaignStatsTool } from "./read/get-campaign-stats";
 
 // WRITE
 import { buildCreateServiceTool } from "./write/create-service";
@@ -57,6 +59,8 @@ import { buildConfirmBookingTool } from "./write/confirm-booking";
 import { buildCompleteBookingTool } from "./write/complete-booking";
 import { buildDeleteStaffBlockingTool } from "./write/delete-staff-blocking";
 import { buildAddBookingNoteTool } from "./write/add-booking-note";
+import { buildCreateMarketingCampaignTool } from "./write/create-marketing-campaign";
+import { buildSendMessageToCustomerTool } from "./write/send-message-to-customer";
 
 export interface ToolRuntimeContext {
   tenantId: string;
@@ -107,6 +111,8 @@ export function buildToolSet(
     find_reactivation_candidates: buildFindReactivationCandidatesTool(ctx, tz),
     get_business_overview: buildGetBusinessOverviewTool(ctx, tz),
     get_tenant_info: buildGetTenantInfoTool(ctx),
+    list_marketing_campaigns: buildListMarketingCampaignsTool(ctx, tz),
+    get_campaign_stats: buildGetCampaignStatsTool(ctx, tz),
 
     // WRITE — patrón preview (sin confirm) → confirm=true.
     create_service: buildCreateServiceTool(ctx),
@@ -124,5 +130,7 @@ export function buildToolSet(
     complete_booking: buildCompleteBookingTool(ctx, tz),
     delete_staff_blocking: buildDeleteStaffBlockingTool(ctx, tz),
     add_booking_note: buildAddBookingNoteTool(ctx, tz),
+    create_marketing_campaign: buildCreateMarketingCampaignTool(ctx),
+    send_message_to_customer: buildSendMessageToCustomerTool(ctx),
   };
 }

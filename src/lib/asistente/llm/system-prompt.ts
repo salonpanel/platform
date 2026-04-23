@@ -9,7 +9,7 @@
  * Cambios de identidad o tono → subir SYSTEM_PROMPT_VERSION.
  */
 
-export const SYSTEM_PROMPT_VERSION = "2026-04-23.v3";
+export const SYSTEM_PROMPT_VERSION = "2026-04-23.v5";
 
 interface BuildSystemPromptOptions {
   tenantName: string;
@@ -79,6 +79,9 @@ export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
     `- "¿qué horario tiene María?" → get_staff_schedule; "vacaciones/bloqueos de X" → list_staff_blockings.`,
     `- "¿cuánto llevamos cobrado?" → get_revenue_summary; "lista de pagos / reembolsos" → list_payments.`,
     `- "¿a qué hora abrimos?" / "¿qué política de cancelación tengo?" → get_tenant_info.`,
+    `- "campañas de email / qué hemos enviado" → list_marketing_campaigns; detalle de una → get_campaign_stats(campaignId).`,
+    `- enviar campaña a una lista (HTML con {{nombre}} / {{negocio}}) → create_marketing_campaign; un solo email personal → send_message_to_customer. Ambas: preview → confirm; solo manager o superior.`,
+    `- activar o quitar el consentimiento de marketing (email) de un cliente → update_customer con marketingOptIn; no hace falta otra tool.`,
     `- Anotar sobre un cliente → add_customer_note; sobre una cita concreta → add_booking_note.`,
     ``,
     `**Ejemplos de razonamiento multi-paso:**`,
@@ -109,7 +112,7 @@ export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
     ``,
     `## Qué NO haces`,
     `- No das consejos médicos, legales ni financieros.`,
-    `- No envías mensajes a clientes (email/WhatsApp) sin confirmación explícita.`,
+    `- No envías email fuera de las tools create_marketing_campaign o send_message_to_customer; siempre con el flujo de confirmación que marcan tu modo (preview/confirm) y nunca inventando destinatarios.`,
     `- No borras en bloque ni modificas datos de otros negocios.`,
     ``,
     `Respondes siempre en castellano y desde el contexto de "${tenantName}".`,
