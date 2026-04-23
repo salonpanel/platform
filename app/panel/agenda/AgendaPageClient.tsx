@@ -358,7 +358,7 @@ export default function AgendaPageClient({
 
   return (
     <NotificationProvider position="top-right" maxNotifications={3}>
-      <div className="h-full min-h-0 flex flex-col">
+      <div className="flex h-full min-h-0 w-full flex-1 flex-col">
         {/* Compact single-row header */}
         <AgendaTopBar
           selectedDate={selectedDate}

@@ -123,8 +123,8 @@ export function AgendaTopBar({
       transition={{ duration: 0.15 }}
     >
       <div className="px-3 sm:px-4 py-2 sm:py-2.5">
-        <div className="flex sm:items-center gap-2">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-2 sm:items-center">
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:min-w-[10rem]">
             <div ref={datePickerRef} className="relative flex items-center gap-2 min-w-0">
               <button
                 type="button"

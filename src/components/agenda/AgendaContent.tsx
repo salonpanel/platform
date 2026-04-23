@@ -191,7 +191,7 @@ export function AgendaContent({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.1, duration: 0.3 }}
-            className="flex-1 min-h-0 overflow-hidden"
+            className="flex min-h-0 flex-1 flex-col overflow-hidden"
           >
             <AnimatePresence mode="wait">
               {loading ? (
@@ -214,7 +214,7 @@ export function AgendaContent({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3 }}
-                  className="h-full min-h-0 flex flex-col"
+                  className="flex h-full min-h-0 flex-1 flex-col"
                 >
                   <AnimatePresence mode="wait">
                     <motion.div
@@ -223,7 +223,7 @@ export function AgendaContent({
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -10 }}
                       transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="flex-1 min-h-0 h-full"
+                      className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col"
                     >
                       {effectiveViewMode === "day" && (
                         staffList.length > 0 ? (

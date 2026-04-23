@@ -215,8 +215,12 @@ export const WeekView = React.memo(function WeekView({
   }
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden bg-[var(--bf-bg)]" role="region" aria-label="Vista semanal de reservas">
-      <div className="flex flex-col h-full overflow-hidden">
+    <div
+      className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden bg-[var(--bf-bg)]"
+      role="region"
+      aria-label="Vista semanal de reservas"
+    >
+      <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden">
         {/* Header días de la semana — plano, sin card flotante */}
         <div className="border-b border-[var(--bf-border)] bg-[var(--bf-bg-elev)] px-4 py-3">
           <div className="grid grid-cols-8 gap-2">
@@ -514,11 +518,18 @@ function MobileWeekView({
   }, []);
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden bg-[var(--bf-bg)]" role="region" aria-label="Vista semanal móvil">
-      {/* Columnas 1fr · auto · 1fr: selector de staff compacto en el centro */}
-      <div className="flex-shrink-0 bg-[var(--bf-bg)] px-2 py-1.5 sm:px-3">
-        <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
-          <div className="flex min-w-0 w-max max-w-[45%] items-center justify-start gap-1">
+    <div
+      className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden bg-[var(--bf-bg)]"
+      role="region"
+      aria-label="Vista semanal móvil"
+    >
+      {/*
+        Fila superior: flex (no grid con max-w 45% en los lados) para que búsqueda/filtros
+        no roben espacio al selector de personal ni se superpongan.
+      */}
+      <div className="relative z-20 flex-shrink-0 border-b border-transparent bg-[var(--bf-bg)] px-2 py-1.5 sm:px-3">
+        <div className="flex w-full min-w-0 items-center gap-1.5 sm:gap-2">
+          <div className="flex shrink-0 items-center justify-start gap-1">
             {mobileToolbar && (
               <AgendaQuickActions
                 only="notifications"
@@ -556,7 +567,7 @@ function MobileWeekView({
             </motion.label>
           </div>
           <div
-            className="min-w-0 w-full justify-self-stretch px-0.5"
+            className="min-w-0 flex-1 px-0.5"
             role="group"
             aria-label="Miembro del equipo"
           >
@@ -571,7 +582,7 @@ function MobileWeekView({
               />
             ) : null}
           </div>
-          <div className="flex min-w-0 w-max max-w-[45%] items-center justify-end">
+          <div className="flex shrink-0 items-center justify-end">
             {mobileToolbar ? (
               <AgendaQuickActions
                 only="searchAndFilters"
@@ -589,10 +600,10 @@ function MobileWeekView({
         </div>
       </div>
 
-      {/* Tira de días (sin líneas divisorias arriba/abajo) */}
+      {/* Tira de días — misma “capa” que la cabecera, por encima del scroll de citas */}
       <div
         ref={stripRef}
-        className="flex-shrink-0 flex gap-1.5 px-2 py-2 overflow-x-auto scrollbar-hide bg-[var(--bf-bg)]"
+        className="relative z-20 flex flex-shrink-0 gap-1.5 overflow-x-auto border-b border-[var(--bf-border)]/50 bg-[var(--bf-bg)] px-2 py-2 scrollbar-hide"
       >
         {allDays.map((day) => {
           const dayKey = format(day, "yyyy-MM-dd");
@@ -670,42 +681,48 @@ function MobileWeekView({
         })}
       </div>
 
-      {/* Lista de reservas del día seleccionado */}
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-3 py-3">
-        {mobileDayBookings.length > 0 ? (
-          <div className="space-y-2">
-            {mobileDayBookings
-              .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
-              .map((booking) => (
-                <AppointmentCard
-                  key={booking.id}
-                  booking={booking}
-                  timezone={timezone}
-                  variant="list"
-                  staffColor={
-                    booking.staff_id
-                      ? staffColorById.get(booking.staff_id)
-                      : (booking.staff?.color ?? null)
-                  }
-                  onClick={() => onBookingClick(booking)}
-                  onContextMenu={(e) => onBookingContextMenu?.(e, booking)}
-                />
-              ))}
-          </div>
-        ) : (
-          <div className="h-full flex items-center justify-center">
-            <GlassEmptyState
-              icon={Calendar}
-              title="Sin citas"
-              description={`No hay citas para ${new Intl.DateTimeFormat("es-ES", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-              }).format(parseISO(selectedMobileDay))}`}
-              variant="default"
-            />
-          </div>
-        )}
+      {/* Lista: única zona con scroll; degradado bajo el borde de la tira de días para que las citas no “asomen” bajo ella */}
+      <div className="relative z-0 flex min-h-0 min-w-0 flex-1 flex-col">
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 z-10 h-10 bg-gradient-to-b from-[var(--bf-bg)] via-[var(--bf-bg)]/90 to-transparent"
+          aria-hidden
+        />
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain px-3 py-2 scrollbar-hide [touch-action:pan-y]">
+          {mobileDayBookings.length > 0 ? (
+            <div className="space-y-2 pt-0.5">
+              {mobileDayBookings
+                .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
+                .map((booking) => (
+                  <AppointmentCard
+                    key={booking.id}
+                    booking={booking}
+                    timezone={timezone}
+                    variant="list"
+                    staffColor={
+                      booking.staff_id
+                        ? staffColorById.get(booking.staff_id)
+                        : (booking.staff?.color ?? null)
+                    }
+                    onClick={() => onBookingClick(booking)}
+                    onContextMenu={(e) => onBookingContextMenu?.(e, booking)}
+                  />
+                ))}
+            </div>
+          ) : (
+            <div className="flex h-full min-h-[12rem] items-center justify-center py-4">
+              <GlassEmptyState
+                icon={Calendar}
+                title="Sin citas"
+                description={`No hay citas para ${new Intl.DateTimeFormat("es-ES", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                }).format(parseISO(selectedMobileDay))}`}
+                variant="default"
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
