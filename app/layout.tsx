@@ -14,6 +14,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Mantiene el árbol en render dinámico: el cliente Supabase en el layout raíz
+// no puede prerenderizarse en builds sin NEXT_PUBLIC_SUPABASE_* (p. ej. local).
+// Mejoras de navegación: staleTimes, prefetch, SW y hints en <head> siguen aplicando.
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
@@ -81,6 +84,13 @@ export default function RootLayout({
 
         {/* ── PWA: manifest (Next.js also adds this, kept for subdomains) ── */}
         <link rel="manifest" href="/manifest.json" />
+
+        {/* Conexión temprana a API Supabase (sesión, datos) — mejora TTFB en interacción */}
+        <link rel="dns-prefetch" href="https://jsqminbgggwhvkfgeibz.supabase.co" />
+        <link rel="preconnect" href="https://jsqminbgggwhvkfgeibz.supabase.co" crossOrigin="anonymous" />
+        {/* Marca / icono: primera pintura y shell PWA alineado con el panel */}
+        <link rel="preload" href="/bookfast-mark.svg" as="image" type="image/svg+xml" />
+        <link rel="preload" href="/bookfast-logo.png" as="image" type="image/png" />
 
         {/* ── iOS PWA standalone mode ──
             Next.js metadata export handles most of these, but we keep them

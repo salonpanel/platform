@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 /**
  * Layout para el área de administración
- * 
+ *
  * Metadatos configurados para NO indexar (área privada)
  */
 export const metadata: Metadata = {

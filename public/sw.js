@@ -4,16 +4,19 @@
 //            Never cache API routes (auth tokens, booking data, etc.).
 // ============================================================================
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE  = `bookfast-static-${CACHE_VERSION}`;
 const PAGE_CACHE    = `bookfast-pages-${CACHE_VERSION}`;
 
-// Static assets to pre-cache on install
+// Static assets to pre-cache on install (branding + PWA: repetición instantánea al abrir desde home)
 const PRECACHE_URLS = [
   '/favicon.ico',
   '/favicon.png',
   '/icon.png',
   '/manifest.json',
+  '/bookfast-mark.svg',
+  '/bookfast-logo.png',
+  '/bookfast-mark-192.png',
 ];
 
 // ── Install ─────────────────────────────────────────────────────────────────

@@ -53,19 +53,25 @@ export function usePrefetchRoutes() {
       }, 2000); // 2 segundos después
     };
 
-    // Ejecutar precarga cuando el usuario está en idle
-    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      requestIdleCallback(() => {
-        prefetchCritical();
-        prefetchSecondary();
-      });
-    } else {
-      // Fallback si requestIdleCallback no está disponible
-      setTimeout(() => {
-        prefetchCritical();
-        prefetchSecondary();
-      }, 100);
-    }
+    // 1) En el siguiente frame: bajar JS de rutas críticas pronto (mejor en PWA / home screen)
+    // 2) Luego idle/timeout: el resto sin bloquear interacción
+    const startSecondary = () => {
+      if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+        requestIdleCallback(
+          () => {
+            prefetchSecondary();
+          },
+          { timeout: 3000 }
+        );
+      } else {
+        setTimeout(prefetchSecondary, 0);
+      }
+    };
+
+    queueMicrotask(() => {
+      prefetchCritical();
+      startSecondary();
+    });
   }, [router, pathname]);
 }
 

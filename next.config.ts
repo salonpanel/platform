@@ -33,6 +33,12 @@ const nextConfig: NextConfig = {
   // 3️⃣ Configuración experimental y Turbopack
   experimental: {
     optimizePackageImports: ['framer-motion', 'lucide-react', '@supabase/supabase-js'],
+    // Cuánto tiempo el router del cliente conserva el RSC prefetched como "fresco"
+    // antes de volver a refetch (navegación hacia atrás/adelante más fluida en SPA).
+    staleTimes: {
+      dynamic: 30,
+      static: 300,
+    },
   },
 
   // Configuración de imágenes y optimización
