@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Users, Scissors, Settings, LayoutDashboard } from "lucide-react";
+import { Calendar, Users, Scissors, Settings, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
@@ -13,7 +13,7 @@ interface BottomNavBarProps {
 
 const navItems = [
   { href: "/panel/agenda", label: "Agenda", icon: Calendar },
-  { href: "/panel/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/panel/dashboard", label: "Estadísticas", icon: BarChart3 },
   { href: "/panel/clientes", label: "Clientes", icon: Users },
   { href: "/panel/servicios", label: "Servicios", icon: Scissors },
   { href: "/panel/ajustes", label: "Ajustes", icon: Settings },

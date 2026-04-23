@@ -335,7 +335,7 @@ function PanelLayoutContent({
 
   const navItems = [
     { href: "/panel/agenda", label: "Agenda" },
-    { href: "/panel/dashboard", label: "Dashboard" },
+    { href: "/panel/dashboard", label: "Estadísticas" },
     { href: "/panel/clientes", label: "Clientes" },
     { href: "/panel/servicios", label: "Servicios" },
     { href: "/panel/staff", label: "Staff" },
@@ -346,7 +346,7 @@ function PanelLayoutContent({
   ];
 
   const getPageTitle = () => {
-    if (pathname?.startsWith("/panel/dashboard")) return "Dashboard";
+    if (pathname?.startsWith("/panel/dashboard")) return "Estadísticas";
     // startsWith so sub-routes (/panel/clientes/[id], /panel/ajustes/calendario, …)
     // inherit their section name instead of falling back to the generic "Panel"
     if (pathname?.startsWith("/panel/agenda"))      return "Agenda";
@@ -370,6 +370,7 @@ function PanelLayoutContent({
   };
 
   const isBookfastAiRoute = pathname?.startsWith("/panel/bookfast-ai") ?? false;
+  const isAgendaRoute = pathname?.startsWith("/panel/agenda") ?? false;
 
   return (
     <div className="flex h-[100dvh] bg-[var(--bg-primary)]">
@@ -410,17 +411,22 @@ function PanelLayoutContent({
         {/* Page Content - pb-nav-safe reserva var(--bottom-nav-offset) (tab + safe area, refinado en cliente) */}
         <main
           className={cn(
-            "flex-1 bg-[var(--bg-primary)]",
+            "flex-1 min-h-0 bg-[var(--bg-primary)]",
             isBookfastAiRoute
               ? "bookfast-ai-main flex min-h-0 flex-col overflow-hidden pb-[calc(var(--bottom-nav-offset,56px)+0.75rem)] md:pb-0"
-              : "overflow-y-auto pb-nav-safe md:pb-0",
+              : isAgendaRoute
+                ? "flex flex-col overflow-hidden pb-nav-safe md:pb-0"
+                : "overflow-y-auto pb-nav-safe md:pb-0",
           )}
         >
           <TenantProvider tenant={tenant} isLoading={loading}>
             <PageContainer
               sidebarCollapsed={sidebarCollapsed}
               padding={isBookfastAiRoute ? "none" : "md"}
-              className={isBookfastAiRoute ? "min-h-0 flex-1 flex flex-col" : undefined}
+              className={cn(
+                isBookfastAiRoute && "min-h-0 flex-1 flex flex-col",
+                isAgendaRoute && "min-h-0 flex-1 flex flex-col overflow-hidden",
+              )}
             >
               {children}
             </PageContainer>

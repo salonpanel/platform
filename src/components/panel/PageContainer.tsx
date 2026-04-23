@@ -36,22 +36,22 @@ export function PageContainer({
     none: "",
     sm:
       density === "dense"
-        ? "py-2"
+        ? "py-1"
         : density === "relaxed"
-          ? "py-4"
-          : "py-3",
+          ? "py-2"
+          : "py-1.5",
     md:
       density === "dense"
-        ? "py-3"
+        ? "py-2"
         : density === "relaxed"
-          ? "py-6 md:py-8"
-          : "py-4 md:py-6",
+          ? "py-3 md:py-4"
+          : "py-2 md:py-3",
     lg:
       density === "dense"
-        ? "py-4"
+        ? "py-2"
         : density === "relaxed"
-          ? "py-8 md:py-12"
-          : "py-6 md:py-8",
+          ? "py-4 md:py-6"
+          : "py-3 md:py-4",
   };
 
   const horizontalSafe = sidebarCollapsed

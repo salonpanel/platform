@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { 
-  LayoutDashboard, 
+  BarChart3,
   Calendar, 
   Users, 
   Scissors, 
@@ -42,7 +42,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { href: "/panel/dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
+  { href: "/panel/dashboard", label: "Estadísticas", icon: <BarChart3 className="h-5 w-5" /> },
   { href: "/panel/agenda", label: "Agenda", icon: <Calendar className="h-5 w-5" /> },
   { href: "/panel/clientes", label: "Clientes", icon: <Users className="h-5 w-5" /> },
   { href: "/panel/servicios", label: "Servicios", icon: <Scissors className="h-5 w-5" /> },
@@ -218,7 +218,7 @@ export function AppShell({
                     style={{ fontFamily: "var(--font-sans)" }}
                   >
                       {pathname === "/panel/dashboard" || pathname?.startsWith("/panel/dashboard/")
-                        ? "Dashboard"
+                        ? "Estadísticas"
                         : pathname === "/panel/agenda"
                         ? "Agenda"
                         : pathname === "/panel/clientes"

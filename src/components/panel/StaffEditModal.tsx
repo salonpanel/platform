@@ -794,7 +794,7 @@ export function StaffEditModal({
                 {/* Grid de permisos */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {[
-                    { key: "dashboard", label: "Dashboard", desc: "Vista general y estadísticas" },
+                    { key: "dashboard", label: "Estadísticas", desc: "Vista general y métricas" },
                     { key: "agenda", label: "Agenda", desc: "Calendario y citas" },
                     { key: "clientes", label: "Clientes", desc: "Base de datos de clientes" },
                     { key: "servicios", label: "Servicios", desc: "Gestión de servicios" },

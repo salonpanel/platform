@@ -214,7 +214,7 @@ export function AgendaContent({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3 }}
-                  className="h-full flex flex-col"
+                  className="h-full min-h-0 flex flex-col"
                 >
                   <AnimatePresence mode="wait">
                     <motion.div
@@ -223,7 +223,7 @@ export function AgendaContent({
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -10 }}
                       transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="flex-1 min-h-0"
+                      className="flex-1 min-h-0 h-full"
                     >
                       {effectiveViewMode === "day" && (
                         staffList.length > 0 ? (
@@ -381,7 +381,7 @@ export function AgendaContent({
             </AnimatePresence>
           </motion.div>
 
-          {/* FAB nueva cita: solo desktop; en móvil va en la barra inferior (MobileBottomNav) */}
+          {/* FAB nueva cita: solo desktop; en móvil: pulsación larga en el botón central de la barra (Agenda) */}
           {!isMobile && (
             <UiFab
               onClick={onNewBooking}

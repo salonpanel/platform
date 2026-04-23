@@ -10,7 +10,7 @@ import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LayoutDashboard,
+  BarChart3,
   Calendar,
   Users,
   Scissors,
@@ -114,7 +114,7 @@ export function SidebarNav({
     const iconClass = "h-5 w-5";
     switch (href) {
       case "/panel/dashboard":
-        return <LayoutDashboard className={iconClass} />;
+        return <BarChart3 className={iconClass} />;
       case "/panel/agenda":
         return <Calendar className={iconClass} />;
       case "/panel/clientes":

@@ -2,18 +2,17 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useBookingModal } from "@/contexts/BookingModalContext";
 import {
-  LayoutDashboard,
+  BarChart3,
   Calendar,
   Users,
   MessageSquare,
   MoreHorizontal,
-  Plus,
   X,
   Wallet,
   Target,
@@ -32,18 +31,28 @@ interface MobileBottomNavProps {
   items: NavItem[];
 }
 
-/** Rutas que ocupan la barra inferior (el resto va a «Más», p. ej. Clientes). */
-const BAR_HREFS = new Set<string>(["/panel/dashboard", "/panel/agenda", "/panel/chat"]);
+/** Rutas fijas de la barra inferior (el resto va a «Más»). */
+const BAR_HREFS = new Set<string>([
+  "/panel/dashboard",
+  "/panel/clientes",
+  "/panel/agenda",
+  "/panel/chat",
+]);
 
+/** Orden: Estadísticas, Clientes, (centro Agenda), Chat, Más. */
 const NAV_LEFT = [
-  { href: "/panel/agenda", label: "Agenda" },
-  { href: "/panel/dashboard", label: "Dashboard" },
+  { href: "/panel/dashboard", label: "Estadísticas" },
+  { href: "/panel/clientes", label: "Clientes" },
 ] as const;
 
 const NAV_RIGHT = [{ href: "/panel/chat", label: "Chat" }] as const;
 
+const AGENDA_HREF = "/panel/agenda";
+const LONG_PRESS_MS = 450;
+
 export function MobileBottomNav({ items }: MobileBottomNavProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { openCreate } = useBookingModal();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const navRef = useRef<HTMLElement>(null);
@@ -97,7 +106,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
       const props = { width: size, height: size, strokeWidth: 1.8 };
       switch (href) {
         case "/panel/dashboard":
-          return <LayoutDashboard {...props} />;
+          return <BarChart3 {...props} />;
         case "/panel/agenda":    return <Calendar {...props} />;
         case "/panel/clientes":  return <Users {...props} />;
         case "/panel/servicios": return <Scissors {...props} />;
@@ -130,6 +139,42 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
   const openNewBooking = useCallback(() => {
     openCreate(new Date());
   }, [openCreate]);
+
+  const longPressFiredRef = useRef(false);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearLongPressTimer = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  const onAgendaCenterPointerDown = useCallback(() => {
+    longPressFiredRef.current = false;
+    longPressTimerRef.current = setTimeout(() => {
+      longPressFiredRef.current = true;
+      longPressTimerRef.current = null;
+      openNewBooking();
+    }, LONG_PRESS_MS);
+  }, [openNewBooking]);
+
+  const onAgendaCenterPointerUpOrCancel = useCallback(() => {
+    clearLongPressTimer();
+  }, [clearLongPressTimer]);
+
+  const onAgendaCenterClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (longPressFiredRef.current) {
+        e.preventDefault();
+        longPressFiredRef.current = false;
+        return;
+      }
+      e.preventDefault();
+      router.push(AGENDA_HREF);
+    },
+    [router]
+  );
 
   const renderLink = (href: string) => {
     const active = isActive(href);
@@ -194,7 +239,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
         <div className="flex items-end justify-around h-14 min-h-14 px-1 pb-0">
           {NAV_LEFT.map(({ href }) => renderLink(href))}
 
-          {/* Centro: nueva cita (solo móvil) */}
+          {/* Centro: calendario (inicio) — toque = agenda; pulsación larga = nueva cita */}
           <motion.div
             className="flex-1 flex items-end justify-center"
             whileTap={{ scale: 0.9 }}
@@ -202,12 +247,17 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
           >
             <button
               type="button"
-              onClick={openNewBooking}
+              onClick={onAgendaCenterClick}
+              onPointerDown={onAgendaCenterPointerDown}
+              onPointerUp={onAgendaCenterPointerUpOrCancel}
+              onPointerCancel={onAgendaCenterPointerUpOrCancel}
+              onPointerLeave={onAgendaCenterPointerUpOrCancel}
+              onContextMenu={(e) => e.preventDefault()}
               className={cn(
-                "relative flex items-end justify-center min-w-[52px] select-none pb-0",
+                "relative flex items-end justify-center min-w-[52px] select-none pb-0 [touch-action:manipulation]",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-aqua)]/50 rounded-2xl"
               )}
-              aria-label="Nueva cita"
+              aria-label="Agenda, calendario. Mantén pulsado para añadir una nueva cita"
             >
               <div
                 className={cn(
@@ -217,7 +267,7 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
                   agendaActive && "ring-2 ring-[rgba(79,161,216,0.4)]"
                 )}
               >
-                <Plus className="w-6 h-6" strokeWidth={2.5} aria-hidden />
+                <Calendar className="w-6 h-6" strokeWidth={2.2} aria-hidden />
               </div>
             </button>
           </motion.div>

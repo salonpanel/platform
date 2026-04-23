@@ -517,8 +517,8 @@ function MobileWeekView({
     <div className="w-full h-full flex flex-col overflow-hidden bg-[var(--bf-bg)]" role="region" aria-label="Vista semanal móvil">
       {/* Columnas 1fr · auto · 1fr: selector de staff compacto en el centro */}
       <div className="flex-shrink-0 bg-[var(--bf-bg)] px-2 py-1.5 sm:px-3">
-        <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-1.5">
-          <div className="flex min-w-0 items-center justify-start gap-1">
+        <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
+          <div className="flex min-w-0 w-max max-w-[45%] items-center justify-start gap-1">
             {mobileToolbar && (
               <AgendaQuickActions
                 only="notifications"
@@ -556,7 +556,7 @@ function MobileWeekView({
             </motion.label>
           </div>
           <div
-            className="min-w-0 max-w-[min(18rem,calc(100vw-8rem))] justify-self-center w-full"
+            className="min-w-0 w-full justify-self-stretch px-0.5"
             role="group"
             aria-label="Miembro del equipo"
           >
@@ -571,7 +571,7 @@ function MobileWeekView({
               />
             ) : null}
           </div>
-          <div className="flex min-w-0 items-center justify-end">
+          <div className="flex min-w-0 w-max max-w-[45%] items-center justify-end">
             {mobileToolbar ? (
               <AgendaQuickActions
                 only="searchAndFilters"

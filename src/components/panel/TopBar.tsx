@@ -71,10 +71,9 @@ export function TopBar({
 
   return (
     <div className={cn(
-      "pb-8",
+      "pb-3 md:pb-4",
       // Mobile: respect status bar (notch / Dynamic Island / home indicator)
-      // Use max() so we always have at least 1rem padding even on devices without safe area
-      "pt-safe-top md:pt-8",
+      "pt-safe-top md:pt-4",
       sidebarCollapsed ? "px-6 md:px-8" : "px-6 md:px-10"
     )}>
       {/* Header: perfil (izq) · título centrado · IA (dch, móvil) */}
@@ -218,10 +217,9 @@ export function TopBar({
           <h1
             className={cn(
               "truncate leading-snug",
-              /* ~30% menor que la escala anterior (11 / 14 / 16 / 18 px → ×0.7; mín. 10px en móvil) */
-              "text-[10px] font-medium tracking-[-0.01em] text-[var(--bf-ink-100)]",
-              "md:text-[10px] md:font-semibold md:tracking-[-0.02em] md:leading-tight md:text-[var(--bf-ink-50)]",
-              "lg:text-[11px] xl:text-[13px]",
+              "text-[9px] font-medium tracking-[-0.01em] text-[var(--bf-ink-100)]",
+              "md:text-[9px] md:font-semibold md:tracking-[-0.02em] md:leading-tight md:text-[var(--bf-ink-50)]",
+              "lg:text-[10px] xl:text-[11px]",
             )}
             style={{
               fontFamily: "var(--font-sans)",
