@@ -43,6 +43,11 @@ import { buildGetTenantInfoTool } from "./read/tenant-info";
 import { buildListMarketingCampaignsTool } from "./read/list-marketing-campaigns";
 import { buildGetCampaignStatsTool } from "./read/get-campaign-stats";
 import { buildListStaffServicesTool } from "./read/list-staff-services";
+import { buildGetStripeStatusTool } from "./read/stripe-status";
+import { buildGetWalletBalanceTool } from "./read/wallet-balance";
+import { buildListPayoutsTool } from "./read/list-payouts-stripe";
+import { buildListCustomerBirthdaysTool } from "./read/customer-birthdays";
+import { buildGetCancellationAnalysisTool } from "./read/cancellation-analysis";
 
 // WRITE
 import { buildCreateServiceTool } from "./write/create-service";
@@ -68,6 +73,11 @@ import { buildSetStaffActiveTool } from "./write/set-staff-active";
 import { buildAssignServiceToStaffTool } from "./write/assign-service-to-staff";
 import { buildUnassignServiceFromStaffTool } from "./write/unassign-service-from-staff";
 import { buildUpdateStaffScheduleTool } from "./write/update-staff-schedule";
+import { buildUpdateBusinessHoursTool } from "./write/update-business-hours";
+import { buildUpdateBookingPolicyTool } from "./write/update-booking-policy";
+import { buildRefundPaymentTool } from "./write/refund-payment";
+import { buildUpdateNoShowPolicyTool } from "./write/update-no-show-policy";
+import { buildUpdateAsistenteSettingsTool } from "./write/update-asistente-settings";
 
 export interface ToolRuntimeContext {
   tenantId: string;
@@ -121,6 +131,11 @@ export function buildToolSet(
     list_marketing_campaigns: buildListMarketingCampaignsTool(ctx, tz),
     get_campaign_stats: buildGetCampaignStatsTool(ctx, tz),
     list_staff_services: buildListStaffServicesTool(ctx),
+    get_stripe_status: buildGetStripeStatusTool(ctx),
+    get_wallet_balance: buildGetWalletBalanceTool(ctx),
+    list_payouts: buildListPayoutsTool(ctx, tz),
+    list_customer_birthdays: buildListCustomerBirthdaysTool(ctx, tz),
+    get_cancellation_analysis: buildGetCancellationAnalysisTool(ctx, tz),
 
     // WRITE — patrón preview (sin confirm) → confirm=true.
     create_service: buildCreateServiceTool(ctx),
@@ -146,5 +161,10 @@ export function buildToolSet(
     assign_service_to_staff: buildAssignServiceToStaffTool(ctx),
     unassign_service_from_staff: buildUnassignServiceFromStaffTool(ctx),
     update_staff_schedule: buildUpdateStaffScheduleTool(ctx),
+    update_business_hours: buildUpdateBusinessHoursTool(ctx),
+    update_booking_policy: buildUpdateBookingPolicyTool(ctx),
+    refund_payment: buildRefundPaymentTool(ctx),
+    update_no_show_policy: buildUpdateNoShowPolicyTool(ctx),
+    update_asistente_settings: buildUpdateAsistenteSettingsTool(ctx),
   };
 }

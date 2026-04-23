@@ -9,7 +9,7 @@
  * Cambios de identidad o tono → subir SYSTEM_PROMPT_VERSION.
  */
 
-export const SYSTEM_PROMPT_VERSION = "2026-04-23.v7";
+export const SYSTEM_PROMPT_VERSION = "2026-04-23.v12";
 
 interface BuildSystemPromptOptions {
   tenantName: string;
@@ -70,20 +70,23 @@ export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
     `- Si te piden algo que NO tienes tool para ello, dilo claramente: "Eso aún no lo puedo hacer desde aquí, pero puedes hacerlo en [sección del panel]".`,
     ``,
     `**Mapa mental de tools (cuándo usar cada una):**`,
-    `- "¿cómo va el día?" / primer mensaje → get_business_overview (snapshot) o get_today_agenda (detalle cita a cita).`,
+    `- "¿cómo va el día?" / primer mensaje: si en el system prompt ya tienes "Foto del día", responde con eso y solo llama get_business_overview si hace falta detalle; para listado cita a cita → get_today_agenda.`,
     `- "buscar cita de Laura" / "próxima de Carlos" → search_bookings (texto libre, sin IDs).`,
     `- "ficha de Laura" → search_customers → get_customer_detail, o directamente get_customer_detail con query.`,
     `- "cómo de fiel es Laura" / "¿viene a menudo?" → get_customer_insights.`,
     `- "clientes que no han vuelto" / "campaña de reactivación" → find_reactivation_candidates.`,
+    `- "cumpleaños en abril / quién cumple este mes" → list_customer_birthdays (mes opcional); "¿cuánto estamos cancelando?" / tendencia de cancelaciones → get_cancellation_analysis.`,
     `- "¿hay hueco mañana a las 17?" → find_available_slots.`,
     `- "¿qué horario tiene María?" → get_staff_schedule; "vacaciones/bloqueos de X" → list_staff_blockings.`,
     `- crear ficha de empleado → create_staff; cambiar nombre/horas/color/bio → update_staff; activar o desactivar a alguien (baja lógica) → set_staff_active (solo admin u owner).`,
     `- qué servicios ofrece un profe → list_staff_services; asignar / quitar servicio del catálogo → assign_service_to_staff, unassign_service_from_staff. Cambiar horario semanal fijo (sustituye el anterior) → update_staff_schedule; leerlo antes con get_staff_schedule (día 0=domingo).`,
-    `- "¿cuánto llevamos cobrado?" → get_revenue_summary; "lista de pagos / reembolsos" → list_payments.`,
-    `- "¿a qué hora abrimos?" / "¿qué política de cancelación tengo?" → get_tenant_info.`,
+    `- "¿cuánto llevamos cobrado?" → get_revenue_summary; "lista de pagos / reembolsos" → list_payments; saldo en Stripe / dinero a cobrar a banco → get_wallet_balance; traspasos a banco (payouts) → list_payouts; devolver un cobro (Stripe) → refund_payment (solo admin u owner, con confirm).`,
+    `- "¿a qué hora abrimos?" / "¿qué política de cancelación tengo?" → get_tenant_info; estado concreto de Stripe Connect (cobros/payouts) → get_stripe_status.`,
+    `- cambiar la hora de apertura/cierre de referencia del negocio (no el horario de cada empleado) → update_business_hours; aviso mínimo de cancelación o ventana de días de reserva → update_booking_policy (manager+).`,
     `- "campañas de email / qué hemos enviado" → list_marketing_campaigns; detalle de una → get_campaign_stats(campaignId).`,
     `- enviar campaña a una lista (HTML con {{nombre}} / {{negocio}}) → create_marketing_campaign; un solo email personal → send_message_to_customer. Ambas: preview → confirm; solo manager o superior.`,
     `- activar o quitar el consentimiento de marketing (email) de un cliente → update_customer con marketingOptIn; no hace falta otra tool.`,
+    `- política de no-shows (depósito / % / horas) → update_no_show_policy; encender o apagar el asistente o cambiar modo de autonomía (solo responsables) → update_asistente_settings (owner o admin, preview).`,
     `- Anotar sobre un cliente → add_customer_note; sobre una cita concreta → add_booking_note.`,
     ``,
     `**Ejemplos de razonamiento multi-paso:**`,

@@ -39,6 +39,7 @@ import {
   logSecurityEvent,
 } from "@/lib/asistente/security";
 import { runAssistantTurn } from "@/lib/asistente/llm";
+import { buildSituationalSummary } from "@/lib/asistente/llm/situational-snapshot";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -272,6 +273,19 @@ export async function POST(request: NextRequest) {
   // ── 8. Cargar historial previo (últimos N mensajes de la sesión) ───────
   const priorMessages = await loadPriorMessages(admin, sessionId!);
 
+  /** Primera acción de la sesión: misma cifras que get_business_overview, sin otra ronda de tools. */
+  let situationalSummary: string | null = null;
+  if (priorMessages.length === 0) {
+    try {
+      situationalSummary = await buildSituationalSummary(
+        tenantId,
+        tenantTimezone,
+      );
+    } catch {
+      situationalSummary = null;
+    }
+  }
+
   // ── 9. Ejecutar turn del asistente ─────────────────────────────────────
   let turnResult: Awaited<ReturnType<typeof runAssistantTurn>>;
   try {
@@ -285,7 +299,7 @@ export async function POST(request: NextRequest) {
       sessionId: sessionId!,
       userMessage: userMessageContent,
       priorMessages,
-      situationalSummary: null,
+      situationalSummary,
       ipAddress: ip,
       userAgent,
     });
