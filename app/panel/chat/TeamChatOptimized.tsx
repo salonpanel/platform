@@ -19,6 +19,7 @@ import { MessageList } from "./MessageList";
 import { MessageComposer } from "./MessageComposer";
 import { MembersModal } from "./MembersModal";
 import { AddMembersModal } from "./AddMembersModal";
+import { CreateGroupModal } from "./CreateGroupModal";
 import type { ChatPageDataset } from "@/lib/chat-page-data";
 
 type ConversationType = "all" | "direct" | "group";
@@ -129,6 +130,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 	const [showUnreadOnly, setShowUnreadOnly] = useState(false);
 	const [showMembersModal, setShowMembersModal] = useState(false);
 	const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+	const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
 
 	// Estados para respuestas y móvil
 	const [replyToMessage, setReplyToMessage] = useState<TeamMessage | null>(null);
@@ -872,6 +874,32 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 		return Object.values(membersDirectory).filter((member) => member.userId !== currentUserId);
 	}, [membersDirectory, currentUserId]);
 
+	const handleCreateGroup = useCallback(
+		async (name: string, otherMemberUserIds: string[]) => {
+			if (!tenantId) {
+				throw new Error("No hay negocio activo");
+			}
+			const { data, error } = await supabase.rpc("create_group_team_conversation", {
+				p_tenant_id: tenantId,
+				p_name: name,
+				p_member_user_ids: otherMemberUserIds,
+			});
+			if (error) {
+				throw new Error(readSupabaseClientError(error));
+			}
+			if (data == null || String(data) === "") {
+				throw new Error("No se pudo crear el grupo");
+			}
+			const newId = String(data);
+			await refreshConversations();
+			setSelectedConversationId(newId);
+			if (isMobile) {
+				setMobileView("chat");
+			}
+		},
+		[supabase, tenantId, refreshConversations, isMobile]
+	);
+
 	return (
 		<div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
 			{/* Lista + hilo: sin cabecera local (perfil y acciones en TopBar; chats en la lista) */}
@@ -894,6 +922,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 						showUnreadOnly={showUnreadOnly}
 						onToggleUnread={() => setShowUnreadOnly(!showUnreadOnly)}
 						currentUserId={currentUserId}
+						onCreateGroup={() => setShowCreateGroupModal(true)}
 					/>
 				</div>
 
@@ -947,8 +976,16 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 							
 							<ConversationHeader
 								conversation={selectedConversation}
-								onViewMembers={handleOpenMembersModal}
-								onAddMember={handleOpenAddMembers}
+								onViewMembers={
+									selectedConversation.type === "direct"
+										? undefined
+										: handleOpenMembersModal
+								}
+								onAddMember={
+									selectedConversation.type === "direct"
+										? undefined
+										: handleOpenAddMembers
+								}
 								onBack={() => setMobileView('list')}
 								isMobile={isMobile}
 							/>
@@ -1132,6 +1169,13 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 					onAddMembers={handleAddMembersToGroup}
 				/>
 			)}
+
+			<CreateGroupModal
+				isOpen={showCreateGroupModal}
+				onClose={() => setShowCreateGroupModal(false)}
+				availableMembers={availableMembers}
+				onCreate={handleCreateGroup}
+			/>
 
 		</div>
 	);

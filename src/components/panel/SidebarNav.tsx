@@ -142,6 +142,13 @@ export function SidebarNav({
     if (href === "/panel/dashboard") {
       return pathname === "/panel/dashboard" || pathname?.startsWith("/panel/dashboard/");
     }
+    if (href === "/panel/agenda") {
+      return (
+        pathname === "/panel" ||
+        pathname === "/panel/agenda" ||
+        pathname?.startsWith("/panel/agenda/")
+      );
+    }
     return pathname === href || pathname?.startsWith(href + "/");
   }, [pathname]);
 

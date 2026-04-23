@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, Check, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { GlassModal } from "@/components/ui/glass/GlassModal";
+import { SheetModalFrame } from "@/components/ui/sheet-modal-frame";
 import { GlassButton } from "@/components/ui/glass";
-import { Button } from "@/components/ui/Button";
-import { Booking, Staff } from "@/types/agenda";
 
 interface SmartModalStep {
   id: string;
@@ -33,16 +31,35 @@ interface SmartModalProps {
     type: "booking" | "customer" | "service" | "staff" | "availability" | "conflict";
     data?: any;
   };
+  /** Bloquea cierre por velo, arrastre y Escape (p. ej. formulario sucio). */
+  preventClose?: boolean;
+}
+
+function mapFrameSize(size: SmartModalProps["size"]): {
+  frame: "sm" | "md" | "lg" | "xl";
+  sheetClassName?: string;
+} {
+  switch (size) {
+    case "sm":
+      return { frame: "sm" };
+    case "md":
+      return { frame: "lg" };
+    case "lg":
+      return { frame: "xl" };
+    case "xl":
+      return { frame: "xl", sheetClassName: "md:max-w-6xl" };
+    case "full":
+      return {
+        frame: "xl",
+        sheetClassName: "md:max-w-[min(96rem,calc(100vw-1.5rem))]",
+      };
+    default:
+      return { frame: "md" };
+  }
 }
 
 /**
- * SmartModal - Modales inteligentes y contextuales premium
- * Características:
- * - Modo guiado con steps
- * - Contexto inteligente
- * - Progress indicators
- * - Responsive design
- * - Animaciones premium
+ * SmartModal — hoja inferior con pestaña arrastrable (mismo marco que el resto de modales).
  */
 export function SmartModal({
   isOpen,
@@ -57,20 +74,25 @@ export function SmartModal({
   children,
   actions,
   context,
+  preventClose = false,
 }: SmartModalProps) {
   const [localStep, setLocalStep] = useState(currentStep);
+  const titleId = useRef(`smart-modal-${Math.random().toString(36).slice(2, 9)}`);
 
   useEffect(() => {
     setLocalStep(currentStep);
   }, [currentStep]);
 
-  const sizeClasses = {
-    sm: "max-w-md",
-    md: "max-w-2xl",
-    lg: "max-w-4xl",
-    xl: "max-w-6xl",
-    full: "max-w-full mx-4"
-  };
+  useEffect(() => {
+    if (!isOpen || preventClose) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose, preventClose]);
+
+  const { frame, sheetClassName } = mapFrameSize(size);
 
   const progressPercentage = useMemo(() => {
     if (!steps.length) return 0;
@@ -90,243 +112,202 @@ export function SmartModal({
 
   const canGoPrev = localStep > 0;
 
-  // Context-aware styling
   const getContextTheme = () => {
     switch (context?.type) {
       case "booking":
-        return {
-          accent: "var(--bf-primary)",
-          bg: "bg-[var(--accent-blue-glass)]",
-          border: "border-[var(--accent-blue-border)]",
-        };
+        return { accent: "var(--bf-primary)" as const };
       case "customer":
-        return {
-          accent: "var(--bf-primary)",
-          bg: "bg-[var(--accent-aqua-glass)]",
-          border: "border-[var(--accent-aqua-border)]",
-        };
+        return { accent: "var(--bf-primary)" as const };
       case "service":
-        return {
-          accent: "var(--bf-primary)",
-          bg: "bg-[var(--accent-purple-glass)]",
-          border: "border-[var(--accent-purple-border)]",
-        };
+        return { accent: "var(--bf-primary)" as const };
       case "staff":
-        return {
-          accent: "var(--accent-pink)",
-          bg: "bg-[var(--accent-pink-glass)]",
-          border: "border-[var(--accent-pink-border)]",
-        };
+        return { accent: "var(--accent-pink)" as const };
       case "availability":
-        return {
-          accent: "var(--accent-green)",
-          bg: "bg-[var(--accent-green-glass)]",
-          border: "border-[var(--accent-green-border)]",
-        };
+        return { accent: "var(--accent-green)" as const };
       case "conflict":
-        return {
-          accent: "var(--accent-orange)",
-          bg: "bg-[var(--accent-orange-glass)]",
-          border: "border-[var(--accent-orange-border)]",
-        };
+        return { accent: "var(--accent-orange)" as const };
       default:
-        return {
-          accent: "var(--bf-primary)",
-          bg: "bg-[var(--glass-bg-default)]",
-          border: "border-[var(--bf-border)]",
-        };
+        return { accent: "var(--bf-primary)" as const };
     }
   };
 
   const theme = getContextTheme();
 
-  if (!isOpen) return null;
-
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[60] flex items-center justify-center p-4"
-      >
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-          onClick={onClose}
-        />
-
-        {/* Modal */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className={cn(
-            "relative w-full rounded-[var(--r-xl)] shadow-2xl overflow-hidden",
-            sizeClasses[size],
-            theme.bg,
-            theme.border
-          )}
-          style={{
-            background: "linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)",
-          }}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-[var(--glass-border-subtle)]">
-            <div className="flex-1">
-              <h2 className="text-xl font-semibold text-[var(--bf-ink-50)] font-[var(--font-sans)]">
-                {title}
-              </h2>
-
-              {/* Step indicator for guided mode */}
-              {variant === "guided" && steps.length > 0 && (
-                <div className="flex items-center gap-4 mt-2">
-                  <span className="text-sm text-[var(--bf-ink-300)]">
-                    Paso {localStep + 1} de {steps.length}
-                  </span>
-                  <div className="flex gap-1">
-                    {steps.map((_, index) => (
-                      <motion.div
-                        key={index}
-                        className={cn(
-                          "w-2 h-2 rounded-full transition-colors",
-                          index <= localStep
-                            ? theme.accent.replace("var(--", "").replace(")", "")
-                            : "bg-[var(--bf-border)]"
-                        )}
-                        initial={false}
-                        animate={{
-                          scale: index === localStep ? 1.2 : 1,
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)] hover:bg-[var(--bf-bg-elev)] transition-colors"
-              aria-label="Cerrar modal"
+    <SheetModalFrame
+      isOpen={isOpen}
+      onClose={onClose}
+      onBackdropClick={() => {
+        if (!preventClose) onClose();
+      }}
+      allowDragDismiss={!preventClose}
+      size={frame}
+      sheetClassName={sheetClassName}
+      titleId={titleId.current}
+    >
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex shrink-0 items-center justify-between border-b border-[var(--glass-border-subtle)] p-5 md:p-6">
+          <div className="min-w-0 flex-1 pr-2">
+            <h2
+              id={titleId.current}
+              className="font-[var(--font-sans)] text-lg font-semibold text-[var(--bf-ink-50)] md:text-xl"
             >
-              <X className="h-5 w-5" />
-            </button>
+              {title}
+            </h2>
+
+            {variant === "guided" && steps.length > 0 && (
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <span className="text-sm text-[var(--bf-ink-300)]">
+                  Paso {localStep + 1} de {steps.length}
+                </span>
+                <div className="flex gap-1">
+                  {steps.map((_, index) => (
+                    <motion.span
+                      key={index}
+                      className={cn(
+                        "h-2 w-2 rounded-full",
+                        index > localStep && "bg-[var(--bf-border)]"
+                      )}
+                      style={
+                        index <= localStep
+                          ? { backgroundColor: theme.accent }
+                          : undefined
+                      }
+                      initial={false}
+                      animate={{
+                        scale: index === localStep ? 1.2 : 1,
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Progress bar */}
-          {showProgress && steps.length > 0 && (
-            <div className="px-6 py-2 bg-[var(--bf-bg-elev)]">
-              <div className="w-full bg-[var(--bf-bg-elev)] rounded-full h-1 overflow-hidden">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-[var(--bf-primary)] to-[var(--bf-primary)] rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progressPercentage}%` }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-[var(--bf-ink-400)] mt-1">
-                <span>{Math.round(progressPercentage)}% completado</span>
-                <span>{steps.length - localStep - 1} pasos restantes</span>
-              </div>
-            </div>
-          )}
+          <button
+            type="button"
+            onClick={() => {
+              if (!preventClose) onClose();
+            }}
+            disabled={preventClose}
+            className={cn(
+              "shrink-0 rounded-lg p-2 text-[var(--bf-ink-300)] transition-colors hover:bg-[var(--bf-bg-elev)] hover:text-[var(--bf-ink-50)]",
+              preventClose && "cursor-not-allowed opacity-50"
+            )}
+            aria-label="Cerrar modal"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6">
-            <AnimatePresence mode="wait">
+        {showProgress && steps.length > 0 && (
+          <div className="shrink-0 bg-[var(--bf-bg-elev)] px-5 py-2 md:px-6">
+            <div className="h-1 w-full overflow-hidden rounded-full bg-[var(--bf-bg-elev)]">
               <motion.div
-                key={localStep}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                {variant === "guided" && steps.length > 0 ? (
-                  <div className="space-y-4">
-                    {/* Step info */}
-                    <div className="p-4 rounded-lg bg-[var(--bf-bg-elev)] border border-[var(--bf-border)]">
-                      <h3 className="font-semibold text-[var(--bf-ink-50)] mb-1">
-                        {steps[localStep]?.title}
-                      </h3>
-                      {steps[localStep]?.description && (
-                        <p className="text-sm text-[var(--bf-ink-300)]">
-                          {steps[localStep].description}
-                        </p>
-                      )}
-                      {steps[localStep]?.required && (
-                        <div className="flex items-center gap-1 mt-2 text-xs text-[var(--accent-orange)]">
-                          <AlertCircle className="h-3 w-3" />
-                          Campo requerido
-                        </div>
-                      )}
-                    </div>
+                className="h-full rounded-full bg-[var(--bf-primary)]"
+                initial={{ width: 0 }}
+                animate={{ width: `${progressPercentage}%` }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              />
+            </div>
+            <div className="mt-1 flex justify-between text-xs text-[var(--bf-ink-400)]">
+              <span>{Math.round(progressPercentage)}% completado</span>
+              <span>{steps.length - localStep - 1} pasos restantes</span>
+            </div>
+          </div>
+        )}
 
-                    {/* Step content */}
-                    {children}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5 md:p-6">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={localStep}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {variant === "guided" && steps.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="rounded-lg border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] p-4">
+                    <h3 className="mb-1 font-semibold text-[var(--bf-ink-50)]">
+                      {steps[localStep]?.title}
+                    </h3>
+                    {steps[localStep]?.description && (
+                      <p className="text-sm text-[var(--bf-ink-300)]">
+                        {steps[localStep].description}
+                      </p>
+                    )}
+                    {steps[localStep]?.required && (
+                      <div className="mt-2 flex items-center gap-1 text-xs text-[var(--accent-orange)]">
+                        <AlertCircle className="h-3 w-3" />
+                        Campo requerido
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  children
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* Footer with actions */}
-          <div className="flex items-center justify-between px-6 pt-6 border-t border-[var(--glass-border-subtle)] pb-modal-footer">
-            <div className="flex gap-2">
-              {variant === "guided" && steps.length > 0 && (
-                <>
-                  <GlassButton
-                    variant="ghost"
-                    onClick={() => handleStepChange(localStep - 1)}
-                    disabled={!canGoPrev}
-                    className="flex items-center gap-2"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Anterior
-                  </GlassButton>
-
-                  <GlassButton
-                    onClick={() => handleStepChange(localStep + 1)}
-                    disabled={!canGoNext}
-                    className="flex items-center gap-2"
-                  >
-                    Siguiente
-                    <ChevronRight className="h-4 w-4" />
-                  </GlassButton>
-                </>
-              )}
-            </div>
-
-            <div className="flex gap-2">
-              {actions ? (
-                actions
+                  {children}
+                </div>
               ) : (
-                variant !== "guided" && (
-                  <GlassButton variant="ghost" onClick={onClose}>
-                    Cancelar
-                  </GlassButton>
-                )
+                children
               )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
-              {variant === "guided" && localStep === steps.length - 1 && (
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-[var(--glass-border-subtle)] px-5 pt-5 pb-[max(1rem,env(safe-area-inset-bottom,0px))] md:px-6">
+          <div className="flex flex-wrap gap-2">
+            {variant === "guided" && steps.length > 0 && (
+              <>
                 <GlassButton
-                  onClick={onClose}
-                  className="bg-gradient-to-r from-[var(--bf-primary)] to-[var(--bf-primary)] text-white border-0"
+                  variant="ghost"
+                  onClick={() => handleStepChange(localStep - 1)}
+                  disabled={!canGoPrev}
+                  className="flex items-center gap-2"
                 >
-                  <Check className="h-4 w-4 mr-2" />
-                  Completar
+                  <ChevronLeft className="h-4 w-4" />
+                  Anterior
                 </GlassButton>
-              )}
-            </div>
+
+                <GlassButton
+                  onClick={() => handleStepChange(localStep + 1)}
+                  disabled={!canGoNext}
+                  className="flex items-center gap-2"
+                >
+                  Siguiente
+                  <ChevronRight className="h-4 w-4" />
+                </GlassButton>
+              </>
+            )}
           </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+
+          <div className="flex flex-wrap gap-2">
+            {actions ? (
+              actions
+            ) : (
+              variant !== "guided" && (
+                <GlassButton
+                  variant="ghost"
+                  onClick={() => {
+                    if (!preventClose) onClose();
+                  }}
+                  disabled={preventClose}
+                >
+                  Cancelar
+                </GlassButton>
+              )
+            )}
+
+            {variant === "guided" && localStep === steps.length - 1 && (
+              <GlassButton
+                onClick={onClose}
+                className="border-0 bg-[var(--bf-primary)] text-[var(--bf-ink)]"
+              >
+                <Check className="mr-2 h-4 w-4" />
+                Completar
+              </GlassButton>
+            )}
+          </div>
+        </div>
+      </div>
+    </SheetModalFrame>
   );
 }

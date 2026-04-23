@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { AgendaTopBar } from "@/components/agenda/AgendaTopBar";
 import { AgendaFilters } from "@/components/agenda/AgendaFilters";
@@ -55,6 +55,7 @@ export default function AgendaPageClient({
   initialViewMode,
 }: AgendaPageClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const tenantId = impersonateOrgId ?? initialData?.tenant.id ?? null;
   const tenantTimezone = initialData?.tenant.timezone ?? "Europe/Madrid";
@@ -329,7 +330,8 @@ export default function AgendaPageClient({
     const next = new URLSearchParams(searchParams.toString());
     next.delete("nuevaCita");
     const q = next.toString();
-    router.replace(q ? `/panel/agenda?${q}` : "/panel/agenda", { scroll: false });
+    const agendaPath = pathname === "/panel" ? "/panel" : "/panel/agenda";
+    router.replace(q ? `${agendaPath}?${q}` : agendaPath, { scroll: false });
 
     modals.openNewBookingModal(slot);
   }, [
@@ -340,6 +342,7 @@ export default function AgendaPageClient({
     staffList,
     visibleStaff,
     router,
+    pathname,
     modals,
   ]);
 

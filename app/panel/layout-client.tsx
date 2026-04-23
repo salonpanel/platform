@@ -349,7 +349,7 @@ function PanelLayoutContent({
     if (pathname?.startsWith("/panel/dashboard")) return "Estadísticas";
     // startsWith so sub-routes (/panel/clientes/[id], /panel/ajustes/calendario, …)
     // inherit their section name instead of falling back to the generic "Panel"
-    if (pathname?.startsWith("/panel/agenda"))      return "Agenda";
+    if (pathname === "/panel" || pathname?.startsWith("/panel/agenda")) return "Agenda";
     if (pathname?.startsWith("/panel/clientes"))    return "Clientes";
     if (pathname?.startsWith("/panel/servicios"))   return "Servicios";
     if (pathname?.startsWith("/panel/staff"))       return "Staff";
@@ -370,7 +370,8 @@ function PanelLayoutContent({
   };
 
   const isBookfastAiRoute = pathname?.startsWith("/panel/bookfast-ai") ?? false;
-  const isAgendaRoute = pathname?.startsWith("/panel/agenda") ?? false;
+  const isAgendaRoute =
+    pathname === "/panel" || (pathname?.startsWith("/panel/agenda") ?? false);
 
   return (
     <div className="flex h-[100dvh] bg-[var(--bg-primary)]">

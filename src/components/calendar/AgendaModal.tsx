@@ -1,11 +1,12 @@
-import { ReactNode, useEffect, useState, useRef, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+"use client";
+
+import { ReactNode, useEffect, useState, useRef, useMemo } from "react";
 import { X, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SmartModal } from "@/components/agenda/SmartModal";
 import { ModalActions, ModalAction } from "@/components/agenda/ModalActions";
+import { SheetModalFrame } from "@/components/ui/sheet-modal-frame";
 
-// Define SmartModalProps interface locally since it's not exported
 interface SmartModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -29,40 +30,25 @@ interface SmartModalProps {
     data?: any;
   };
 }
-import { theme } from "@/theme/ui";
-import { getMotionSafeProps } from "@/components/agenda/motion/presets";
 
-interface AgendaModalProps extends Omit<SmartModalProps, 'variant' | 'size' | 'context' | 'actions'> {
-  // Agenda-specific variants
+interface AgendaModalProps extends Omit<SmartModalProps, "variant" | "size" | "context" | "actions"> {
   variant?: "modal" | "drawer" | "slide";
-  
-  // Mobile-first responsive sizing
   size?: "sm" | "md" | "lg" | "xl" | "full";
-  
-  // Responsive behavior
   showMobileDrawer?: boolean;
   drawerPosition?: "bottom" | "right";
-  
-  // Enhanced features
   enhancedHeader?: boolean;
   stickyFooter?: boolean;
   preventClose?: boolean;
-  
-  // Enhanced header configuration
   header?: {
     title?: string;
     subtitle?: string;
     showBackButton?: boolean;
     onBack?: () => void;
   };
-  
-  // Override context with extended types
   context?: {
     type: "booking" | "customer" | "service" | "staff" | "availability" | "conflict";
     data?: any;
   };
-  
-  // Standard actions API
   actions?: ModalAction[];
   actionsConfig?: {
     layout?: "start" | "center" | "end" | "space-between";
@@ -71,18 +57,11 @@ interface AgendaModalProps extends Omit<SmartModalProps, 'variant' | 'size' | 'c
     onCancel?: () => void;
     cancelLabel?: string;
   };
-  
-  // Additional styling (handled internally, not passed to SmartModal)
   className?: string;
 }
 
 /**
- * AgendaModal - Premium modal wrapper for Agenda module
- * Extends SmartModal with Agenda-specific behaviors:
- * - Mobile drawer mode for detail panels
- * - Booking-specific context themes  
- * - Responsive sizing and positioning
- * - Enhanced accessibility patterns
+ * AgendaModal — modal / cajón móvil sobre el mismo marco de hoja inferior (pestaña arrastrable).
  */
 export function AgendaModal({
   isOpen,
@@ -92,11 +71,9 @@ export function AgendaModal({
   size = "md",
   context,
   showMobileDrawer = false,
-  drawerPosition = "bottom",
   header,
   actions,
   actionsConfig,
-  stickyFooter = false,
   preventClose = false,
   children,
   className = "",
@@ -105,141 +82,98 @@ export function AgendaModal({
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
+  const drawerTitleId = useRef(
+    `agenda-drawer-${Math.random().toString(36).slice(2, 9)}`
+  );
   const previousActiveElement = useRef<HTMLElement | null>(null);
 
-  // SSR-safe mobile detection using CSS media query
   useEffect(() => {
     setMounted(true);
-    const mediaQuery = window.matchMedia('(max-width: 768px)');
-    
-    const handleChange = (e: MediaQueryListEvent) => {
-      setIsMobile(e.matches);
-    };
-    
-    // Set initial value
-    setIsMobile(mediaQuery.matches);
-    
-    // Listen for changes
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    const mq = window.matchMedia("(max-width: 768px)");
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    setIsMobile(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  // Focus management for drawer
+  const actualVariant = useMemo(
+    () => (isMobile && showMobileDrawer ? "drawer" : variant),
+    [isMobile, showMobileDrawer, variant]
+  );
+
   useEffect(() => {
     if (!mounted || !isOpen || actualVariant !== "drawer") return;
 
-    // Save current active element
     previousActiveElement.current = document.activeElement as HTMLElement;
-
-    // Focus drawer when opened
-    const drawerElement = drawerRef.current;
-    if (drawerElement) {
-      const focusableElements = drawerElement.querySelectorAll<HTMLElement>(
+    const el = drawerRef.current;
+    if (el) {
+      const focusables = el.querySelectorAll<HTMLElement>(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
       );
-      const firstFocusable = focusableElements[0];
-      if (firstFocusable) {
-        firstFocusable.focus();
-      } else {
-        drawerElement.focus();
-      }
+      (focusables[0] ?? el).focus();
     }
 
-    // Focus trap for drawer
-    const handleTabKey = (e: KeyboardEvent) => {
-      if (e.key !== "Tab" || !drawerElement) return;
-
-      const focusableElements = Array.from(
-        drawerElement.querySelectorAll<HTMLElement>(
+    const onTab = (e: KeyboardEvent) => {
+      if (e.key !== "Tab" || !el) return;
+      const list = Array.from(
+        el.querySelectorAll<HTMLElement>(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
         )
-      ).filter((el) => {
-        return !el.hasAttribute("disabled") && 
-               !el.hasAttribute("aria-hidden") &&
-               el.offsetParent !== null;
-      });
-
-      if (focusableElements.length === 0) return;
-
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements[focusableElements.length - 1];
-
-      if (e.shiftKey) {
-        if (document.activeElement === firstElement) {
-          e.preventDefault();
-          lastElement.focus();
-        }
-      } else {
-        if (document.activeElement === lastElement) {
-          e.preventDefault();
-          firstElement.focus();
-        }
+      ).filter(
+        (node) =>
+          !node.hasAttribute("disabled") &&
+          !node.hasAttribute("aria-hidden") &&
+          node.offsetParent !== null
+      );
+      if (!list.length) return;
+      const first = list[0];
+      const last = list[list.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
       }
     };
 
-    // Escape key handler
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !preventClose) {
-        onClose();
-      }
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !preventClose) onClose();
     };
 
-    document.addEventListener("keydown", handleTabKey);
-    document.addEventListener("keydown", handleEscape);
-
-    // Prevent body scroll when drawer is open
-    document.body.style.overflow = "hidden";
-
+    document.addEventListener("keydown", onTab);
+    document.addEventListener("keydown", onEsc);
     return () => {
-      document.removeEventListener("keydown", handleTabKey);
-      document.removeEventListener("keydown", handleEscape);
-      // Restore focus and body scroll when drawer closes
-      if (previousActiveElement.current) {
-        previousActiveElement.current.focus();
-      }
-      document.body.style.overflow = "unset";
+      document.removeEventListener("keydown", onTab);
+      document.removeEventListener("keydown", onEsc);
+      previousActiveElement.current?.focus();
     };
-  }, [isOpen, mounted, isMobile, showMobileDrawer, variant, preventClose, onClose]);
-
-  // Body scroll lock for modal variants (SmartModal handles this, but ensuring consistency)
-  useEffect(() => {
-    const actualVariant = isMobile && showMobileDrawer ? "drawer" : variant;
-    if (!mounted || !isOpen || actualVariant === "drawer") return;
-
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen, mounted, isMobile, showMobileDrawer, variant]);
+  }, [mounted, isOpen, actualVariant, preventClose, onClose]);
 
   if (!mounted) return null;
 
-  // Determine actual variant based on screen size and props
-  const actualVariant = isMobile && showMobileDrawer ? "drawer" : variant;
-  
-  // Map Agenda context to SmartModal context
-  const smartModalContext = context ? {
-    type: context.type as "booking" | "customer" | "service" | "staff",
-    data: context.data
-  } : undefined;
+  const smartModalContext = context
+    ? {
+        type: context.type as "booking" | "customer" | "service" | "staff",
+        data: context.data,
+      }
+    : undefined;
 
-  // Enhanced header component
   const enhancedHeader = (
     <div
       className={cn(
-        "flex items-center justify-between w-full",
-        "px-5 sm:px-6 py-4",
-        "border-b border-[var(--glass-border-subtle)]"
+        "flex w-full shrink-0 items-center justify-between",
+        "border-b border-[var(--glass-border-subtle)] px-5 py-4 sm:px-6"
       )}
     >
-      <div className="flex items-center gap-3 min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         {header?.showBackButton && (
           <button
+            type="button"
             onClick={header.onBack || onClose}
             className={cn(
-              "p-2 rounded-xl transition-all duration-200",
-              "text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)]",
-              "hover:bg-[var(--bf-bg-elev)] active:scale-95"
+              "rounded-xl p-2 transition-all duration-200",
+              "text-[var(--bf-ink-300)] hover:bg-[var(--bf-bg-elev)] hover:text-[var(--bf-ink-50)] active:scale-95"
             )}
             aria-label="Volver"
           >
@@ -247,34 +181,35 @@ export function AgendaModal({
           </button>
         )}
         <div className="min-w-0 flex-1">
-          <h2 className={cn(
-            "text-lg font-semibold truncate",
-            "text-[var(--bf-ink-50)] font-[var(--font-sans)]"
-          )}>
+          <h2
+            id={drawerTitleId.current}
+            className={cn(
+              "truncate font-[var(--font-sans)] text-lg font-semibold text-[var(--bf-ink-50)]"
+            )}
+          >
             {header?.title || title}
           </h2>
           {header?.subtitle && (
-            <p className={cn(
-              "text-sm mt-1 truncate",
-              "text-[var(--bf-ink-300)] font-[var(--font-sans)]"
-            )}>
+            <p
+              className={cn(
+                "mt-1 truncate font-[var(--font-sans)] text-sm text-[var(--bf-ink-300)]"
+              )}
+            >
               {header.subtitle}
             </p>
           )}
         </div>
       </div>
-      
+
       <button
+        type="button"
         onClick={() => {
-          if (!preventClose) {
-            onClose();
-          }
+          if (!preventClose) onClose();
         }}
         className={cn(
-          "p-2 rounded-xl transition-all duration-200",
-          "text-[var(--bf-ink-300)] hover:text-[var(--bf-ink-50)]",
-          "hover:bg-[var(--bf-bg-elev)] active:scale-95",
-          preventClose && "opacity-50 cursor-not-allowed"
+          "rounded-xl p-2 transition-all duration-200",
+          "text-[var(--bf-ink-300)] hover:bg-[var(--bf-bg-elev)] hover:text-[var(--bf-ink-50)] active:scale-95",
+          preventClose && "cursor-not-allowed opacity-50"
         )}
         aria-label="Cerrar"
         disabled={preventClose}
@@ -284,124 +219,81 @@ export function AgendaModal({
     </div>
   );
 
-  // Enhanced footer component
-  const enhancedFooter = actions && actions.length > 0 ? (
-    <ModalActions
-      actions={actions}
-      layout={actionsConfig?.layout || "end"}
-      size={actionsConfig?.size || "md"}
-      showCancel={actionsConfig?.showCancel ?? true}
-      onCancel={actionsConfig?.onCancel || onClose}
-      cancelLabel={actionsConfig?.cancelLabel || "Cancelar"}
-    />
-  ) : null;
+  const enhancedFooter =
+    actions && actions.length > 0 ? (
+      <ModalActions
+        actions={actions}
+        layout={actionsConfig?.layout || "end"}
+        size={actionsConfig?.size || "md"}
+        showCancel={actionsConfig?.showCancel ?? true}
+        onCancel={actionsConfig?.onCancel || onClose}
+        cancelLabel={actionsConfig?.cancelLabel || "Cancelar"}
+      />
+    ) : null;
 
-  // Drawer-specific styling and animations
-  const drawerClasses: { size: "sm" | "md" | "lg" | "xl" | "full"; className: string } = 
-    actualVariant === "drawer" ? {
-      size: drawerPosition === "bottom" ? "full" : "lg",
-      className: cn(
-        drawerPosition === "bottom" && "rounded-t-3xl mb-0",
-        drawerPosition === "right" && "rounded-l-3xl ml-0 h-full max-w-md",
-        className
-      )
-    } : { size, className };
-
-  // Enhanced close handler with form protection
   const handleClose = () => {
-    if (!preventClose) {
-      onClose();
-    }
+    if (!preventClose) onClose();
   };
 
-  // If drawer variant, use custom implementation
+  const drawerFrameSize =
+    size === "sm"
+      ? "sm"
+      : size === "md"
+        ? "lg"
+        : size === "lg" || size === "xl" || size === "full"
+          ? "xl"
+          : "md";
+
+  const drawerSheetExtra =
+    size === "full"
+      ? "md:max-w-[min(96rem,calc(100vw-1.5rem))]"
+      : size === "xl"
+        ? "md:max-w-6xl"
+        : undefined;
+
   if (actualVariant === "drawer") {
     return (
-      <AnimatePresence>
-        {isOpen && (
-          <div className="fixed inset-0 z-[60] flex items-end justify-center">
-            {/* Enhanced backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className={cn(
-                "absolute inset-0 bg-black/40 backdrop-blur-sm"
-              )}
-              onClick={handleClose}
-            />
-            
-            {/* Drawer container */}
-            <div className={cn(
-              "relative z-10 w-full",
-              drawerPosition === "bottom" && "items-end",
-              drawerPosition === "right" && "items-center justify-start"
-            )}>
-              <motion.div
-                ref={drawerRef}
-                {...getMotionSafeProps({
-                  initial: drawerPosition === "bottom" 
-                    ? { y: "100%", opacity: 0 }
-                    : { x: "100%", opacity: 0 },
-                  animate: drawerPosition === "bottom"
-                    ? { y: 0, opacity: 1 }
-                    : { x: 0, opacity: 1 },
-                  exit: drawerPosition === "bottom"
-                    ? { y: "100%", opacity: 0 }
-                    : { x: "100%", opacity: 0 },
-                  transition: { type: "spring", stiffness: 300, damping: 30 }
-                })}
-                className={cn(
-                  "relative flex flex-col bg-[var(--bf-bg)] border",
-                  "border-[var(--bf-border)] shadow-[var(--bf-shadow-card)]",
-                  "backdrop-blur-md",
-                  // Mobile drawer: deja márgenes laterales y aire arriba/abajo (no fullscreen)
-                  drawerPosition === "bottom" &&
-                    "w-[min(720px,calc(100%-1.5rem))] mx-auto mb-3 rounded-3xl max-h-[85vh] nav-inset-bottom",
-                  drawerPosition === "right" && "h-full max-w-md rounded-l-3xl",
-                  className
-                )}
-                style={{
-                  ...getMotionSafeProps({}).style,
-                }}
-              >
-                {enhancedHeader}
-                
-                <div className={cn(
-                  "flex-1 overflow-auto",
-                  drawerPosition === "bottom" ? "overscroll-contain" : "overscroll-y-contain"
-                )}>
-                  {children}
-                </div>
-                
-                {enhancedFooter}
-              </motion.div>
-            </div>
+      <SheetModalFrame
+        isOpen={isOpen}
+        onClose={onClose}
+        onBackdropClick={handleClose}
+        allowDragDismiss={!preventClose}
+        size={drawerFrameSize}
+        sheetRef={drawerRef}
+        titleId={drawerTitleId.current}
+        sheetClassName={cn(drawerSheetExtra, className)}
+      >
+        <div className="flex min-h-0 flex-1 flex-col">
+          {enhancedHeader}
+          <div className="min-h-0 flex-1 overflow-auto overscroll-contain px-5 py-2 sm:px-6">
+            {children}
           </div>
-        )}
-      </AnimatePresence>
+          {enhancedFooter && (
+            <div className="shrink-0 border-t border-[var(--glass-border-subtle)] pb-[max(0.5rem,env(safe-area-inset-bottom,0px))]">
+              {enhancedFooter}
+            </div>
+          )}
+        </div>
+      </SheetModalFrame>
     );
   }
 
-  // Use SmartModal for modal variants
   return (
     <SmartModal
       isOpen={isOpen}
       onClose={handleClose}
       title={title}
-      size={drawerClasses.size}
+      size={size}
       variant="default"
       context={smartModalContext}
+      preventClose={preventClose}
       {...props}
     >
-      <div className="flex flex-col h-full">
-        {header && enhancedHeader}
-        
-        <div className="flex-1 overflow-auto">
-          {children}
-        </div>
-        
+      <div className="flex h-full flex-col">
+        {header ? enhancedHeader : null}
+
+        <div className="min-h-0 flex-1 overflow-auto">{children}</div>
+
         {enhancedFooter}
       </div>
     </SmartModal>

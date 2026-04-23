@@ -46,7 +46,11 @@ export function Sidebar({ tenantName, isOpen = true, onClose }: SidebarProps) {
 
   const isActive = (href: string) => {
     if (href === "/panel/agenda") {
-      return pathname === href || pathname?.startsWith(href + "/");
+      return (
+        pathname === "/panel" ||
+        pathname === href ||
+        pathname?.startsWith(href + "/")
+      );
     }
     return pathname === href || pathname?.startsWith(href + "/");
   };

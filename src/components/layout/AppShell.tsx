@@ -219,7 +219,7 @@ export function AppShell({
                   >
                       {pathname === "/panel/dashboard" || pathname?.startsWith("/panel/dashboard/")
                         ? "Estadísticas"
-                        : pathname === "/panel/agenda"
+                        : pathname === "/panel" || pathname === "/panel/agenda"
                         ? "Agenda"
                         : pathname === "/panel/clientes"
                         ? "Clientes"

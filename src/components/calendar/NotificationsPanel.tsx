@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { X, CheckCircle2, XCircle, AlertCircle, Info, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SheetModalFrame } from "@/components/ui/sheet-modal-frame";
 
 export interface AgendaNotificationItem {
   id: string;
@@ -16,9 +18,7 @@ interface NotificationsPanelProps {
   isOpen: boolean;
   onClose: () => void;
   notifications?: AgendaNotificationItem[];
-  /** Quita una notificación del listado */
   onRemove?: (id: string) => void;
-  /** Elimina todas las notificaciones */
   onClearAll?: () => void;
 }
 
@@ -43,52 +43,37 @@ export function NotificationsPanel({
   onRemove,
   onClearAll,
 }: NotificationsPanelProps) {
-  if (!isOpen) return null;
-
+  const titleId = useRef(`notifications-panel-${Math.random().toString(36).slice(2, 9)}`);
   const hasItems = notifications.length > 0;
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
+
   return (
-    <div className="fixed inset-0 z-[60]">
-      {/* Backdrop */}
-      <button
-        type="button"
-        aria-label="Cerrar notificaciones"
-        className="absolute inset-0 bg-[var(--bf-ink)]/70 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/*
-        Móvil: hoja inferior (altura acotada) — cabecera y “Cerrar” bajo el notch / Dynamic Island.
-        Desktop: panel lateral derecho.
-      */}
-      <div
-        className={cn(
-          "absolute z-10 flex w-full flex-col bg-[var(--bf-surface)] shadow-[var(--bf-shadow-card)]",
-          /* Móvil */
-          "bottom-0 left-0 right-0 max-h-[min(88dvh,calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)-1rem))] rounded-t-[var(--r-xl)] border-t border-[var(--bf-border)]",
-          /* Desktop */
-          "md:bottom-0 md:left-auto md:right-0 md:top-0 md:h-full md:max-h-none md:w-[min(100%,24rem)] md:rounded-none md:border-l md:border-t-0",
-        )}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="notifications-panel-title"
-      >
-        {/* Indicador tipo sheet (solo móvil) */}
-        <div
-          className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-[var(--bf-border-2)] md:hidden"
-          aria-hidden
-        />
-
-        {/* Cabecera: acciones siempre alcanzables; en desktop respeta safe-area arriba */}
+    <SheetModalFrame
+      isOpen={isOpen}
+      onClose={onClose}
+      onBackdropClick={onClose}
+      size="md"
+      titleId={titleId.current}
+      sheetClassName="md:max-w-[min(100%,24rem)]"
+    >
+      <div className="flex min-h-0 flex-1 flex-col">
         <div
           className={cn(
-            "shrink-0 border-b border-[var(--bf-border)] px-4 pb-3 pt-2",
-            "md:pt-[max(0.75rem,env(safe-area-inset-top,0px))]",
+            "shrink-0 border-b border-[var(--bf-border)] px-4 pb-3 pt-1",
+            "md:pt-[max(0.25rem,env(safe-area-inset-top,0px))]"
           )}
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2
-              id="notifications-panel-title"
+              id={titleId.current}
               className="text-base font-semibold text-[var(--bf-ink-50)]"
               style={{ fontFamily: "var(--font-sans)" }}
             >
@@ -102,7 +87,7 @@ export function NotificationsPanel({
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-[var(--r-md)] px-3 py-2 text-xs font-medium",
                     "text-[var(--bf-ink-300)] ring-1 ring-[var(--bf-border)]",
-                    "hover:bg-[var(--bf-bg-elev)] hover:text-[var(--bf-ink-50)] transition-colors",
+                    "transition-colors hover:bg-[var(--bf-bg-elev)] hover:text-[var(--bf-ink-50)]"
                   )}
                   style={{ fontFamily: "var(--font-sans)" }}
                 >
@@ -116,7 +101,7 @@ export function NotificationsPanel({
                 className={cn(
                   "inline-flex items-center justify-center gap-1.5 rounded-[var(--r-md)] px-4 py-2 text-xs font-semibold",
                   "bg-[var(--bf-primary)] text-[var(--bf-ink)] shadow-[var(--bf-shadow-glow)]",
-                  "hover:brightness-105 active:brightness-95 transition",
+                  "transition hover:brightness-105 active:brightness-95"
                 )}
                 style={{ fontFamily: "var(--font-sans)" }}
               >
@@ -126,12 +111,11 @@ export function NotificationsPanel({
           </div>
         </div>
 
-        {/* Lista */}
         <div
           className={cn(
             "min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3",
             "scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[var(--bf-border-2)]",
-            "pb-[max(1rem,env(safe-area-inset-bottom,0px))]",
+            "pb-[max(1rem,env(safe-area-inset-bottom,0px))]"
           )}
         >
           {!hasItems ? (
@@ -152,7 +136,8 @@ export function NotificationsPanel({
                     key={notification.id}
                     className={cn(
                       "relative rounded-[var(--r-lg)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] p-3 pr-10 transition-colors",
-                      !notification.read && "border-l-[3px] border-l-[var(--bf-primary)] pl-[calc(0.75rem-3px)]",
+                      !notification.read &&
+                        "border-l-[3px] border-l-[var(--bf-primary)] pl-[calc(0.75rem-3px)]"
                     )}
                   >
                     {onRemove && (
@@ -162,7 +147,7 @@ export function NotificationsPanel({
                         className={cn(
                           "absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-[var(--r-md)]",
                           "text-[var(--bf-ink-400)] hover:bg-[var(--bf-surface)] hover:text-[var(--bf-ink-50)]",
-                          "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bf-primary)]",
+                          "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bf-primary)]"
                         )}
                         aria-label={`Eliminar: ${notification.title}`}
                       >
@@ -173,7 +158,7 @@ export function NotificationsPanel({
                       <Icon
                         className={cn(
                           "mt-0.5 h-5 w-5 shrink-0",
-                          notificationColors[notification.type],
+                          notificationColors[notification.type]
                         )}
                         aria-hidden
                       />
@@ -186,7 +171,10 @@ export function NotificationsPanel({
                             {notification.title}
                           </h3>
                           {!notification.read && (
-                            <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--bf-primary)]" aria-hidden />
+                            <span
+                              className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--bf-primary)]"
+                              aria-hidden
+                            />
                           )}
                         </div>
                         <p
@@ -210,6 +198,6 @@ export function NotificationsPanel({
           )}
         </div>
       </div>
-    </div>
+    </SheetModalFrame>
   );
 }

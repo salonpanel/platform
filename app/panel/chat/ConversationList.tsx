@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/Avatar";
 import { CheckCheck, Users } from "lucide-react";
+import { CreateGroupListButton } from "./CreateGroupModal";
 
 type ConversationType = "all" | "direct" | "group";
 
@@ -28,6 +29,8 @@ type ConversationListProps = {
 	showUnreadOnly: boolean;
 	onToggleUnread: () => void;
 	currentUserId: string | null;
+	/** Abre el flujo para crear un chat grupal con miembros del equipo */
+	onCreateGroup?: () => void;
 };
 
 function formatTimestamp(iso: string): string {
@@ -98,13 +101,14 @@ export function ConversationList({
 	showUnreadOnly,
 	onToggleUnread,
 	currentUserId,
+	onCreateGroup,
 }: ConversationListProps) {
 	void onToggleUnread;
 	const teamChat = conversations[0]?.type === "all" ? conversations[0] : null;
 	const rest = teamChat ? conversations.slice(1) : conversations;
 
 	return (
-		<div className="flex h-full flex-col bg-[var(--bf-bg)]">
+		<div className="flex h-full min-h-0 flex-col bg-[var(--bf-bg)]">
 			<div className="custom-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-2 md:px-3.5 md:py-2.5">
 				{conversations.length === 0 ? (
 					<div className="p-8 text-center text-sm text-[var(--bf-ink-400)]">
@@ -140,6 +144,11 @@ export function ConversationList({
 					</div>
 				)}
 			</div>
+			{onCreateGroup && (
+				<div className="shrink-0 border-t border-[var(--bf-border)] bg-[var(--bf-bg)] px-3 py-2.5 md:px-3.5">
+					<CreateGroupListButton onClick={onCreateGroup} />
+				</div>
+			)}
 		</div>
 	);
 }

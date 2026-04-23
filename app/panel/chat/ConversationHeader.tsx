@@ -74,9 +74,11 @@ export function ConversationHeader({
 					</h2>
 					<div className="flex items-center gap-2">
 						<ConversationTypeBadge type={conversation.type} />
-						<span className="text-[10px] text-[var(--bf-ink-400)]" style={{ fontFamily: "var(--font-mono)" }}>
-							{conversation.membersCount} {conversation.membersCount === 1 ? "miembro" : "miembros"}
-						</span>
+						{conversation.type !== "direct" && (
+							<span className="text-[10px] text-[var(--bf-ink-400)]" style={{ fontFamily: "var(--font-mono)" }}>
+								{conversation.membersCount} {conversation.membersCount === 1 ? "miembro" : "miembros"}
+							</span>
+						)}
 					</div>
 				</div>
 			</div>

@@ -47,7 +47,7 @@ const NAV_LEFT = [
 
 const NAV_RIGHT = [{ href: "/panel/chat", label: "Chats" }] as const;
 
-const AGENDA_HREF = "/panel/agenda";
+const AGENDA_HREF = "/panel";
 const LONG_PRESS_MS = 450;
 
 export function MobileBottomNav({ items }: MobileBottomNavProps) {
@@ -134,7 +134,10 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
   const moreItems = items.filter((item) => !BAR_HREFS.has(item.href));
   const isMoreActive = moreItems.some((item) => isActive(item.href));
 
-  const agendaActive = pathname === "/panel/agenda" || pathname?.startsWith("/panel/agenda/");
+  const agendaActive =
+    pathname === "/panel" ||
+    pathname === "/panel/agenda" ||
+    pathname?.startsWith("/panel/agenda/");
 
   const openNewBooking = useCallback(() => {
     openCreate(new Date());
