@@ -508,13 +508,13 @@ function EmptyState({ onPick }: { onPick: (text: string) => void }) {
           boxShadow: "var(--bf-shadow-glow), 0 10px 36px -12px rgba(31, 107, 158, 0.55)",
         }}
       >
-        {/* Isotipo BookFast — mismos stops que `public/bookfast-mark.svg` / Brand Kit */}
+        {/* Isotipo claro (--bf-ink-50 / #F5F7FA) sobre cyan — Brand Kit variantes mono */}
         <img
-          src="/bookfast-mark.svg"
+          src="/bookfast-mark-light.svg"
           alt=""
           width={28}
           height={28}
-          className="h-6 w-6 drop-shadow-[0_1px_3px_rgba(5,7,10,0.35)] md:h-7 md:w-7"
+          className="h-6 w-6 md:h-7 md:w-7"
           decoding="async"
         />
       </motion.div>
