@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/Avatar";
-import { CheckCheck, Users } from "lucide-react";
+import { Archive, CheckCheck, Users } from "lucide-react";
 import { CreateGroupListButton } from "./CreateGroupModal";
 
 type ConversationType = "all" | "direct" | "group";
@@ -36,6 +36,8 @@ type ConversationListProps = {
 	membersDirectory?: MemberDir;
 	/** Abre el flujo para crear un chat grupal con miembros del equipo */
 	onCreateGroup?: () => void;
+	/** Abre modal de chats archivados */
+	onOpenArchivedChats?: () => void;
 };
 
 /** Hora si el último mensaje tiene menos de 24 h; si no, "Hace N días". */
@@ -129,6 +131,7 @@ export function ConversationList({
 	currentUserId,
 	membersDirectory,
 	onCreateGroup,
+	onOpenArchivedChats,
 }: ConversationListProps) {
 	void onToggleUnread;
 	const teamChat = conversations[0]?.type === "all" ? conversations[0] : null;
@@ -173,9 +176,34 @@ export function ConversationList({
 					</div>
 				)}
 			</div>
-			{onCreateGroup && (
+			{(onCreateGroup || onOpenArchivedChats) && (
 				<div className="shrink-0 border-t border-[var(--bf-border)] bg-[var(--bf-bg)] px-3 py-2.5 md:px-3.5">
-					<CreateGroupListButton onClick={onCreateGroup} />
+					<div
+						className={cn(
+							"grid gap-2",
+							onCreateGroup && onOpenArchivedChats ? "grid-cols-2" : "grid-cols-1"
+						)}
+					>
+						{onOpenArchivedChats && (
+							<button
+								type="button"
+								onClick={onOpenArchivedChats}
+								className={cn(
+									"flex w-full min-w-0 items-center justify-center gap-2 rounded-[var(--r-md)] border border-[var(--bf-border)]",
+									"bg-[var(--bf-surface)]/80 px-2 py-2.5 text-sm font-medium text-[var(--bf-ink-50)]",
+									"transition-[background-color,box-shadow,border-color,transform] duration-200",
+									"hover:border-[var(--bf-primary)]/40 hover:bg-[var(--bf-surface)]",
+									"active:scale-[0.99]",
+									"focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bf-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bf-bg)]"
+								)}
+								style={{ fontFamily: "var(--font-sans)" }}
+							>
+								<Archive className="h-4 w-4 shrink-0 text-[var(--bf-ink-400)]" aria-hidden />
+								<span className="truncate">Archivados</span>
+							</button>
+						)}
+						{onCreateGroup && <CreateGroupListButton onClick={onCreateGroup} />}
+					</div>
 				</div>
 			)}
 		</div>

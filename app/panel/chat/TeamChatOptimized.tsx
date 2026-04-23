@@ -20,6 +20,7 @@ import { MessageComposer } from "./MessageComposer";
 import { MembersModal } from "./MembersModal";
 import { AddMembersModal } from "./AddMembersModal";
 import { CreateGroupModal } from "./CreateGroupModal";
+import { ArchivedChatsModal } from "./ArchivedChatsModal";
 import type { ChatPageDataset } from "@/lib/chat-page-data";
 import { usePermissions } from "@/contexts/PermissionsContext";
 import { Modal } from "@/components/ui/Modal";
@@ -137,6 +138,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 	const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
 	const [deleteChatModalOpen, setDeleteChatModalOpen] = useState(false);
 	const [deleteChatBusy, setDeleteChatBusy] = useState(false);
+	const [archivedChatsModalOpen, setArchivedChatsModalOpen] = useState(false);
 
 	// Estados para respuestas y móvil
 	const [replyToMessage, setReplyToMessage] = useState<TeamMessage | null>(null);
@@ -1025,6 +1027,7 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 						currentUserId={currentUserId}
 						membersDirectory={listMembersPreview}
 						onCreateGroup={() => setShowCreateGroupModal(true)}
+						onOpenArchivedChats={() => setArchivedChatsModalOpen(true)}
 					/>
 				</div>
 
@@ -1284,6 +1287,15 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 				onClose={() => setShowCreateGroupModal(false)}
 				availableMembers={availableMembers}
 				onCreate={handleCreateGroup}
+			/>
+
+			<ArchivedChatsModal
+				isOpen={archivedChatsModalOpen}
+				onClose={() => setArchivedChatsModalOpen(false)}
+				tenantId={tenantId}
+				currentUserId={currentUserId}
+				membersDirectory={listMembersPreview}
+				onDidUnarchive={refreshConversations}
 			/>
 
 			<Modal

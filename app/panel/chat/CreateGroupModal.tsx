@@ -202,23 +202,30 @@ export function CreateGroupModal({
 	);
 }
 
-export function CreateGroupListButton({ onClick }: { onClick: () => void }) {
+export function CreateGroupListButton({
+	onClick,
+	className,
+}: {
+	onClick: () => void;
+	className?: string;
+}) {
 	return (
 		<button
 			type="button"
 			onClick={onClick}
 			className={cn(
-				"flex w-full items-center justify-center gap-2 rounded-[var(--r-md)] border border-[var(--bf-border)]",
-				"bg-[var(--bf-surface)]/80 px-3 py-2.5 text-sm font-medium text-[var(--bf-ink-50)]",
+				"flex w-full min-w-0 items-center justify-center gap-2 rounded-[var(--r-md)] border border-[var(--bf-border)]",
+				"bg-[var(--bf-surface)]/80 px-2 py-2.5 text-sm font-medium text-[var(--bf-ink-50)]",
 				"transition-[background-color,box-shadow,border-color,transform] duration-200",
 				"hover:border-[var(--bf-primary)]/40 hover:bg-[var(--bf-surface)]",
 				"active:scale-[0.99]",
-				"focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bf-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bf-bg)]"
+				"focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bf-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bf-bg)]",
+				className
 			)}
 			style={{ fontFamily: "var(--font-sans)" }}
 		>
-			<Users className="h-4 w-4 text-[var(--bf-primary)]" aria-hidden />
-			Crear nuevo grupo
+			<Users className="h-4 w-4 shrink-0 text-[var(--bf-primary)]" aria-hidden />
+			<span className="truncate">Nuevo grupo</span>
 		</button>
 	);
 }
