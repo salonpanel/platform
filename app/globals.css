@@ -2,7 +2,7 @@
 @import "tailwindcss";
 
 :root {
-  /* Fila táctil del tab bar. Fallback: ~pt-2 + fila de iconos (~44px) + safe-area (el cliente mide la altura real). */
+  /* Fila táctil del tab bar. Fallback aproximado; el cliente mide la altura real del <nav>. */
   --bottom-nav-height: 52px;
   --bottom-nav-offset: var(--bottom-nav-height);
 

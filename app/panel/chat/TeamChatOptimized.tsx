@@ -1102,8 +1102,9 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 										: undefined
 								}
 							/>
-							{/* flex-col + overflow: el hijo MessageList necesita un flex parent para que flex-1 limite altura y el scroll funcione */}
-							<div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
+							{/* flex-col + overflow: el hijo MessageList necesita un flex parent para que flex-1 limite altura y el scroll funcione.
+							    pb en <lg: espacio para el compositor fijo + tab bar (evita que el último mensaje quede tapado). */}
+							<div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden max-lg:pb-[min(16rem,42vh)] lg:pb-0">
 								{messagesLoadError && (
 									<div
 										className="shrink-0 border-b border-[rgba(224,96,114,0.28)] bg-[rgba(224,96,114,0.06)] px-4 py-2 text-sm text-[var(--bf-danger)]"
@@ -1144,7 +1145,16 @@ export function TeamChatOptimized({ initialData }: TeamChatOptimizedProps) {
 									</p>
 								</div>
 							) : (
-								<div className="relative z-20 shrink-0 border-t border-[var(--bf-border)] bg-[var(--bf-bg)]">
+								<div
+									className={cn(
+										"relative z-20 shrink-0 border-t border-[var(--bf-border)] bg-[var(--bf-bg)]",
+										"max-lg:fixed max-lg:left-0 max-lg:right-0 max-lg:z-40",
+										"max-lg:border-t max-lg:shadow-[0_-8px_24px_rgba(0,0,0,0.14)]",
+										"max-lg:pl-[max(0.75rem,env(safe-area-inset-left,0px))] max-lg:pr-[max(0.75rem,env(safe-area-inset-right,0px))]",
+										"max-lg:bottom-[calc(var(--bottom-nav-offset,52px)+0.625rem)]",
+										"lg:static lg:shadow-none"
+									)}
+								>
 									{pendingAttachments.length > 0 && (
 										<div className="bg-transparent px-4 py-3">
 											<div className="flex items-center gap-2 overflow-x-auto">

@@ -315,10 +315,9 @@ export default function BookfastAiClient() {
 
   const isEmpty = messages.length === 0;
 
-  const composerPadBottom =
-    keyboardInset > 0
-      ? Math.max(10, keyboardInset)
-      : undefined;
+  /** Móvil: distancia del borde inferior del viewport al compositor fijo (encima del tab bar o del teclado). */
+  const composerDockBottomPx =
+    keyboardInset > 0 ? Math.max(10, keyboardInset) : null;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 px-4 pb-0 pt-2 md:pt-3">
@@ -345,8 +344,8 @@ export default function BookfastAiClient() {
         className={cn(
           "min-h-0 flex-1",
           isEmpty
-            ? "flex min-h-0 flex-col overflow-hidden"
-            : "overflow-y-auto",
+            ? "flex min-h-0 flex-col overflow-hidden max-md:pb-[min(10rem,32vh)]"
+            : "overflow-y-auto max-md:pb-[min(12rem,38vh)] md:pb-0",
         )}
       >
         {isEmpty ? (
@@ -391,18 +390,19 @@ export default function BookfastAiClient() {
       {/* Barra de entrada fija abajo: con teclado sube y no compite con la tab bar */}
       <form
         onSubmit={handleSubmit}
-        style={
-          composerPadBottom !== undefined
-            ? { paddingBottom: composerPadBottom }
-            : undefined
-        }
+        style={{
+          ...(composerDockBottomPx !== null
+            ? { bottom: composerDockBottomPx }
+            : { bottom: "calc(var(--bottom-nav-offset, 52px) + 0.625rem)" }),
+        }}
         className={cn(
           "shrink-0 flex gap-2 rounded-xl px-2.5 py-1.5",
           composerMultiline ? "items-end" : "items-center",
-          "bg-white/[0.04] ring-1 ring-white/10",
+          "bg-white/[0.04] ring-1 ring-white/10 backdrop-blur-md",
           "focus-within:ring-white/20 focus-within:bg-white/[0.06] transition",
-          composerPadBottom === undefined &&
-            "pb-2 md:pb-2.5 max-md:pb-1.5",
+          "max-md:fixed max-md:left-4 max-md:right-4 max-md:z-40 max-md:py-2",
+          "md:static md:bottom-auto md:z-auto md:backdrop-blur-none md:py-1.5",
+          "pb-2 md:pb-2.5",
         )}
       >
         <textarea
