@@ -78,7 +78,7 @@ export default async function AgendaServerPage({
   const userAgent = headersList.get("user-agent") || "";
   const isMobile = /mobile/i.test(userAgent);
 
-  const defaultView = isMobile ? "week" : "day";
+  const defaultView = "week";
   const initialViewMode = ((resolvedSearchParams?.view as ViewMode) || defaultView) as ViewMode;
 
   const result = await getInitialAgendaData(impersonateOrgId, initialDate, initialViewMode);

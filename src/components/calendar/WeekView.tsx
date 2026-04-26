@@ -44,6 +44,8 @@ interface WeekViewProps {
   mobileToolbar?: MobileAgendaToolbarProps;
   /** Móvil: sincronizar día con la agenda (URL / datos) */
   onDateChange?: (date: string) => void;
+  /** Abrir modal de nueva cita (usado en empty state del desktop) */
+  onNewBooking?: () => void;
 }
 
 export const WeekView = React.memo(function WeekView({
@@ -61,6 +63,7 @@ export const WeekView = React.memo(function WeekView({
   bookingCounts,
   mobileToolbar,
   onDateChange,
+  onNewBooking,
 }: WeekViewProps) {
   const weekStart = startOfWeek(parseISO(selectedDate), { weekStartsOn: 1 }); // Lunes
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
@@ -215,133 +218,21 @@ export const WeekView = React.memo(function WeekView({
   }
 
   return (
-    <div
-      className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden bg-[var(--bf-bg)]"
-      role="region"
-      aria-label="Vista semanal de reservas"
-    >
-      <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden">
-        {/* Header días de la semana — plano, sin card flotante */}
-        <div className="border-b border-[var(--bf-border)] bg-[var(--bf-bg-elev)] px-4 py-3">
-          <div className="grid grid-cols-8 gap-2">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--bf-ink-400)] border-r border-[var(--bf-border)] pr-2 flex items-center justify-center" style={{ fontFamily: "var(--font-mono)" }}>
-              Hora
-            </div>
-            {weekDays.map((day, idx) => {
-              const isSelected = isSameDay(day, parseISO(selectedDate));
-              const isTodayDate = isSameDay(day, today);
-              return (
-                <div
-                  key={idx}
-                  className={cn(
-                    "text-center transition-all duration-200 relative px-2 rounded-lg",
-                    isSelected
-                      ? "bg-[var(--bf-primary)]/20 ring-1 ring-[var(--bf-primary)]/50"
-                      : isTodayDate
-                      ? "bg-[var(--bf-primary)]/15 ring-1 ring-[var(--bf-primary)]/30"
-                      : "hover:bg-[var(--bf-bg-elev)] border-r border-[var(--bf-border)]/50"
-                  )}
-                >
-                  <div className={cn(
-                    "text-xs font-semibold uppercase tracking-wider mb-1",
-                    "text-[var(--bf-ink-400)] font-[var(--font-sans)]"
-                  )}>
-                    {new Intl.DateTimeFormat("es-ES", { weekday: "short" }).format(day)}
-                  </div>
-                  <div className={cn(
-                    "text-lg font-semibold",
-                    isSelected
-                      ? "text-[var(--bf-primary)]"
-                      : isTodayDate
-                      ? "text-[var(--bf-primary)]"
-                      : "text-[var(--bf-ink-50)]",
-                    "font-[var(--font-sans)]"
-                  )}>
-                    {format(day, "d")}
-                  </div>
-                  {isTodayDate && !isSelected && (
-                    <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[var(--bf-primary)]" />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Timeline - Unified */}
-        <div className="relative flex-1 overflow-x-auto overflow-y-auto scrollbar-hide" role="region" aria-label="Timeline semanal">
-          <div className="min-w-[800px]">
-            <div className="grid grid-cols-8 gap-px bg-[var(--bf-border)]">
-              {/* Time Column */}
-              <div className="bg-[var(--bf-bg)]" role="columnheader">
-                {hours.map((hour) => (
-                  <div
-                    key={hour}
-                    className={cn(
-                      "text-xs font-semibold border-b border-[var(--bf-border)]/50 min-h-[60px] p-2",
-                      "text-[var(--bf-ink-400)] font-[var(--font-mono)] bg-[var(--bf-bg-elev)]"
-                    )}
-                    role="cell"
-                    aria-label={`${hour}:00`}
-                  >
-                    {hour}:00
-                  </div>
-                ))}
-              </div>
-              {/* Day columns with bookings */}
-              {weekDays.map((day, dayIdx) => {
-                const dayBookings = getBookingsForDay(day);
-                return (
-                  <div
-                    key={dayIdx}
-                    className="relative bg-[var(--bf-bg)]"
-                    style={{
-                      minHeight: `${hours.length * 60}px`,
-                    }}
-                  >
-                    {/* Hour rows (visual only) */}
-                    {hours.map((hour) => (
-                      <div
-                        key={hour}
-                        className="border-b border-[var(--bf-border)]/50 min-h-[60px] hover:bg-[var(--bf-bg-elev)] transition-colors cursor-pointer"
-                        onClick={(e) => handleSlotClick(e, day, hour)}
-                      />
-                    ))}
-                    {/* Bookings for this day */}
-                    {dayBookings.map((booking) => {
-                      const position = getBookingPosition(booking);
-
-                      return (
-                        <div
-                          key={booking.id}
-                          style={{
-                            position: "absolute",
-                            left: "4px",
-                            right: "4px",
-                            top: position.top,
-                            height: position.height,
-                            minHeight: "50px",
-                          }}
-                        >
-                          <AppointmentCard
-                            booking={booking}
-                            timezone={timezone}
-                            variant="timeline"
-                            staffColor={booking.staff?.color}
-                            onClick={() => onBookingClick(booking)}
-                            onContextMenu={(e) => onBookingContextMenu?.(e, booking)}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <DesktopWeekListView
+      bookings={bookings}
+      staffList={staffList}
+      timezone={timezone}
+      selectedDate={selectedDate}
+      staffColorById={staffColorById}
+      bookingsByDay={bookingsByDay}
+      onBookingClick={onBookingClick}
+      onBookingContextMenu={onBookingContextMenu}
+      mobileSelectedStaffId={mobileSelectedStaffId ?? null}
+      onMobileStaffChange={onMobileStaffChange}
+      bookingCounts={bookingCounts}
+      onDateChange={onDateChange}
+      onNewBooking={onNewBooking}
+    />
   );
 }, (prevProps, nextProps) => {
   return (
@@ -355,9 +246,407 @@ export const WeekView = React.memo(function WeekView({
     prevProps.onPopoverShow === nextProps.onPopoverShow &&
     prevProps.onBookingContextMenu === nextProps.onBookingContextMenu &&
     prevProps.mobileToolbar === nextProps.mobileToolbar &&
-    prevProps.onDateChange === nextProps.onDateChange
+    prevProps.onDateChange === nextProps.onDateChange &&
+    prevProps.onNewBooking === nextProps.onNewBooking
   );
 });
+
+// ─── DesktopWeekListView — tira de días + lista de citas detallada ──────────
+interface DesktopWeekListViewProps {
+  bookings: Booking[];
+  staffList: Staff[];
+  timezone: string;
+  selectedDate: string;
+  staffColorById: Map<string, string>;
+  bookingsByDay: Map<string, Booking[]>;
+  onBookingClick: (booking: Booking) => void;
+  onBookingContextMenu?: (e: React.MouseEvent, booking: Booking) => void;
+  mobileSelectedStaffId: string | null;
+  onMobileStaffChange?: (staffId: string | null) => void;
+  bookingCounts?: Record<string, number>;
+  onDateChange?: (date: string) => void;
+  onNewBooking?: () => void;
+}
+
+function DesktopWeekListView({
+  bookings,
+  staffList,
+  timezone,
+  selectedDate,
+  staffColorById,
+  bookingsByDay,
+  onBookingClick,
+  onBookingContextMenu,
+  mobileSelectedStaffId,
+  onMobileStaffChange,
+  bookingCounts,
+  onDateChange,
+  onNewBooking,
+}: DesktopWeekListViewProps) {
+  const today = startOfToday();
+  const PAST_DAYS = 60;
+  const FUTURE_DAYS = 180;
+
+  const allDays = useMemo(() => {
+    return Array.from({ length: PAST_DAYS + FUTURE_DAYS + 1 }, (_, i) =>
+      addDays(today, i - PAST_DAYS)
+    );
+  }, [today]);
+
+  const [selectedDay, setSelectedDay] = useState<string>(() => selectedDate || format(today, "yyyy-MM-dd"));
+
+  const stripRef = useRef<HTMLDivElement>(null);
+  const todayBtnRef = useRef<HTMLButtonElement>(null);
+  const listScrollRef = useRef<HTMLDivElement>(null);
+  const [listScrollTop, setListScrollTop] = useState(0);
+  const listScrolled = listScrollTop > 2;
+
+  useEffect(() => { setListScrollTop(0); listScrollRef.current?.scrollTo({ top: 0 }); }, [selectedDay]);
+
+  useEffect(() => {
+    if (!selectedDate) return;
+    setSelectedDay((prev) => {
+      if (prev === selectedDate) return prev;
+      requestAnimationFrame(() => scrollDayChipIntoView(stripRef.current, selectedDate));
+      return selectedDate;
+    });
+  }, [selectedDate]);
+
+  // Scroll to today on mount
+  useEffect(() => {
+    let cancelled = false;
+    const strip = stripRef.current;
+    const todayEl = todayBtnRef.current;
+    if (!strip || !todayEl) return;
+    const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
+    const run = () => {
+      if (cancelled) return;
+      const finalLeft = Math.max(0, todayEl.offsetLeft - 8);
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { strip.scrollLeft = finalLeft; return; }
+      const approxChip = 64;
+      const jumpDays = 20;
+      const maxScroll = Math.max(0, strip.scrollWidth - strip.clientWidth);
+      const startLeft = Math.min(finalLeft + jumpDays * approxChip, maxScroll);
+      strip.scrollLeft = startLeft;
+      const duration = 520;
+      const from = startLeft;
+      const to = finalLeft;
+      const t0 = performance.now();
+      const tick = (now: number) => {
+        if (cancelled) return;
+        const u = Math.min(1, (now - t0) / duration);
+        strip.scrollLeft = from + (to - from) * easeOutCubic(u);
+        if (u < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    };
+    const raf = requestAnimationFrame(() => requestAnimationFrame(run));
+    return () => { cancelled = true; cancelAnimationFrame(raf); };
+  }, []);
+
+  const activeStaffId = mobileSelectedStaffId === null
+    ? null
+    : staffList.some((s) => s.id === mobileSelectedStaffId) ? mobileSelectedStaffId : staffList[0]?.id ?? null;
+
+  const dayBookingsAll = useMemo(() => {
+    return bookings.filter((b) => {
+      const local = new Date(new Date(b.starts_at).toLocaleString("en-US", { timeZone: timezone }));
+      return format(local, "yyyy-MM-dd") === selectedDay;
+    });
+  }, [bookings, selectedDay, timezone]);
+
+  const dayBookings = activeStaffId
+    ? dayBookingsAll.filter((b) => b.staff_id === activeStaffId)
+    : dayBookingsAll;
+
+  const countByDay = useMemo(() => {
+    const map: Record<string, number> = {};
+    bookings.forEach((b) => {
+      const local = new Date(new Date(b.starts_at).toLocaleString("en-US", { timeZone: timezone }));
+      const k = format(local, "yyyy-MM-dd");
+      map[k] = (map[k] ?? 0) + 1;
+    });
+    return map;
+  }, [bookings, timezone]);
+
+  const stripDateBounds = useMemo(() => ({
+    min: format(allDays[0], "yyyy-MM-dd"),
+    max: format(allDays[allDays.length - 1], "yyyy-MM-dd"),
+  }), [allDays]);
+
+  const selectedDayLabel = useMemo(() => {
+    const raw = new Intl.DateTimeFormat("es-ES", {
+      weekday: "long", day: "numeric", month: "long",
+    }).format(new Date(selectedDay + "T12:00:00"));
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
+  }, [selectedDay]);
+
+  const totalRevenue = useMemo(() => {
+    return dayBookings.reduce((sum, b) => sum + (b.service?.price_cents ?? 0), 0) / 100;
+  }, [dayBookings]);
+
+  const dayStatsLine = dayBookings.length === 0
+    ? "Sin citas"
+    : `${dayBookings.length} cita${dayBookings.length !== 1 ? "s" : ""}${totalRevenue > 0 ? ` · ${totalRevenue.toFixed(0)}€` : ""}`;
+
+  // Per-staff booking counts for the selected day (for staff pill badges)
+  const bookingCountsByStaffForDay = useMemo(() => {
+    const map: Record<string, number> = {};
+    dayBookingsAll.forEach((b) => {
+      if (b.staff_id) map[b.staff_id] = (map[b.staff_id] ?? 0) + 1;
+    });
+    return map;
+  }, [dayBookingsAll]);
+
+  // "EN CURSO" / "PRÓXIMO" indicators — computed at render time for today's appointments
+  const nowIndicator = useMemo(() => {
+    const todayKey = format(today, "yyyy-MM-dd");
+    if (selectedDay !== todayKey) return { currentId: null, nextId: null };
+    const nowMs = Date.now();
+    const sorted = [...dayBookings].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
+    let currentId: string | null = null;
+    let nextId: string | null = null;
+    for (const b of sorted) {
+      const start = new Date(b.starts_at).getTime();
+      const end = new Date(b.ends_at).getTime();
+      if (start <= nowMs && nowMs <= end && !currentId) {
+        currentId = b.id;
+      } else if (start > nowMs && !nextId) {
+        nextId = b.id;
+      }
+    }
+    return { currentId, nextId };
+  }, [dayBookings, selectedDay, today]);
+
+  return (
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden bg-[var(--bf-bg)]">
+      {/* Toolbar: day summary + staff selector + date picker — single row */}
+      <div className="flex-shrink-0 border-b border-[var(--bf-border)]/50 bg-[var(--bf-bg)] px-4 py-2 flex items-center gap-3 min-h-[44px]">
+        {/* Day stats (left, shrink-proof) */}
+        <div className="flex-shrink-0 flex items-center gap-1.5">
+          <span className="text-xs font-medium text-[var(--bf-ink-300)]">{dayStatsLine}</span>
+        </div>
+
+        {/* Separator */}
+        <div className="w-px h-4 flex-shrink-0 bg-[var(--bf-border)]/60" />
+
+        {/* Staff filter (scrollable flex region) */}
+        {staffList.length > 1 ? (
+          <div className="flex-1 flex items-center gap-2 overflow-x-auto scrollbar-hide min-w-0">
+            <button
+              type="button"
+              onClick={() => onMobileStaffChange?.(null)}
+              className={cn(
+                "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150",
+                activeStaffId === null
+                  ? "bg-[var(--bf-primary)] text-[var(--bf-ink)]"
+                  : "bg-[var(--bf-bg-elev)] text-[var(--bf-ink-400)] hover:text-[var(--bf-ink-50)] border border-[var(--bf-border)]"
+              )}
+            >
+              Todos
+            </button>
+            {staffList.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => onMobileStaffChange?.(s.id)}
+                className={cn(
+                  "flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150",
+                  activeStaffId === s.id
+                    ? "bg-[var(--bf-primary)] text-[var(--bf-ink)]"
+                    : "bg-[var(--bf-bg-elev)] text-[var(--bf-ink-400)] hover:text-[var(--bf-ink-50)] border border-[var(--bf-border)]"
+                )}
+              >
+                <div
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: staffColorById.get(s.id) ?? "var(--bf-primary)" }}
+                />
+                {s.name}
+                {bookingCountsByStaffForDay[s.id] ? (
+                  <span className={cn(
+                    "ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold",
+                    activeStaffId === s.id ? "bg-black/20 text-white" : "bg-[var(--bf-primary)]/15 text-[var(--bf-primary)]"
+                  )}>
+                    {bookingCountsByStaffForDay[s.id]}
+                  </span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="flex-1" />
+        )}
+
+        {/* Date picker icon */}
+        <motion.label
+          whileTap={{ scale: 0.94 }}
+          className="relative flex h-8 w-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-[var(--r-md)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] transition-colors hover:bg-[var(--bf-surface)]"
+        >
+          <Calendar className="pointer-events-none h-3.5 w-3.5 text-[var(--bf-ink-400)]" aria-hidden />
+          <input
+            type="date"
+            min={stripDateBounds.min}
+            max={stripDateBounds.max}
+            value={selectedDay}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (!v) return;
+              setSelectedDay(v);
+              onDateChange?.(v);
+              requestAnimationFrame(() => scrollDayChipIntoView(stripRef.current, v));
+            }}
+            className="absolute inset-0 cursor-pointer opacity-0"
+            style={{ fontSize: 16 }}
+            aria-label="Ir a una fecha"
+          />
+        </motion.label>
+      </div>
+
+      {/* Day strip */}
+      <div
+        ref={stripRef}
+        className="relative z-20 flex flex-shrink-0 gap-1.5 overflow-x-auto border-b border-[var(--bf-border)]/50 bg-[var(--bf-bg)] px-3 py-2 scrollbar-hide"
+      >
+        {allDays.map((day) => {
+          const dayKey = format(day, "yyyy-MM-dd");
+          const todayKey = format(today, "yyyy-MM-dd");
+          const isSelected = dayKey === selectedDay;
+          const isToday = dayKey === todayKey;
+          const count = countByDay[dayKey] ?? 0;
+
+          return (
+            <button
+              key={dayKey}
+              ref={isToday ? todayBtnRef : undefined}
+              type="button"
+              data-day={dayKey}
+              onClick={() => {
+                setSelectedDay(dayKey);
+                onDateChange?.(dayKey);
+                scrollDayChipIntoView(stripRef.current, dayKey);
+              }}
+              className="flex-shrink-0 flex flex-col items-center gap-0.5 rounded-[var(--r-md)] px-3 py-1.5 min-w-[52px] transition-all duration-150 relative"
+              style={
+                isSelected
+                  ? { backgroundColor: "var(--bf-primary)", border: "none" }
+                  : isToday
+                  ? { backgroundColor: "rgba(79,161,216,0.10)", border: "1px solid rgba(79,161,216,0.35)" }
+                  : { backgroundColor: "transparent", border: "1px solid transparent" }
+              }
+            >
+              <span
+                className="text-[10px] font-medium uppercase tracking-[0.08em]"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  color: isSelected ? "var(--bf-ink)" : isToday ? "var(--bf-primary)" : "var(--bf-ink-400)",
+                }}
+              >
+                {new Intl.DateTimeFormat("es-ES", { weekday: "short" }).format(day).slice(0, 2)}
+              </span>
+              <span
+                className="text-[17px] font-bold leading-none"
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  letterSpacing: "-0.02em",
+                  color: isSelected ? "var(--bf-ink)" : isToday ? "var(--bf-primary)" : "var(--bf-ink-50)",
+                }}
+              >
+                {format(day, "d")}
+              </span>
+              {count > 0 && (
+                <span
+                  className="text-[9px] font-bold leading-none px-1.5 py-0.5 rounded-full mt-0.5"
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    backgroundColor: isSelected ? "rgba(5,7,10,0.25)" : "rgba(79,161,216,0.15)",
+                    color: isSelected ? "var(--bf-ink)" : "var(--bf-primary)",
+                  }}
+                >
+                  {count}
+                </span>
+              )}
+              {isToday && !isSelected && (
+                <div className="absolute bottom-1 w-1 h-1 rounded-full" style={{ backgroundColor: "var(--bf-primary)" }} />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Appointment list */}
+      <div className="relative z-0 flex min-h-0 min-w-0 flex-1 flex-col">
+        <div
+          className={cn(
+            "pointer-events-none absolute left-0 right-0 z-10 -top-px bg-gradient-to-b from-[var(--bf-bg)] via-[var(--bf-bg)]/90 to-transparent transition-[height,opacity] duration-200 ease-out",
+            listScrolled ? "h-7 opacity-100" : "h-0 opacity-0"
+          )}
+          aria-hidden
+        />
+        <div
+          ref={listScrollRef}
+          className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain px-4 pb-4 pt-3 scrollbar-hide"
+          onScroll={(e) => setListScrollTop(e.currentTarget.scrollTop)}
+        >
+          {dayBookings.length > 0 ? (
+            <div className="space-y-2">
+              {dayBookings
+                .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
+                .map((booking) => {
+                  const isNow = nowIndicator.currentId === booking.id;
+                  const isNext = !nowIndicator.currentId && nowIndicator.nextId === booking.id;
+                  return (
+                    <div key={booking.id}>
+                      {isNow && (
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <div className="h-px flex-1 bg-[var(--bf-primary)]/20" />
+                          <span className="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-[rgba(79,161,216,0.15)] text-[var(--bf-primary)] border border-[rgba(79,161,216,0.3)] whitespace-nowrap">
+                            ● EN CURSO
+                          </span>
+                          <div className="h-px flex-1 bg-[var(--bf-primary)]/20" />
+                        </div>
+                      )}
+                      {isNext && (
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <div className="h-px flex-1 bg-[var(--bf-border)]/50" />
+                          <span className="text-[10px] font-semibold tracking-wider px-2 py-0.5 rounded-full bg-[var(--bf-bg-elev)] text-[var(--bf-ink-400)] border border-[var(--bf-border)] whitespace-nowrap">
+                            PRÓXIMO
+                          </span>
+                          <div className="h-px flex-1 bg-[var(--bf-border)]/50" />
+                        </div>
+                      )}
+                      <AppointmentCard
+                        booking={booking}
+                        timezone={timezone}
+                        variant="desktop-list"
+                        staffColor={
+                          booking.staff_id
+                            ? staffColorById.get(booking.staff_id)
+                            : (booking.staff?.color ?? null)
+                        }
+                        onClick={() => onBookingClick(booking)}
+                        onContextMenu={(e) => onBookingContextMenu?.(e, booking)}
+                      />
+                    </div>
+                  );
+                })}
+            </div>
+          ) : (
+            <div className="flex h-full min-h-[12rem] items-center justify-center py-8">
+              <GlassEmptyState
+                icon={Calendar}
+                title="Sin citas para hoy"
+                description="La agenda está libre para este día."
+                actionLabel="+ Nueva cita"
+                onAction={onNewBooking}
+                variant="default"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── MobileWeekView — infinite horizontal day strip ─────────────────────────
 // Genera PAST_DAYS días antes de hoy y FUTURE_DAYS días después.

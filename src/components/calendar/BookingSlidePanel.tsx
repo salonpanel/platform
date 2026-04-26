@@ -156,7 +156,13 @@ export function BookingSlidePanel({
 
   if (!booking) return null;
 
-  const formattedDate = formatInTenantTz(booking.starts_at, timezone, "EEEE, d 'de' MMMM");
+  const formattedDate = (() => {
+    const raw = new Intl.DateTimeFormat("es-ES", {
+      weekday: "long", day: "numeric", month: "long",
+      timeZone: timezone,
+    }).format(new Date(booking.starts_at));
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
+  })();
   const formattedStartTime = formatInTenantTz(booking.starts_at, timezone, 'HH:mm');
   const formattedEndTime = formatInTenantTz(booking.ends_at, timezone, 'HH:mm');
 
@@ -303,7 +309,7 @@ export function BookingSlidePanel({
                       Fecha y hora
                     </p>
                     <p
-                      className="text-sm font-medium capitalize"
+                      className="text-sm font-medium"
                       style={{ color: 'var(--bf-ink-50)' }}
                     >
                       {formattedDate}
@@ -495,14 +501,24 @@ export function BookingSlidePanel({
               )}
 
               {onBookingStateChange && presentation.bookingState !== "completed" && presentation.bookingState !== "cancelled" && presentation.bookingState !== "no_show" && (
-                <button
-                  onClick={() => applyBookingState("completed")}
-                  disabled={statusLoading !== null}
-                  className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: 'rgba(79,161,216,0.15)', color: '#4FA1D8', border: '1px solid rgba(79,161,216,0.3)' }}
-                >
-                  ✓ Marcar cita como completada
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => applyBookingState("completed")}
+                    disabled={statusLoading !== null}
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: 'rgba(79,161,216,0.15)', color: '#4FA1D8', border: '1px solid rgba(79,161,216,0.3)' }}
+                  >
+                    {statusLoading === "completed" ? "Guardando..." : "✓ Completada"}
+                  </button>
+                  <button
+                    onClick={() => applyBookingState("no_show")}
+                    disabled={statusLoading !== null}
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: 'rgba(224,96,114,0.10)', color: '#E06072', border: '1px solid rgba(224,96,114,0.30)' }}
+                  >
+                    {statusLoading === "no_show" ? "Guardando..." : "✗ No vino"}
+                  </button>
+                </div>
               )}
 
               {/* Edit + Cancel row */}

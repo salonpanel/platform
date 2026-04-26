@@ -13,7 +13,7 @@ interface AppointmentCardProps {
   compact?: boolean;
   onClick?: () => void;
   onContextMenu?: (e: React.MouseEvent) => void;
-  variant?: "timeline" | "list" | "grid";
+  variant?: "timeline" | "list" | "grid" | "desktop-list";
   showStatus?: boolean;
   showPrice?: boolean;
   className?: string;
@@ -228,6 +228,104 @@ export function AppointmentCard({
             </div>
           )}
         </div>
+      </motion.div>
+    );
+  }
+
+  // Desktop-list variant: single horizontal row with full detail
+  if (variant === "desktop-list") {
+    const durationMin = booking.service?.duration_min
+      ?? Math.round((new Date(booking.ends_at).getTime() - new Date(booking.starts_at).getTime()) / 60000);
+
+    return (
+      <motion.div
+        {...getMotionSafeProps({
+          initial: { opacity: 0, y: 6 },
+          animate: { opacity: 1, y: 0 },
+          whileHover: interactionPresets.appointmentCard.hover,
+          whileTap: interactionPresets.appointmentCard.tap,
+        })}
+        onClick={onClick}
+        onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(e); }}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick?.(); } }}
+        tabIndex={0}
+        role="button"
+        className={cn(baseClasses, "px-4 py-3 flex items-center gap-4 min-h-[60px]")}
+        style={cardStyle}
+        aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime}`}
+      >
+        {/* Time + duration */}
+        <div className="flex-shrink-0 w-[110px]">
+          <div className="text-sm font-mono font-semibold text-[var(--bf-primary)]">
+            {startTime} <span className="text-[var(--bf-ink-400)]">-</span> {endTime}
+          </div>
+          <div className="text-[11px] text-[var(--bf-ink-400)] mt-0.5">
+            {durationMin} min
+          </div>
+        </div>
+
+        {/* Customer */}
+        <div className="flex-shrink-0 w-[190px] min-w-0">
+          <div className="text-sm font-semibold text-[var(--bf-ink-50)] truncate">
+            {booking.customer?.name || "Sin cliente"}
+          </div>
+          {booking.customer?.phone && (
+            <div className="text-[11px] text-[var(--bf-ink-400)] truncate mt-0.5">
+              {booking.customer.phone}
+            </div>
+          )}
+        </div>
+
+        {/* Service */}
+        <div className="flex-1 min-w-0">
+          <div className="text-sm text-[var(--bf-ink-200)] truncate">
+            {booking.service?.name || "Sin servicio"}
+          </div>
+          {booking.staff?.name && (
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <div
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: accentColor }}
+              />
+              <span className="text-[11px] text-[var(--bf-ink-400)] truncate">
+                {booking.staff.name}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Status badges */}
+        <div className="flex-shrink-0 flex items-center gap-2">
+          <span
+            className="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap"
+            style={{
+              backgroundColor: presentation.bookingStateConfig.legendBg,
+              color: presentation.bookingStateConfig.legendColor,
+              border: `1px solid ${presentation.bookingStateConfig.legendBorder}`,
+            }}
+          >
+            {presentation.bookingStateConfig.label}
+          </span>
+          <span
+            className="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap"
+            style={{
+              backgroundColor: presentation.paymentStatusConfig.legendBg,
+              color: presentation.paymentStatusConfig.legendColor,
+              border: `1px solid ${presentation.paymentStatusConfig.legendBorder}`,
+            }}
+          >
+            {presentation.paymentStatusConfig.shortLabel}
+          </span>
+        </div>
+
+        {/* Price */}
+        {booking.service?.price_cents != null && (
+          <div className="flex-shrink-0 w-[60px] text-right">
+            <span className="text-sm font-semibold text-[var(--bf-ink-50)]">
+              {(booking.service.price_cents / 100).toFixed(0)}€
+            </span>
+          </div>
+        )}
       </motion.div>
     );
   }

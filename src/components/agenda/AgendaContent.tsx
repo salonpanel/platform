@@ -198,7 +198,7 @@ export function AgendaContent({
             className="flex min-h-0 flex-1 flex-col overflow-hidden"
           >
             <AnimatePresence mode="wait">
-              {loading ? (
+              {loading && staffList.length === 0 ? (
                 <motion.div
                   key="loading-skeleton"
                   initial={{ opacity: 0 }}
@@ -324,11 +324,12 @@ export function AgendaContent({
                             onBookingContextMenu={onBookingContextMenu}
                             staffSchedules={staffSchedules}
                             staffBlockings={staffBlockings}
-                            mobileSelectedStaffId={isMobile ? mobileSelectedStaffId : null}
-                            onMobileStaffChange={isMobile ? (id) => setMobileSelectedStaffId(id) : undefined}
+                            mobileSelectedStaffId={mobileSelectedStaffId}
+                            onMobileStaffChange={(id) => setMobileSelectedStaffId(id)}
                             bookingCounts={isMobile ? bookingCountsByStaff : undefined}
                             mobileToolbar={isMobile ? mobileToolbar ?? undefined : undefined}
                             onDateChange={onDateChange}
+                            onNewBooking={onNewBooking}
                           />
                         ) : (
                           <div className="h-full flex items-center justify-center p-8">

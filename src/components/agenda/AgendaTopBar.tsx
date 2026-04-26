@@ -70,7 +70,7 @@ export function AgendaTopBar({
     const date = parseISO(selectedDate);
     const ops = {
       day: { prev: subDays, next: addDays },
-      week: { prev: subWeeks, next: addWeeks },
+      week: { prev: subDays, next: addDays },
       month: { prev: subMonths, next: addMonths },
       list: { prev: subDays, next: addDays },
     };
@@ -92,7 +92,7 @@ export function AgendaTopBar({
       case "day":
         return `${WEEKDAYS[date.getDay()]}, ${date.getDate()} ${MONTHS_LONG[date.getMonth()]}`;
       case "week":
-        return `Semana del ${date.getDate()} ${MONTHS_SHORT[date.getMonth()]}`;
+        return `${WEEKDAYS[date.getDay()]}, ${date.getDate()} ${MONTHS_SHORT[date.getMonth()]}`;
       case "month":
         return `${MONTHS_LONG[date.getMonth()].charAt(0).toUpperCase() + MONTHS_LONG[date.getMonth()].slice(1)} ${date.getFullYear()}`;
       case "list":
@@ -216,24 +216,7 @@ export function AgendaTopBar({
             onFiltersChange={onFiltersChange}
           />
 
-          <div className="flex items-center rounded-[var(--r-full)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] p-0.5 gap-0.5 flex-shrink-0">
-            {VIEW_MODES.map((mode) => (
-              <motion.button
-                key={mode.key}
-                type="button"
-                whileTap={{ scale: 0.95 }}
-                onClick={() => onViewModeChange(mode.key)}
-                className={cn(
-                  "px-2.5 py-1 rounded-[10px] text-xs font-medium transition-all duration-150",
-                  viewMode === mode.key
-                    ? "bg-[var(--bf-ink-50)] text-[var(--bf-ink)]"
-                    : "text-[var(--bf-ink-400)] hover:text-[var(--bf-ink-100)]"
-                )}
-              >
-                {mode.short}
-              </motion.button>
-            ))}
-          </div>
+          {/* View mode selector hidden — desktop now always uses the day-list view */}
         </div>
       </div>
     </motion.div>
