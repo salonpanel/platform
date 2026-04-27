@@ -70,6 +70,14 @@ export function SheetModalFrame({
 }: SheetModalFrameProps) {
   const reduceMotion = useReducedMotion();
   const [mounted, setMounted] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   const dragControls = useDragControls();
   const innerRef = useRef<HTMLDivElement | null>(null);
 
@@ -110,15 +118,31 @@ export function SheetModalFrame({
     [allowDragDismiss, reduceMotion, onClose]
   );
 
-  const dragEnabled = allowDragDismiss && !reduceMotion;
+  const dragEnabled = allowDragDismiss && !reduceMotion && !isDesktop;
 
   const backdropTransition = reduceMotion
     ? { duration: 0.08 }
     : { duration: 0.2, ease: BF_EASE_OUT };
 
   const sheetTransition = reduceMotion
-    ? { duration: 0.2, ease: "easeOut" as const }
+    ? { duration: 0.15, ease: "easeOut" as const }
+    : isDesktop
+    ? { duration: 0.18, ease: [0.22, 1, 0.36, 1] as const }
     : { ...BF_MODAL_SPRING, damping: 34, stiffness: 360 };
+
+  const sheetInitial = reduceMotion
+    ? { opacity: 0 }
+    : isDesktop
+    ? { opacity: 0, scale: 0.96, y: 10 }
+    : { y: "100%" };
+
+  const sheetAnimate = reduceMotion ? { opacity: 1 } : isDesktop ? { opacity: 1, scale: 1, y: 0 } : { y: 0 };
+
+  const sheetExit = reduceMotion
+    ? { opacity: 0 }
+    : isDesktop
+    ? { opacity: 0, scale: 0.96, y: 10 }
+    : { y: "100%" };
 
   if (!mounted) return null;
 
@@ -143,7 +167,10 @@ export function SheetModalFrame({
             onClick={() => backdropHandler()}
           />
 
-          <div className="absolute inset-0 flex items-end justify-center p-0 pointer-events-none">
+          <div className={cn(
+            "absolute inset-0 flex justify-center p-0 pointer-events-none",
+            isDesktop ? "items-center p-4" : "items-end"
+          )}>
             <motion.div
               ref={setRefs}
               role="dialog"
@@ -151,9 +178,9 @@ export function SheetModalFrame({
               aria-labelledby={titleId}
               aria-describedby={ariaDescribedBy}
               tabIndex={-1}
-              initial={reduceMotion ? { opacity: 0 } : { y: "100%" }}
-              animate={reduceMotion ? { opacity: 1 } : { y: 0 }}
-              exit={reduceMotion ? { opacity: 0 } : { y: "100%" }}
+              initial={sheetInitial}
+              animate={sheetAnimate}
+              exit={sheetExit}
               transition={sheetTransition}
               drag={dragEnabled ? "y" : false}
               dragControls={dragEnabled ? dragControls : undefined}
@@ -166,14 +193,19 @@ export function SheetModalFrame({
               className={cn(
                 "pointer-events-auto flex w-full min-h-0 flex-col",
                 "bg-[var(--bf-surface)] shadow-[var(--bf-shadow-card)]",
-                "rounded-t-[var(--r-xl)] border-t border-[var(--bf-border)]",
-                "max-h-[min(88dvh,calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)-1rem))]",
+                isDesktop
+                  ? "rounded-[var(--r-xl)] border border-[var(--bf-border)]"
+                  : "rounded-t-[var(--r-xl)] border-t border-[var(--bf-border)]",
+                isDesktop
+                  ? "max-h-[min(88dvh,52rem)]"
+                  : "max-h-[min(88dvh,calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)-1rem))]",
                 SIZE_MAX[size],
                 "outline-none",
                 sheetClassName
               )}
             >
-              {showDragHandle && dragEnabled && (
+              {/* Drag handle — only on mobile */}
+              {!isDesktop && showDragHandle && dragEnabled && (
                 <div className="flex shrink-0 justify-center pt-2 pb-1">
                   <button
                     type="button"
@@ -189,7 +221,7 @@ export function SheetModalFrame({
                   </button>
                 </div>
               )}
-              {showDragHandle && !dragEnabled && (
+              {!isDesktop && showDragHandle && !dragEnabled && (
                 <div
                   className="flex shrink-0 justify-center pt-2 pb-1"
                   aria-hidden

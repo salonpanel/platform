@@ -55,6 +55,8 @@ interface AgendaContentProps {
   onSlotAbsence?: (slot: { staffId: string; date: string; time: string }) => void;
   /** En móvil, acciones de agenda en la barra superior de WeekView (junto al selector de staff) */
   mobileToolbar?: MobileAgendaToolbarProps | null;
+  /** Ocultar el FAB de nueva cita cuando hay algún modal abierto */
+  isSomeModalOpen?: boolean;
 }
 
 /**
@@ -88,6 +90,7 @@ export function AgendaContent({
   onSlotBlock,
   onSlotAbsence,
   mobileToolbar = null,
+  isSomeModalOpen = false,
 }: AgendaContentProps) {
   // Phase 2: Mobile-first responsive viewport detection
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -386,8 +389,8 @@ export function AgendaContent({
             </AnimatePresence>
           </motion.div>
 
-          {/* FAB nueva cita: solo desktop; en móvil: pulsación larga en el botón central de la barra (Agenda) */}
-          {!isMobile && (
+          {/* FAB nueva cita: solo desktop, oculto cuando hay algún modal abierto */}
+          {!isMobile && !isSomeModalOpen && (
             <UiFab
               onClick={onNewBooking}
               label="Nueva cita"

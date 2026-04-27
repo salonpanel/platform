@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { AgendaTopBar } from "@/components/agenda/AgendaTopBar";
 import { AgendaFilters } from "@/components/agenda/AgendaFilters";
+import { AgendaSearchResults } from "@/components/agenda/AgendaSearchResults";
 import { AgendaContent } from "@/components/agenda/AgendaContent";
 import { NotificationsPanel } from "@/components/calendar/NotificationsPanel";
 import { BookingActionPopover } from "@/components/calendar/BookingActionPopover";
@@ -389,8 +390,20 @@ export default function AgendaPageClient({
           hideStaff={viewMode === "week"}
         />
 
-        {/* Calendar content — flex column para que el hijo flex-1 tenga altura acotada y el scroll (lista de citas) funcione */}
-        <div className="mt-0 flex min-h-0 flex-1 flex-col md:mt-1">
+        {/* Calendar content — search results overlay or normal view */}
+        <div className="mt-0 flex min-h-0 flex-1 flex-col md:mt-1 relative">
+          {/* Search results — shown whenever there's an active search term */}
+          {searchOpen && debouncedSearchTerm.trim() ? (
+            <AgendaSearchResults
+              term={debouncedSearchTerm}
+              bookings={bookings}
+              timezone={tenantTimezone}
+              onBookingClick={handleBookingClick}
+              onContextMenu={handleBookingContextMenu}
+            />
+          ) : null}
+          {/* Normal agenda view — hidden (not unmounted) when searching to preserve state */}
+          <div className={searchOpen && debouncedSearchTerm.trim() ? "hidden" : "flex min-h-0 flex-1 flex-col"}>
           <AgendaContent
             viewMode={viewMode}
             onViewModeChange={setViewMode}
@@ -418,7 +431,16 @@ export default function AgendaPageClient({
             onSlotBlock={(slot) => handleSlotBlock(slot, "block")}
             onSlotAbsence={(slot) => handleSlotBlock(slot, "absence")}
             mobileToolbar={mobileToolbar}
+            isSomeModalOpen={
+              modals.showNewBookingModal ||
+              modals.showBookingDetail ||
+              modals.showBlockingModal ||
+              !!slotPopover?.open ||
+              !!bookingPopover?.open ||
+              notificationsOpen
+            }
           />
+          </div>
         </div>
 
         {/* Notifications panel */}

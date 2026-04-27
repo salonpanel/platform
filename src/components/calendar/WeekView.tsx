@@ -477,12 +477,15 @@ function DesktopWeekListView({
           <div className="flex-1" />
         )}
 
-        {/* Date picker icon */}
+        {/* Date label + picker — shows selected day name alongside calendar icon */}
         <motion.label
-          whileTap={{ scale: 0.94 }}
-          className="relative flex h-8 w-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-[var(--r-md)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] transition-colors hover:bg-[var(--bf-surface)]"
+          whileTap={{ scale: 0.97 }}
+          className="relative flex flex-shrink-0 cursor-pointer items-center gap-1.5 h-8 rounded-[var(--r-md)] border border-[var(--bf-border)] bg-[var(--bf-bg-elev)] transition-colors hover:bg-[var(--bf-surface)] px-2.5"
         >
-          <Calendar className="pointer-events-none h-3.5 w-3.5 text-[var(--bf-ink-400)]" aria-hidden />
+          <Calendar className="pointer-events-none h-3.5 w-3.5 flex-shrink-0 text-[var(--bf-ink-400)]" aria-hidden />
+          <span className="pointer-events-none text-xs font-medium text-[var(--bf-ink-200)] whitespace-nowrap">
+            {selectedDayLabel}
+          </span>
           <input
             type="date"
             min={stripDateBounds.min}

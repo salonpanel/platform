@@ -43,14 +43,12 @@ export const interactionPresets = {
   // Appointment card interactions
   appointmentCard: {
     hover: {
-      scale: 1.02,
-      y: -2,
-      boxShadow: "0px 4px 20px rgba(79,161,216,0.25), inset 0px 1px 0px rgba(255,255,255,0.1)",
-      transition: { duration: 0.15 }
+      boxShadow: "0 0 0 1.5px rgba(79,161,216,0.40)",
+      transition: { duration: 0.1 }
     },
     tap: {
-      scale: 0.98,
-      transition: { duration: 0.1 }
+      scale: 0.99,
+      transition: { duration: 0.08 }
     },
     drag: {
       scale: 1.05,
