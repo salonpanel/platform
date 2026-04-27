@@ -11,7 +11,7 @@ const BookingUpdateSchema = z
     // Legacy single status
     status: z.enum(["hold", "pending", "confirmed", "paid", "completed", "cancelled", "no_show"] as const).optional(),
     // New dual-state model
-    booking_state: z.enum(["pending", "confirmed", "in_progress", "completed", "cancelled", "no_show"] as const).optional(),
+    booking_state: z.enum(["pending", "confirmed", "arrived", "in_progress", "completed", "cancelled", "no_show"] as const).optional(),
     payment_status: z.enum(["unpaid", "deposit", "paid"] as const).optional(),
   })
   .refine((v) => Boolean(v.status || v.booking_state || v.payment_status), {
@@ -24,6 +24,8 @@ function deriveLegacyStatus(input: { booking_state: BookingState; payment_status
   if (booking_state === "no_show") return "no_show";
   if (booking_state === "completed") return "completed";
   if (payment_status === "paid") return "paid";
+  if (booking_state === "in_progress") return "confirmed";
+  if (booking_state === "arrived") return "confirmed";
   if (booking_state === "confirmed") return "confirmed";
   return "pending";
 }

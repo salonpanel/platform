@@ -725,3 +725,18 @@ select option {
     opacity: 0;
   }
 }
+
+/* ============================================================================
+   Booking card live state animations
+   ============================================================================ */
+@keyframes bf-warn-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(245,158,11,0.25); }
+  50%       { box-shadow: 0 0 0 4px rgba(245,158,11,0.55); }
+}
+.bf-card-late-pulse {
+  animation: bf-warn-pulse 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bf-card-late-pulse { animation: none; }
+}

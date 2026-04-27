@@ -18,6 +18,162 @@ interface AppointmentCardProps {
   showPrice?: boolean;
   className?: string;
   staffColor?: string | null;
+  /** Optional override for "now" — defaults to Date.now() at render time */
+  nowMs?: number;
+}
+
+// ─── Live-state helpers ───────────────────────────────────────────────────────
+
+function getDayKey(dateMs: number, timezone: string): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date(dateMs));
+}
+
+interface LiveState {
+  isToday: boolean;
+  isCurrentWindow: boolean; // now is between start and end
+  isLate10: boolean;        // confirmed/pending, >10 min after start
+  isLate20: boolean;        // confirmed/pending, >20 min after start — pulsing
+  isOverdue: boolean;       // past end time, still pending/confirmed (show ¿Vino? badge)
+}
+
+function computeLiveState(booking: Booking, timezone: string, nowMs: number): LiveState {
+  const startMs = new Date(booking.starts_at).getTime();
+  const endMs   = new Date(booking.ends_at).getTime();
+
+  const todayKey   = getDayKey(nowMs, timezone);
+  const bookingDay = getDayKey(startMs, timezone);
+  const isToday    = todayKey === bookingDay;
+
+  const state = (booking.booking_state ?? "pending");
+  const isActionable = state === "pending" || state === "confirmed";
+
+  if (!isToday || !isActionable) {
+    return { isToday, isCurrentWindow: false, isLate10: false, isLate20: false, isOverdue: false };
+  }
+
+  const isCurrentWindow = nowMs >= startMs && nowMs <= endMs;
+  const lateMs          = nowMs > startMs ? nowMs - startMs : 0;
+  const isLate10        = lateMs > 10 * 60_000;
+  const isLate20        = lateMs > 20 * 60_000;
+  const isOverdue       = nowMs > endMs;
+
+  return { isToday, isCurrentWindow, isLate10, isLate20, isOverdue };
+}
+
+// ─── State-based card styles ──────────────────────────────────────────────────
+
+interface CardTokens {
+  bg: string;
+  border: string;
+  text: string;
+  shadow: string;
+  opacity: number;
+}
+
+function getStateTokens(
+  booking: Booking,
+  live: LiveState,
+  staffColor: string | null | undefined,
+): CardTokens {
+  const state = booking.booking_state ?? "pending";
+  const presentation = getBookingPresentation(booking);
+  const fallbackText = presentation.bookingStateConfig.legendColor;
+  const accentColor  = staffColor || fallbackText;
+
+  // Terminal states — dim heavily
+  if (state === "cancelled") {
+    return {
+      bg:      "rgba(60,60,65,0.06)",
+      border:  "rgba(80,85,90,0.40)",
+      text:    "#6B7280",
+      shadow:  "none",
+      opacity: 0.45,
+    };
+  }
+
+  if (state === "completed") {
+    return {
+      bg:      "rgba(80,90,100,0.08)",
+      border:  staffColor ?? "#4B5563",
+      text:    "#6B7280",
+      shadow:  "none",
+      opacity: 0.58,
+    };
+  }
+
+  if (state === "no_show") {
+    return {
+      bg:      "rgba(224,96,114,0.10)",
+      border:  "#E06072",
+      text:    "#E06072",
+      shadow:  "0 1px 4px rgba(224,96,114,0.12)",
+      opacity: 0.60,
+    };
+  }
+
+  // Arrived — client is here waiting (amber warm)
+  if (state === "arrived") {
+    return {
+      bg:      "rgba(245,158,11,0.14)",
+      border:  "#F59E0B",
+      text:    "#F59E0B",
+      shadow:  "0 0 0 1px rgba(245,158,11,0.28)",
+      opacity: 1,
+    };
+  }
+
+  // In-progress — service is happening (violet)
+  if (state === "in_progress") {
+    return {
+      bg:      "rgba(167,139,250,0.14)",
+      border:  "#A78BFA",
+      text:    "#A78BFA",
+      shadow:  "0 0 0 1px rgba(167,139,250,0.28)",
+      opacity: 1,
+    };
+  }
+
+  // Live time-based overrides for pending / confirmed
+  if (live.isLate20) {
+    return {
+      bg:      "rgba(245,158,11,0.14)",
+      border:  "#F59E0B",
+      text:    accentColor,
+      shadow:  "0 0 0 1px rgba(245,158,11,0.30)",
+      opacity: 1,
+    };
+  }
+
+  if (live.isLate10) {
+    return {
+      bg:      "rgba(245,158,11,0.09)",
+      border:  "#F59E0B",
+      text:    accentColor,
+      shadow:  "0 0 0 1px rgba(245,158,11,0.20)",
+      opacity: 1,
+    };
+  }
+
+  if (live.isCurrentWindow) {
+    return {
+      bg:      `${presentation.bookingStateConfig.legendBg}`,
+      border:  fallbackText,
+      text:    accentColor,
+      shadow:  `0 0 0 1px ${fallbackText}28, 0 2px 8px ${fallbackText}18`,
+      opacity: 1,
+    };
+  }
+
+  // Default
+  const rawToken = (theme.statusTokens as Record<string, { bg: string; border: string; text: string; shadow: string } | undefined>)[state] ?? theme.statusTokens.pending;
+  const statusTokens: CardTokens = { ...rawToken, opacity: 1 };
+  return {
+    bg:      statusTokens.bg,
+    border:  accentColor,
+    text:    statusTokens.text,
+    shadow:  `0 1px 6px ${statusTokens.text}12`,
+    opacity: 1,
+  };
 }
 
 /**
@@ -35,70 +191,88 @@ export function AppointmentCard({
   showPrice = false,
   className = "",
   staffColor,
+  nowMs: nowMsProp,
 }: AppointmentCardProps) {
+  const nowMs = nowMsProp ?? Date.now();
   const startTime = formatInTenantTz(booking.starts_at, timezone, "HH:mm");
-  const endTime = formatInTenantTz(booking.ends_at, timezone, "HH:mm");
-  const statusConfig = BOOKING_STATUS_CONFIG[booking.status] || BOOKING_STATUS_CONFIG.pending;
+  const endTime   = formatInTenantTz(booking.ends_at,   timezone, "HH:mm");
+
   const presentation = getBookingPresentation(booking);
+  const live         = computeLiveState(booking, timezone, nowMs);
+  const tokens       = getStateTokens(booking, live, staffColor);
 
-  // Get theme-based status colors with fallbacks for missing statuses
-  const statusTokens = theme.statusTokens?.[presentation.bookingState as keyof typeof theme.statusTokens] || 
-    theme.statusTokens?.pending || {
-      bg: "rgba(255, 193, 7, 0.12)",
-      border: "rgba(255, 193, 7, 0.25)", 
-      text: "#FFC107",
-      shadow: "0px 2px 8px rgba(255, 193, 7, 0.15)"
-    };
-
-  // Base card styling with premium glassmorphism and mobile-first responsive design
   const baseClasses = cn(
     "relative backdrop-blur-md border-l-[3px] rounded-[10px] cursor-pointer",
-    "transition-all duration-200 group",
+    "transition-colors duration-200 group",
     "focus:outline-none focus:ring-2 focus:ring-[rgba(79,161,216,0.4)] focus:ring-offset-2 focus:ring-offset-[var(--bf-bg)]",
-    // Phase 3: Mobile-first responsive improvements
-    "min-h-[44px]", // Ensure 44px minimum tap target (padding handled per variant)
+    "min-h-[44px]",
     variant === "timeline" ? "w-full h-full" : "w-full",
+    live.isLate20 ? "bf-card-late-pulse" : "",
     className
   );
 
-  // Status tinting is primary — staffColor only affects the left border accent
-  const accentColor = staffColor || statusTokens.text;
-  const cardStyle = {
-    background: statusTokens.bg,
-    borderLeftColor: accentColor,
-    boxShadow: `0 1px 6px ${statusTokens.text}12`,
-    borderRadius: "10px",
+  const cardStyle: React.CSSProperties = {
+    background:    tokens.bg,
+    borderLeftColor: tokens.border,
+    boxShadow:     tokens.shadow,
+    borderRadius:  "10px",
+    opacity:       tokens.opacity,
   };
 
-  // Timeline variant (compact for day/week grid cells - progressive disclosure)
+  // Small "¿Vino?" badge for overdue bookings
+  const OverdueBadge = live.isOverdue ? (
+    <span
+      className="absolute top-1 right-1 z-10 inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5
+                 text-[9px] font-bold tracking-wide bg-[rgba(245,158,11,0.20)] text-[#F59E0B]
+                 border border-[rgba(245,158,11,0.45)] pointer-events-none"
+    >
+      ¿Vino?
+    </span>
+  ) : null;
+
+  // Small "retraso" badge (10+ min but not yet 20)
+  const LateBadge = (live.isLate10 && !live.isLate20 && !live.isOverdue) ? (
+    <span
+      className="absolute top-1 right-1 z-10 inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5
+                 text-[9px] font-bold tracking-wide bg-[rgba(245,158,11,0.15)] text-[#F59E0B]
+                 border border-[rgba(245,158,11,0.35)] pointer-events-none"
+    >
+      +10
+    </span>
+  ) : null;
+
+  // "Ha llegado" badge for arrived state
+  const ArrivedBadge = booking.booking_state === "arrived" ? (
+    <span
+      className="absolute top-1 right-1 z-10 inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5
+                 text-[9px] font-bold tracking-wide bg-[rgba(245,158,11,0.20)] text-[#F59E0B]
+                 border border-[rgba(245,158,11,0.45)] pointer-events-none"
+    >
+      Aquí
+    </span>
+  ) : null;
+
+  // ─── Timeline variant ──────────────────────────────────────────────────────
   if (variant === "timeline") {
     return (
       <motion.div
         {...getMotionSafeProps({
           initial: { opacity: 0, scale: 0.97 },
-          animate: { opacity: 1, scale: 1 },
+          animate: { opacity: tokens.opacity, scale: 1 },
           whileHover: interactionPresets.appointmentCard.hover,
           whileTap: interactionPresets.appointmentCard.tap,
         })}
         onClick={onClick}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          onContextMenu?.(e);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onClick?.();
-          }
-        }}
+        onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(e); }}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick?.(); } }}
         tabIndex={0}
         role="button"
         className={baseClasses}
         style={cardStyle}
         aria-label={`${startTime} - ${booking.customer?.name || "Sin cliente"} - ${booking.service?.name || "Sin servicio"}`}
       >
+        {OverdueBadge ?? ArrivedBadge ?? LateBadge}
         <div className="h-full flex flex-col justify-center px-2.5 py-1 gap-0.5 min-w-0 overflow-hidden">
-          {/* Row 1: time + customer name */}
           <div className="flex items-center gap-1.5 min-w-0">
             <span className="text-[11px] font-mono font-medium flex-shrink-0 text-[var(--bf-primary)]">
               {startTime}
@@ -107,15 +281,11 @@ export function AppointmentCard({
               {booking.customer?.name || "Sin cliente"}
             </span>
           </div>
-
-          {/* Row 2: service name (always shown, hidden by overflow when too small) */}
           {booking.service?.name && (
             <span className="text-[10px] text-[var(--bf-ink-400)] truncate leading-none">
               {booking.service.name}
             </span>
           )}
-
-          {/* Row 3: compact dual badges (only when requested) */}
           {showStatus && (
             <div className="flex items-center gap-1.5 mt-1">
               <span
@@ -145,85 +315,50 @@ export function AppointmentCard({
     );
   }
 
-  // List variant (for ListView and mobile displays)
+  // ─── List variant ──────────────────────────────────────────────────────────
   if (variant === "list") {
     return (
       <motion.div
         {...getMotionSafeProps({
           initial: { opacity: 0, y: 8 },
-          animate: { opacity: 1, y: 0 },
+          animate: { opacity: tokens.opacity, y: 0 },
           whileHover: interactionPresets.appointmentCard.hover,
           whileTap: interactionPresets.appointmentCard.tap,
         })}
         onClick={onClick}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          onContextMenu?.(e);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onClick?.();
-          }
-        }}
+        onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(e); }}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick?.(); } }}
         tabIndex={0}
         role="button"
-        className={cn(
-          baseClasses,
-          "p-4"
-        )}
+        className={cn(baseClasses, "p-4")}
         style={cardStyle}
         aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime} - ${endTime}`}
       >
+        {OverdueBadge ?? ArrivedBadge ?? LateBadge}
         <div className="space-y-3">
-          {/* Header: Time + Status */}
           <div className="flex items-start justify-between">
-            <div className={cn(
-              "text-sm font-semibold font-mono",
-              "text-[var(--bf-primary)]"
-            )}>
+            <div className="text-sm font-semibold font-mono text-[var(--bf-primary)]">
               {startTime} - {endTime}
             </div>
             {showStatus && (
               <div className="flex items-center gap-1.5">
-                <div 
-                  className="w-2 h-2 rounded-full flex-shrink-0" 
-                  style={{ backgroundColor: staffColor || statusTokens.text }}
-                />
-                <span className={cn(
-                  "text-xs font-medium",
-                  "text-[var(--bf-ink-300)]"
-                )}>
-                  {statusConfig.label}
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: tokens.border }} />
+                <span className="text-xs font-medium text-[var(--bf-ink-300)]">
+                  {presentation.bookingStateConfig.label}
                 </span>
               </div>
             )}
           </div>
-
-          {/* Customer name */}
-          <div className={cn(
-            "text-base font-semibold",
-            "text-[var(--bf-ink-50)]"
-          )}>
+          <div className="text-base font-semibold text-[var(--bf-ink-50)]">
             {booking.customer?.name || "Sin cliente"}
           </div>
-
-          {/* Service details */}
-          <div className={cn(
-            "text-sm",
-            "text-[var(--bf-ink-300)]"
-          )}>
+          <div className="text-sm text-[var(--bf-ink-300)]">
             {booking.service?.name || "Sin servicio"}
             {booking.service && ` • ${booking.service.duration_min} min`}
             {booking.staff && ` • ${booking.staff.name}`}
           </div>
-
-          {/* Price (if requested) */}
           {showPrice && booking.service && (
-            <div className={cn(
-              "text-sm font-semibold pt-2 border-t border-[var(--bf-border)]",
-              "text-[var(--bf-ink-50)]"
-            )}>
+            <div className="text-sm font-semibold pt-2 border-t border-[var(--bf-border)] text-[var(--bf-ink-50)]">
               {(booking.service.price_cents / 100).toFixed(2)} €
             </div>
           )}
@@ -232,7 +367,7 @@ export function AppointmentCard({
     );
   }
 
-  // Desktop-list variant: single horizontal row with full detail
+  // ─── Desktop-list variant ──────────────────────────────────────────────────
   if (variant === "desktop-list") {
     const durationMin = booking.service?.duration_min
       ?? Math.round((new Date(booking.ends_at).getTime() - new Date(booking.starts_at).getTime()) / 60000);
@@ -241,7 +376,7 @@ export function AppointmentCard({
       <motion.div
         {...getMotionSafeProps({
           initial: { opacity: 0, y: 6 },
-          animate: { opacity: 1, y: 0 },
+          animate: { opacity: tokens.opacity, y: 0 },
           whileHover: interactionPresets.appointmentCard.hover,
           whileTap: interactionPresets.appointmentCard.tap,
         })}
@@ -254,14 +389,14 @@ export function AppointmentCard({
         style={cardStyle}
         aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime}`}
       >
+        {OverdueBadge ?? ArrivedBadge ?? LateBadge}
+
         {/* Time + duration */}
         <div className="flex-shrink-0 w-[110px]">
           <div className="text-sm font-mono font-semibold text-[var(--bf-primary)]">
             {startTime} <span className="text-[var(--bf-ink-400)]">-</span> {endTime}
           </div>
-          <div className="text-[11px] text-[var(--bf-ink-400)] mt-0.5">
-            {durationMin} min
-          </div>
+          <div className="text-[11px] text-[var(--bf-ink-400)] mt-0.5">{durationMin} min</div>
         </div>
 
         {/* Customer */}
@@ -283,13 +418,8 @@ export function AppointmentCard({
           </div>
           {booking.staff?.name && (
             <div className="flex items-center gap-1.5 mt-0.5">
-              <div
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: accentColor }}
-              />
-              <span className="text-[11px] text-[var(--bf-ink-400)] truncate">
-                {booking.staff.name}
-              </span>
+              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: tokens.border }} />
+              <span className="text-[11px] text-[var(--bf-ink-400)] truncate">{booking.staff.name}</span>
             </div>
           )}
         </div>
@@ -330,56 +460,29 @@ export function AppointmentCard({
     );
   }
 
-  // Grid variant (for MonthView grid cells)
+  // ─── Grid variant ──────────────────────────────────────────────────────────
   if (variant === "grid") {
     return (
       <motion.div
         {...getMotionSafeProps({
           initial: { opacity: 0, x: -4 },
-          animate: { opacity: 1, x: 0 },
+          animate: { opacity: tokens.opacity, x: 0 },
           whileHover: interactionPresets.appointmentCard.hover,
           whileTap: interactionPresets.appointmentCard.tap,
         })}
         onClick={onClick}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          onContextMenu?.(e);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onClick?.();
-          }
-        }}
+        onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(e); }}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick?.(); } }}
         tabIndex={0}
         role="button"
-        className={cn(
-          baseClasses,
-          "p-1.5"
-        )}
+        className={cn(baseClasses, "p-1.5")}
         style={cardStyle}
         aria-label={`Cita de ${booking.customer?.name || "cliente"} a las ${startTime}`}
       >
         <div className="flex items-center gap-1.5">
-          {/* Status dot */}
-          <div
-            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-            style={{ backgroundColor: statusTokens.text }}
-          />
-          
-          {/* Time */}
-          <span className={cn(
-            "text-xs font-semibold font-mono flex-shrink-0",
-            "text-[var(--bf-primary)]"
-          )}>
-            {startTime}
-          </span>
-          
-          {/* Customer initials */}
-          <span className={cn(
-            "text-xs font-medium truncate",
-            "text-[var(--bf-ink-50)]"
-          )}>
+          <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: tokens.text }} />
+          <span className="text-xs font-semibold font-mono flex-shrink-0 text-[var(--bf-primary)]">{startTime}</span>
+          <span className="text-xs font-medium truncate text-[var(--bf-ink-50)]">
             {getCustomerInitials(booking.customer?.name)}
           </span>
         </div>
@@ -390,13 +493,10 @@ export function AppointmentCard({
   return null;
 }
 
-// Helper function to get customer initials
 function getCustomerInitials(name: string | null | undefined): string {
   if (!name) return "?";
   const parts = name.trim().split(" ");
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase().slice(0, 2);
-  }
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   return name.slice(0, 2).toUpperCase();
 }
 

@@ -8,7 +8,7 @@
  */
 export type BookingStatus = "hold" | "pending" | "confirmed" | "paid" | "completed" | "cancelled" | "no_show";
 
-export type BookingState = "pending" | "confirmed" | "in_progress" | "completed" | "cancelled" | "no_show";
+export type BookingState = "pending" | "confirmed" | "arrived" | "in_progress" | "completed" | "cancelled" | "no_show";
 export type PaymentStatus = "unpaid" | "deposit" | "paid";
 
 export const BOOKING_STATE_CONFIG: Record<
@@ -31,6 +31,12 @@ export const BOOKING_STATE_CONFIG: Record<
     legendColor: "#38BDF8",
     legendBg: "rgba(56,189,248,0.12)",
     legendBorder: "rgba(56,189,248,0.35)",
+  },
+  arrived: {
+    label: "Ha llegado",
+    legendColor: "#F59E0B",
+    legendBg: "rgba(245,158,11,0.14)",
+    legendBorder: "rgba(245,158,11,0.40)",
   },
   in_progress: {
     label: "En curso",

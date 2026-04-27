@@ -500,6 +500,30 @@ export function BookingSlidePanel({
                 </button>
               )}
 
+              {/* Arrival flow: "Llegó" for pending/confirmed; "En curso" for pending/confirmed/arrived */}
+              {onBookingStateChange && (presentation.bookingState === "pending" || presentation.bookingState === "confirmed" || presentation.bookingState === "arrived") && (
+                <div className="flex gap-2">
+                  {(presentation.bookingState === "pending" || presentation.bookingState === "confirmed") && (
+                    <button
+                      onClick={() => applyBookingState("arrived")}
+                      disabled={statusLoading !== null}
+                      className="flex-1 flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ backgroundColor: 'rgba(245,158,11,0.13)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.35)' }}
+                    >
+                      {statusLoading === "arrived" ? "Guardando..." : "↗ Llegó"}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => applyBookingState("in_progress")}
+                    disabled={statusLoading !== null}
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: 'rgba(167,139,250,0.13)', color: '#A78BFA', border: '1px solid rgba(167,139,250,0.35)' }}
+                  >
+                    {statusLoading === "in_progress" ? "Guardando..." : "✂ En curso"}
+                  </button>
+                </div>
+              )}
+
               {onBookingStateChange && presentation.bookingState !== "completed" && presentation.bookingState !== "cancelled" && presentation.bookingState !== "no_show" && (
                 <div className="flex gap-2">
                   <button
