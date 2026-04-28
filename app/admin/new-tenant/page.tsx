@@ -137,6 +137,34 @@ export default function NewTenantPage() {
         throw new Error(data.error || "Error al crear tenant");
       }
 
+      // Disparar tarea de onboarding en OpenClaw
+      const tenantId = data.tenant.id;
+      try {
+        await fetch("/api/agents/tasks", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${process.env.NEXT_PUBLIC_AGENT_API_KEY || "sk_agent_dev"}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            type: "onboarding",
+            tenant_id: tenantId,
+            payload: {
+              business_name: name.trim(),
+              tenant_slug: slug.trim(),
+              owner_email: ownerEmail.trim(),
+              owner_name: ownerName.trim(),
+              timezone,
+            },
+            priority: "high",
+          }),
+        });
+        console.log("✅ Onboarding task created for tenant:", tenantId);
+      } catch (taskError) {
+        console.error("⚠️ Failed to create onboarding task:", taskError);
+        // No fallar si la tarea no se crea, el tenant ya está creado
+      }
+
       setSuccess(true);
       setTimeout(() => {
         router.push(`/admin/${data.tenant.id}`);
