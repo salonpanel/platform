@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
 /**
  * GET /api/admin/agents/tasks
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0');
 
     // 3. Build query
-    const adminClient = createAdminClient();
+    const adminClient = getSupabaseAdmin();
     let query = adminClient.from('agent_tasks').select('*', { count: 'exact' });
 
     if (status) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Verify tenant exists
-    const adminClient = createAdminClient();
+    const adminClient = getSupabaseAdmin();
     const { data: tenant, error: tenantError } = await (adminClient
       .from('tenants')
       .select('id')

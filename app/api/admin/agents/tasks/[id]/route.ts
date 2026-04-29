@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
 /**
  * PATCH /api/admin/agents/tasks/{id}
@@ -37,7 +37,7 @@ export async function PATCH(
     }
 
     // 3. Get current task
-    const adminClient = createAdminClient();
+    const adminClient = getSupabaseAdmin();
     const { data: task, error: fetchError } = await (adminClient
       .from('agent_tasks')
       .select('*')

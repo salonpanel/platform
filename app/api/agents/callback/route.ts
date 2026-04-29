@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import crypto from 'crypto';
 
 /**
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. Update task
-    const adminClient = createAdminClient();
+    const adminClient = getSupabaseAdmin();
     const { data: task, error: updateError } = await (adminClient
       .from('agent_tasks')
       .update({
