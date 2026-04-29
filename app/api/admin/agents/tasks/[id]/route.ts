@@ -11,11 +11,12 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin';
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 1. TODO: Verificar autenticación y rol platform_admin
-    const taskId = params.id;
+    const { id } = await params;
+    const taskId = id;
 
     // 2. Parse payload
     const body = await request.json();
